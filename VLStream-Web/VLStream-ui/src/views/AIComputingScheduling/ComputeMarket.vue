@@ -25,7 +25,7 @@
             <div class="price-line"><strong>{{ item.billingType === 'FREE' ? marketText('免费') : marketPricePresentation(item)?.amount ?? marketText('价格待确认') }}</strong><small v-if="item.billingType !== 'FREE' && marketPricePresentation(item) !== null">{{ marketText(marketPricePresentation(item).unit) }}</small></div>
             <p v-if="!(item.billingType === 'FREE' && item.schedulingMode === 'SHARED_GPU_QUEUE')" class="price-note">{{ marketText(item.billingType === 'FREE' ? '整实例独享' : item.paidAdmissionEnabled ? '确认报价后按用量结算' : marketPricePresentation(item)?.reference ? '参考价 · 磁盘另费' : '收费暂未开放') }}</p>
             <el-button v-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
-            <el-button v-else-if="item.billingType === 'POINTS'" type="primary" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || item.powerState !== 'STOPPED'" @click="billingPanel?.start(item)">{{ marketText(item.paidAdmissionEnabled ? '付费开机' : '租赁暂未开放') }}</el-button>
+            <el-button v-else-if="item.billingType === 'POINTS'" type="primary" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || (item.powerState !== 'STOPPED' && !(item.configurationManaged && item.provider === 'autodl' && item.powerState === 'UNKNOWN'))" @click="billingPanel?.start(item)">{{ marketText(item.paidAdmissionEnabled ? '付费开机' : '租赁暂未开放') }}</el-button>
             <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE'" type="primary" @click="router.push('/algorithm-training')">{{ marketText('前往训练') }}</el-button>
           </div>
         </div>
@@ -38,7 +38,7 @@
           <el-button v-if="item.claimState === 'MINE'" :loading="operating === item.id" @click="release(item)">{{ marketText('释放占用') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" type="primary" :loading="operating === item.id" :disabled="item.operationPending || item.capacityState === 'UNAVAILABLE' || item.provider === 'self' || item.powerState === 'RUNNING'" @click="power(item, 'start')">{{ marketText(item.apiControl ? '启动实例' : '开机指引') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" :disabled="item.operationPending || item.taskCount > 0 || item.provider === 'self' || item.powerState === 'STOPPED'" :loading="operating === item.id" @click="power(item, 'stop')">{{ marketText(item.apiControl ? '停止实例' : '关机指引') }}</el-button>
-          <el-button v-if="item.canRefreshEnvironment || item.canOperate" type="primary" plain :disabled="item.operationPending || item.powerState !== 'RUNNING'" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
+          <el-button v-if="item.canRefreshEnvironment || item.canOperate" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
           <el-button v-if="item.canManage" class="manage-action" link @click="router.push({ path: '/compute-management', query: { ...route.query, nodeId: item.id } })">{{ marketText('管理') }}<el-icon><ArrowRight /></el-icon></el-button>
         </div>
       </article>

@@ -37,6 +37,33 @@ class ComputeBillingPolicyTest {
         node.setCapacitySource("PROVIDER_API"); node.setPowerState("STOPPED"); node.setProviderChargeType("PostPaid");
         node.setPowerCheckedAt(new Date()); node.setPowerOperationAction("stop"); return node;
     }
+    private ComputeBillingRate fixed() {
+        ComputeBillingRate value=rate();value.setPricePolicy("VLS_FIXED");value.setUserPriceSource("OFFICIAL_CONFIG");
+        value.setFixedPriceConfigurationId("official-autodl");value.setFixedPriceUnit("PER_INSTANCE_HOUR");value.setFixedHourlyPrice(new BigDecimal("5"));
+        value.setProviderPriceLockConfirmed(false);value.setPriceEvidence(null);value.setCostSource(null);value.setCostHourly(null);return value;
+    }
+    @Test void officialFixedPriceNeedsNeitherSupplierPriceNorLockAndDoesNotApplyLegacyMarkup() {
+        ComputeBillingRate value=fixed();value.validate(Instant.now());
+        assertEquals(0,new BigDecimal("500").compareTo(value.unroundedQuota(3600000)));
+        value.setCostHourly(new BigDecimal("99999"));value.setSaleMultiplier(new BigDecimal("99"));
+        assertEquals(0,new BigDecimal("500").compareTo(value.unroundedQuota(3600000)));
+    }
+    @Test void missingOfficialPriceOrWrongConfigSourceCannotFallBackToSupplierCost() {
+        ComputeBillingRate value=fixed();value.setFixedHourlyPrice(null);value.setCostHourly(BigDecimal.ONE);
+        assertThrows(IllegalArgumentException.class,()->value.validate(Instant.now()));
+        value.setFixedHourlyPrice(BigDecimal.ZERO);assertThrows(IllegalArgumentException.class,()->value.validate(Instant.now()));
+        value.setFixedHourlyPrice(BigDecimal.ONE);value.setUserPriceSource("SUPPLIER_API");assertThrows(IllegalArgumentException.class,()->value.validate(Instant.now()));
+        value.setUserPriceSource("OFFICIAL_CONFIG");value.setProviderPriceLockConfirmed(true);assertThrows(IllegalArgumentException.class,()->value.validate(Instant.now()));
+    }
+    @Test void acceptedFixedUserPriceRemainsUnchangedWhenDeploymentPriceChanges() throws Exception {
+        ComputeBillingRate value=fixed();ObjectMapper mapper=new ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode config=mapper.readTree("{\"settlement_currency\":\"CNY\",\"quota_unit\":\"test-unit\",\"conversion_version\":\"test-conversion\",\"quota_per_currency_unit\":{\"numerator\":\"100\",\"denominator\":\"1\"},\"effective_at\":\"2026-01-01T00:00:00Z\",\"valid_until\":\"2027-01-01T00:00:00Z\"}");
+        com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot accepted=com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot.fromExistingRate(value,config,Instant.now(),mapper);
+        value.setFixedHourlyPrice(new BigDecimal("9"));
+        assertEquals(0,new BigDecimal("5").compareTo(accepted.approvedHourlyPrice));
+        ComputeBillingRate historical=mapper.treeToValue(mapper.readTree(accepted.json).path("accepted_rate"),ComputeBillingRate.class);
+        assertEquals(0,new BigDecimal("500").compareTo(historical.unroundedQuota(3600000)));
+    }
     @Test void defaultConfigurationKeepsRunningAndCannotEnableDeletionOrPowerAutomation() {
         ComputeBillingPolicy policy = new ComputeBillingPolicy(); policy.validate();
         assertEquals(3600, policy.getOpeningReserveSeconds()); assertEquals(7200, policy.getEarlyReminderSeconds());

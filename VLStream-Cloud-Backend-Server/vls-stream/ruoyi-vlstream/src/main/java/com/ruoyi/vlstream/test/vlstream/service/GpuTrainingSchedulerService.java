@@ -17,7 +17,6 @@ import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTrainingContainerProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsContainerInstanceMapper;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.RemoteServers;
@@ -60,8 +59,6 @@ public class GpuTrainingSchedulerService {
 	private IVlsAlgorithmTrainingService algorithmTrainingService;
 	@Resource
 	private IVlsAlgorithmService algorithmService;
-	@Resource
-	private VlsRemoteServersMapper remoteServersMapper;
 	@Resource
 	private SSHService sshService;
 	@Resource
@@ -166,7 +163,9 @@ public class GpuTrainingSchedulerService {
 		definition.put("runName",runName);definition.put("trainType",resolvedTaskType);definition.put("datasetPath",datasetPath);definition.put("baseModel",baseModel);
 		definition.put("epochs",epochs);definition.put("batchSize",batchSize);definition.put("imgSize",imgSize);
 		// Persist typed inputs. The worker reconstructs its fixed command; raw shell text is never executed.
-		instance.setEnvConfig(toJson(singletonMap("launchDefinition",definition)));
+        Map<String,Object> execution=new LinkedHashMap<>();execution.put("launchDefinition",definition);
+        execution.put("executionFingerprint",sshProperties.executionFingerprint());
+        instance.setEnvConfig(toJson(execution));
 		Map<String, Object> volumeConfig = new LinkedHashMap<>();
 		volumeConfig.put("hostPath", properties.getHostDataDir());
 		volumeConfig.put("containerPath", properties.getHostDataDir());
@@ -208,6 +207,7 @@ public class GpuTrainingSchedulerService {
 		instance.setImageName(properties.getImage()); instance.setImageTag(properties.getImage()); instance.setInstanceCount(1);
 		instance.setTrainingTaskId(roundId); instance.setServerId(server.getId()); instance.setServerIp(server.getServerIp());
 		instance.setGpuIndex(properties.getGpuIndex()); instance.setGpuUuid(properties.getGpuUuid()); instance.setGpuLimit("GPU " + properties.getGpuIndex() + " (exclusive)");
+		instance.setEnvConfig(toJson(singletonMap("executionFingerprint",sshProperties.executionFingerprint())));
 		instance.setInstanceStatus(STATUS_QUEUED); instance.setHealthStatus("unknown"); instance.setQueueTime(new Date()); instance.setRestartCount(0);
 		if (!containerInstanceService.saveTaskRecord(instance)) throw new IllegalStateException("智能标注任务入队失败");
 	}
@@ -257,6 +257,7 @@ public class GpuTrainingSchedulerService {
 		if ("cloud_training".equals(instance.getInstanceType())) {
 			return cloudTrainingService.containerLogs(instance.getId());
 		}
+		sshProperties.requireReference(instance);
 		int safeLines = Math.max(1, Math.min(lines, 2000));
 		SSHService.SSHExecutionResult result = execute(
 			"tail -n " + safeLines + " " + shellQuote(instance.getLogsPath()) + " 2>/dev/null || true");
@@ -336,7 +337,7 @@ public class GpuTrainingSchedulerService {
 
 	private boolean reconcileActiveContainer(ContainerInstance instance) {
 		try { requireSchedulerIdentity(instance); }
-		catch(RuntimeException invalid) { log.warn("拒绝未确认的GPU运行记录: {}",instance.getId());return false; }
+		catch(RuntimeException invalid) { log.warn("拒绝未确认的GPU运行记录: {}",instance.getId());return true; }
 		String inspect = "docker inspect -f '{{.State.Status}}|{{.State.ExitCode}}|{{.Id}}' "
 			+ shellQuote(instance.getInstanceName()) + " 2>/dev/null || echo missing";
 		SSHService.SSHExecutionResult stateResult = execute(inspect);
@@ -541,6 +542,7 @@ public class GpuTrainingSchedulerService {
 		if(instance.getTrainingTaskId()==null || instance.getCreateUser()==null || isBlank(instance.getTenantId()))
 			throw new IllegalStateException("调度记录缺少任务归属");
 		containerInstanceService.requireTaskExecution(instance);
+		sshProperties.requireReference(instance);
 		String expected="vls-training-"+instance.getTrainingTaskId();
 		if(TYPE_TRAINING.equals(instance.getInstanceType())) {
 			if(!expected.equals(instance.getInstanceName()))throw new IllegalStateException("训练容器命名与任务不一致");
@@ -551,7 +553,8 @@ public class GpuTrainingSchedulerService {
 	private String trustedLaunch(ContainerInstance instance) {
 		try {
 			RemoteServers server=requireServer();
-			if(!java.util.Objects.equals(server.getId(),instance.getServerId()) || !java.util.Objects.equals(server.getServerIp(),instance.getServerIp())
+			sshProperties.requireReference(instance);
+			if(!java.util.Objects.equals(server.getServerIp(),instance.getServerIp())
 				|| !java.util.Objects.equals(properties.getGpuIndex(),instance.getGpuIndex()))throw new IllegalStateException("训练主机/GPU身份不一致");
 			com.fasterxml.jackson.databind.JsonNode env=objectMapper.readTree(instance.getEnvConfig());
 			com.fasterxml.jackson.databind.JsonNode def=env.path("launchDefinition");
@@ -623,15 +626,13 @@ public class GpuTrainingSchedulerService {
 	}
 
 	private RemoteServers requireServer() {
-		RemoteServers server = remoteServersMapper.selectActiveServer();
-		if (server == null) {
-			throw new IllegalStateException("未找到启用的GPU训练服务器");
-		}
-		if(companyPool(server.getServerIp(),22))throw new IllegalStateException("该公司GPU必须通过正式训练的共享节点队列执行，保留原默认服务器记录");
+		RemoteServers server = sshProperties.requireServer();
+		if(companyPool(server.getServerIp(),server.getServerPort()))throw new IllegalStateException("该公司GPU必须通过正式训练的共享节点队列执行");
 		return server;
 	}
 
 	private SSHService.SSHExecutionResult execute(String command) {
+		sshProperties.requireServer();
 		return sshService.executeCommand(sshProperties.getHost(), sshProperties.getPort(),
 			sshProperties.getUsername(), sshProperties.getPassword(), command);
 	}

@@ -43,7 +43,7 @@ public class ConfiguredComputeIntegrationTest {
         jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(32),error_message TEXT,stop_time TIMESTAMP)");
         jdbc.execute("CREATE ALIAS GET_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.acquireLock'");
         jdbc.execute("CREATE ALIAS RELEASE_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.releaseLock'");
-        properties=new ConfiguredComputeProperties();properties.setEnabled(true);assets=new ComputeTrustedSelfAssetsProperties();
+        properties=new ConfiguredComputeProperties();assets=new ComputeTrustedSelfAssetsProperties();
         addResource(-173L,173L,"173");addResource(-99L,99L,"99");
         registry=new ConfiguredComputeRegistry(properties,assets,json,jdbc);registry.initialize();
         ssh=mock(ComputeSsh.class);connection=mock(ComputeSsh.Connection.class);when(ssh.open(any())).thenReturn(connection);
@@ -125,14 +125,15 @@ public class ConfiguredComputeIntegrationTest {
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
         for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
         ConfiguredComputeProperties bound=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.company-resources",org.springframework.boot.context.properties.bind.Bindable.of(ConfiguredComputeProperties.class)).get();
-        assertEquals(2,bound.getResources().size());assertEquals(-173L,bound.getResources().get(0).getNodeId());assertEquals(-99L,bound.getResources().get(1).getNodeId());
-        assertFalse(bound.isEnabled());
+        assertEquals(3,bound.getResources().size());assertEquals(-173L,bound.getResources().get(0).getNodeId());assertEquals(-99L,bound.getResources().get(1).getNodeId());
+        assertEquals(-6000L,bound.getResources().get(2).getNodeId());assertEquals(0,new java.math.BigDecimal("13.00").compareTo(bound.getResources().get(2).getFixedPrice().getPerInstanceHour()));
+        assertDoesNotThrow(()->new ConfiguredComputeRegistry(bound,new ComputeTrustedSelfAssetsProperties(),json,mock(JdbcTemplate.class)).initialize());
         assertEquals("192.168.88.173",bound.getResources().get(0).getAssetHost());assertFalse(bound.getResources().get(0).getLegacyNodeIds().isEmpty());
         assertTrue(bound.getResources().get(0).getWorkDir().endsWith("/localhost"));
     }
     @Test void approvedHostReferenceReusesExistingAssetAndMissingAssetCannotAdvertiseSupply() {
         ConfiguredComputeProperties.Resource first=properties.getResources().get(0);first.setAssetId("");first.setAssetHost("192.168.88.173");registry.initialize();assertEquals(2,registry.published().size());
-        first.setAssetHost("missing.invalid");registry.initialize();assertEquals(1,registry.published().size());assertThrows(ServiceException.class,()->nodes.requireReady(-173L));
+        first.setAssetHost("missing.invalid");registry.initialize();assertEquals(2,registry.published().size());assertTrue(registry.published().get(0).getLifecycleMessage().contains("YAML"));assertThrows(ServiceException.class,()->nodes.requireReady(-173L));
     }
     @Test void unmappedRealRowCannotAdvertiseReadinessOrBeRemovedUntilTheAliasIsExplicit() throws Exception {
         ComputeNode configured=nodes.get(-173L);
@@ -141,7 +142,7 @@ public class ConfiguredComputeIntegrationTest {
         ComputeNode legacy=jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=555",new BeanPropertyRowMapper<>(ComputeNode.class));
         assertTrue(registry.migrationPending(legacy));assertFalse(nodes.canManage(legacy));
         assertThrows(ServiceException.class,()->nodes.delete(555L));assertThrows(ServiceException.class,()->nodes.probe(555L));
-        assertThrows(ServiceException.class,()->registry.resolve(-173L));assertThrows(ServiceException.class,()->market.list(true));
+        assertThrows(ServiceException.class,()->registry.resolve(-173L));assertTrue(market.list(true).stream().anyMatch(row -> row.getId().equals("-173") && !row.isSchedulable() && row.getMessage().contains("映射")));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));verifyNoInteractions(ssh);
         properties.getResources().get(0).setLegacyNodeIds(Arrays.asList(173L,555L));registry.initialize();
         assertFalse(registry.migrationPending(legacy));assertTrue(registry.replaces(legacy));assertEquals(-173L,registry.resolve(555L).getId());
@@ -168,13 +169,41 @@ public class ConfiguredComputeIntegrationTest {
         ContainerInstance record=new ContainerInstance();record.setInstanceType("cloud_training");record.setTrainingTaskId(1L);record.setServerId(-173L);
         access.prepareTaskRecord(record);assertEquals(-173L,record.getServerId());assertEquals("tenant-a",record.getTenantId());assertEquals("101",record.getCreateUser());
     }
-    @Test void explicitCutoverDefaultsOffAndRetainsTheOriginalDatabaseNodeResolution() {
-        properties.setEnabled(false);registry.initialize();
-        assertFalse(registry.contains(-173L));assertFalse(registry.contains(173L));assertTrue(registry.published().isEmpty());
-        assertEquals(Collections.singletonList(173L),nodes.queueIds(173L));assertEquals(173L,nodes.queueId(173L));
-        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,host,port,enabled,gpu_index) VALUES(173,'tenant-a','Legacy source','legacy.invalid',22,1,0)");
-        assertEquals("legacy.invalid",nodes.get(173L).getHost());assertFalse(nodes.get(173L).isConfigurationManaged());
-        assertFalse(registry.migrationPending(nodes.get(173L)));registry.requireMutable(173L);
+    @Test void everyDatabaseSelfNodeIsHistoricalOnlyWithoutAnySourceSwitch() {
+        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,provider,host,port,enabled,gpu_index,resource_scope) VALUES(888,'tenant-a','Old self','self','legacy.invalid',22,1,0,'PLATFORM')");
+        assertThrows(ServiceException.class,()->nodes.get(888L));
+        assertEquals(2,market.list(true).size());
+        assertTrue(registry.migrationPending(jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=888",new BeanPropertyRowMapper<>(ComputeNode.class))));
+        ComputeRequests.Node request=new ComputeRequests.Node();request.setProvider("self");
+        assertThrows(ServiceException.class,()->nodes.save(null,request));
+        assertTrue(registry.contains(-173L));assertEquals(-173L,nodes.queueId(173L));verifyNoInteractions(ssh);
+    }
+    @Test void malformedCompanyMappingLeavesAutodlSupplyVisibleAndSelfWorkHeld() {
+        jdbc.execute("ALTER TABLE vls_compute_node ADD server_group VARCHAR(100)");jdbc.execute("ALTER TABLE vls_compute_node ADD provider_instance_id VARCHAR(100)");
+        properties.getResources().get(0).setAssetId("not-installed");registry.initialize();
+        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,provider,host,port,enabled,gpu_index,resource_scope) VALUES(888,'tenant-a','AutoDL unaffected','autodl','legacy.invalid',22,1,0,'PLATFORM')");
+        assertTrue(market.list(false).stream().anyMatch(row -> row.getId().equals("888")));
+        assertThrows(ServiceException.class,()->nodes.get(-173L));
+        assertEquals("autodl",nodes.get(888L).getProvider());verifyNoInteractions(ssh);
+    }
+    @Test void unmappedPrivateSelfWorkIsHeldWithoutMarkingTheRemoteProcessStopped() {
+        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,provider,host,resource_scope) VALUES(888,'tenant-a','Old self','self','legacy.invalid','PRIVATE')");
+        jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,node_id,run_dir,options_json,job_state,container_record_id) VALUES('old-private','tenant-a',888,'/old/run','{}','RUNNING',6)");
+        CloudTrainingWorker worker=new CloudTrainingWorker(jdbc,transactions,nodes,ssh,mock(CloudTrainingDatasetWriter.class),mock(DataManagementService.class),storage,mock(RemoteModelArtifactService.class),json);
+        try {
+            worker.tick(888L);assertTrue(jdbc.queryForObject("SELECT message FROM vls_cloud_training_job WHERE id='old-private'",String.class).contains("YAML"));
+            jdbc.update("DELETE FROM vls_compute_node WHERE id=888");worker.tick(888L);
+        } finally {worker.shutdown();}
+        assertEquals("RUNNING",jdbc.queryForObject("SELECT job_state FROM vls_cloud_training_job WHERE id='old-private'",String.class));
+        assertTrue(jdbc.queryForObject("SELECT message FROM vls_cloud_training_job WHERE id='old-private'",String.class).contains("保留"));verifyNoInteractions(ssh);
+    }
+    @Test void invalidatedAliasesCannotReuseCachedReadyProofOrBypassPendingMaintenance() throws Exception {
+        ready(-173L);ComputeNode node=nodes.get(-173L);
+        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,provider,host,port,username,python_path,work_dir,gpu_index,scheduling_mode,billing_type,resource_scope,enabled,host_key,power_operation_id) VALUES(173,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            node.getTenantId(),node.getName(),node.getProvider(),node.getHost(),node.getPort(),node.getUsername(),node.getPythonPath(),node.getWorkDir(),0,node.getSchedulingMode(),"FREE","PLATFORM",true,node.getHostKey(),"pending-maintenance");
+        assertThrows(ServiceException.class,()->nodes.get(-173L));assertThrows(ServiceException.class,()->nodes.delete(173L));
+        ComputeNode unavailable=registry.published().get(0);assertFalse(shared.ready(unavailable));assertNull(unavailable.getProbeJson());
+        assertTrue(unavailable.getLifecycleMessage().contains("维护"));verifyNoInteractions(ssh);
     }
     @Test void bothResourcesStartWithCanonicalIdsWithoutDatabaseNodes() throws Exception {
         startFixture(-173L);training.start(1L,request(173L));

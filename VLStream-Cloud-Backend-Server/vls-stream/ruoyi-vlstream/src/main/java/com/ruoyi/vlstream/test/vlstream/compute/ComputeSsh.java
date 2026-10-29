@@ -27,10 +27,16 @@ public class ComputeSsh {
     private ComputeDeploymentSshIdentity deploymentIdentity;
     @Autowired(required = false)
     private ComputeApprovedAutoDlSshIdentity approvedAutoDlIdentity;
+    @Autowired(required = false)
+    private ConfiguredOfficialSshIdentity officialIdentity;
 
     /** Validate the administrator-owned key reference without reading private material. */
     public void requireDeploymentIdentity(ComputeNode node) throws IOException {
         if ("autodl".equals(node.getProvider())) {
+            if(node.isConfigurationManaged()) {
+                if(officialIdentity==null)throw new IOException("官方算力SSH部署身份未配置");
+                officialIdentity.resolve(node);return;
+            }
             if (approvedAutoDlIdentity == null) throw new IOException("AutoDL本地部署身份未配置");
             approvedAutoDlIdentity.requireConfigured(node);
             return;
@@ -46,10 +52,16 @@ public class ComputeSsh {
             ComputeTrustedSelfPolicy.Target target = trustedSelfPolicy.resolve(node);
             boolean keyMode = ComputeDeploymentSshIdentity.KEY.equals(node.getAuthMode());
             ComputeApprovedAutoDlSshIdentity.Reference autoDlReference = null;
+            ConfiguredOfficialSshIdentity.Reference officialReference = null;
             if (keyMode && "autodl".equals(node.getProvider())) {
+                if(node.isConfigurationManaged()) {
+                    if(officialIdentity==null)throw new IOException("官方算力SSH部署身份未配置");
+                    officialReference=officialIdentity.resolve(node);target=officialReference.bind(target);
+                } else {
                 if (approvedAutoDlIdentity == null) throw new IOException("AutoDL本地部署身份未配置");
                 autoDlReference = approvedAutoDlIdentity.resolve(node);
                 target = autoDlReference.bind(target);
+                }
             }
             InetAddress[] addresses = target.addresses();
             jsch = new JSch();
@@ -59,7 +71,8 @@ public class ComputeSsh {
             if (keyMode) {
                 requireDeploymentIdentity(node);
                 if (!pinned) throw new IOException("后台部署SSH身份必须绑定已核验主机公钥");
-                if (autoDlReference != null) autoDlReference.addIdentity(jsch);
+                if (officialReference != null) officialReference.addIdentity(jsch);
+                else if (autoDlReference != null) autoDlReference.addIdentity(jsch);
                 else deploymentIdentity.addIdentity(node, jsch);
             } else if (!ComputeDeploymentSshIdentity.PASSWORD.equals(node.getAuthMode())) {
                 throw new IOException("SSH认证模式无效");

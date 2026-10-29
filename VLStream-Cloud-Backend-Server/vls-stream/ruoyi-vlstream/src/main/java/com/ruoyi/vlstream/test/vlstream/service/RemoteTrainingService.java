@@ -8,7 +8,6 @@
 
 package com.ruoyi.vlstream.test.vlstream.service;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import com.ruoyi.vlstream.test.common.constant.CommonConstant;
 import com.ruoyi.vlstream.test.vlstream.config.VlsModelConversionProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.RemoteServers;
 import org.springframework.stereotype.Service;
@@ -34,9 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RemoteTrainingService {
-
-	@Resource
-	private VlsRemoteServersMapper remoteServerMapper;
 
 	@Resource
 	private SSHService sshService;
@@ -65,7 +60,7 @@ public class RemoteTrainingService {
 									 String extraParams) {
 		StartResult startResult = new StartResult();
 		try {
-			RemoteServers server = remoteServerMapper.selectActiveServer();
+			RemoteServers server = sshProperties.requireServer();
 			if (server == null) {
 				startResult.setMessage("未找到可用的训练服务器");
 				return startResult;
@@ -158,39 +153,14 @@ public class RemoteTrainingService {
 		algorithmTrainingService.updateAlgorithmTraining(update);
 	}
 
-	/**
-	 * Execute SSH , if failed configuration SSH .
-	 */
+	/** Execute only the YAML target; authentication failure cannot select another host. */
 	private SSHService.SSHExecutionResult executeWithFallback(RemoteServers server, String command) {
-		String host = server != null ? server.getServerIp() : sshProperties.getHost();
-		Integer port = server != null && server.getServerPort() != null ? server.getServerPort() : sshProperties.getPort();
-		String username = server != null ? server.getUsername() : sshProperties.getUsername();
-		String password = server != null ? decryptPassword(server.getPassword()) : sshProperties.getPassword();
-
-		SSHService.SSHExecutionResult result = sshService.executeCommand(host, port, username, password, command);
-		if (shouldRetryWithDefault(result)) {
-			boolean sameAsDefault = Objects.equals(host, sshProperties.getHost())
-				&& Objects.equals(port, sshProperties.getPort())
-				&& Objects.equals(username, sshProperties.getUsername())
-				&& Objects.equals(password, sshProperties.getPassword());
-			if (!sameAsDefault) {
-				log.warn("SSH auth failed for {}@{}:{}, retrying with default ssh config", username, host, port);
-				result = sshService.executeCommand(sshProperties.getHost(), sshProperties.getPort(), sshProperties.getUsername(), sshProperties.getPassword(), command);
-			}
-		}
-		return result;
-	}
-
-	private boolean shouldRetryWithDefault(SSHService.SSHExecutionResult result) {
-		if (result == null || result.isSuccess()) {
-			return false;
-		}
-		String err = result.getErrorMsg();
-		if (err == null) {
-			return false;
-		}
-		String lower = err.toLowerCase();
-		return lower.contains("auth fail") || lower.contains("authentication") || lower.contains("permission denied");
+		RemoteServers configured=sshProperties.requireServer();
+		if(server==null || !Objects.equals(configured.getId(),server.getId()) || !Objects.equals(configured.getServerIp(),server.getServerIp())
+			|| !Objects.equals(configured.getServerPort(),server.getServerPort()) || !Objects.equals(configured.getUsername(),server.getUsername())
+			|| !Objects.equals(configured.getCondaEnv(),server.getCondaEnv()) || !Objects.equals(configured.getWorkDir(),server.getWorkDir()))
+			throw new com.ruoyi.common.exception.ServiceException("远程执行目标与 YAML 配置不一致");
+		return sshService.executeCommand(configured.getServerIp(),configured.getServerPort(),configured.getUsername(),sshProperties.getPassword(),command);
 	}
 
 	/**
@@ -229,7 +199,7 @@ public class RemoteTrainingService {
 	public LogResult getTrainingLogs(Long taskId, String logPath, String trainType, String taskName, int lines) {
 		LogResult logResult = new LogResult();
 		try {
-			RemoteServers server = remoteServerMapper.selectActiveServer();
+			RemoteServers server = sshProperties.requireServer();
 			if (server == null) {
 				logResult.setMessage("未找到可用的训练服务器");
 				return logResult;
@@ -285,7 +255,7 @@ public class RemoteTrainingService {
 	}
 
 	public String exportModel(String modelPath, String format) {
-		RemoteServers server = remoteServerMapper.selectActiveServer();
+		RemoteServers server = sshProperties.requireServer();
 		if (server == null) {
 			throw new IllegalStateException("未找到可用的模型转换服务器");
 		}
@@ -359,7 +329,7 @@ public class RemoteTrainingService {
 	 * Convert a trained YOLOv8 checkpoint into the SVP ACL OM expected by Hi3519DV500.
 	 */
 	public String exportHisiliconOm(String modelPath, String datasetYamlPath) {
-		RemoteServers server = remoteServerMapper.selectActiveServer();
+		RemoteServers server = sshProperties.requireServer();
 		if (server == null) {
 			throw new IllegalStateException("未找到可用的Hi3519DV500模型转换服务器");
 		}
@@ -484,7 +454,7 @@ public class RemoteTrainingService {
 			return;
 		}
 
-		RemoteServers server = remoteServerMapper.selectActiveServer();
+		RemoteServers server = sshProperties.requireServer();
 		if (server == null) {
 			log.warn("No active remote server, skip synset generation: trainingId={}, onnxPath={}", trainingId, onnxModelPath);
 			return;
@@ -530,7 +500,7 @@ public class RemoteTrainingService {
 		String model = training == null ? null : training.getModelOutputPath();
 		int weights = model == null ? -1 : model.lastIndexOf("/weights/");
 		if (weights < 1 || !model.startsWith("/")) throw new com.ruoyi.common.exception.ServiceException("历史训练未记录原始数据集，不能改用当前 MinIO 版本");
-		String content = readRemoteFile(remoteServerMapper.selectActiveServer(), model.substring(0, weights) + "/args.yaml");
+		String content = readRemoteFile(sshProperties.requireServer(), model.substring(0, weights) + "/args.yaml");
 		if (content == null || content.trim().isEmpty()) throw new com.ruoyi.common.exception.ServiceException("无法读取历史训练的 args.yaml，请确认原始训练目录仍可访问");
 		Object parsed = new Yaml(new org.yaml.snakeyaml.constructor.SafeConstructor(new org.yaml.snakeyaml.LoaderOptions())).load(content);
 		if (parsed instanceof Map) {
@@ -660,7 +630,7 @@ public class RemoteTrainingService {
 	 */
 	public TrainingProgress getProgress(Long taskId, String logPath) {
 		try {
-			RemoteServers server = remoteServerMapper.selectActiveServer();
+			RemoteServers server = sshProperties.requireServer();
 			if (server == null) {
 				log.error("未找到训练服务器");
 				return null;
@@ -765,62 +735,6 @@ public class RemoteTrainingService {
 			}
 		}
 		return "Training failed.";
-	}
-
-	@PostConstruct
-	public void initDefaultServer() {
-		try {
-			// (if in )
-			try {
-				remoteServerMapper.createTableIfNotExists();
-				log.info("远程服务器配置表检查完成");
-			} catch (Exception e) {
-				log.warn("创建远程服务器配置表失败: {}", e.getMessage());
-			}
-
-			// if configurationservice , service configuration
-			if (remoteServerMapper.count() == 0) {
-				RemoteServers server = new RemoteServers();
-				server.setServerName("YOLOv8训练服务器");
-				server.setServerIp(sshProperties.getHost());
-				server.setServerPort(sshProperties.getPort());
-				server.setUsername(sshProperties.getUsername());
-				server.setPassword(encryptPassword(sshProperties.getPassword()));
-				server.setCondaEnv("yolo8");
-				server.setWorkDir("/data/work/ultralytics_yolov8-main/datasets");
-				server.setStatus(1);
-				remoteServerMapper.insert(server);
-				log.info("初始化默认服务器配置成功");
-			} else {
-				log.info("远程服务器配置已存在，跳过初始化");
-			}
-		} catch (Exception e) {
-			// , only record
-			log.warn("初始化默认服务器配置失败，跳过此步骤: {}", e.getMessage());
-		}
-	}
-
-	/**
-	 * ( in full )
-	 */
-	private String encryptPassword(String password) {
-		return Base64.getEncoder().encodeToString(password.getBytes());
-	}
-
-	/**
-	 *
-	 */
-	private String decryptPassword(String encryptedPassword) {
-		if (encryptedPassword == null) {
-			return null;
-		}
-		try {
-			return new String(Base64.getDecoder().decode(encryptedPassword));
-		} catch (IllegalArgumentException e) {
-			// if is Base64 , value , failed
-			log.warn("Remote server password is not Base64 encoded, using raw value.");
-			return encryptedPassword;
-		}
 	}
 
 	/**

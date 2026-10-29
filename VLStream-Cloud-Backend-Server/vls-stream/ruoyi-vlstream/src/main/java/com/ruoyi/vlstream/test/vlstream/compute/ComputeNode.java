@@ -8,6 +8,11 @@ import lombok.ToString;
 
 @Data
 public class ComputeNode {
+    /** Deployment-owned user price projection; not a supplier quote or database node setting. */
+    private String userHourlyPrice;
+    private String priceCurrency;
+    private String priceUnit;
+    private String pricePolicy;
     private boolean configurationManaged;
     private boolean configurationReplaced;
     private boolean configurationMigrationPending;

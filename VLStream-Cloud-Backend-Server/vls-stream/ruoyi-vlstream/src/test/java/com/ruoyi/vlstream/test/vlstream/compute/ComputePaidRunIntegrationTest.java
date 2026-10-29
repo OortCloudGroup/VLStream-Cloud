@@ -71,6 +71,10 @@ class ComputePaidRunIntegrationTest {
     ComputeNode node(){return jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=1",new BeanPropertyRowMapper<>(ComputeNode.class));}
     String accepted(){ComputePaidRunService.View quoted=runs.quote(1L,payer,config);assertEquals("QUOTED",quoted.getState());assertEquals(0,wallet.holdPosts);runs.accept(quoted.getRunId(),payer);return quoted.getRunId();}
     void start(String id){runs.tick(id);assertEquals("FUNDING",runs.get(id,payer).getState());assertNull(node().getPowerOperationId());runs.tick(id);assertEquals("STARTING",runs.get(id,payer).getState());power.poll(node(),supplier);runs.tick(id);assertEquals("RUNNING",runs.get(id,payer).getState());}
+    ComputePowerProvider.Snapshot fixtureObservation(String state) {
+        ComputePowerProvider.Snapshot result=new ComputePowerProvider.Snapshot(state,"UNKNOWN","TEST_ONLY");
+        result.stoppedMode="StopCharging";result.chargeType="PostPaid";result.gpuAmount=1;return result;
+    }
 
     @Test void confirmedFundingPowerMeterTrainingStopArchiveSettlementAndReleaseRecoverTheSameRun() throws Exception {
         String id=accepted();runs.accept(id,payer);assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_usage",Integer.class));
@@ -97,6 +101,61 @@ class ComputePaidRunIntegrationTest {
         String id=accepted();runs.tick(id);runs.tick(id);power.recordFailure(node(),new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
         runs.tick(id);runs.tick(id);assertEquals("CANCELLED",runs.get(id,payer).getState());assertEquals(0,wallet.remaining());assertEquals(0,wallet.capturePosts);assertEquals(1,wallet.releasePosts);
     }
+    @Test void stopBeforePowerSendCancelsTheOriginalOutboxAndReleasesOnlyItsHold() {
+        String id=accepted();runs.tick(id);runs.tick(id);assertEquals("STARTING",runs.get(id,payer).getState());
+        ComputeNode queued=node();assertFalse(queued.isPowerOperationSubmitted());
+        runs.stop(id,payer);runs.tick(id);runs.tick(id);
+        assertEquals("CANCELLED",runs.get(id,payer).getState());assertNull(node().getPowerOperationId());
+        assertEquals("UNKNOWN",node().getPowerState());assertEquals(0,wallet.remaining());assertEquals(1,wallet.releasePosts);
+        verify(supplier,never()).submit(any(),anyString(),anyString());
+        // A worker holding the old node cannot submit after the committed CAS cancellation.
+        power.poll(queued,supplier);verify(supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void unknownSubmittedStartReachesAbsoluteBudgetWithoutReleasingOrReplacingTheOriginal() {
+        String id=accepted();runs.tick(id);runs.tick(id);
+        when(supplier.status(any())).thenReturn(fixtureObservation("STOPPED"),fixtureObservation("UNKNOWN"));
+        power.poll(node(),supplier);String original=node().getPowerOperationId();
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=? WHERE run_id=?",System.currentTimeMillis()+360000L-1,id);
+        runs.tick(id);runs.tick(id);
+        assertEquals("STARTING",runs.get(id,payer).getState());assertEquals(original,node().getPowerOperationId());assertTrue(node().isPowerOperationSubmitted());
+        assertEquals("START_OUTCOME_UNKNOWN",jdbc.queryForObject("SELECT error_code FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        assertTrue(wallet.remaining()>0);assertEquals(0,wallet.releasePosts);assertEquals(0,wallet.capturePosts);
+        power.poll(node(),supplier);verify(supplier,times(1)).submit(any(),eq("start"),eq(original));verify(supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @Test void startupTimeConsumesAbsoluteBudgetAndLateRunningImmediatelyQueuesSafeStop() {
+        String id=accepted();runs.tick(id);runs.tick(id);
+        when(supplier.status(any())).thenReturn(fixtureObservation("STOPPED"),fixtureObservation("UNKNOWN"));power.poll(node(),supplier);
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=? WHERE run_id=?",System.currentTimeMillis()+360000L-1,id);runs.tick(id);
+        ComputePowerProvider.Snapshot running=new ComputePowerProvider.Snapshot("RUNNING","UNKNOWN","TEST_ONLY");running.stoppedMode="StopCharging";running.chargeType="PostPaid";
+        when(supplier.status(any())).thenReturn(running);power.poll(node(),supplier);runs.tick(id);
+        assertEquals("stop",node().getPowerOperationAction());assertFalse(runs.trainingAvailable(node()));
+        assertEquals(0,wallet.releasePosts);verify(supplier,times(1)).submit(any(),eq("start"),anyString());
+    }
+    @Test void definitiveStartFailureAfterBudgetExpiryStillCleansTheOriginalHold() {
+        String id=accepted();runs.tick(id);runs.tick(id);
+        when(supplier.status(any())).thenReturn(fixtureObservation("STOPPED"),fixtureObservation("UNKNOWN"));power.poll(node(),supplier);
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=? WHERE run_id=?",System.currentTimeMillis()+360000L-1,id);runs.tick(id);
+        power.recordFailure(node(),new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
+        runs.tick(id);runs.tick(id);assertEquals("CANCELLED",runs.get(id,payer).getState());assertEquals(0,wallet.remaining());
+        assertEquals(1,wallet.releasePosts);assertEquals(0,wallet.capturePosts);
+    }
+    @Test void exhaustedAbsoluteQuoteBudgetCannotCreateFundingOrAClaim() {
+        String id=runs.quote(1L,payer,config).getRunId();
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=? WHERE run_id=?",System.currentTimeMillis()+360000L-1,id);
+        assertThrows(RuntimeException.class,()->runs.accept(id,payer));assertEquals(0,wallet.holdPosts);
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_usage",Integer.class));
+        verify(inventory,never()).claimPaid(any(),any());
+    }
+    @Test void unknownStopResponseKeepsTheOriginalOutboxAndFundsPendingWithoutResending() {
+        String id=accepted();start(id);runs.stop(id,payer);runs.tick(id);String original=node().getPowerOperationId();
+        doThrow(new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN)).when(supplier).submit(any(),eq("stop"),eq(original));
+        assertThrows(ComputeProviderException.class,()->power.poll(node(),supplier));
+        when(supplier.status(any())).thenReturn(new ComputePowerProvider.Snapshot("UNKNOWN","UNKNOWN","TEST_ONLY"));
+        power.poll(node(),supplier);runs.tick(id);
+        assertEquals(original,node().getPowerOperationId());assertTrue(wallet.remaining()>0);assertEquals(0,wallet.releasePosts);
+        assertNotEquals("COMPLETED",runs.get(id,payer).getState());verify(supplier,times(1)).submit(any(),eq("stop"),eq(original));
+    }
     @Test void unknownReleaseCannotDeclareCompletionOrSendAnotherRelease() {
         String id=accepted();runs.tick(id);runs.tick(id);power.recordFailure(node(),new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));wallet.loseReleaseWithoutCommit=true;
         runs.tick(id);runs.tick(id);assertEquals("RELEASING",runs.get(id,payer).getState());assertTrue(wallet.remaining()>0);assertEquals(1,wallet.releasePosts);
@@ -114,17 +173,25 @@ class ComputePaidRunIntegrationTest {
         setup();String id=accepted();BillingPayer other=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":14}"));
         assertThrows(RuntimeException.class,()->runs.get(id,other));assertThrows(RuntimeException.class,()->runs.stop(id,other));assertThrows(RuntimeException.class,()->runs.accept(id,other));assertEquals(0,wallet.holdPosts);
     }
-    private final class Wallet implements ExternalBillingGateway {
+    final class Wallet implements ExternalBillingGateway {
         String power="STOPPED",reference,expiry;int total,captured,released,version=1,holdPosts,capturePosts,releasePosts;boolean loseHoldReply,loseReleaseWithoutCommit;JsonNode charge;
+        final Map<String,JsonNode> chargesByReference=new LinkedHashMap<>(),chargesByKey=new LinkedHashMap<>();
+        final Map<String,String> captureBodies=new LinkedHashMap<>();
         int remaining(){return total-captured-released;}
         ObjectNode detail(){ObjectNode d=json.createObjectNode();d.put("hold_id","1");d.put("merchant_hold_id",reference);d.put("user_id","13");d.put("hold_quota",Integer.toString(total));d.put("captured_quota",Integer.toString(captured));d.put("released_quota",Integer.toString(released));d.put("remaining_quota",Integer.toString(remaining()));d.put("hold_status",remaining()==0?"RELEASED":captured==0?"ACTIVE":"PARTIALLY_CAPTURED");d.put("balance_version",Integer.toString(version));d.put("expires_at",expiry);d.put("created_at","1");d.put("updated_at","1");return d;}
-        public Result createHold(String key,String body){assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());try{JsonNode b=json.readTree(body);holdPosts++;total=b.path("hold_quota").asInt();reference=b.path("merchant_hold_id").asText();expiry=b.path("expires_at").asText();if(loseHoldReply)return Result.of(Status.UNKNOWN);ObjectNode receipt=json.createObjectNode();receipt.put("hold_id","1");receipt.put("held_quota",Integer.toString(total));receipt.put("available_quota",Integer.toString(10000-total));return new Result(Status.SUCCEEDED,"",receipt);}catch(Exception invalid){throw new RuntimeException(invalid);}}
+        public Result createHold(String key,String body){assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());try{JsonNode b=json.readTree(body);holdPosts++;total=b.path("hold_quota").asInt();reference=b.path("merchant_hold_id").asText();expiry=b.path("expires_at").asText();if(loseHoldReply)return Result.of(Status.UNKNOWN);ObjectNode receipt=json.createObjectNode();receipt.put("hold_id","1");receipt.put("held_quota",Integer.toString(total));receipt.put("available_quota",Integer.toString(10000000-total));return new Result(Status.SUCCEEDED,"",receipt);}catch(Exception invalid){throw new RuntimeException(invalid);}}
         public Result holdByReference(String ref){return new Result(Status.SUCCEEDED,"",detail());}
         public Result holdById(String id){return new Result(Status.SUCCEEDED,"",detail());}
-        public Result capture(String key,String body){try{capturePosts++;ObjectNode d=(ObjectNode)json.readTree(body);captured+=d.path("charge_quota").asInt();version++;d.put("status","SUCCEEDED");d.put("charge_id","1");d.put("ledger_entry_id","1");d.put("charged_quota",d.path("charge_quota").asText());charge=d;return new Result(Status.SUCCEEDED,"",d);}catch(Exception invalid){throw new RuntimeException(invalid);}}
+        public Result capture(String key,String body){try{
+            if(chargesByKey.containsKey(key))return body.equals(captureBodies.get(key))?new Result(Status.SUCCEEDED,"",chargesByKey.get(key)):Result.of(Status.CONFLICT);
+            ObjectNode d=(ObjectNode)json.readTree(body);String reference=d.path("merchant_charge_id").asText();
+            if(chargesByReference.containsKey(reference))return Result.of(Status.CONFLICT);
+            capturePosts++;captured+=d.path("charge_quota").asInt();version++;d.put("status","SUCCEEDED");d.put("charge_id",Integer.toString(capturePosts));d.put("ledger_entry_id",Integer.toString(capturePosts));d.put("charged_quota",d.path("charge_quota").asText());
+            charge=d;chargesByReference.put(reference,d);chargesByKey.put(key,d);captureBodies.put(key,body);return new Result(Status.SUCCEEDED,"",d);
+        }catch(Exception invalid){throw new RuntimeException(invalid);}}
         public Result releaseHold(String id,String key,String body){releasePosts++;if(loseReleaseWithoutCommit)return Result.of(Status.UNKNOWN);int amount=remaining();released+=amount;version++;ObjectNode d=detail();d.put("released_quota",Integer.toString(amount));d.put("held_quota","0");return new Result(Status.SUCCEEDED,"",d);}
-        public Result byKey(String key){return Result.of(charge==null?Status.NOT_FOUND:Status.SUCCEEDED);}
-        public Result byReference(String ref){return charge==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",charge);}
+        public Result byKey(String key){JsonNode receipt=chargesByKey.get(key);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
+        public Result byReference(String ref){JsonNode receipt=chargesByReference.get(ref);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
         public Result balance(String id){throw new AssertionError("No implicit balance/auto-grant in workflow scheduler");}
         public boolean supportsAtomicCapture(){return true;}
     }

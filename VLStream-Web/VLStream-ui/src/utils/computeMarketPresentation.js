@@ -34,6 +34,14 @@ export const verifiedMarketPriceReference = Object.freeze({
 })
 
 export function marketPricePresentation(resource) {
+  if (resource?.pricePolicy === 'VLS_FIXED') {
+    const amount = resource.userHourlyPrice
+    if (resource.currency && resource.currency !== resource.priceCurrency) return null
+    if (resource.priceCurrency !== 'CNY' || resource.priceUnit !== 'PER_INSTANCE_HOUR'
+      || typeof amount !== 'string' || !/^(0|[1-9]\d*)(\.\d{1,12})?$/.test(amount) || /^0(\.0+)?$/.test(amount)) return null
+    return { amount: '￥' + amount, unit: '/整实例小时', reference: false, fixed: true }
+  }
+  if (resource?.configurationManaged && resource.provider === 'autodl') return null
   const configured = marketHourlyPrice(resource)
   if (configured !== null) return { amount: configured, unit: '额度/小时', reference: false }
   const evidence = verifiedMarketPriceReference

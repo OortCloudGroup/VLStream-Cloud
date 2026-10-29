@@ -25,7 +25,21 @@ public class ComputeNodeService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ConfiguredComputeRegistry configured;
     boolean configured(Long id) { return configured != null && configured.contains(id); }
-    void requireMutable(Long id) { if (configured != null) configured.requireMutable(id); }
+    boolean officialConfigured(ComputeNode node){return configured!=null&&configured.official(node);}
+    ComputeBillingRate configuredFixedRate(ComputeNode node,JsonNode config){return configured.fixedRate(node,config);}
+    void requireOfficialConnection(ComputeNode node){try{ssh.requireDeploymentIdentity(node);}catch(IOException invalid){throw new ServiceException("官方算力连接身份尚未配置，请管理员核对");}}
+    void ensureOfficialIdentity(ComputeNode node){publicInventory().ensureConfiguredIdentity(node,configured.definition(node).getAccountScope());}
+    void recordConfiguredPower(ComputeNode node,ComputePowerProvider.Snapshot snapshot){configured.recordPower(node,snapshot);}
+    String officialBaseModel(String reference,String type,String owner){return configured.officialBaseModel(reference,type,owner);}
+    void requireMutable(Long id) {
+        if (configured != null) configured.requireMutable(id);
+        if(id!=null)requireConfiguredSupply(stored(id,false));
+    }
+    static ComputeNode requireConfiguredSupply(ComputeNode node) {
+        if("self".equals(node.getProvider()) && !node.isConfigurationManaged())
+            throw ConfiguredComputeRegistry.unavailable("自有算力仅由 YAML 提供，旧数据库记录仅供历史关联；请管理员配置稳定ID和旧ID映射");
+        return node;
+    }
     List<Long> queueIds(Long id) { return configured == null ? java.util.Collections.singletonList(id) : configured.queueIds(id); }
     Long queueId(Long id) { return configured == null ? id : configured.canonicalId(id); }
     void verifyJob(CloudTrainingJob job, ComputeNode node) throws IOException { if (configured != null) configured.verifyJob(job, node); }
@@ -127,15 +141,15 @@ public class ComputeNodeService {
         if(configured(id))return configured.resolve(id);
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE (tenant_id=? OR resource_scope='PLATFORM') AND id=? FOR UPDATE", mapper(), tenant(), id);
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权访问");
-        return rows.get(0);
+        return requireConfiguredSupply(rows.get(0));
     }
     private ComputeNode get(Long id, boolean lock) {
         if(configured(id))return configured.resolve(id);
-        return stored(id,lock);
+        return requireConfiguredSupply(stored(id,lock));
     }
     private ComputeNode stored(Long id, boolean lock) {
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE (tenant_id=?" + (lock ? "" : " OR resource_scope='PLATFORM'") + ") AND id=?" + (lock ? " FOR UPDATE" : ""), mapper(), tenant(), id);
-        if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权访问");
+        if (rows.isEmpty()) throw ConfiguredComputeRegistry.unavailable("算力实例不存在或无权访问，活动任务保留等待管理员核对");
         return rows.get(0);
     }
     public ComputeNode requireReady(Long id) {
@@ -171,6 +185,7 @@ public class ComputeNodeService {
 
     @Transactional(rollbackFor = Exception.class)
     public ComputeNode save(Long id, ComputeRequests.Node request) {
+        if("self".equals(request.getProvider()))throw new ServiceException("自有算力仅在服务 YAML 配置，不能从页面创建或修改",403);
         requireMutable(id);
         String host = request.getHost().trim().toLowerCase(Locale.ROOT);
         if(configured!=null)configured.requireUnconfiguredEndpoint(host,request.getPort());

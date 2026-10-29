@@ -2657,6 +2657,7 @@ export const uiEnglish = {
   "固件升级指令下发失败": "Failed to send firmware upgrade command",
   "加载视频源失败": "Failed to load video sources",
   "创建预览失败": "Failed to create preview",
+  "设备查询返回空列表，与心跳上报不一致，暂保留心跳模型，等待后续上报确认": "The device query returned an empty list that conflicts with its heartbeat. Keeping heartbeat models until a later report confirms the state.",
   "每 5 秒自动刷新": "Refreshes automatically every 5 seconds",
   "每 5 秒更新下发状态和设备模型；离线时仅更新平台记录，运行模型以设备上报为准。": "Deployment status and device models refresh every 5 seconds. While offline, only platform records refresh; running models reflect device reports.",
   "设备下发状态返回无效": "Invalid device deployment status response",

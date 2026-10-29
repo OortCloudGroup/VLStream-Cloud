@@ -60,10 +60,19 @@ public class ComputePublicInventoryService {
 
     String state(ComputeNode node, String viewer) {
         Instance row = read(node,false);
+        if(row==null&&officialConfigured(node))return "FREE"; // Read-only availability; accept creates only the lease journal.
         if (row == null || !("FREE".equals(row.getPublicState()) || "OCCUPIED".equals(row.getPublicState()))
             || "FREE".equals(row.getPublicState()) && row.isWorkspaceDirty()) return "ISOLATED";
         if ("FREE".equals(row.getPublicState())) return "FREE";
         return viewer != null && viewer.equals(row.getOwnerSubject()) ? "MINE" : "OTHER";
+    }
+    private boolean officialConfigured(ComputeNode node){return node.isConfigurationManaged()&&"autodl".equals(node.getProvider())&&"AUTODL_PRO".equals(node.getProviderProduct())&&node.getId()< -1;}
+    void ensureConfiguredIdentity(ComputeNode node,String accountScope) {
+        if(!officialConfigured(node)||accountScope==null||!node.getPublicInstanceKey().equals(ModelArtifactObjectStore.hash("autodl\n"+accountScope+"\n"+node.getProviderInstanceId())))
+            throw new ServiceException("官方供给身份未匹配部署配置");
+        if(!jdbc.queryForList("SELECT instance_key FROM vls_compute_public_instance WHERE provider='autodl' AND provider_instance_id=? AND instance_key<>? FOR UPDATE",node.getProviderInstanceId(),node.getPublicInstanceKey()).isEmpty())
+            throw new ServiceException("实例已有另一占用身份，不能重建或绕过原记录");
+        jdbc.update("INSERT IGNORE INTO vls_compute_public_instance(instance_key,provider,account_scope,provider_instance_id) VALUES(?,?,?,?)",node.getPublicInstanceKey(),"autodl",accountScope,node.getProviderInstanceId());
     }
 
     public void bind(ComputeNode node, ComputeRequests.PublicIdentity request) {
@@ -159,7 +168,7 @@ public class ComputePublicInventoryService {
             throw new ServiceException("付费开机、计费或余额释放尚未完成，请先停止并等待对账");
         if (!jdbc.queryForList("SELECT id FROM vls_compute_node WHERE public_instance_key=? AND (power_operation_id IS NOT NULL OR probe_state='CHECKING') ORDER BY id FOR UPDATE",Long.class,node.getPublicInstanceKey()).isEmpty())
             throw new ServiceException("实例仍有启停或环境检查操作，不能解除占用");
-        List<String> active = jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j JOIN vls_compute_node n ON n.id=j.node_id WHERE (j.public_instance_key=? OR n.public_instance_key=?) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",String.class,row.getInstanceKey(),row.getInstanceKey());
+        List<String> active = jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j LEFT JOIN vls_compute_node n ON n.id=j.node_id WHERE (j.public_instance_key=? OR n.public_instance_key=?) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",String.class,row.getInstanceKey(),row.getInstanceKey());
         if (!active.isEmpty()) throw new ServiceException("实例仍有排队、运行或归档任务，不能解除占用");
         if (row.isWorkspaceDirty()) {
             jdbc.update("UPDATE vls_compute_public_instance SET public_state='ISOLATED' WHERE instance_key=?",row.getInstanceKey());

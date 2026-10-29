@@ -28,7 +28,7 @@ public class ComputeBillingLedgerService {
         if (openingUserId==null || openingUserId.trim().isEmpty() || verifiedAccountRef==null || verifiedAccountRef.trim().isEmpty() || tenant==null || serverKey==null || startOperation==null)
             throw new ServiceException("付款人、实例租用归属和开机操作尚未确认");
         rate.validate(Instant.now());
-        if (!"LOCKED_FOR_RUN".equals(rate.getPricePolicy()))
+        if (!rate.fixedUserPrice() && !"LOCKED_FOR_RUN".equals(rate.getPricePolicy()))
             throw new ServiceException("该供应商未确认本开机周期锁价，事先告知与分段价格计量尚未接入，收费继续阻断");
         List<Map<String,Object>> duplicate=jdbc.queryForList("SELECT id,tenant_id,server_key,opening_user_id,payer_account_ref FROM vls_compute_usage WHERE start_operation_id=? FOR UPDATE",startOperation);
         if (!duplicate.isEmpty()) {

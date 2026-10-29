@@ -34,7 +34,10 @@ public class ComputeBillingCoordinator {
             if(jdbc.queryForList("SELECT id FROM vls_compute_usage WHERE id=? AND billing_start_at IS NOT NULL",usageId).isEmpty())return;
             BillingLifecycleGateway.Observation observation = lifecycle.observe(usageId);
             if ("RUNNING".equals(observation.snapshot.power)) settlements.recordRunningObservation(usageId, observation.observedAt);
-            else if ("STOPPED".equals(observation.snapshot.power)) settlements.confirmPhysicalStop(usageId, observation.observedAt);
+            else if ("STOPPED".equals(observation.snapshot.power)) {
+                if(observation.snapshot.providerStoppedAt==null)settlements.confirmPhysicalStop(usageId,observation.observedAt);
+                else settlements.confirmPhysicalStop(usageId,observation.observedAt,observation.snapshot.providerStoppedAt);
+            }
             else if (!"STOPPING".equals(observation.snapshot.power)) risk(usageId, "PROVIDER_STATE_UNKNOWN");
             Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
             long cursor = ((Number) session.get("metered_until_ms")).longValue();

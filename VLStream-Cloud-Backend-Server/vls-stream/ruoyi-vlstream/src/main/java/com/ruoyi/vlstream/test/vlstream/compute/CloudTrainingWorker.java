@@ -89,7 +89,8 @@ public class CloudTrainingWorker {
                     process(job);
                 }
                 catch (ServiceException e) {
-                    if(sharedQueue!=null && sharedQueue.isSharedJob(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待节点确认，租约未释放；请管理员核对配置/队列",job.getTenantId(),job.getId());
+                    if(java.util.Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE,e.getCode())) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",limited(e.getMessage()),job.getTenantId(),job.getId());
+                    else if(sharedQueue!=null && sharedQueue.isSharedJob(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待节点确认，租约未释放；请管理员核对配置/队列",job.getTenantId(),job.getId());
                     else finish(job, "FAILED", limited(e.getMessage()), null);
                 }
                 catch (Exception e) {

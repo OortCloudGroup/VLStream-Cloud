@@ -62,13 +62,19 @@ test('configured resources cannot be edited and legacy entries expose only autho
   assert.equal(api.canRemoveNode({ configurationReplaced: true }), true)
   assert.equal(api.canRemoveNode({ configurationMigrationPending: true }), false)
   assert.equal(api.canEditNode({ configurationMigrationPending: true }), false)
+  assert.equal(api.canEditNode({ provider: 'self', managementOwnership: 'MINE', selfServiceNode: true }), false)
+  assert.doesNotMatch(descriptor.template.content, /value="self"/)
   assert.match(descriptor.template.content, /v-else-if="!row.configurationReplaced && !row.configurationManaged"/)
 })
 test('normal login with no provider role loads and opens SSH form without market proof', async () => {
   const { api, calls } = fixture(); await api.load(); await api.edit()
-  assert.equal(api.visible.value, true); assert.equal(calls.auth, 0); assert.equal(api.form.provider, 'self')
+  assert.equal(api.visible.value, true); assert.equal(calls.auth, 0); assert.equal(api.form.provider, 'autodl')
   assert.equal(api.form.username, ''); assert.equal(api.form.pythonPath, ''); assert.equal(api.form.workDir, '')
   assert.equal(api.canBindDeployment.value, false)
+})
+test('tampered self provider is rejected before any save API', async () => {
+  const { api, calls } = fixture(); await api.load(); await api.edit(); api.form.provider = 'self'
+  await api.save(); assert.equal(calls.saved.length, 0); assert.match(calls.messages[0], /YAML/)
 })
 test('save uses own API, clears password, refreshes and automatically probes saved node', async () => {
   const { api, calls } = fixture(); await api.load(); await api.edit()

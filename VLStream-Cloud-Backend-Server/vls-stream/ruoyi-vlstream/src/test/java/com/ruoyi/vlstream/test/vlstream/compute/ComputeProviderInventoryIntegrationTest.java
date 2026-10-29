@@ -74,7 +74,8 @@ class ComputeProviderInventoryIntegrationTest {
         expectPage(1,page(1,1,1,item("pro-source")));inventory.sync(fixture.nodeId);ComputeProviderInventoryService.Draft draft=inventory.list(fixture.nodeId).get(0);assertEquals(fixture.nodeId,draft.getNodeId());
         mock.reset();mock.expect(requestTo(AutoDlProPowerProvider.BASE+"status")).andRespond(withSuccess("{\"code\":\"Success\",\"data\":\"not-confirmed\"}",MediaType.APPLICATION_JSON));
         String snapshot="{\"code\":\"Success\",\"data\":{\"payg_price\":1970,\"origin_pay_price\":3030,\"root_password\":\"do-not-export-secret\",\"jupyter_token\":\"do-not-export-secret\"}}";
-        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andRespond(withSuccess(snapshot,MediaType.APPLICATION_JSON));mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andRespond(withSuccess(snapshot,MediaType.APPLICATION_JSON));
+        expectPage(1,page(1,1,1,item("pro-source")));
+        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andRespond(withSuccess(snapshot,MediaType.APPLICATION_JSON));
         inventory.refresh(fixture.nodeId,draft.getInstanceKey());draft=inventory.list(fixture.nodeId).get(0);assertEquals("UNKNOWN",draft.getPowerState());assertEquals("UNKNOWN",draft.getPriceUnit());assertFalse(draft.isPublishable());assertEquals(0,draft.getPaygPrice().compareTo(new java.math.BigDecimal("1970")));
         assertEquals(claim,CloudComputeIntegrationTest.jdbc.queryForMap("SELECT * FROM vls_compute_public_instance"));assertEquals(node,CloudComputeIntegrationTest.jdbc.queryForMap("SELECT * FROM vls_compute_node WHERE id=?",fixture.nodeId));
     }

@@ -14,7 +14,8 @@ class TrainingDatasetPreflightTest {
         RemoteServers server=new RemoteServers();server.setCondaEnv("yolo");when(servers.selectActiveServer()).thenReturn(server);
         SSHService.SSHExecutionResult result=new SSHService.SSHExecutionResult();result.setSuccess(true);result.setOutput("VLS_DATASET_CHECK={\"valid\":true}");
         when(ssh.executeCommand(anyString(),anyInt(),anyString(),anyString(),anyString())).thenReturn(result);
-        TrainingDatasetPreflight service=new TrainingDatasetPreflight(ssh,new VlsSshProperties(),servers);
+        VlsSshProperties properties=new VlsSshProperties();properties.setPassword("fixture-only");properties.setCondaEnv("yolo");
+        TrainingDatasetPreflight service=new TrainingDatasetPreflight(ssh,properties);
         service.validate("/data/a'$(bad)/dataset.yaml","/models/base.pt");
         ArgumentCaptor<String> command=ArgumentCaptor.forClass(String.class);verify(ssh).executeCommand(anyString(),anyInt(),anyString(),anyString(),command.capture());
         assertTrue(command.getValue().startsWith("timeout 180 "));assertTrue(command.getValue().contains("'/data/a'\"'\"'$(bad)/dataset.yaml'"));

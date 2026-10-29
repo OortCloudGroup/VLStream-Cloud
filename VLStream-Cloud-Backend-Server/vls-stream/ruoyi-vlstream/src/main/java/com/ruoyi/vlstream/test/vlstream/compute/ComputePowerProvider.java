@@ -15,6 +15,9 @@ public interface ComputePowerProvider {
         public String stoppedMode;
         public String chargeType;
         public Boolean locked;
+        /** Explicit vendor event fields, if present and valid. Absence is never fabricated. */
+        public java.time.Instant providerStartedAt;
+        public java.time.Instant providerStoppedAt;
         public Snapshot(String power, String capacity, String message) {
             if (!java.util.Arrays.asList("UNKNOWN", "STARTING", "RUNNING", "STOPPING", "STOPPED", "FAILED").contains(power)
                 || !java.util.Arrays.asList("UNKNOWN", "AVAILABLE_HINT", "UNAVAILABLE").contains(capacity))

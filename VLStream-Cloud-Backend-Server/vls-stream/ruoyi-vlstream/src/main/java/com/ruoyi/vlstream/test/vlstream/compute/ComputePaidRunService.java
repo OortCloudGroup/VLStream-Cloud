@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot;
@@ -30,6 +31,8 @@ import java.util.UUID;
  * Repeated browser actions recover the same run; uncertain operations are never replaced. */
 @Service
 public class ComputePaidRunService {
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ConfiguredPaidPowerService configuredPower;
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
     private final ObjectMapper json;
@@ -73,6 +76,11 @@ public class ComputePaidRunService {
     /** No balance call here: trusted auto-grant must follow explicit account/paid-use acceptance. */
     public View quote(Long nodeId,BillingPayer payer,JsonNode config) {
         enabled();
+        ComputeNode before=nodes.get(nodeId);
+        if(nodes.officialConfigured(before)) {
+            if(configuredPower==null)throw new ServiceException("官方算力电源编排尚未就绪");
+            nodes.requireOfficialConnection(before);configuredPower.refresh(before);
+        }
         return tx.execute(status->{
             ComputeNode node=nodes.lockServer(nodeId);eligible(node);
             ComputePlatformAuthorization.Context actor=actor(payer);
@@ -80,22 +88,29 @@ public class ComputePaidRunService {
             if(!("FREE".equals(claimState)||"MINE".equals(claimState)))throw new ServiceException("实例已被占用或工作空间隔离中");
             if(!jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=? FOR UPDATE",node.getPublicInstanceKey()).isEmpty())
                 throw new ServiceException("该实例已有付费操作，请查看原单");
-            ComputeBillingRate configured=properties.getRates().get(String.valueOf(node.getId()));
+            JsonNode actual=config!=null&&config.has("success")?config.path("success").asBoolean()?config.path("data"):null:config;
+            ComputeBillingRate configured=nodes.officialConfigured(node)?nodes.configuredFixedRate(node,actual):properties.getRates().get(String.valueOf(node.getId()));
             if(configured==null)throw new ServiceException("当前实例的有效计费价格尚未配置");
             ComputeBillingRate rate=readRate(write(configured));
+            if(node.isConfigurationManaged()&&"autodl".equals(node.getProvider())&&!rate.fixedUserPrice())
+                throw new ServiceException("官方算力必须使用部署配置的固定用户价格");
+            if(rate.fixedUserPrice()&&(!node.isConfigurationManaged()||!java.util.Objects.equals(node.getConfigurationCode(),rate.getFixedPriceConfigurationId())))
+                throw new ServiceException("官方固定价格必须绑定同一部署配置供给");
             long now=System.currentTimeMillis();
             long until=Math.addExact(now,Math.multiplyExact((long)properties.getMaximumRunSeconds()+policy.getStopBudgetSeconds()+policy.getPollingSafetySeconds(),1000L));
             rate.validate(Instant.ofEpochMilli(until));
-            JsonNode actual=config!=null&&config.has("success")?config.path("success").asBoolean()?config.path("data"):null:config;
             BillingSnapshot snapshot=BillingSnapshot.fromExistingRate(rate,actual,Instant.ofEpochMilli(now),json);
             snapshot.requireInterval(now,Math.addExact(until,1));
             ExactQuota estimate=ExactQuota.compute(snapshot.approvedHourlyPrice,until-now,snapshot.numerator,snapshot.denominator);
             BigInteger quota=estimate.numerator.add(estimate.denominator).subtract(BigInteger.ONE).divide(estimate.denominator);
             if(quota.signum()<=0||quota.compareTo(ExactQuota.integer(properties.getMaximumHoldQuota(),true))>0)
                 throw new ServiceException("所需预冻结超出当前实例的已配置消费上限");
+            ObjectNode acceptedSnapshot=(ObjectNode)parse(snapshot.json);
+            acceptedSnapshot.putObject("run_budget").put("stop_budget_seconds",policy.getStopBudgetSeconds())
+                .put("polling_safety_seconds",policy.getPollingSafetySeconds());
             String run=UUID.randomUUID().toString();
             jdbc.update("INSERT INTO vls_compute_paid_run(run_id,node_id,instance_key,tenant_id,opening_user_id,platform_subject,payer_user_id,merchant_id,quote_snapshot,reserve_quota,quote_until_ms,hold_until_ms,maximum_run_seconds,start_operation_id,state) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'QUOTED')",
-                run,node.getId(),node.getPublicInstanceKey(),payer.tenantId,payer.actorId,payer.platformSubject,payer.userId,properties.getMerchantId(),snapshot.json,quota.toString(),now+120000,until,properties.getMaximumRunSeconds(),UUID.randomUUID().toString());
+                run,node.getId(),node.getPublicInstanceKey(),payer.tenantId,payer.actorId,payer.platformSubject,payer.userId,properties.getMerchantId(),write(acceptedSnapshot),quota.toString(),now+120000,until,properties.getMaximumRunSeconds(),UUID.randomUUID().toString());
             return view(row(run,false));
         });
     }
@@ -110,10 +125,11 @@ public class ComputePaidRunService {
             if(!"QUOTED".equals(text(row,"state")))return null;
             if(!java.util.Objects.equals(properties.getMerchantId(),text(row,"merchant_id")))throw new ServiceException("计费服务身份已变化，请重新确认报价");
             eligible(node);
-            if(System.currentTimeMillis()>=number(row,"quote_until_ms")||!node.getPublicInstanceKey().equals(text(row,"instance_key")))
+            if(System.currentTimeMillis()>=Math.min(number(row,"quote_until_ms"),stopDeadline(row))||!node.getPublicInstanceKey().equals(text(row,"instance_key")))
                 throw new ServiceException("价格或实例状态已变化，请重新确认本次开机");
             BillingSnapshot snapshot=BillingSnapshot.read(text(row,"quote_snapshot"),json);
             ComputeBillingRate rate=readRate(parse(snapshot.json).path("accepted_rate").toString());rate.validate(Instant.now());
+            if(nodes.officialConfigured(node))nodes.ensureOfficialIdentity(node);
             nodes.publicInventory().claimPaid(node,actor(payer));
             jdbc.update("UPDATE vls_compute_paid_run SET active_instance_key=? WHERE run_id=?",node.getPublicInstanceKey(),runId);
             String usage=ledger.reserve(ComputeBillingLedgerService.serverKey(node.getId()),payer.tenantId,payer.actorId,payer.platformSubject,rate,false,text(row,"start_operation_id"));
@@ -159,6 +175,7 @@ public class ComputePaidRunService {
         if(!java.util.Objects.equals(properties.getMerchantId(),text(run,"merchant_id")))throw new ServiceException("计费服务身份已变化，暂不能开始新训练");
         if(!actor.getPlatformUserId().equals(text(run,"platform_subject"))||!actor.getVlsTenantId().equals(text(run,"tenant_id"))||!actor.getVlsUserId().equals(text(run,"opening_user_id")))
             throw new ServiceException("训练必须使用本次开机付款账户与租户");
+        if(System.currentTimeMillis()>=stopDeadline(run))throw new ServiceException("本次开机的绝对运行预算已到期，请等待原单安全停止与结算");
         settlements.requirePaidAdmission(text(run,"usage_id"));
     }
 
@@ -190,9 +207,33 @@ public class ComputePaidRunService {
         }
         Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);
         Map<String,Object> observedUsage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
-        if("FUNDING".equals(state)&&System.currentTimeMillis()+policy.getStopBudgetSeconds()*1000L>=number(run,"hold_until_ms")) {
+        boolean budgetExpired=System.currentTimeMillis()>=stopDeadline(run);
+        if(budgetExpired&&("FUNDING".equals(state)||"STARTING".equals(state)||"RUNNING".equals(state))) {
+            jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code IS NULL THEN 'RUN_WINDOW_EXPIRED' ELSE risk_code END WHERE usage_id=?",usage);
+            session.put("stop_requested",1);
+        }
+        if(configuredPower!=null&&("STARTING".equals(state)||"RUNNING".equals(state)||"STOPPING".equals(state))) {
+            ComputeNode controlled=lifecycle.controlledNode(usage);
+            if(nodes.officialConfigured(controlled)&&(!"STARTING".equals(state)||number(session,"stop_requested")==0||!"PREPARED".equals(text(run,"power_start_state")))) {
+                configuredPower.advance(run,controlled);
+                run=row(id,false);state=text(run,"state");
+                session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);
+                observedUsage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+            }
+        }
+        if("FUNDING".equals(state)&&number(session,"stop_requested")!=0) {
             jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING' WHERE run_id=?",id);
-            jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);state="CANCELLING";
+            state="CANCELLING";
+        }
+        if("STARTING".equals(state)&&number(session,"stop_requested")!=0&&observedUsage.get("billing_start_at")==null&&!"START_FAILED".equals(text(observedUsage,"state"))) {
+            if(cancelUnsubmittedStart(run))state="CANCELLING";
+            else {
+                jdbc.update("UPDATE vls_compute_paid_run SET error_code='START_OUTCOME_UNKNOWN' WHERE run_id=?",id);
+                lifecycle.requestSafeStop(usage);
+                // A possibly submitted start is not a cancellation/no-debit proof.
+                // Keep its original outbox and hold until observation resolves it.
+                return;
+            }
         }
         if("FUNDING".equals(state)&&number(session,"stop_requested")==0) {
             if(!ComputeFundingIntentService.DETAIL_OBSERVED.equals(hold.state))return;
@@ -200,17 +241,18 @@ public class ComputePaidRunService {
                 ComputeNode node=lifecycle.controlledNode(usage);
                 Map<String,Object> current=row(id,true);
                 if(!"FUNDING".equals(text(current,"state")))return null;
+                if(System.currentTimeMillis()>=stopDeadline(current))throw new ServiceException("本次开机预算已到期，等待原冻结释放");
                 settlements.requirePaidAdmission(usage);
                 if(nodes.serverRows(node).stream().anyMatch(n->n.getPowerOperationId()!=null))throw new ServiceException("实例已有待确认操作");
                 nodes.assertNoActiveJobs(node.getId());
-                if(!"STOPPED".equals(node.getPowerState())||!node.getPublicInstanceKey().equals(text(run,"instance_key")))throw new ServiceException("实例状态已变化");
-                queueStart(node,text(run,"start_operation_id"));
+                if(!"STOPPED".equals(node.getPowerState())||!node.getPublicInstanceKey().equals(text(current,"instance_key")))throw new ServiceException("实例状态已变化");
+                queueStart(node,text(current,"start_operation_id"));
                 jdbc.update("UPDATE vls_compute_paid_run SET state='STARTING',error_code=NULL,update_time=NOW() WHERE run_id=?",id);return null;
             });return;
         }
         if(observedUsage.get("billing_start_at")!=null&&observedUsage.get("billing_end_at")==null) {
             jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
-            long deadline=Math.addExact(((Timestamp)observedUsage.get("billing_start_at")).getTime(),number(run,"maximum_run_seconds")*1000L);
+            long deadline=Math.min(stopDeadline(run),Math.addExact(((Timestamp)observedUsage.get("billing_start_at")).getTime(),Math.multiplyExact(number(run,"maximum_run_seconds"),1000L)));
             if(System.currentTimeMillis()>=deadline)jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);
             if(number(session,"stop_requested")!=0||System.currentTimeMillis()>=deadline)lifecycle.requestSafeStop(usage);
             return;
@@ -235,8 +277,37 @@ public class ComputePaidRunService {
             return null;
         });
     }
+    private long stopDeadline(Map<String,Object> run) {
+        long margin=Math.addExact((long)policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
+        JsonNode saved=parse(text(run,"quote_snapshot")).path("run_budget");
+        if(!saved.isMissingNode()) {
+            JsonNode stop=saved.path("stop_budget_seconds"),poll=saved.path("polling_safety_seconds");
+            if(!stop.canConvertToInt()||!poll.canConvertToInt()||!stop.isIntegralNumber()||!poll.isIntegralNumber()||stop.asInt()<1||poll.asInt()<1)
+                throw new IllegalStateException("Invalid accepted run budget");
+            // A later local setting cannot silently reduce the accepted safety margin.
+            margin=Math.max(margin,Math.addExact(stop.longValue(),poll.longValue()));
+        }
+        return Math.subtractExact(number(run,"hold_until_ms"),Math.multiplyExact(margin,1000L));
+    }
+    private boolean cancelUnsubmittedStart(Map<String,Object> run) {
+        return Boolean.TRUE.equals(tx.execute(status->{
+            String usage=text(run,"usage_id");ComputeNode node=lifecycle.controlledNode(usage);
+            if(nodes.officialConfigured(node)) {
+                if(configuredPower==null||!configuredPower.cancelUnsubmitted(run,node))return false;
+                ledger.startFailed(usage);jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING',error_code='START_CANCELLED_BEFORE_SEND' WHERE run_id=?",text(run,"run_id"));return true;
+            }
+            if(!text(run,"start_operation_id").equals(node.getPowerOperationId())||!"start".equals(node.getPowerOperationAction())||node.isPowerOperationSubmitted())return false;
+            int changed=jdbc.update("UPDATE vls_compute_node SET power_operation_id=NULL,power_operation_action=NULL,power_operation_started_at=NULL,power_operation_submitted=0 WHERE id=? AND power_operation_id=? AND power_operation_submitted=0",node.getId(),text(run,"start_operation_id"));
+            if(changed!=1)return false;
+            jdbc.update("UPDATE vls_compute_node SET power_state='UNKNOWN',power_checked_at=NULL,probe_state='UNTESTED',probe_time=NULL,lifecycle_message='本次开机未向厂商发送，已取消；需刷新确认实例状态' WHERE "+ComputeNodeService.SERVER_WHERE,ComputeNodeService.serverArgs(node));
+            ledger.startFailed(usage);
+            jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING',error_code='START_CANCELLED_BEFORE_SEND' WHERE run_id=?",text(run,"run_id"));
+            return true;
+        }));
+    }
     private void queueStart(ComputeNode node,String operation) {
         if(!providers.orderedStream().anyMatch(p->p.supports(node)))throw new ServiceException("厂商开机接口不可用");
+        if(nodes.officialConfigured(node))return; // STARTING on the original paid run is the committed outbox.
         jdbc.update("UPDATE vls_compute_node SET power_state='STARTING',probe_state='UNTESTED',probe_time=NULL,lifecycle_revision=lifecycle_revision+1 WHERE "+ComputeNodeService.SERVER_WHERE,ComputeNodeService.serverArgs(node));
         jdbc.update("UPDATE vls_compute_node SET power_operation_id=?,power_operation_action='start',power_operation_started_at=NOW(),power_operation_submitted=0,lifecycle_message='预冻结已确认，等待厂商开机' WHERE id=?",operation,node.getId());
     }

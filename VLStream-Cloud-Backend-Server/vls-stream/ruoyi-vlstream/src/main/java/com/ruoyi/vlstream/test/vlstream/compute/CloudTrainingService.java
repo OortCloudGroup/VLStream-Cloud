@@ -61,6 +61,7 @@ public class CloudTrainingService {
         if (algorithm == null || !tenant.equals(algorithm.getTenantId()) || algorithm.getCategory() == null || !type.getModelTask().equals(algorithm.getCategory().getCode())) throw new ServiceException("算法不存在、无权访问或与数据集标注类型不匹配");
         String baseModel = resolveBaseModel(request.getModelSource(), algorithm.getPtModelFilePath(), type.getModelTask());
         if(companyShared)baseModel=sharedQueue.verifyBaseModel(baseModel,type.getCode(),taskOwner);
+        else if(nodes.officialConfigured(node))baseModel=nodes.officialBaseModel(baseModel,type.getCode(),taskOwner);
         DatasetSnapshot snapshot = data.snapshot(request.getDatasetId());
         CloudTrainingDatasetWriter.members(snapshot);
         DataRequests.Version versionRequest = new DataRequests.Version();
@@ -83,6 +84,10 @@ public class CloudTrainingService {
             configured.put("sharedQueue",sharedQueue.configuration(node,jobId,taskOwner));durableOptions=json.writeValueAsString(configured);
             if(node.isConfigurationManaged()) { configured.put("configuredResource",nodes.configurationSnapshot(node));durableOptions=json.writeValueAsString(configured); }
         } catch(java.io.IOException error){throw new ServiceException("共享GPU任务快照保存失败");}
+        if(node.isConfigurationManaged()&&!companyShared)try {
+            Map<String,Object> configured=json.readValue(durableOptions,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
+            configured.put("configuredResource",nodes.configurationSnapshot(node));durableOptions=json.writeValueAsString(configured);
+        } catch(java.io.IOException error){throw new ServiceException("官方算力执行目标快照保存失败");}
         jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,training_id,node_id,container_record_id,dataset_id,version_id,annotation_type,snapshot_json,base_model,options_json,run_dir,public_instance_key,public_claim_id,public_owner_subject) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             jobId, tenant, trainingId, node.getId(), instance.getId(), request.getDatasetId(), version.getId(), type.getCode(), version.getSnapshotJson(), baseModel, durableOptions, runDir,
             claim==null?null:claim.getInstanceKey(),claim==null?null:claim.getClaimId(),taskOwner);

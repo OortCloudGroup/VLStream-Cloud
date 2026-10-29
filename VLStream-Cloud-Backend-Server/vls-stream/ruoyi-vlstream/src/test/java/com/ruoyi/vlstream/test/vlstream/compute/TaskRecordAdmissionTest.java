@@ -71,9 +71,9 @@ class TaskRecordAdmissionTest {
         trainingMapper=mock(VlsAlgorithmTrainingMapper.class);when(trainingMapper.selectById(1L)).thenReturn(training);when(trainingMapper.selectAlgorithmTrainingById(1L)).thenReturn(training);when(trainingMapper.updateById(any(AlgorithmTraining.class))).thenAnswer(call->{AlgorithmTraining change=call.getArgument(0);if(change.getConfigParams()!=null)training.setConfigParams(change.getConfigParams());if(change.getLogPath()!=null)training.setLogPath(change.getLogPath());return 1;});
         trainings=new VlsAlgorithmTrainingServiceImpl();ReflectionTestUtils.setField(trainings,"baseMapper",trainingMapper);ReflectionTestUtils.setField(trainings,"algorithmTrainingMapper",trainingMapper);ReflectionTestUtils.setField(trainings,"publicAccess",access);
         scheduler=new GpuTrainingSchedulerService();ReflectionTestUtils.setField(scheduler,"containerInstanceService",containers);ReflectionTestUtils.setField(scheduler,"algorithmTrainingService",trainings);ReflectionTestUtils.setField(scheduler,"objectMapper",new ObjectMapper());ReflectionTestUtils.setField(scheduler,"properties",new VlsTrainingContainerProperties());
-        VlsSshProperties properties=new VlsSshProperties();properties.setHost("203.0.113.10");ReflectionTestUtils.setField(scheduler,"sshProperties",properties);
+        VlsSshProperties properties=new VlsSshProperties();properties.setHost("203.0.113.10");properties.setPassword("fixture-only");properties.setLegacyServerIds(java.util.Collections.singletonList(3L));properties.setWorkDir("/fixture");properties.setCondaEnv("fixture");ReflectionTestUtils.setField(scheduler,"sshProperties",properties);
         RemoteServers server=new RemoteServers();server.setId(3L);server.setServerIp("203.0.113.10");server.setWorkDir("/fixture");server.setCondaEnv("fixture");
-        VlsRemoteServersMapper servers=mock(VlsRemoteServersMapper.class);when(servers.selectActiveServer()).thenReturn(server);ReflectionTestUtils.setField(scheduler,"remoteServersMapper",servers);
+        VlsRemoteServersMapper servers=mock(VlsRemoteServersMapper.class);when(servers.selectActiveServer()).thenReturn(server);
         ssh=mock(SSHService.class);ReflectionTestUtils.setField(scheduler,"sshService",ssh);
         ReflectionTestUtils.setField(scheduler,"containerInstanceMapper",mapper);
     }
@@ -145,7 +145,7 @@ class TaskRecordAdmissionTest {
         List<String> forwarded=simulatedTransport();dispatch(inserted.get());assertEquals(1,forwarded.size());assertFalse(forwarded.get(0).contains("SYNTHETIC_STOP_OTHER_USER_TASK"));assertTrue(forwarded.get(0).contains("vls-training-1"));assertEquals("running",inserted.get().getInstanceStatus());
     }
     @Test void oldRawCommandWithKnownAssociationMustMatchTrustedReconstruction() throws Exception {
-        scheduler.enqueue("detect",1L,"/fixture/dataset.yaml","@preset/detect",1,2,320);ContainerInstance row=inserted.get();
+        scheduler.enqueue("detect",1L,"/fixture/dataset.yaml","@preset/detect",1,2,320);ContainerInstance row=inserted.get();row.setServerId(3L);
         com.fasterxml.jackson.databind.JsonNode def=new ObjectMapper().readTree(row.getEnvConfig()).path("launchDefinition");
         com.fasterxml.jackson.databind.node.ObjectNode config=(com.fasterxml.jackson.databind.node.ObjectNode)new ObjectMapper().readTree(training.getConfigParams());config.put("runtimeDatasetPath","/fixture/dataset.yaml");config.put("epochs",1);config.put("batchSize",2);config.put("imgSize",320);training.setConfigParams(config.toString());
         IVlsAlgorithmService algorithms=mock(IVlsAlgorithmService.class);Algorithm algorithm=new Algorithm();algorithm.setTenantId("000000");algorithm.setCategory(AlgorithmCategoryEnum.detect);when(algorithms.getById(2L)).thenReturn(algorithm);ReflectionTestUtils.setField(scheduler,"algorithmService",algorithms);

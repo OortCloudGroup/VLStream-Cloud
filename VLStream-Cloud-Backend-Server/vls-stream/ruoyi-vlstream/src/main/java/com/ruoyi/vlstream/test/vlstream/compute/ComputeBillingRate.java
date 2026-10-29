@@ -22,18 +22,36 @@ public class ComputeBillingRate {
     private Integer quotaScale;
     private RoundingMode quotaRounding;
     // Provider-confirmed behavior, never inferred from the vendor name (ordinary AutoDL FAQ is not Pro/ECS).
-    private String pricePolicy = "UNVERIFIED"; // LOCKED_FOR_RUN or SEGMENTED_NOTICE
+    private String pricePolicy = "UNVERIFIED"; // VLS_FIXED, legacy LOCKED_FOR_RUN or SEGMENTED_NOTICE
     private boolean providerPriceLockConfirmed;
     private String priceEvidence;
+    /** Official deployment price, independent of supplier costs and the legacy multiplier. */
+    private String userPriceSource;
+    private String fixedPriceConfigurationId;
+    private String fixedPriceUnit;
+    private BigDecimal fixedHourlyPrice;
+
+    public boolean fixedUserPrice() { return "VLS_FIXED".equals(pricePolicy); }
+    public BigDecimal userHourlyPrice() { return fixedUserPrice() ? fixedHourlyPrice : costHourly.multiply(saleMultiplier); }
 
     public void validate(Instant at) {
-        if (!("LOCKED_FOR_RUN".equals(pricePolicy) || "SEGMENTED_NOTICE".equals(pricePolicy))
-            || priceEvidence == null || priceEvidence.trim().isEmpty()
-            || ("LOCKED_FOR_RUN".equals(pricePolicy) && !providerPriceLockConfirmed))
-            throw new IllegalArgumentException("供应商锁价/调价生效规则尚未核验，禁止推断锁价或自动加价");
-        if (version==null || !("VERIFIED_MANUAL".equals(costSource)||"ACTUAL_API".equals(costSource))
-            || currency==null || !currency.matches("[A-Z]{3}") || !"INSTANCE_COMPUTE".equals(costScope) || !"PER_INSTANCE_HOUR".equals(costUnit)
-            || costHourly==null || costHourly.signum()<=0 || saleMultiplier==null || saleMultiplier.compareTo(new BigDecimal("2"))!=0
+        if (fixedUserPrice()) {
+            if (!"OFFICIAL_CONFIG".equals(userPriceSource) || fixedPriceConfigurationId == null
+                || !fixedPriceConfigurationId.matches("[a-z][a-z0-9-]{1,63}") || !"PER_INSTANCE_HOUR".equals(fixedPriceUnit)
+                || fixedHourlyPrice == null || fixedHourlyPrice.signum() <= 0 || fixedHourlyPrice.scale() > 12
+                || providerPriceLockConfirmed)
+                throw new IllegalArgumentException("官方固定用户价格、配置身份或整实例小时单位尚未确认；不能冒称供应商锁价");
+        } else {
+            if (!("LOCKED_FOR_RUN".equals(pricePolicy) || "SEGMENTED_NOTICE".equals(pricePolicy))
+                || priceEvidence == null || priceEvidence.trim().isEmpty()
+                || ("LOCKED_FOR_RUN".equals(pricePolicy) && !providerPriceLockConfirmed))
+                throw new IllegalArgumentException("供应商锁价/调价生效规则尚未核验，禁止推断锁价或自动加价");
+            if (!("VERIFIED_MANUAL".equals(costSource)||"ACTUAL_API".equals(costSource))
+                || !"INSTANCE_COMPUTE".equals(costScope) || !"PER_INSTANCE_HOUR".equals(costUnit)
+                || costHourly==null || costHourly.signum()<=0 || saleMultiplier==null || saleMultiplier.compareTo(new BigDecimal("2"))!=0)
+                throw new IllegalArgumentException("可信实例小时成本、口径与原有倍率尚未确认");
+        }
+        if (version==null || currency==null || !currency.matches("[A-Z]{3}")
             || quotaUnit==null || quotaUnit.trim().isEmpty() || conversionVersion==null || quotaPerCurrencyUnit==null || quotaPerCurrencyUnit.signum()<=0
             || quotaScale==null || quotaScale<0 || quotaScale>12 || quotaRounding==null || quotaRounding==RoundingMode.UNNECESSARY)
             throw new IllegalArgumentException("可信实例小时成本、成本口径、额度单位和换算/舍入策略尚未确认");
@@ -43,7 +61,7 @@ public class ComputeBillingRate {
     public BigDecimal unroundedQuota(long elapsedMillis) {
         if (elapsedMillis<0) throw new IllegalArgumentException("Invalid duration");
         // Seconds = milliseconds / 1000. No per-tick rounding, no ceiling to minutes/hours.
-        return costHourly.multiply(saleMultiplier).multiply(quotaPerCurrencyUnit).multiply(BigDecimal.valueOf(elapsedMillis))
+        return userHourlyPrice().multiply(quotaPerCurrencyUnit).multiply(BigDecimal.valueOf(elapsedMillis))
             .divide(BigDecimal.valueOf(3600000),MathContext.DECIMAL128);
     }
 }

@@ -54,6 +54,13 @@ public class ComputeMarketService {
         private String gpuModel;
         private int gpuIndex;
         private String billingType;
+        private boolean configurationManaged;
+        private String configurationCode;
+        // Official fixed-price presentation, filled only by an authoritative price projection.
+        private String userHourlyPrice;
+        private String priceCurrency;
+        private String priceUnit;
+        private String pricePolicy;
         private BigDecimal pointsPerHour;
         private String powerState;
         private String capacityState;
@@ -86,8 +93,8 @@ public class ComputeMarketService {
             (selection ? " OR (tenant_id=? AND resource_scope='PRIVATE')" : "") + " ORDER BY name,id",
             new BeanPropertyRowMapper<>(ComputeNode.class), selection ? new Object[]{ComputeNodeService.tenant()} : new Object[]{});
         List<Resource> result = new ArrayList<>();
+        rows.removeIf(node -> "self".equals(node.getProvider()));
         if(configured!=null) {
-            rows.removeIf(configured::replaces);
             rows.addAll(configured.published());
         }
         long now = System.currentTimeMillis();
@@ -106,9 +113,11 @@ public class ComputeMarketService {
             resource.setCanQueryProvider(shared ? "MINE".equals(claim) : ComputeNodeService.tenant().equals(node.getTenantId()));
             resource.setCanRefreshEnvironment(resource.isCanOperate());
             resource.setId(String.valueOf(node.getId())); resource.setName(node.getName());
+            resource.setConfigurationManaged(node.isConfigurationManaged()); resource.setConfigurationCode(node.getConfigurationCode());
             resource.setProvider(node.getProvider()); resource.setScope(node.getResourceScope());
             resource.setServerGroup(node.getServerGroup()); resource.setGpuModel(node.getGpuModel()); resource.setGpuIndex(node.getGpuIndex());
             resource.setBillingType(node.getBillingType()); resource.setPointsPerHour(node.getPointsPerHour());
+            resource.setUserHourlyPrice(node.getUserHourlyPrice());resource.setPriceCurrency(node.getPriceCurrency());resource.setPriceUnit(node.getPriceUnit());resource.setPricePolicy(node.getPricePolicy());
             resource.setPowerState(node.getPowerState());
             resource.setCapacityState(ComputeAvailability.fresh(node.getCapacityCheckedAt(), now) ? node.getCapacityState() : "UNKNOWN");
             resource.setCapacitySource(node.getCapacitySource()); resource.setCapacityCheckedAt(node.getCapacityCheckedAt());
@@ -121,7 +130,7 @@ public class ComputeMarketService {
             resource.setSchedulable(ComputeAvailability.ready(node, now) && (!shared || "MINE".equals(claim) && "FREE".equals(node.getBillingType())));
             if("POINTS".equals(node.getBillingType())) {
                 boolean configured=billingProperties!=null&&billingProperties.isEnabled()&&billingProperties.isAllowWrites()&&billingProperties.isSafetyStopEnabled()&&billingProperties.isPaidAdmissionEnabled()
-                    &&billingProperties.getRates().containsKey(String.valueOf(node.getId()));
+                    &&(nodes.officialConfigured(node)?"VLS_FIXED".equals(node.getPricePolicy())&&node.getUserHourlyPrice()!=null:billingProperties.getRates().containsKey(String.valueOf(node.getId())));
                 resource.setPaidAdmissionEnabled(configured);
                 ComputePaidRunService paid=paidRuns==null?null:paidRuns.getIfAvailable();
                 resource.setSchedulable(configured&&paid!=null&&"MINE".equals(claim)&&ComputeAvailability.ready(node,now)&&paid.trainingAvailable(node));
@@ -132,7 +141,7 @@ public class ComputeMarketService {
                 boolean admitted=sharedQueue!=null && sharedQueue.authenticated();
                 resource.setRequiresClaim(false);resource.setClaimState("SHARED_QUEUE");resource.setCanClaim(false);
                 resource.setCanOperate(false);resource.setCanQueryProvider(false);resource.setCanRefreshEnvironment(admitted);
-                resource.setCanManage(nodes.canManage(node));resource.setMessage(null);
+                resource.setCanManage(nodes.canManage(node));resource.setMessage(node.getLifecycleMessage());
                 resource.setSchedulable(admitted && sharedQueue.ready(node));
                 resource.setHealthState(sharedQueue!=null && sharedQueue.ready(node)?"READY":resource.getHealthState());
             }

@@ -32,12 +32,12 @@ public final class BillingSnapshot {
 
     public static BillingSnapshot fromExistingRate(ComputeBillingRate rate, JsonNode config, Instant at, ObjectMapper mapper) {
         rate.validate(at);
-        if (!"LOCKED_FOR_RUN".equals(rate.getPricePolicy())) throw new IllegalArgumentException("Segmented supplier pricing not admitted yet");
+        if (!rate.fixedUserPrice() && !"LOCKED_FOR_RUN".equals(rate.getPricePolicy())) throw new IllegalArgumentException("Segmented supplier pricing not admitted yet");
         if (!rate.getCurrency().equals(required(config, "settlement_currency")) || !rate.getQuotaUnit().equals(required(config, "quota_unit"))
             || !rate.getConversionVersion().equals(required(config, "conversion_version"))) throw new IllegalArgumentException("Price/conversion snapshot mismatch");
         ObjectNode snapshot = mapper.createObjectNode();
         snapshot.put("price_snapshot_id", rate.getVersion());
-        snapshot.put("approved_hourly_price", rate.getCostHourly().multiply(rate.getSaleMultiplier()).toPlainString());
+        snapshot.put("approved_hourly_price", rate.userHourlyPrice().toPlainString());
         snapshot.put("quota_unit", rate.getQuotaUnit()); snapshot.put("conversion_version", rate.getConversionVersion());
         snapshot.put("numerator", required(config.path("quota_per_currency_unit"), "numerator"));
         snapshot.put("denominator", required(config.path("quota_per_currency_unit"), "denominator"));

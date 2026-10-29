@@ -15,7 +15,7 @@ public class ComputePublicMarketService {
     private final JdbcTemplate jdbc;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ConfiguredComputeRegistry configured;
-    static final String FILTER = " FROM vls_compute_node n WHERE n.resource_scope='PLATFORM' AND n.enabled=1";
+    static final String FILTER = " FROM vls_compute_node n WHERE n.resource_scope='PLATFORM' AND n.enabled=1 AND (n.provider IS NULL OR n.provider<>'self')";
     @Data
     public static class Offer {
         private String name;

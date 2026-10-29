@@ -90,7 +90,7 @@ public class VlsRemoteServersController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description  = "传入vlsRemoteServers")
 	public R save(@Valid @RequestBody RemoteServers vlsRemoteServers) {
-		return R.status(vlsRemoteServersService.save(vlsRemoteServers));
+		throw new com.ruoyi.common.exception.ServiceException("自有执行器仅由服务 YAML 配置；旧记录保留只读历史",403);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class VlsRemoteServersController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description  = "传入vlsRemoteServers")
 	public R update(@Valid @RequestBody RemoteServers vlsRemoteServers) {
-		return R.status(vlsRemoteServersService.updateById(vlsRemoteServers));
+		throw new com.ruoyi.common.exception.ServiceException("自有执行器仅由服务 YAML 配置；旧记录保留只读历史",403);
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class VlsRemoteServersController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description  = "传入vlsRemoteServers")
 	public R submit(@Valid @RequestBody RemoteServers vlsRemoteServers) {
-		return R.status(vlsRemoteServersService.saveOrUpdate(vlsRemoteServers));
+		throw new com.ruoyi.common.exception.ServiceException("自有执行器仅由服务 YAML 配置；旧记录保留只读历史",403);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class VlsRemoteServersController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description  = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
-		return R.status(vlsRemoteServersService.deleteLogic(Func.toLongList(ids)));
+		throw new com.ruoyi.common.exception.ServiceException("自有执行器仅由服务 YAML 配置；旧记录保留只读历史",403);
 	}
 
 	/**

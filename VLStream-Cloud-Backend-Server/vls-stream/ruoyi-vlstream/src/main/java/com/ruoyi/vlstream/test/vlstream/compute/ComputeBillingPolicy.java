@@ -66,9 +66,12 @@ public class ComputeBillingPolicy {
         return verifiedSupplierComputeCost.subtract(proportionalCost).max(BigDecimal.ZERO);
     }
 
-    /** Only a fresh, actual ECS economical stop is proven by the currently supported adapter.
-     * Stopped alone, requested StopCharging, manual notes and prepaid plans are insufficient. */
+    /** Official Pro user billing ends at verified physical stop, independently of supplier costs.
+     * Existing ECS supply still requires its original economical-stop contract. */
     static void requireEconomicalPaidOffer(ComputeNode node, long now) {
+        if(officialPro(node)&&"API".equals(node.getControlMode())&&"PROVIDER_API".equals(node.getCapacitySource())
+            &&ComputeAvailability.fresh(node.getPowerCheckedAt(),now)&&"STOPPED".equals(node.getPowerState())
+            &&"AUTODL_PRO_PHYSICAL_STOPPED".equals(node.getActualStoppedMode()))return;
         if (!"aliyun".equals(node.getProvider()) || !"ECS".equals(node.getProviderProduct())
             || !"API".equals(node.getControlMode()) || !"StopCharging".equals(node.getRequestedStoppedMode())
             || !"PROVIDER_API".equals(node.getCapacitySource()) || !ComputeAvailability.fresh(node.getPowerCheckedAt(), now)
@@ -79,8 +82,12 @@ public class ComputeBillingPolicy {
 
     /** Billing termination is separate from successful power-off and from storage release. */
     static boolean computeStopConfirmed(ComputeNode node, ComputePowerProvider.Snapshot snapshot) {
+        if(officialPro(node))return "STOPPED".equals(snapshot.power)&&"AUTODL_PRO_PHYSICAL_STOPPED".equals(snapshot.stoppedMode);
         return "aliyun".equals(node.getProvider()) && "ECS".equals(node.getProviderProduct())
             && "STOPPED".equals(snapshot.power) && "StopCharging".equals(snapshot.stoppedMode)
             && "PostPaid".equals(snapshot.chargeType);
+    }
+    private static boolean officialPro(ComputeNode node) {
+        return node.isConfigurationManaged()&&"autodl".equals(node.getProvider())&&"AUTODL_PRO".equals(node.getProviderProduct());
     }
 }

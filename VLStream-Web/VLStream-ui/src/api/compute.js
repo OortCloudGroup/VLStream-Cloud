@@ -13,6 +13,7 @@ export const refreshComputeHealth = (id, platformToken) => platformToken === und
 export const listMyTrainingTasks = params => currentIdentityRequest({ url: '/vlsCompute/my-trainings', method: 'get', params })
 export const recordComputeObservation = (id, data) => currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/observation`, method: 'put', data })
 export const listComputeSelection = () => currentIdentityRequest({ url: '/vlsCompute/selection', method: 'get' })
+export const getComputeQueueSnapshot = id => currentIdentityRequest({ url: `/vlsCompute/selection/${computePathPart(id)}/queue`, method: 'get', timeout: 35000, silentError: true })
 export const publishComputeOffer = (id, data) => currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/offer`, method: 'put', data })
 export const requestComputePower = (id, action, platformToken) => platformToken === undefined ? currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/power/${computePathPart(action)}`, method: 'post' }) : request({ url: `/vlsCompute/nodes/${computePathPart(id)}/power/${computePathPart(action)}`, method: 'post', ...platformProof(platformToken) })
 export const claimComputeInstance = (id, platformToken) => request({ url: `/vlsCompute/nodes/${computePathPart(id)}/claim`, method: 'post', ...platformProof(platformToken) })

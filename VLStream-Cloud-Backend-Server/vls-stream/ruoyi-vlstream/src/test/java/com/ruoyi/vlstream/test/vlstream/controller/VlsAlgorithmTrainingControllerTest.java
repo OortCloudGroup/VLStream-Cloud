@@ -258,7 +258,9 @@ class VlsAlgorithmTrainingControllerTest {
 		result.setOutput(output);
 		when(ssh.executeCommand(anyString(), org.mockito.ArgumentMatchers.anyInt(), anyString(), anyString(), anyString())).thenReturn(result);
 		setField(controller, "sshService", ssh);
-		setField(controller, "sshProperties", new VlsSshProperties());
+		VlsSshProperties sshProperties = new VlsSshProperties();
+		sshProperties.setPassword("test-only-password");
+		setField(controller, "sshProperties", sshProperties);
 		return ssh;
 	}
 

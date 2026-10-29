@@ -36,7 +36,6 @@ public class SmartAnnotationWorker {
     private final YoloDatasetWriter writer;
     private final VlsSshProperties ssh;
     private final VlsTrainingContainerProperties properties;
-    private final VlsRemoteServersMapper servers;
     private final ObjectMapper json;
 
     public String prepare(ContainerInstance instance) {
@@ -44,7 +43,7 @@ public class SmartAnnotationWorker {
         SmartAnnotationTask task = service.task(round.getTaskId());
         if (!"QUEUED".equals(task.getTaskState())) throw new ServiceException("智能标注任务不在队列中");
         state(task, round, "PREPARING", null);
-        RemoteServers server = servers.selectActiveServer();
+        RemoteServers server = ssh.requireServer();
         if (server == null) throw new ServiceException("未配置GPU训练服务器");
         String root = properties.getHostDataDir() + "/vls-smart-annotation/" + task.getId() + "/" + round.getId() + "_" + UUID.randomUUID().toString().replace("-", "");
         String preset = "@preset/" + AnnotationTaskType.of(task.getAnnotationType()).getModelTask();

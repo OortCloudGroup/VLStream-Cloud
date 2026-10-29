@@ -122,7 +122,7 @@ class LegacyStopNoCloudOwnerTest {
         doReturn(1).when(records).updateAlgorithmTraining(any(AlgorithmTraining.class));
         RemoteTrainingService legacy=new RemoteTrainingService();
         SSHService ssh=mock(SSHService.class);VlsRemoteServersMapper servers=mock(VlsRemoteServersMapper.class);
-        ReflectionTestUtils.setField(legacy,"sshService",ssh);ReflectionTestUtils.setField(legacy,"remoteServerMapper",servers);
+        ReflectionTestUtils.setField(legacy,"sshService",ssh);
         VlsAlgorithmTrainingController controller=new VlsAlgorithmTrainingController();ReflectionTestUtils.setField(controller,"vlsAlgorithmTrainingService",records);ReflectionTestUtils.setField(controller,"remoteTrainingService",legacy);
         access.training(1L);
         assertTrue(assertThrows(ServiceException.class,()->controller.stopTraining(1L)).getMessage().contains("可信进程身份"));

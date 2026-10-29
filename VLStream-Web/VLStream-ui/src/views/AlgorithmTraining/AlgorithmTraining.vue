@@ -483,9 +483,7 @@
         <div class="config-sidebar">
           <div class="config-section">
             <h3 class="section-title">{{ $tp('训练算力') }}</h3>
-            <el-select :model-value="selectedCompute ? computeNodeId : ''" :placeholder="$tp('请选择 GPU 设备')" :disabled="isTraining || trainingSubmitting" :loading="computeNodesLoading" :no-data-text="$tp('暂无可用 GPU 设备')" class="config-select" @update:model-value="computeNodeId = $event" @change="selectCompute" @visible-change="visible => visible && loadComputeNodes()">
-              <el-option v-for="node in computeNodes" :key="node.id" :value="String(node.id)" :label="computeLabel(node)" :disabled="['OTHER','ISOLATED'].includes(node.claimState) || (!node.schedulable && !node.stopped && !node.canClaim)" />
-            </el-select>
+            <TrainingComputeSelector v-model="computeNodeId" :nodes="computeNodes" :disabled="isTraining || trainingSubmitting" :loading="computeNodesLoading" :node-label="computeLabel" @change="selectCompute" @reload="loadComputeNodes" />
             <div v-if="computeSelectionHint" class="config-tip" role="status">{{ computeSelectionHint }}</div>
             <el-button v-if="computeNodesError" link type="primary" :disabled="computeNodesLoading || trainingSubmitting || isTraining" @click="loadComputeNodes">{{ $tp('重新加载') }}</el-button>
             <div v-if="computeNodeId" class="config-tip">{{ $tp('使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。') }}</div>
@@ -1120,6 +1118,7 @@ import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage, getAlgorithmAnnotationById} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
+import TrainingComputeSelector from './components/TrainingComputeSelector.vue'
 import { listComputeSelection, startCloudTraining } from '@/api/compute'
 
 // Import

@@ -94,16 +94,35 @@ public class ComputeBillingSettlementService {
     /** No exact provider event is available here: charge only through the last proven running sample.
      * Retain the later stopped observation independently rather than inventing an actual transition time. */
     public void confirmPhysicalStop(String usageId, java.time.Instant observedAt) {
+        confirmPhysicalStop(usageId,observedAt,null);
+    }
+    public void confirmPhysicalStop(String usageId,java.time.Instant observedAt,java.time.Instant providerEvent) {
         if (observedAt == null || observedAt.toEpochMilli() > System.currentTimeMillis()) throw new IllegalArgumentException("Invalid stopped observation");
         transactions.execute(tx -> {
             Map<String, Object> usage = usage(usageId);
             Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usageId);
             long end = number(session, "last_running_ms");
+            // A short run may stop before the first periodic running observation.
+            // Its immutable confirmed start, not epoch zero or the polling time,
+            // is the first unsettled boundary.
+            Timestamp confirmedStart=(Timestamp)usage.get("billing_start_at");
+            if(end==0&&number(session,"metered_until_ms")==0) {
+                if(confirmedStart==null)throw new IllegalStateException("Confirmed start required");
+                end=confirmedStart.getTime();
+                jdbc.update("UPDATE vls_compute_billing_session SET metered_until_ms=?,last_running_ms=? WHERE usage_id=?",end,end,usageId);
+            }
             if (observedAt.toEpochMilli() < end) throw new IllegalArgumentException("Stopped observation precedes proven runtime");
+            if(providerEvent!=null) {
+                Timestamp started=(Timestamp)usage.get("billing_start_at");
+                if(started==null||providerEvent.isBefore(started.toInstant())||providerEvent.isAfter(observedAt)||providerEvent.toEpochMilli()<end)
+                    throw new IllegalStateException("Provider stop event conflicts with proven runtime");
+                end=providerEvent.toEpochMilli();
+            }
             Timestamp priorEnd=(Timestamp)usage.get("billing_end_at");
             if(priorEnd!=null)end="PROVIDER_EVENT".equals(usage.get("stop_evidence"))?priorEnd.getTime():Math.min(end,priorEnd.getTime());
             if(end>observedAt.toEpochMilli()||end<number(session,"metered_until_ms"))throw new IllegalStateException("Runtime end conflicts with sealed intervals");
             jdbc.update("UPDATE vls_compute_usage SET state='STOPPED',billing_end_at=? WHERE id=?",new Timestamp(end),usageId);
+            if(providerEvent!=null)jdbc.update("UPDATE vls_compute_usage SET stop_observed_at=?,stop_evidence='PROVIDER_EVENT' WHERE id=?",Timestamp.from(observedAt),usageId);
             jdbc.update("UPDATE vls_compute_billing_session SET last_running_ms=?,physical_stop_observed_ms=COALESCE(physical_stop_observed_ms,?),safety_state='STOP_CONFIRMED' WHERE usage_id=?",end,observedAt.toEpochMilli(),usageId);
             jdbc.update("UPDATE vls_compute_billing_slice SET is_tail=1 WHERE usage_id=? AND interval_end_ms=?", usageId, end);
             return null;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.RemoteServers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -18,7 +17,6 @@ import java.util.Base64;
 public class TrainingDatasetPreflight {
     private final SSHService ssh;
     private final VlsSshProperties properties;
-    private final VlsRemoteServersMapper servers;
 
     public void validate(String dataset, String model) {
         validate(dataset, model, "object_detection", null);
@@ -26,7 +24,7 @@ public class TrainingDatasetPreflight {
 
     public void validate(String dataset, String model, String annotationType, Long datasetId) {
         com.ruoyi.vlstream.test.vlstream.data.AnnotationTaskType.of(annotationType);
-        RemoteServers server = servers.selectActiveServer();
+        RemoteServers server = properties.requireServer();
         if (server == null || server.getCondaEnv() == null || !server.getCondaEnv().matches("[A-Za-z0-9_-]+")) throw new ServiceException("训练服务器 Python 环境未正确配置");
         try {
             String script;

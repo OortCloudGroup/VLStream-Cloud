@@ -84,9 +84,9 @@ test('no selected device never submits', async () => {
   const f = fixture(); f.api.computeNodeId.value = ''; await f.api.handleStartTraining()
   assert.equal(f.calls.starts.length, 0); assert.match(f.calls.messages[0], /请选择实际 GPU/)
 })
-test('device options have no billing groups or free queue labels', () => {
-  assert.doesNotMatch(descriptor.template.content, /el-option-group|computeGroups/)
-  assert.match(descriptor.template.content, /v-for="node in computeNodes"/)
+test('device selector delegates grouped presentation without changing submission names', () => {
+  assert.match(descriptor.template.content, /<TrainingComputeSelector/)
+  assert.match(descriptor.template.content, /:nodes="computeNodes"/)
   const f = fixture()
   const node = { ...gpu, name: '免费 GPU 173（P100）', gpuModel: 'Tesla P100-PCIE-16GB' }
   assert.equal(f.api.computeLabel(node), 'GPU 173（P100） · GPU 0')
@@ -101,7 +101,8 @@ test('device labels retain unavailable and exclusive claim hints', () => {
   assert.match(f.api.computeLabel({ ...gpu, schedulable: false }), /暂不可训练$/)
   assert.match(f.api.computeLabel({ ...gpu, stopped: true }), /请管理员检查共享环境$/)
   assert.match(f.api.computeLabel({ ...gpu, requiresClaim: true, claimState: 'OTHER' }), /他人占用/)
-  assert.match(f.api.computeLabel({ ...gpu, billingType: 'POINTS' }), /结算待接入$/)
+  assert.match(f.api.computeLabel({ ...gpu, billingType: 'POINTS' }), /付费实例运行中$/)
+  assert.match(f.api.computeLabel({ ...gpu, billingType: 'POINTS', schedulable: false }), /请先完成付费开机与环境检查$/)
 })
 test('clean label and refresh still submit the exact selected device ID', async () => {
   const device = { ...gpu, name: '免费 GPU 173（P100）' }

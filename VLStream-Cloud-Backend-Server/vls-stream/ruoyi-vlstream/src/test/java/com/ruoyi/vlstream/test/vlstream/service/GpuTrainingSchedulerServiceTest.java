@@ -75,7 +75,7 @@ class GpuTrainingSchedulerServiceTest {
 		VlsContainerInstanceMapper mapper = mock(VlsContainerInstanceMapper.class);
 		IVlsContainerInstanceService containerService = mock(IVlsContainerInstanceService.class);
 		SSHService sshService = mock(SSHService.class);
-		VlsSshProperties sshProperties = new VlsSshProperties();
+		VlsSshProperties sshProperties = new VlsSshProperties();sshProperties.setPassword("fixture-only");sshProperties.setLegacyServerIds(java.util.Collections.singletonList(7L));
 		VlsTrainingContainerProperties trainingProperties = new VlsTrainingContainerProperties();
 
 		ContainerInstance active = new ContainerInstance();
@@ -83,7 +83,7 @@ class GpuTrainingSchedulerServiceTest {
 		active.setTenantId("tenant-a");
 		active.setInstanceName("vls-training-10");
 		active.setInstanceType("training");active.setTrainingTaskId(10L);active.setCreateUser("101");
-		active.setInstanceStatus("running");
+		active.setInstanceStatus("running");active.setServerId(7L);active.setServerIp(sshProperties.getHost());
 		when(mapper.selectActiveTrainingForScheduler()).thenReturn(Collections.singletonList(active));
 		when(sshService.executeCommand(anyString(), anyInt(), anyString(), anyString(), anyString()))
 			.thenAnswer(invocation -> {
@@ -134,7 +134,7 @@ class GpuTrainingSchedulerServiceTest {
 		AlgorithmTraining training = new AlgorithmTraining();
 		training.setId(30L);
 		training.setTaskName("water-detection");
-		RemoteServers server = new RemoteServers();
+		RemoteServers server = new RemoteServers();server.setServerPort(22);
 		when(trainingService.getById(30L)).thenReturn(training);
 		when(remoteServersMapper.selectActiveServer()).thenReturn(server);
 		when(remoteTrainingService.processTrainingResult(30L, server, "detect", "water-detection"))
@@ -143,7 +143,7 @@ class GpuTrainingSchedulerServiceTest {
 		GpuTrainingSchedulerService scheduler = new GpuTrainingSchedulerService();
 		setField(scheduler, "containerInstanceService", containerService);
 		setField(scheduler, "algorithmTrainingService", trainingService);
-		setField(scheduler, "remoteServersMapper", remoteServersMapper);
+		com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties yaml=mock(com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties.class);when(yaml.requireServer()).thenReturn(server);setField(scheduler,"sshProperties",yaml);
 		setField(scheduler, "remoteTrainingService", remoteTrainingService);
 		setField(scheduler, "applicationEventPublisher", eventPublisher);
 

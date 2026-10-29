@@ -66,7 +66,7 @@
     <el-dialog v-model="visible" class="connection-dialog" :title="editingId ? $tp('编辑实例') : $tp('接入服务器')" width="min(640px, calc(100vw - 32px))" destroy-on-close @closed="clearPassword">
       <el-form ref="formRef" class="connection-fields" :model="form" :rules="rules" label-width="120px">
         <el-form-item :label="$tp('实例名称')" prop="name"><el-input v-model="form.name" maxlength="100" :placeholder="$tp('例如：我的 GPU 训练服务器')" /></el-form-item>
-        <el-form-item :label="$tp('厂商')"><el-select v-model="form.provider"><el-option label="AutoDL" value="autodl" /><el-option label="阿里云 EGS" value="aliyun" /><el-option :label="$tp('自有服务器')" value="self" /></el-select></el-form-item>
+        <el-form-item :label="$tp('厂商')"><el-select v-model="form.provider"><el-option label="AutoDL" value="autodl" /><el-option label="阿里云 EGS" value="aliyun" /></el-select></el-form-item>
         <el-form-item :label="$tp('服务器标识')"><el-input v-model="form.serverGroup" maxlength="100" /></el-form-item>
         <el-form-item :label="$tp('GPU 型号')"><el-input v-model="form.gpuModel" maxlength="100" /></el-form-item>
         <el-form-item :label="$tp('粘贴 SSH 命令')"><el-input v-model="sshCommand" placeholder="ssh -p 12345 root@connect.example.autodl.com" @change="parseSsh" /><div class="field-help">{{ $tp('可从服务器控制台复制；自建服务器填写实际 SSH 地址、端口和账号。') }}</div></el-form-item>
@@ -139,7 +139,7 @@ const providerLabels = { self: '自有服务器', autodl: 'AutoDL', aliyun: '阿
 const hasPermission = permission => hasComputePermission(access.value, permission)
 const ownNode = row => row?.managementOwnership === 'MINE' && row.selfServiceNode === true
 const canRemoveNode = row => Boolean(access.value) && !row?.configurationManaged && !row?.configurationMigrationPending && (ownNode(row) || hasPermission('vls:compute:configure'))
-const canEditNode = row => !row?.configurationReplaced && canRemoveNode(row)
+const canEditNode = row => row?.provider !== 'self' && !row?.configurationReplaced && canRemoveNode(row)
 const canBindDeployment = computed(() => hasPermission('vls:compute:configure') && (access.value?.isAdmin === true || hasPermission('vls:compute:manage-all')))
 const canManageSupply = row => !row?.configurationMigrationPending && !row?.configurationReplaced && !row?.configurationManaged && nodes.value.includes(row) && canManageComputeSupply(access.value, row)
 const providerActions = row => computeProviderActions(row, Date.now() - capabilitiesCheckedAt.value < 60000 ? capabilities.value.find(item => item.id === row?.id) : null, access.value)
@@ -260,7 +260,7 @@ const showProbe = ref(false)
 const showSetup = ref(false)
 const probeResult = ref(null)
 const labels = { READY: '可训练', ERROR: '检查未通过', UNTESTED: '待检查' }
-const defaults = () => ({ name: '', provider: 'self', serverGroup: '', gpuModel: '', host: '', port: 22, username: '', authMode: 'PASSWORD', password: '', pythonPath: '', workDir: '', gpuIndex: 0, enabled: true })
+const defaults = () => ({ name: '', provider: 'autodl', serverGroup: '', gpuModel: '', host: '', port: 22, username: '', authMode: 'PASSWORD', password: '', pythonPath: '', workDir: '', gpuIndex: 0, enabled: true })
 const form = reactive(defaults())
 watch(() => form.authMode, mode => { if (mode !== 'PASSWORD') clearPassword() }, { flush: 'sync' })
 watch(() => form.provider, provider => { if (!['self', 'autodl'].includes(provider) && form.authMode === 'DEPLOYMENT_KEY') { form.authMode = 'PASSWORD'; clearPassword() } }, { flush: 'sync' })
@@ -315,6 +315,7 @@ const probe = async row => {
 }
 const save = async () => {
   if (!access.value || saving.value) return
+  if (form.provider === 'self') { ElMessage.warning(uiText('自有算力仅在服务 YAML 配置')); return }
   saving.value = true
   try {
     if (!(await formRef.value.validate().catch(() => false))) return

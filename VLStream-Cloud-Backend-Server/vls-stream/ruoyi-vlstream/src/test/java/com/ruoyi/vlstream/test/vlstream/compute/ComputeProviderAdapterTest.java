@@ -36,7 +36,7 @@ class ComputeProviderAdapterTest {
         AliyunEcsPowerProvider.ClientFactory clients = mock(AliyunEcsPowerProvider.ClientFactory.class);
         assertFalse(new AliyunEcsPowerProvider(cipher,false,clients).supports(node("aliyun"))); verifyNoInteractions(clients);
     }
-    @Test void proUsesRawAuthorizationGpuStartAndGetBodyAndDiscardsSecretSnapshotFields() throws Exception {
+    @Test void proUsesRawAuthorizationAndBoundedListWithoutFetchingSecretSnapshotFields() throws Exception {
         RestTemplate http = AutoDlProPowerProvider.transport(); MockRestServiceServer mock = MockRestServiceServer.bindTo(http).build();
         ComputeNode n = node("autodl"); AutoDlProPowerProvider provider = new AutoDlProPowerProvider(cipher,true,http);
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on")).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization","test-only-token"))
@@ -44,8 +44,9 @@ class ComputeProviderAdapterTest {
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":null,\"request_id\":\"test-id\"}",MediaType.APPLICATION_JSON));
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"status")).andExpect(method(HttpMethod.GET)).andExpect(content().json("{\"instance_uuid\":\"pro-test-only\"}"))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":\"running\"}",MediaType.APPLICATION_JSON));
-        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"req_gpu_amount\":2,\"root_password\":\"discard-test-password\",\"jupyter_token\":\"discard-test-token\",\"untrusted\":\"anything\"}}",MediaType.APPLICATION_JSON));
+        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"list")).andExpect(method(HttpMethod.POST))
+            .andExpect(content().json("{\"page_index\":1,\"page_size\":20}"))
+            .andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"page_index\":1,\"max_page\":1,\"result_total\":1,\"list\":[{\"uuid\":\"pro-test-only\",\"status\":\"running\",\"req_gpu_amount\":2,\"charge_type\":\"fixed\",\"root_password\":\"discard-test-password\",\"jupyter_token\":\"discard-test-token\",\"untrusted\":\"anything\"}]}}",MediaType.APPLICATION_JSON));
         provider.submit(n,"start","stable-op"); assertNull(n.getPowerState()); // acceptance didn't set RUNNING
         ComputePowerProvider.Snapshot state = provider.status(n); assertEquals("RUNNING",state.power); assertEquals("UNKNOWN",state.capacity); assertEquals(2,state.gpuAmount);
         String exported = json.writeValueAsString(state); assertFalse(exported.contains("discard-test")); assertFalse(exported.contains("untrusted")); mock.verify();

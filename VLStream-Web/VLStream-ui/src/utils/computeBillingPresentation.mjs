@@ -13,7 +13,7 @@ export function billingCurrency(quota, numerator, denominator) {
 }
 
 const labels = {
-  QUOTED: '待确认开机', FUNDING: '正在预冻结', STARTING: '厂商开机处理中', RUNNING: '实例运行中',
+  QUOTED: '待确认开机', FUNDING: '正在预冻结', STARTING: '厂商开机处理中', RUNNING: '实例运行中', STOPPING: '实例关机处理中',
   CANCELLING: '正在取消开机', RELEASING: '正在释放未消费余额', COMPLETED: '已停止并完成结算', CANCELLED: '已取消并完成释放'
 }
 export const paidRunState = state => labels[state] || '状态待确认'

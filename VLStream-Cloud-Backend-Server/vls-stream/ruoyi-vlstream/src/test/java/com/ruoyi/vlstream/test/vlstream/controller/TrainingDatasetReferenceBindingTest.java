@@ -50,7 +50,8 @@ class TrainingDatasetReferenceBindingTest {
         ReflectionTestUtils.setField(controller, "gpuTrainingSchedulerService", scheduler);
         ReflectionTestUtils.setField(controller, "dataManagementService", mock(DataManagementService.class));
         ReflectionTestUtils.setField(controller, "trainingPublicationService", mock(TrainingPublicationService.class));
-        ReflectionTestUtils.setField(controller, "sshService", ssh); ReflectionTestUtils.setField(controller, "sshProperties", new VlsSshProperties());
+        VlsSshProperties sshProperties = new VlsSshProperties(); sshProperties.setPassword("test-only-password");
+        ReflectionTestUtils.setField(controller, "sshService", ssh); ReflectionTestUtils.setField(controller, "sshProperties", sshProperties);
         AlgorithmTraining training = new AlgorithmTraining(); training.setId(1L); training.setAlgorithmId(2L);
         when(trainings.selectAlgorithmTrainingById(1L)).thenReturn(training); when(trainings.updateAlgorithmTraining(any())).thenReturn(1);
         AlgorithmAnnotation annotation = new AlgorithmAnnotation(); annotation.setId(3L); annotation.setAnnotationType("object_detection"); annotation.setDatasetPath(REF);

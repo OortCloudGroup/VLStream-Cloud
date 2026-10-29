@@ -39,6 +39,7 @@ public class ComputeHealthRefreshService {
                     if (!"PLATFORM".equals(node.getResourceScope()) || !node.isEnabled()) throw new ServiceException("算力已停止发布或停用，请刷新列表");
                     if (nodes.serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null) || (!node.isConfigurationManaged() && !"RUNNING".equals(node.getPowerState())))
                         throw new ServiceException("仅可检查明确运行且无挂起启停操作的实例；请先开机或确认厂商状态");
+                    if(nodes.officialConfigured(node)&&!"RUNNING".equals(node.getPowerState()))throw new ServiceException("官方实例尚未确认运行，请等待原开机状态");
                     if (node.getHostKey() == null || node.getHostKey().isEmpty()) throw new ServiceException("资源管理员须先检查连接并确认 SSH 主机身份");
                     long now = System.currentTimeMillis();
                     if ("READY".equals(node.getProbeState()) && ComputeAvailability.fresh(node.getProbeTime(), now)) return null;
@@ -47,7 +48,7 @@ public class ComputeHealthRefreshService {
                     nodes.assertNoActiveJobs(id);
                     if(node.isConfigurationManaged())nodes.requestedProbe(node);
                     if(!node.isConfigurationManaged())jdbc.update("UPDATE vls_compute_node SET probe_requested_at=NOW() WHERE " + ComputeNodeService.SERVER_WHERE, ComputeNodeService.serverArgs(node));
-                    if(!nodes.isCompanyShared(node))jdbc.update("UPDATE vls_compute_node SET probe_state='CHECKING',probe_time=NULL WHERE id=?", id);
+                    if(!node.isConfigurationManaged()&&!nodes.isCompanyShared(node))jdbc.update("UPDATE vls_compute_node SET probe_state='CHECKING',probe_time=NULL WHERE id=?", id);
                     return node;
                 });
                 if (snapshot == null) return "已使用五分钟内的环境检查结果，请刷新列表查看";

@@ -1,6 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { billingCurrency, paidRunState, paidRunActive, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
+const marketSource = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
+const { marketPricePresentation } = await import('data:text/javascript;base64,' + Buffer.from(marketSource).toString('base64'))
+
+test('official deployment price is exact CNY per instance hour and never supplier cost times two', () => {
+  const official = { configurationManaged: true, provider: 'autodl', billingType: 'POINTS', pricePolicy: 'VLS_FIXED', userHourlyPrice: '13.00', priceCurrency: 'CNY', priceUnit: 'PER_INSTANCE_HOUR', pointsPerHour: 999999 }
+  assert.deepEqual(marketPricePresentation(official), { amount: '￥13.00', unit: '/整实例小时', reference: false, fixed: true })
+  assert.equal(marketPricePresentation({ ...official, userHourlyPrice: null }), null)
+  assert.equal(marketPricePresentation({ ...official, pricePolicy: null }), null)
+  assert.equal(marketPricePresentation({ ...official, userHourlyPrice: '0.00' }), null)
+  assert.equal(marketPricePresentation({ ...official, priceUnit: 'PER_GPU_HOUR' }), null)
+})
 
 test('wallet projection keeps integers above JS safe range exact', () => {
   assert.equal(billingCurrency('9007199254740993', '500000', '1'), '18014398509.481986')

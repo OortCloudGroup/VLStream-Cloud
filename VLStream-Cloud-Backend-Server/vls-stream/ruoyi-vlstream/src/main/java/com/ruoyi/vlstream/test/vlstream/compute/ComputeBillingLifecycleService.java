@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
  * It never calls provider.submit, kills processes, deletes data, or releases ownership. */
 @Service
 public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ConfiguredPaidPowerService configuredPower;
     private final JdbcTemplate jdbc;
     private final ComputeNodeService nodes;
     private final ObjectProvider<ComputePowerProvider> providers;
@@ -50,6 +52,13 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
         ComputeNode node=transaction.execute(tx->control(usageId));
         ComputePowerProvider provider=provider(node);
         ComputePowerProvider.Snapshot result=provider.status(node);
+        if(nodes.officialConfigured(node)) {
+            nodes.recordConfiguredPower(node,result);
+            if(result.providerStoppedAt!=null) {
+                java.sql.Timestamp started=jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage WHERE id=?",java.sql.Timestamp.class,usageId);
+                if(started==null||result.providerStoppedAt.isBefore(started.toInstant()))result.providerStoppedAt=null;
+            }
+        }
         Instant now=Instant.now();transaction.execute(tx->{control(usageId);return null;});
         if("STOPPED".equals(result.power)&&!ComputeBillingPolicy.computeStopConfirmed(node,result))
             return new Observation(new ComputePowerProvider.Snapshot("UNKNOWN",result.capacity,"停机模式尚未证实停止计算收费"),now);
@@ -81,6 +90,11 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
             if(aliases.stream().anyMatch(n->n.getPowerOperationId()!=null)) {
                 phase(usageId,operation.equals(node.getPowerOperationId())&&"stop".equals(node.getPowerOperationAction())?"STOP_REQUESTED":"WAITING_OPERATION");return null;
             }
+            if(nodes.officialConfigured(node)) {
+                if(configuredPower==null)throw new IllegalStateException("Official power outbox unavailable");
+                jdbc.update("UPDATE vls_compute_billing_session SET stop_operation_id=?,safety_state='STOP_REQUESTED' WHERE usage_id=?",operation,usageId);
+                configuredPower.queueStop(usageId,operation);return null;
+            }
             jdbc.update("UPDATE vls_compute_node SET power_state='STOPPING',probe_state='UNTESTED',probe_time=NULL,lifecycle_revision=lifecycle_revision+1 WHERE "+ComputeNodeService.SERVER_WHERE,ComputeNodeService.serverArgs(node));
             jdbc.update("UPDATE vls_compute_node SET power_operation_id=?,power_operation_action='stop',power_operation_started_at=NOW(),power_operation_submitted=0,lifecycle_message='计费安全停机已排队，尚未确认停止' WHERE id=?",operation,node.getId());
             jdbc.update("UPDATE vls_compute_billing_session SET stop_operation_id=?,safety_state='STOP_REQUESTED' WHERE usage_id=?",operation,usageId);
@@ -96,9 +110,10 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
     private Map<String,Object> session(String usageId){return jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usageId);}
     private ComputeNode node(Map<String,Object> session) {
         String ref=String.valueOf(session.get("instance_ref"));
-        if(!ref.matches("node-server:[1-9][0-9]*"))throw new IllegalArgumentException("Canonical physical instance required");
+        if(!ref.matches("node-server:-?[1-9][0-9]*"))throw new IllegalArgumentException("Canonical physical instance required");
         long id=Long.parseLong(ref.substring("node-server:".length()));
-        ComputeNode node=jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=? FOR UPDATE",new BeanPropertyRowMapper<>(ComputeNode.class),id);
+        ComputeNode node=id<0?nodes.get(id):jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=? FOR UPDATE",new BeanPropertyRowMapper<>(ComputeNode.class),id);
+        if(id<0&&!nodes.officialConfigured(node))throw new IllegalArgumentException("Configured official identity required");
         if(node==null||!"PLATFORM".equals(node.getResourceScope())||!"POINTS".equals(node.getBillingType())||node.getPublicInstanceKey()==null||!"API".equals(node.getControlMode()))throw new IllegalArgumentException("Only bound paid public API instances may use billing control");
         List<ComputeNode> aliases=nodes.serverRows(node);
         if(aliases.isEmpty()||!aliases.get(0).getId().equals(node.getId()))throw new IllegalStateException("Physical instance identity changed");
@@ -108,6 +123,7 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
         ObjectNode value=json.createObjectNode();value.put("id",node.getId());value.put("public_key",node.getPublicInstanceKey());
         value.put("provider",node.getProvider());value.put("instance",node.getProviderInstanceId());value.put("region",node.getProviderRegion());value.put("product",node.getProviderProduct());
         value.put("credential_revision",ModelArtifactObjectStore.hash(String.valueOf(node.getProviderCredentialCipher())));
+        if(nodes.officialConfigured(node))value.put("configured_target",String.valueOf(nodes.configurationSnapshot(node).get("targetFingerprint")));
         value.put("claim",claim.getClaimId());value.put("owner",claim.getOwnerSubject());value.put("generation",claim.getGeneration());value.put("state",claim.getPublicState());
         if(!"OCCUPIED".equals(claim.getPublicState())||claim.getClaimId()==null||claim.getOwnerSubject()==null)throw new IllegalStateException("Active owned claim required");
         return value.toString();
