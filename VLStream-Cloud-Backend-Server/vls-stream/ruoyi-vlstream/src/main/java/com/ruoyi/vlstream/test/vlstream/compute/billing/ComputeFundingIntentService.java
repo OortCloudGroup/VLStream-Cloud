@@ -26,6 +26,7 @@ public class ComputeFundingIntentService {
     public static final String REJECTED = "REJECTED";
     public static final String UNKNOWN = "UNKNOWN";
     public static final String RECEIPT_UNVERIFIED = "RECEIPT_UNVERIFIED";
+    public static final String OPERATION_CONFIRMED = "OPERATION_CONFIRMED";
     public static final String CONFLICT = "CONFLICT";
     private static final String BASE = "/api/v1/external-billing/holds";
     private static final String CURRENT_CONTRACT = "HOLDS_V3";
@@ -33,6 +34,7 @@ public class ComputeFundingIntentService {
     private final TransactionTemplate transactions;
     private final ObjectMapper json;
     private final Supplier<ComputeRefundIntentService> refunds;
+    private final ComputeBillingTrialGuard trial;
 
     public ComputeFundingIntentService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json) {
         this(jdbc, manager, json, (Supplier<ComputeRefundIntentService>) () -> null);
@@ -40,16 +42,22 @@ public class ComputeFundingIntentService {
 
     @Autowired
     public ComputeFundingIntentService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
-                                       ObjectProvider<ComputeRefundIntentService> refunds) {
-        this(jdbc, manager, json, (Supplier<ComputeRefundIntentService>) refunds::getIfAvailable);
+                                       ObjectProvider<ComputeRefundIntentService> refunds, ExternalBillingProperties properties) {
+        this(jdbc, manager, json, (Supplier<ComputeRefundIntentService>) refunds::getIfAvailable, properties);
     }
 
     public ComputeFundingIntentService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
                                        Supplier<ComputeRefundIntentService> refunds) {
+        this(jdbc, manager, json, refunds, new ExternalBillingProperties());
+    }
+
+    public ComputeFundingIntentService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
+                                       Supplier<ComputeRefundIntentService> refunds, ExternalBillingProperties properties) {
         this.jdbc = jdbc;
         this.transactions = new TransactionTemplate(manager);
         this.json = json;
         this.refunds = refunds;
+        this.trial = new ComputeBillingTrialGuard(jdbc, json, properties);
     }
 
     /** Backend-only preparation against an already verified session. No caller-supplied payer/key.
@@ -60,6 +68,8 @@ public class ComputeFundingIntentService {
             String reference = "vls-hold:" + usageId + ":initial";
             ObjectNode body = FundingContracts.hold(text(session, "merchant_id"), reference,
                 text(session, "payer_user_id"), holdQuota, expiresAt, reason);
+            if (byReference(text(session, "merchant_id"), reference).isEmpty())
+                trial.requireFundingPreparation(usageId, "HOLD", holdQuota);
             return prepare(session, "HOLD", reference, null, BASE, body);
         });
     }
@@ -74,6 +84,7 @@ public class ComputeFundingIntentService {
             requireHold(hold);
             String reference = "vls-release:" + usageId + ":final";
             List<Map<String, Object>> prior = byReference(hold.merchantId, reference);
+            if (prior.isEmpty()) trial.requireCleanupScope(usageId);
             boolean legacy = !prior.isEmpty() && !CURRENT_CONTRACT.equals(text(prior.get(0), "contract_version"));
             ObjectNode body = legacy ? FundingContracts.release(hold.merchantId, hold.payerUserId, releaseQuota)
                 : FundingContracts.release(hold.merchantId, reference, hold.payerUserId, releaseQuota);
@@ -92,6 +103,7 @@ public class ComputeFundingIntentService {
             ObjectNode body = FundingContracts.topup(hold.merchantId, merchantTopupId, hold.payerUserId, quota, reason);
             List<Map<String, Object>> prior = byReference(hold.merchantId, merchantTopupId);
             if (prior.isEmpty()) {
+                trial.requireFundingPreparation(usageId, "TOPUP", quota);
                 Map<String, Object> detail = observation(hold.id);
                 if (nowMillis < 0 || nowMillis >= number(detail, "expires_at_ms")
                     || !("ACTIVE".equals(text(detail, "hold_status")) || "PARTIALLY_CAPTURED".equals(text(detail, "hold_status"))))
@@ -119,6 +131,7 @@ public class ComputeFundingIntentService {
             String reference = "vls-release:refund:" + ComputeBillingSettlementService.hash(hold.id + ":" + refundReference);
             List<Map<String, Object>> existing = byReference(hold.merchantId, reference);
             if (!existing.isEmpty()) return checked(session, existing.get(0));
+            trial.requireCleanupScope(usageId);
             Map<String, Object> detail = observation(hold.id);
             if (number(detail, "query_started_at_ms") <= refund.receiptObservedAtMs)
                 throw new IllegalStateException("A new authoritative hold query after the refund receipt is required");
@@ -197,7 +210,7 @@ public class ComputeFundingIntentService {
     }
 
     /** Resource counters cannot establish whether one particular TOPUP/RELEASE committed.
-     * Until the operation-query response is specified, recovery exposes paths and remains closed. */
+     * The incomplete operation lookup is only a guard; the original POST supplies its receipt. */
     public Recovery recoveryPlan(String intentId) {
         Intent intent = recover(intentId);
         String resourcePath = "HOLD".equals(intent.operation) ? BASE + "/by-reference/" + intent.reference
@@ -208,11 +221,19 @@ public class ComputeFundingIntentService {
     /** Persist uncertainty before external I/O. A process crash cannot make another worker send
      * a fresh request: only the first PREPARED caller receives a claim; recovery is query-first. */
     public Intent claimInitialSend(String intentId, long nowMillis) {
+        return claimInitialSend(intentId, nowMillis, null);
+    }
+
+    public Intent claimInitialSend(String intentId, long nowMillis, JsonNode freshConfig) {
         String usageId = owner(intentId);
         return transactions.execute(tx -> {
             Map<String, Object> session = session(usageId);
             Intent intent = checked(session, row(intentId));
             if (!PREPARED.equals(intent.state) || !CURRENT_CONTRACT.equals(intent.contractVersion)) return null;
+            if (!"RELEASE".equals(intent.operation))
+                trial.requireNewFunding(usageId, intent.operation,
+                    requiredText(parse(intent.body), "HOLD".equals(intent.operation) ? "hold_quota" : "topup_quota"), freshConfig);
+            else trial.requireCleanupScope(usageId);
             if (!"RELEASE".equals(intent.operation) && ("FUNDING_OPERATION_CONFLICT".equals(text(session, "risk_code"))
                 || "NOT_AUTHORIZED".equals(text(session, "risk_code")))) return null;
             if ("HOLD".equals(intent.operation)) {
@@ -231,8 +252,97 @@ public class ComputeFundingIntentService {
         return transactions.execute(tx -> checked(session(usageId), row(intentId)));
     }
 
-    /** Used by an isolated fake or a future verified transport; no transport is wired today.
-     * A late timeout cannot erase an earlier receipt. Conflicts stay sticky for manual reconciliation. */
+    /** Only new debit/freeze paths need current trial permission; original cleanup does not. */
+    public boolean requiresTrialConfig(String intentId) {
+        Intent intent = recover(intentId);
+        return !"RELEASE".equals(intent.operation) && trial.protectedUsage(intent.usageId);
+    }
+
+    /** Validate the immutable original for an idempotent HTTP replay, never a new financial
+     * operation. The paid-run worker lease bounds attempts; this is not a new exclusive claim. */
+    public Intent prepareOriginalReplay(String intentId, long nowMillis, long queryStartedAtMs, JsonNode lookup) {
+        String usageId = owner(intentId);
+        return transactions.execute(tx -> {
+            Map<String, Object> session = session(usageId);
+            Intent intent = checked(session, row(intentId));
+            if (!CURRENT_CONTRACT.equals(intent.contractVersion) || !UNKNOWN.equals(intent.state) || intent.receipt != null) return null;
+            // The live contract has no confirmed NOT_FOUND schema. An unavailable or partial
+            // lookup cannot authorize replay; only this original child operation's identity can.
+            if ("HOLD".equals(intent.operation) || lookup == null || !lookup.isObject()
+                || !lookup.path("status").isTextual() || !"SUCCEEDED".equals(lookup.path("status").textValue())
+                || !lookup.has("idempotency_key") || !lookup.has("user_id") || !lookup.has("hold_id")
+                || !lookupMatches(lookup, "idempotency_key", intent.key) || !lookupMatches(lookup, "user_id", intent.payerUserId)
+                || !lookupMatches(lookup, "hold_id", checked(session, row(intent.parentId)).holdId)) return null;
+            // A trial never replenishes its original frozen pool, even with an old TOPUP key.
+            if ("TOPUP".equals(intent.operation) && trial.protectedUsage(usageId)) return null;
+            if (!"RELEASE".equals(intent.operation) && ("NOT_AUTHORIZED".equals(text(session, "risk_code"))
+                || "FUNDING_OPERATION_CONFLICT".equals(text(session, "risk_code")))) return null;
+            if (nowMillis < 0 || queryStartedAtMs <= 0) return null;
+            Map<String, Object> detail = observation(intent.parentId);
+            if (number(detail, "query_started_at_ms") < queryStartedAtMs) return null;
+            if ("TOPUP".equals(intent.operation) && (nowMillis >= number(detail, "expires_at_ms")
+                || !("ACTIVE".equals(text(detail, "hold_status")) || "PARTIALLY_CAPTURED".equals(text(detail, "hold_status"))))) return null;
+            if ("RELEASE".equals(intent.operation)) trial.requireCleanupScope(usageId);
+            return intent;
+        });
+    }
+
+    /** Validate only fields actually supplied by the operation lookup. Its partial success
+     * payload is never promoted into a POST receipt or inferred from aggregate hold counters. */
+    public Intent checkOperationLookup(String intentId, String expectedRequestHash, JsonNode evidence) {
+        String usageId = owner(intentId);
+        return transactions.execute(tx -> {
+            Map<String, Object> session = session(usageId);
+            Intent intent = checked(session, row(intentId)); requireHash(intent, expectedRequestHash);
+            if (evidence == null) return intent;
+            String expectedHold = "HOLD".equals(intent.operation) ? intent.holdId : checked(session, row(intent.parentId)).holdId;
+            if (!lookupMatches(evidence, "idempotency_key", intent.key)
+                || !lookupMatches(evidence, "user_id", intent.payerUserId)
+                || (expectedHold != null && !lookupMatches(evidence, "hold_id", expectedHold))) {
+                if ("HOLD".equals(intent.operation)) return conflict(session, intent, "OPERATION_LOOKUP_MISMATCH", null);
+                return operationConflict(session, intent, "OPERATION_LOOKUP_MISMATCH", null);
+            }
+            return intent;
+        });
+    }
+
+    /** A child is complete only with its own validated original POST receipt and a later
+     * successful, ownership-checked parent query. A refund may increase remaining again. */
+    public Intent confirmOperation(String intentId, long queryStartedAtMs) {
+        String usageId = owner(intentId);
+        return transactions.execute(tx -> {
+            Map<String, Object> session = session(usageId);
+            Intent intent = checked(session, row(intentId));
+            if (!CURRENT_CONTRACT.equals(intent.contractVersion) || !RECEIPT_UNVERIFIED.equals(intent.state)
+                || "HOLD".equals(intent.operation) || intent.receipt == null || queryStartedAtMs <= 0) return intent;
+            Map<String, Object> detail = observation(intent.parentId);
+            if (number(detail, "query_started_at_ms") < queryStartedAtMs) return intent;
+            JsonNode receipt = parse(intent.receipt);
+            if ("TOPUP".equals(intent.operation)) {
+                FundingContracts.TopupReceipt topup = FundingContracts.topupReceipt(receipt);
+                if (number(detail, "balance_version") < ExactQuota.integer(topup.balanceVersion, false).longValueExact()
+                    || ExactQuota.integer(text(detail, "hold_quota"), false).compareTo(ExactQuota.integer(topup.holdQuota, false)) < 0
+                    || ExactQuota.integer(text(detail, "released_quota"), false).compareTo(ExactQuota.integer(topup.releasedQuota, false)) < 0) return intent;
+                if (number(detail, "balance_version") == ExactQuota.integer(topup.balanceVersion, false).longValueExact()
+                    && (!topup.holdQuota.equals(text(detail, "hold_quota")) || !topup.capturedQuota.equals(text(detail, "captured_quota"))
+                    || !topup.releasedQuota.equals(text(detail, "released_quota")) || !topup.remainingQuota.equals(text(detail, "remaining_quota"))))
+                    return operationConflict(session, intent, "OPERATION_DETAIL_CONFLICT", null);
+            } else {
+                FundingContracts.ReleaseReceipt release = FundingContracts.releaseResult(receipt);
+                if (ExactQuota.integer(text(detail, "released_quota"), false).compareTo(ExactQuota.integer(release.releasedQuota, false)) < 0) return intent;
+            }
+            jdbc.update("UPDATE vls_compute_funding_intent SET state=?,error_code='ORIGINAL_RECEIPT_CONFIRMED' WHERE intent_id=?",
+                OPERATION_CONFIRMED, intent.id);
+            return checked(session, row(intent.id));
+        });
+    }
+
+    private static boolean lookupMatches(JsonNode evidence, String name, String expected) {
+        JsonNode value = evidence.get(name);
+        return value == null || ((value.isTextual() || value.isIntegralNumber()) && expected.equals(value.asText()));
+    }
+
+    /** A late timeout cannot erase an earlier receipt. Conflicts stay sticky for reconciliation. */
     public Intent recordUnknown(String intentId, String expectedRequestHash) {
         String usageId = owner(intentId);
         return transactions.execute(tx -> {
@@ -253,6 +363,8 @@ public class ComputeFundingIntentService {
         return transactions.execute(tx -> {
             Map<String, Object> session = session(usageId);
             Intent intent = checked(session, row(intentId)); requireHash(intent, expectedRequestHash);
+            if (result.status == ExternalBillingGateway.Status.NOT_AUTHORIZED)
+                jdbc.update("UPDATE vls_compute_billing_session SET risk_code='NOT_AUTHORIZED',stop_requested=1 WHERE usage_id=?", usageId);
             if (!UNKNOWN.equals(intent.state) && !PREPARED.equals(intent.state)) return intent;
             String code = result.errorCode != null && result.errorCode.matches("[A-Z][A-Z0-9_]{0,63}") ? result.errorCode : "FUNDING_REJECTED";
             if (result.status == ExternalBillingGateway.Status.CONFLICT && "HOLD".equals(intent.operation))
@@ -374,7 +486,7 @@ public class ComputeFundingIntentService {
         } else throw new IllegalStateException("Unknown funding operation");
         if (!expected.toString().equals(intent.body) || !(CONTRACT_BLOCKED.equals(intent.state) || PREPARED.equals(intent.state)
             || DETAIL_OBSERVED.equals(intent.state) || UNKNOWN.equals(intent.state) || REJECTED.equals(intent.state)
-            || RECEIPT_UNVERIFIED.equals(intent.state) || CONFLICT.equals(intent.state)))
+            || RECEIPT_UNVERIFIED.equals(intent.state) || OPERATION_CONFIRMED.equals(intent.state) || CONFLICT.equals(intent.state)))
             throw new IllegalStateException("Invalid immutable funding request/state");
         if (intent.receipt != null) {
             JsonNode receipt = parse(intent.receipt);
@@ -387,8 +499,16 @@ public class ComputeFundingIntentService {
                 if (receipt.has("available_quota")) ExactQuota.integer(requiredText(receipt, "available_quota"), false);
                 if (receipt.has("hold_id") && !requiredText(receipt, "hold_id").equals(text(row(intent.parentId), "hold_id")))
                     throw new IllegalStateException("Release receipt binding mismatch");
+                if (CURRENT_CONTRACT.equals(intent.contractVersion)) {
+                    if ("TOPUP".equals(intent.operation)) FundingContracts.topupReceipt(receipt);
+                    else {
+                        FundingContracts.ReleaseReceipt release = FundingContracts.releaseResult(receipt);
+                        if (ExactQuota.integer(release.releasedQuota, false).compareTo(ExactQuota.integer(requiredText(stored, "release_quota"), true)) > 0)
+                            throw new IllegalStateException("Release receipt exceeds original request");
+                    }
+                }
             }
-        } else if (RECEIPT_UNVERIFIED.equals(intent.state)) throw new IllegalStateException("Funding receipt missing");
+        } else if (RECEIPT_UNVERIFIED.equals(intent.state) || OPERATION_CONFIRMED.equals(intent.state)) throw new IllegalStateException("Funding receipt missing");
         else if (intent.holdId != null) {
             Map<String, Object> detail = observation(intent.id);
             if (!intent.holdId.equals(text(detail, "hold_id"))) throw new IllegalStateException("Hold detail binding mismatch");
@@ -397,6 +517,8 @@ public class ComputeFundingIntentService {
             Map<String, Object> detail = observation(intent.id);
             if (!intent.holdId.equals(text(detail, "hold_id"))) throw new IllegalStateException("Hold detail binding mismatch");
         }
+        if (OPERATION_CONFIRMED.equals(intent.state) && ("HOLD".equals(intent.operation) || !CURRENT_CONTRACT.equals(intent.contractVersion)))
+            throw new IllegalStateException("Invalid confirmed funding operation");
         return intent;
     }
 

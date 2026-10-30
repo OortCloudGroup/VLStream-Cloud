@@ -64,7 +64,10 @@ class ComputeExternalBillingIntegrationTest {
             ComputeFundingIntentService.Intent topup = journal.prepareTopup(hold.id,
                 "topup-loopback-1", "300", "GPU_COMPUTE", System.currentTimeMillis());
             assertFalse(topup.body.contains("expires_at"));
-            assertEquals("RECEIPT_UNVERIFIED", recovery.advance(topup.id, System.currentTimeMillis()).state);
+            int queriesBeforeTopup = loopback.holdQueries;
+            assertEquals("OPERATION_CONFIRMED", recovery.advance(topup.id, System.currentTimeMillis()).state);
+            assertEquals(queriesBeforeTopup + 1, loopback.holdQueries,
+                "The original topup receipt must be followed by a fresh hold query");
             settlements.dispatch(reference);
             settlements.dispatch(reference);
             assertEquals("SETTLED", fixture.state(reference));
@@ -88,7 +91,7 @@ class ComputeExternalBillingIntegrationTest {
         final long expiry;
         final List<String> captureBodies = new ArrayList<>(), captureKeys = new ArrayList<>();
         String holdReference;
-        int total = 100, captured, version = 1, releases;
+        int total = 100, captured, version = 1, releases, holdQueries;
         boolean rejected;
         JsonNode charge;
 
@@ -151,6 +154,7 @@ class ComputeExternalBillingIntegrationTest {
                     // Deliberately unspecified: this must never be accepted as operation success.
                     response.put("uncontracted", true);
                 } else if (path.contains("/holds/")) {
+                    holdQueries++;
                     response = counters();
                     response.put("merchant_hold_id", holdReference); response.put("user_id", 123);
                     response.put("expires_at", expiry);

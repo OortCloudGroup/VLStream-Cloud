@@ -20,6 +20,8 @@ public interface ExternalBillingGateway {
     Result byReference(String reference);
     Result balance(String verifiedUserId);
     Result capture(String originalKey, String immutableBody);
+    /** Fresh read-only conversion evidence; an unsupported gateway never authorizes trial writes. */
+    default JsonNode config() { throw new IllegalStateException("Current billing configuration unavailable"); }
     /** Implemented, explicitly enabled hold-to-charge transport. Target wallet verification is a separate gate. */
     boolean supportsAtomicCapture();
     default Result ledger(long fromSecond, long toSecond, String cursor) { return Result.of(Status.UNKNOWN); }

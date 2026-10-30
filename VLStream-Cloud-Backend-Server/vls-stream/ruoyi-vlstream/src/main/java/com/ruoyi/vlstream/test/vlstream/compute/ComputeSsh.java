@@ -29,11 +29,14 @@ public class ComputeSsh {
     private ComputeApprovedAutoDlSshIdentity approvedAutoDlIdentity;
     @Autowired(required = false)
     private ConfiguredOfficialSshIdentity officialIdentity;
+    @Autowired(required = false)
+    private AutoDlRuntimeSsh runtimeSsh;
 
     /** Validate the administrator-owned key reference without reading private material. */
     public void requireDeploymentIdentity(ComputeNode node) throws IOException {
         if ("autodl".equals(node.getProvider())) {
             if(node.isConfigurationManaged()) {
+                if(runtimeSsh!=null&&runtimeSsh.dynamic(node)){try(AutoDlRuntimeSsh.Binding ignored=runtimeSsh.require(node)){return;}}
                 if(officialIdentity==null)throw new IOException("官方算力SSH部署身份未配置");
                 officialIdentity.resolve(node);return;
             }
@@ -48,9 +51,11 @@ public class ComputeSsh {
     public Connection open(ComputeNode node) throws IOException {
         Session session = null;
         JSch jsch = null;
+        AutoDlRuntimeSsh.Binding runtimeReference=null;
         try {
+            if(runtimeSsh!=null&&runtimeSsh.dynamic(node)) {runtimeReference=runtimeSsh.require(node);node=runtimeReference.endpoint(node);}
             ComputeTrustedSelfPolicy.Target target = trustedSelfPolicy.resolve(node);
-            boolean keyMode = ComputeDeploymentSshIdentity.KEY.equals(node.getAuthMode());
+            boolean keyMode = runtimeReference==null&&ComputeDeploymentSshIdentity.KEY.equals(node.getAuthMode());
             ComputeApprovedAutoDlSshIdentity.Reference autoDlReference = null;
             ConfiguredOfficialSshIdentity.Reference officialReference = null;
             if (keyMode && "autodl".equals(node.getProvider())) {
@@ -67,6 +72,7 @@ public class ComputeSsh {
             jsch = new JSch();
             String alias = node.getHost() + ":" + node.getPort();
             boolean pinned = target.hostKey() != null && !target.hostKey().isEmpty();
+            if(runtimeReference!=null&&!pinned)throw new IOException("官方动态SSH必须核验主机公钥");
             if (pinned) jsch.getHostKeyRepository().add(new HostKey(alias, Base64.getDecoder().decode(target.hostKey())), null);
             if (keyMode) {
                 requireDeploymentIdentity(node);
@@ -74,7 +80,7 @@ public class ComputeSsh {
                 if (officialReference != null) officialReference.addIdentity(jsch);
                 else if (autoDlReference != null) autoDlReference.addIdentity(jsch);
                 else deploymentIdentity.addIdentity(node, jsch);
-            } else if (!ComputeDeploymentSshIdentity.PASSWORD.equals(node.getAuthMode())) {
+            } else if (runtimeReference==null&&!ComputeDeploymentSshIdentity.PASSWORD.equals(node.getAuthMode())) {
                 throw new IOException("SSH认证模式无效");
             }
             session = jsch.getSession(node.getUsername(), node.getHost(), node.getPort());
@@ -83,16 +89,18 @@ public class ComputeSsh {
             session.setConfig("StrictHostKeyChecking", pinned ? "yes" : "no");
             if (target.requiredAlgorithm() != null) session.setConfig("server_host_key", target.requiredAlgorithm());
             session.setConfig("PreferredAuthentications", keyMode ? "publickey" : "password,keyboard-interactive");
-            if (!keyMode) session.setPassword(cipher.decrypt(node.getPasswordCipher()));
+            if(runtimeReference!=null)runtimeReference.authenticate(session);
+            else if (!keyMode) session.setPassword(cipher.decrypt(node.getPasswordCipher()));
             session.setTimeout(30000);
             session.connect(20000);
+            if(runtimeReference!=null)session.setPassword((String)null);
             return new Connection(session, jsch);
         } catch (Exception e) {
             if (session != null) session.disconnect();
             if (jsch != null) try { jsch.removeAllIdentity(); } catch (Exception ignored) { }
             // An exception cause from a key parser may contain a private file path.
             throw new IOException("SSH 连接失败，请检查实例、认证模式和主机指纹");
-        }
+        } finally {if(runtimeReference!=null)runtimeReference.close();}
     }
 
     public static String quote(String text) { return "'" + text.replace("'", "'\"'\"'") + "'"; }
@@ -193,6 +201,16 @@ public class ComputeSsh {
         public void download(String path, Path target) throws IOException {
             try (OutputStream output = Files.newOutputStream(target)) { sftp().get(path, output); }
             catch (Exception e) { throw new IOException("实例产物下载失败", e); }
+        }
+        public void downloadBounded(String path, Path target, long maximum) throws IOException {
+            if (maximum <= 0) throw new IOException("无效文件大小限制");
+            try (InputStream input = sftp().get(path); OutputStream output = Files.newOutputStream(target)) {
+                byte[] buffer = new byte[65536]; long total = 0; int count;
+                while ((count = input.read(buffer)) != -1) {
+                    total += count; if (total > maximum) throw new IOException("实例产物超过大小限制");
+                    output.write(buffer, 0, count);
+                }
+            } catch (Exception error) { throw new IOException("实例产物下载或大小校验失败", error); }
         }
         @Override public void close() { if (sftp != null) sftp.disconnect(); session.disconnect(); if (identityOwner != null) try { identityOwner.removeAllIdentity(); } catch (Exception ignored) { } }
     }

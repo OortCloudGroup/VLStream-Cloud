@@ -34,9 +34,17 @@ class AutoDlProStatusContractTest {
         org.springframework.test.util.ReflectionTestUtils.setField(provider,"configured",configured);
     }
     @AfterEach void verifyTransport(){transport.verify();}
+    @Test void singleOfficialControlDoesNotEnableLegacyNodesOrAnotherInstance(){
+        provider=new AutoDlProPowerProvider(mock(ComputeCredentialCipher.class),false,AutoDlProPowerProvider.transport());
+        ConfiguredComputeRegistry configured=mock(ConfiguredComputeRegistry.class);when(configured.providerTokenPresent(any())).thenReturn(true);
+        org.springframework.test.util.ReflectionTestUtils.setField(provider,"configured",configured);
+        org.springframework.test.util.ReflectionTestUtils.setField(provider,"officialControl",true);
+        org.springframework.test.util.ReflectionTestUtils.setField(provider,"officialControlInstanceId","pro-123456abcdef");
+        node.setConfigurationManaged(true);node.setId(-6000L);node.setConfigurationCode("official-autodl");node.setProviderInstanceId("pro-123456abcdef");assertTrue(provider.supports(node));
+        node.setConfigurationManaged(false);assertFalse(provider.supports(node));node.setConfigurationManaged(true);node.setProviderInstanceId("pro-abcdef123456");assertFalse(provider.supports(node));
+    }
     void state(String value) {
-        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"status")).andExpect(method(HttpMethod.GET))
-            .andExpect(content().json("{\"instance_uuid\":\"pro-fixture\"}"))
+        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"status?instance_uuid=pro-fixture")).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":\""+value+"\"}",MediaType.APPLICATION_JSON));
     }
     String item(String id,String status) {
@@ -62,16 +70,16 @@ class AutoDlProStatusContractTest {
         assertThrows(RuntimeException.class,()->ComputeBillingPolicy.requireEconomicalPaidOffer(node,System.currentTimeMillis()));
     }
     @Test void documentedCanonicalShutdownConfirmsOnlyOfficialPhysicalStopNotFreeSupplierStorage() {
-        state("shutdown");page(item("pro-fixture","shutdown"));node.setConfigurationManaged(true);
+        state("shutdown");node.setConfigurationManaged(true);
         ComputePowerProvider.Snapshot result=provider.status(node);
         assertEquals("STOPPED",result.power);assertEquals("AUTODL_PRO_PHYSICAL_STOPPED",result.stoppedMode);
         assertTrue(ComputeBillingPolicy.computeStopConfirmed(node,result));
         node.setConfigurationManaged(false);assertFalse(ComputeBillingPolicy.computeStopConfirmed(node,result));
     }
     @Test void supplierPrepaymentDoesNotExtendOfficialUserBillingAfterPhysicalShutdown() {
-        state("shutdown");page(item("pro-fixture","shutdown").replace("\"payg\"","\"prepaid\""));node.setConfigurationManaged(true);
+        state("shutdown");node.setConfigurationManaged(true);
         ComputePowerProvider.Snapshot result=provider.status(node);
-        assertEquals("prepaid",result.chargeType);assertTrue(ComputeBillingPolicy.computeStopConfirmed(node,result));
+        assertNull(result.chargeType);assertTrue(ComputeBillingPolicy.computeStopConfirmed(node,result));
     }
     @Test void mismatchedShutdownDoesNotBecomeAStopOrAReleaseProof() {
         state("shutdown");page(item("pro-fixture","starting"));
@@ -103,7 +111,7 @@ class AutoDlProStatusContractTest {
         assertEquals("UNKNOWN",provider.status(node).power);
     }
     @Test void rawPriceCannotBecomeCurrencyHourlyCostOrAUserLedgerRate() throws Exception {
-        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andExpect(method(HttpMethod.GET))
+        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot?instance_uuid=pro-fixture")).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"payg_price\":1970,\"origin_pay_price\":3030,\"root_password\":\"SYNTHETIC_SENSITIVE_FIELD\"}}",MediaType.APPLICATION_JSON));
         ComputeCostProvider.Observation price=provider.cost(node);
         assertEquals(0,new BigDecimal("1970").compareTo(price.getAmount()));assertFalse(price.isBillableCost());

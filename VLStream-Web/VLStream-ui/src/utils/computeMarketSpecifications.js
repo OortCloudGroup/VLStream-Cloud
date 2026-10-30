@@ -47,6 +47,10 @@ export function getMarketSpecifications(resource) {
     if (publicProjection && publicP10099Names.includes(resource.name)) return p10099
     if (publicProjection && publicP100173Names.includes(resource.name)) return p100173
   }
+  // The configured API names the GPU model; the confirmed catalog supplies memory.
+  if (resource.configurationManaged === true && resource.configurationCode === 'official-autodl' &&
+    resource.provider === 'autodl' && String(resource.id) === '-6000' && resource.billingType === 'POINTS' &&
+    /^RTX\s*6000D(?:\s*84\s*GB)?$/i.test(gpu)) return rtx6000d
   if (/RTX\s*6000D\s*84\s*GB/i.test(gpu) && resource.billingType === 'POINTS' &&
     (String(resource.id) === '792022144331380001' ||
       publicProjection && public6000dNames.includes(resource.name))) return rtx6000d

@@ -51,6 +51,8 @@ public class CloudTrainingWorker {
     @Value("${vlstream.model-storage.temp-dir:${java.io.tmpdir}/vls-model-storage}") private String tempDir;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputeSharedQueueService sharedQueue;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputePaidArchiveRecoveryService paidArchives;
 
     @Scheduled(fixedDelay = 5000, initialDelay = 20000)
     public void scan() {
@@ -91,6 +93,7 @@ public class CloudTrainingWorker {
                 catch (ServiceException e) {
                     if(java.util.Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE,e.getCode())) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",limited(e.getMessage()),job.getTenantId(),job.getId());
                     else if(sharedQueue!=null && sharedQueue.isSharedJob(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待节点确认，租约未释放；请管理员核对配置/队列",job.getTenantId(),job.getId());
+                    else if(paidArchives!=null && paidArchives.hasCheckpoint(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","原任务归档待恢复，退出证据及原盘产物保留",job.getTenantId(),job.getId());
                     else finish(job, "FAILED", limited(e.getMessage()), null);
                 }
                 catch (Exception e) {
@@ -116,6 +119,11 @@ public class CloudTrainingWorker {
         nodes.verifyJob(job,node);
         boolean company=sharedQueue!=null && sharedQueue.isSharedJob(job);
         if(nodes.isCompanyShared(node)!=company)throw new IOException("节点调度类型与本轮冻结配置不一致，不能切换执行路径");
+        boolean archiveOnly=paidArchives!=null && paidArchives.hasCheckpoint(job);
+        if(archiveOnly) {
+            requireArchiveClaim(job,node);
+            if(!paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
+        }
         if (job.isCancelRequested() && "QUEUED".equals(job.getJobState())) {
             if(company)try(ComputeSsh.Connection connection=ssh.open(node)){sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);}
             finish(job, "CANCELLED", "训练已取消", null); return;
@@ -127,6 +135,7 @@ public class CloudTrainingWorker {
             String configPath = job.getRunDir() + "/job.json";
             String prepared = connection.execute("test -s " + quote(configPath) + " && echo READY || echo MISSING", 20).trim();
             if (!"READY".equals(prepared)) {
+                if(archiveOnly)throw new IOException("原归档任务文件缺失，保留退出证明等待核对");
                 if (cancelled(job)) {
                     if(company)sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);
                     finish(job, "CANCELLED", "训练已取消", null); return;
@@ -145,8 +154,18 @@ public class CloudTrainingWorker {
             JsonNode result = remoteStatus(connection.execute(command + (cancelled(job) ? " cancel " : " status ") + quote(configPath), 45));
             jdbc.update("UPDATE vls_cloud_training_job SET log_tail=? WHERE tenant_id=? AND id=?", result.path("logs").asText(""), job.getTenantId(), job.getId());
             String state = result.path("state").asText();
+            if(archiveOnly && !"SUCCEEDED".equals(state))throw new IOException("原归档任务终态已变化，不能重新训练或覆盖证据");
             if ("SUCCEEDED".equals(state)) {
-                phase(job, "ARCHIVING", "训练已完成，正在校验并回存 PT 和类别文件", 99, result.path("epoch").asInt());
+                if(!archiveOnly)phase(job, "ARCHIVING", "训练已完成，正在校验并回存 PT 和类别文件", 99, result.path("epoch").asInt());
+                if(nodes.officialConfigured(node) && !company && paidArchives!=null) {
+                    JsonNode proof=archiveExitProof(connection,node,job);
+                    if(!proof.path("sha256").asText().equals(result.path("sha256").asText()) || proof.path("size").asLong()!=result.path("size").asLong())
+                        throw new IOException("原训练结果与进程退出证明不一致");
+                    ComputePublicInventoryService.Instance claim=requireArchiveClaim(job,node);
+                    paidArchives.recordExit(job,node,archiveTarget(node),claim.getClaimId(),claim.getOwnerSubject(),proof,System.currentTimeMillis());
+                    job.setOptionsJson(jdbc.queryForObject("SELECT options_json FROM vls_cloud_training_job WHERE id=?",String.class,job.getId()));
+                    if(paidArchives.hasCheckpoint(job) && !paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
+                }
                 archive(job, connection, result);
                 if(company) {
                     String classes=new TrainingDatasetLayout(job.getAnnotationType(),data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir()+"/dataset");
@@ -164,6 +183,27 @@ public class CloudTrainingWorker {
                 phase(job, "RUNNING", cancelled(job) ? "等待训练进程确认停止" : "所选 AutoDL 实例训练中", Math.min(98, result.path("progress").asInt()), result.path("epoch").asInt());
             } else throw new IOException("实例返回了未知任务状态");
         }
+    }
+
+    private String archiveTarget(ComputeNode node) { return String.valueOf(nodes.configurationSnapshot(node).get("targetFingerprint")); }
+    private ComputePublicInventoryService.Instance requireArchiveClaim(CloudTrainingJob job,ComputeNode node) throws IOException {
+        if(!nodes.officialConfigured(node)||nodes.isCompanyShared(node))throw new IOException("原任务归档恢复仅支持官方付费独占实例");
+        ComputePublicInventoryService.Instance claim=nodes.publicInventory().read(node,false);
+        if(claim==null||!"OCCUPIED".equals(claim.getPublicState())||!Objects.equals(job.getPublicClaimId(),claim.getClaimId())
+            ||!Objects.equals(job.getPublicOwnerSubject(),claim.getOwnerSubject())||!Objects.equals(job.getPublicInstanceKey(),node.getPublicInstanceKey()))
+            throw new IOException("原任务归档占用身份已变化");
+        return claim;
+    }
+    private JsonNode archiveExitProof(ComputeSsh.Connection connection,ComputeNode node,CloudTrainingJob job) throws IOException {
+        String source;
+        try(InputStream input=new org.springframework.core.io.ClassPathResource("training/paid_archive_exit_probe.py").getInputStream()) {
+            source=Base64.getEncoder().encodeToString(org.springframework.util.StreamUtils.copyToByteArray(input));
+        }
+        String command="import base64;exec(compile(base64.b64decode('"+source+"'),'<vls-paid-archive-exit>','exec'))";
+        String output=connection.execute(quote(node.getPythonPath())+" -c "+quote(command)+" "+quote(job.getRunDir()),30);
+        int marker=output.lastIndexOf("VLS_ARCHIVE_EXIT=");
+        if(marker<0)throw new IOException("实例未返回原训练进程退出证明");
+        return json.readTree(output.substring(marker+17).trim());
     }
 
     private void persistDatasetReference(CloudTrainingJob job, String reference) throws IOException {
@@ -203,11 +243,27 @@ public class CloudTrainingWorker {
         String sha = result.path("sha256").asText(); long size = result.path("size").asLong();
         if (!sha.matches("[a-f0-9]{64}") || size < 1) throw new IOException("实例产物缺少校验信息");
         String yaml = new TrainingDatasetLayout(job.getAnnotationType(), data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir() + "/dataset");
+        if(paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+            requireOriginalStoredArtifact(job.modelKey(),sha,size,false);
+            requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,false);
+        }
         if (!objects.archive(ModelClassFileService.storagePath(job.modelKey()), "data.yaml", target -> Files.write(target, yaml.getBytes(StandardCharsets.UTF_8)))) throw new IOException("类别归档等待重试");
         if (!objects.archive(job.modelKey(), "best.pt", target -> {
             connection.download(job.getRunDir() + "/output/weights/best.pt", target);
             if (Files.size(target) != size || !digest(target).equals(sha)) throw new IOException("PT 从实例取回后校验不一致");
         })) throw new IOException("PT 归档等待重试");
+        // archive() may observe a concurrent READY row after the preflight. Completion must
+        // still match this original result and classes, including that short-circuit path.
+        if(paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+            requireOriginalStoredArtifact(job.modelKey(),sha,size,true);
+            requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,true);
+        }
+    }
+
+    private void requireOriginalStoredArtifact(String path,String sha,long size,boolean requireReady) throws IOException {
+        ModelArtifactObjectStore.StoredArtifact stored=objects.find(path);
+        if(requireReady&&stored==null||stored!=null&&(!sha.equals(stored.getSha256())||size!=stored.getFileSize()))
+            throw new IOException("原任务已归档对象与冻结的产物证明不一致");
     }
 
     private boolean cancelled(CloudTrainingJob job) {

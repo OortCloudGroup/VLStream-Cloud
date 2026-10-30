@@ -221,9 +221,29 @@ class Registry:
             state['tickets'][key]['state'] = 'ARCHIVING'
             self.persist(state)
 
+    @staticmethod
+    def verify_detection_archive(root, acknowledgement):
+        result = read_json(root / 'result.json')
+        manifest = read_json(root / 'manifest.json')
+        acknowledged = read_json(root / 'acknowledged.json').get('events', [])
+        events = manifest.get('events', [])
+        manifest_path = root / 'manifest.json'
+        sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest() if manifest_path.is_file() else ''
+        if result.get('kind') != 'CLOUD_AI' or result.get('state') not in ('COMPLETED', 'CANCELLED', 'SKIPPED', 'FAILED'):
+            raise ValueError('Detection terminal proof missing; lease retained')
+        if not re.fullmatch('[a-f0-9]{64}', sha) or sha != result.get('manifestSha256') or sha != acknowledgement.get('manifestSha256'):
+            raise ValueError('Detection manifest acknowledgement mismatch; lease retained')
+        if result.get('eventCount') != len(events) or acknowledgement.get('eventCount') != len(events) or set(acknowledged) != {event['id'] for event in events}:
+            raise ValueError('Detection evidence has not been archived; lease retained')
+
     def release(self, ticket, acknowledgement):
         with self.locked() as state:
             requested = validate_ticket(ticket)
+            if requested not in state['tickets'] and acknowledgement.get('state') == 'DETECTION_ARCHIVED':
+                root = Path(ticket['runDir'])
+                with confirmed_exit(root):
+                    self.verify_detection_archive(root, acknowledgement)
+                    return dict(state='DONE', position=0, ownsLease=False)
             if requested not in state['tickets'] and acknowledgement.get('state') == 'CANCELLED':
                 # No admission ever took place, and no process state may be present.
                 if read_json(Path(ticket['runDir']) / 'state.json'):
@@ -245,6 +265,8 @@ class Registry:
                         raise ValueError('Successful task archive acknowledgement does not match its result')
                     if not re.fullmatch('[a-f0-9]{64}', acknowledgement.get('classesSha256', '')):
                         raise ValueError('Verified classes archive acknowledgement missing')
+                elif acknowledgement.get('state') == 'DETECTION_ARCHIVED':
+                    self.verify_detection_archive(root, acknowledgement)
                 elif acknowledgement.get('state') in ('FAILED', 'CANCELLED'):
                     result = read_json(root / 'result.json')
                     if state['active'] == key and result.get('state') != acknowledgement['state']:

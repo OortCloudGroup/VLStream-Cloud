@@ -1,5 +1,7 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
+import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingTrialGuard;
+import com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway;
 import java.time.Instant;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 @RequiredArgsConstructor
 public class ConfiguredPaidPowerService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private ComputeBillingTrialGuard trialGuard;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private AutoDlRuntimeSsh runtimeSsh;
+    @org.springframework.beans.factory.annotation.Autowired
+    private ObjectProvider<ExternalBillingGateway> externalGateways;
     private final JdbcTemplate jdbc;
     private final ConfiguredComputeRegistry configured;
     private final ObjectProvider<ComputePowerProvider> providers;
@@ -33,6 +41,13 @@ public class ConfiguredPaidPowerService {
         ComputePowerProvider supplier=provider(verified);
         if("PREPARED".equals(phase)) {
             if(!stop) {
+                try {requireTrialStart(run,verified);}
+                catch(RuntimeException denied) {
+                    // No power submission has happened. Preserve the original hold for safe cancellation.
+                    jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);
+                    jdbc.update("UPDATE vls_compute_paid_run SET error_code='TRIAL_GUARD_BLOCKED' WHERE run_id=?",id);
+                    return;
+                }
                 ComputeNode preflight=refresh(verified);
                 if(!"STOPPED".equals(preflight.getPowerState()))return;
                 ComputeBillingPolicy.requireEconomicalPaidOffer(preflight,System.currentTimeMillis());
@@ -65,8 +80,21 @@ public class ConfiguredPaidPowerService {
                 Instant event=validStartEvent(run,observed,now);
                 ledger.confirmedRunning(usage,now,event==null?now:event,event==null?"OBSERVATION":"PROVIDER_EVENT");
             }
-            if(!stop)jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
+            if(!stop) {
+                boolean connected=true;
+                if(runtimeSsh!=null&&runtimeSsh.dynamic(verified))try {runtimeSsh.prepare(id,verified);}
+                catch(Exception pending) {
+                    connected=false;
+                    jdbc.update("UPDATE vls_compute_paid_run SET error_code='SSH_PREPARATION_PENDING' WHERE run_id=?",id);
+                    Map<String,Object> latest=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+                    Object started=latest.get("billing_start_at");
+                    if(started instanceof java.sql.Timestamp&&System.currentTimeMillis()-((java.sql.Timestamp)started).getTime()>=30000L)
+                        jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code='SSH_PREPARATION_FAILED' WHERE usage_id=?",usage);
+                }
+                if(connected)jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
+            }
         } else if(ComputeBillingPolicy.computeStopConfirmed(verified,observed)) {
+            if(runtimeSsh!=null)runtimeSsh.clear(verified);
             if(usageRow.get("billing_start_at")==null) {
                 Instant start=validStartEvent(run,observed,now);
                 if(start==null||observed.providerStoppedAt==null||observed.providerStoppedAt.isBefore(start))return;
@@ -78,6 +106,23 @@ public class ConfiguredPaidPowerService {
             if(event!=null&&(event.isBefore(start)||event.isAfter(now)))event=null;
             ledger.confirmedStopped(usage,now,event==null?now:event,event==null?"OBSERVATION":"PROVIDER_EVENT");
         }
+    }
+    private void requireTrialStart(Map<String,Object> run,ComputeNode node) {
+        String usage=text(run,"usage_id");
+        if(trialGuard==null) {
+            // Direct construction is retained for existing non-trial fixtures; a persisted marker
+            // must never lose its guard because a dependency was omitted after restart.
+            try {
+                if(new com.fasterxml.jackson.databind.ObjectMapper().readTree(text(run,"quote_snapshot")).has("trial_guard"))
+                    throw new IllegalStateException("Trial guard unavailable for original paid run");
+            } catch(java.io.IOException invalid) {throw new IllegalStateException("Invalid paid-run snapshot",invalid);}
+            return;
+        }
+        if(!trialGuard.protectedUsage(usage))return;
+        trialGuard.requireNode(node);
+        ExternalBillingGateway gateway=externalGateways==null?null:externalGateways.getIfAvailable();
+        if(gateway==null)throw new IllegalStateException("Fresh trial conversion configuration required before power submission");
+        trialGuard.requireNewUsage(usage,gateway.config());
     }
     private Instant validStartEvent(Map<String,Object> run,ComputePowerProvider.Snapshot observed,Instant now) {
         Object attempt=run.get("power_start_attempt_ms");Instant event=observed.providerStartedAt;

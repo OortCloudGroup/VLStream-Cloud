@@ -23,6 +23,12 @@ public class ComputePublicMarketService {
         private String billingType;
         private BigDecimal price;
         private String priceUnit;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String userHourlyPrice;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String priceCurrency;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String pricePolicy;
         private String schedulingMode;
         private String powerState;
         private String healthState;
@@ -86,7 +92,9 @@ public class ComputePublicMarketService {
         List<Offer> configuration=new java.util.ArrayList<>();
         if(configured!=null)for(ComputeNode node:configured.published()) {
             Offer offer=new Offer();offer.setName(publicText(node.getName(),"GPU resource"));offer.setGpuModel(publicText(node.getGpuModel(),"GPU"));
-            offer.setBillingType("FREE");offer.setSchedulingMode(ComputeSharedQueueService.MODE);
+            offer.setBillingType(oneOf(node.getBillingType(),"FREE","POINTS"));
+            offer.setSchedulingMode(oneOf(node.getSchedulingMode(),ComputeSharedQueueService.MODE,"INSTANCE_EXCLUSIVE"));
+            configuredPrice(offer,node);
             offer.setPowerState(ComputeAvailability.fresh(node.getPowerCheckedAt(),now)?oneOf(node.getPowerState(),"RUNNING"):"UNKNOWN");
             offer.setHealthState(ComputeAvailability.fresh(node.getProbeTime(),now)?oneOf(node.getProbeState(),"READY","ERROR"):"UNKNOWN");
             offer.setAvailability(availability(offer,false,null,false));configuration.add(offer);
@@ -94,6 +102,17 @@ public class ComputePublicMarketService {
         int offset=(int)Math.max(0,(long)(page-1)*size-databaseTotal);
         if(items.size()<size && offset<configuration.size())items.addAll(configuration.subList(offset,Math.min(configuration.size(),offset+size-items.size())));
         return new Page(items, databaseTotal+configuration.size(), page, size);
+    }
+    private static void configuredPrice(Offer offer, ComputeNode node) {
+        if (!"POINTS".equals(offer.getBillingType()) || !"VLS_FIXED".equals(node.getPricePolicy())
+            || !"PER_INSTANCE_HOUR".equals(node.getPriceUnit()) || node.getPriceCurrency() == null
+            || !node.getPriceCurrency().matches("[A-Z]{3}") || node.getUserHourlyPrice() == null
+            || !node.getUserHourlyPrice().matches("(0|[1-9][0-9]*)(\\.[0-9]{1,12})?")) return;
+        BigDecimal price = new BigDecimal(node.getUserHourlyPrice());
+        if (price.signum() <= 0) return;
+        offer.setPrice(price); offer.setPriceUnit("PER_INSTANCE_HOUR");
+        offer.setUserHourlyPrice(price.toPlainString()); offer.setPriceCurrency(node.getPriceCurrency());
+        offer.setPricePolicy("VLS_FIXED");
     }
     // Dated presentation only, never billing or a live supplier quote. Match trusted
     // persisted identity, not public names/specifications; do not expose that identity.

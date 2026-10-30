@@ -40,6 +40,8 @@ public class ConfiguredComputeProperties {
         private int port = 22;
         private String username = "root";
         private String hostKey;
+        /** Existing administrator-verified host bindings; never written by first-use discovery. */
+        private String knownHostsFile;
         private String publicKeyFingerprint;
         @com.fasterxml.jackson.annotation.JsonIgnore
         @lombok.ToString.Exclude

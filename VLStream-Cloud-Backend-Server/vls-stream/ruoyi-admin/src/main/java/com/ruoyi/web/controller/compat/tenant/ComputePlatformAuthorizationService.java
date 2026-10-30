@@ -24,6 +24,17 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
     private final BladeTokenUserStore localUsers;
     private final TokenProperties properties;
     private static final String ATTRIBUTE=ComputePlatformAuthorizationService.class.getName()+".context";
+    private static final String SELF_ATTRIBUTE=ComputePlatformAuthorizationService.class.getName()+".verifiedSelf";
+    /** Not a response DTO or session object: credentials live only in this authenticated request. */
+    private static final class VerifiedSelf {
+        final String localToken, proof, mode;
+        final com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient.SelfAuthorization authorization;
+        VerifiedSelf(String localToken, String proof, Context actor, PlatformGatewayHeaders headers) {
+            this.localToken=localToken; this.proof=proof; this.mode=actor.getMode();
+            this.authorization=new com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient.SelfAuthorization(
+                actor,proof,headers.getRequestType(),headers.getAppId(),headers.getSecretKey());
+        }
+    }
 
     @Override public Context check() {
         HttpServletRequest request=currentRequest(); Context result=new Context();
@@ -50,12 +61,15 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
             catch (Exception e) { return deny(result,"UNAVAILABLE","平台授权校验配置暂不可用，请联系管理员"); }
         }
         try {
+            // Freeze the exact verified gateway values, not a mutable bound-session reference.
+            headers=new PlatformGatewayHeaders(headers.getRequestType(),headers.getAppId(),headers.getSecretKey());
             PlatformIdentity identity=client.verifyToken(token,headers);
             if (identity==null || blank(identity.getUserId()) || blank(identity.getTenantId())) return deny(result,"UNAVAILABLE","平台授权未返回有效身份，请稍后重试");
             if (multi && (!Objects.equals(bound.getPlatformUserId(),identity.getUserId()) || !Objects.equals(bound.getTenantId(),identity.getTenantId())))
                 return deny(result,"CHANGED","平台账户或租户已变化，请重新授权登录");
             result.setAuthorized(true); result.setPlatformUserId(identity.getUserId()); result.setPlatformTenantId(identity.getTenantId());
-            result.setMessage("平台身份已校验；个人余额扣款、GPU 计量与整机占用/产物安全回存清理尚未接入，收费操作仍阻断；工作空间成本由平台承担");
+            result.setMessage("平台身份已校验；余额与付费操作仍须通过各自的计费准入及本次报价确认");
+            request.setAttribute(SELF_ATTRIBUTE,new VerifiedSelf(localToken,token,result,headers));
             request.setAttribute(ATTRIBUTE,result); return result;
         } catch (Exception e) {
             // Never echo upstream messages, URLs, credentials or exception causes.
@@ -67,9 +81,17 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
     public com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer billingPayer(
             com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient billing) {
         Context actor=requireIdentity();
-        String proof=originalPlatformToken(currentRequest());
-        if(proof==null)throw new com.ruoyi.common.exception.ServiceException("计费身份需要当前已验证的平台会话");
-        return billing.resolveSelf(actor,proof);
+        HttpServletRequest request=currentRequest();
+        Object cached=request==null?null:request.getAttribute(SELF_ATTRIBUTE);
+        String localToken=request==null?null:TokenHeaderResolver.normalize(request.getHeader("Authorization"));
+        if(localToken==null&&request!=null)localToken=TokenHeaderResolver.normalize(request.getHeader("blade-auth"));
+        if(!(cached instanceof VerifiedSelf))throw new com.ruoyi.common.exception.ServiceException("计费身份需要当前已验证的平台会话");
+        VerifiedSelf verified=(VerifiedSelf)cached;
+        if(!Objects.equals(verified.proof,originalPlatformToken(request))||!Objects.equals(verified.localToken,localToken)
+            ||!Objects.equals(verified.mode,actor.getMode())||!Objects.equals(currentUserId(),actor.getVlsUserId())
+            ||!Objects.equals(TenantContextHolder.getTenantId(),actor.getVlsTenantId()))
+            throw new com.ruoyi.common.exception.ServiceException("计费身份已变化，请使用当前平台会话重试");
+        return billing.resolveSelf(actor,verified.authorization);
     }
     protected String currentUserId() { return LoginHelper.getUserId(); }
     /** Compatibility wrappers normalize all auth headers to the local session.
@@ -85,5 +107,5 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
         return TokenHeaderResolver.normalize(original.getHeader("accesstoken"));
     }
     private static boolean blank(String value) { return value==null || value.trim().isEmpty(); }
-    private Context deny(Context result,String reason,String message) { result.setReason(reason);result.setMessage(message);return result; }
+    private Context deny(Context result,String reason,String message) { result.setAuthorized(false);result.setReason(reason);result.setMessage(message);return result; }
 }

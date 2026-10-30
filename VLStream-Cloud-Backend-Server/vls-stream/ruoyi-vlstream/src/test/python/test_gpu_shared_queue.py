@@ -1,5 +1,6 @@
 """Linux filesystem/process tests for the shared queue; no GPU training is simulated."""
 import fcntl
+import hashlib
 import importlib.util
 import json
 import multiprocessing
@@ -61,6 +62,52 @@ class SharedQueueTest(unittest.TestCase):
         self.assertTrue(self.registry.inspect()['active'])
         self.registry.release(local, self.result(local))
         self.assertTrue(self.registry.claim(vm))
+
+    def detection_result(self, ticket, state='COMPLETED', acknowledged=True):
+        root=Path(ticket['runDir']);root.mkdir(parents=True,exist_ok=True)
+        manifest=dict(events=[dict(id='event-1')])
+        (root/'manifest.json').write_text(json.dumps(manifest))
+        digest=hashlib.sha256((root/'manifest.json').read_bytes()).hexdigest()
+        (root/'result.json').write_text(json.dumps(dict(kind='CLOUD_AI',state=state,manifestSha256=digest,eventCount=1)))
+        (root/'acknowledged.json').write_text(json.dumps(dict(events=['event-1'] if acknowledged else [])))
+        return dict(state='DETECTION_ARCHIVED',manifestSha256=digest,eventCount=1)
+
+    def test_detection_blocks_training_until_every_event_is_archived(self):
+        detection,training=self.ticket(),self.ticket('vm','d')
+        self.registry.register([detection,training]);self.assertTrue(self.registry.claim(detection))
+        self.registry.archiving(detection)
+        proof=self.detection_result(detection,acknowledged=False)
+        with self.assertRaises(ValueError):self.registry.release(detection,proof)
+        self.assertFalse(self.registry.claim(training))
+        self.detection_result(detection)
+        self.registry.release(detection,proof)
+        self.assertTrue(self.registry.claim(training))
+
+    def test_detection_release_requires_matching_manifest_and_proven_exit(self):
+        ticket=self.ticket();self.registry.register([ticket]);self.registry.claim(ticket)
+        proof=self.detection_result(ticket);root=Path(ticket['runDir'])
+        with self.assertRaises(ValueError):self.registry.release(ticket,dict(proof,eventCount=2))
+        with self.assertRaises(ValueError):self.registry.release(ticket,dict(proof,manifestSha256='a'*64))
+        start=Path('/proc/self/stat').read_text().rsplit(')',1)[1].split()[19]
+        (root/'state.json').write_text(json.dumps(dict(supervisorPid=os.getpid(),supervisorStart=start)))
+        with self.assertRaises(ValueError):self.registry.release(ticket,proof)
+        (root/'state.json').write_text('{}')
+        self.registry.release(ticket,proof)
+        self.registry.release(ticket,proof)
+        self.assertFalse(self.registry.inspect()['active'])
+
+    def test_expired_detection_does_not_release_active_training(self):
+        training,waiting=self.ticket(),self.ticket('vm')
+        self.registry.register([training,waiting]);self.registry.claim(training)
+        self.registry.release(waiting,self.detection_result(waiting,state='SKIPPED'))
+        self.assertTrue(self.registry.inspect(training)['ownsLease'])
+        self.assertEqual(self.registry.inspect(waiting)['state'],'DONE')
+
+    def test_recovery_before_queue_registration_requires_detection_terminal_proof(self):
+        ticket=self.ticket();proof=self.detection_result(ticket,state='CANCELLED')
+        self.assertEqual(self.registry.release(ticket,proof)['state'],'DONE')
+        (Path(ticket['runDir'])/'acknowledged.json').write_text('{}')
+        with self.assertRaises(ValueError):self.registry.release(ticket,proof)
 
     def test_atomic_concurrent_registration_survives_process_restart(self):
         tickets = [self.ticket('localhost' if index % 2 else 'vm') for index in range(12)]

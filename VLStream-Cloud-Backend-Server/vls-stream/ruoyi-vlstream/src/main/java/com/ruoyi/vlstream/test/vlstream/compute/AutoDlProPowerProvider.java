@@ -25,6 +25,10 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
     private final ObjectMapper json = new ObjectMapper();
     @Autowired(required = false)
     private ConfiguredComputeRegistry configured;
+    @Value("${vlstream.compute.official-autodl-control.enabled:false}")
+    private boolean officialControl;
+    @Value("${vlstream.compute.official-autodl-control.instance-id:}")
+    private String officialControlInstanceId;
     @Autowired
     public AutoDlProPowerProvider(ComputeCredentialCipher cipher, @Value("${vlstream.compute.cloud-control.enabled:false}") boolean enabled) {
         this(cipher, enabled, transport());
@@ -46,7 +50,11 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         return new RestTemplate(factory);
     }
     @Override public boolean supports(ComputeNode node) {
-        return enabled && "API".equals(node.getControlMode()) && "autodl".equals(node.getProvider())
+        boolean scoped=officialControl&&node.isConfigurationManaged()&&Long.valueOf(-6000L).equals(node.getId())
+            &&"official-autodl".equals(node.getConfigurationCode())&&officialControlInstanceId!=null
+            &&officialControlInstanceId.matches("pro-[a-f0-9]{12}")&&officialControlInstanceId.equals(node.getProviderInstanceId());
+        if(officialControl&&!scoped)return false;
+        return (enabled||scoped) && "API".equals(node.getControlMode()) && "autodl".equals(node.getProvider())
             && "AUTODL_PRO".equals(node.getProviderProduct()) && (node.isConfigurationManaged()
                 ? configured!=null&&configured.providerTokenPresent(node) : node.isProviderCredentialConfigured())
             && node.getProviderInstanceId() != null && !node.getProviderInstanceId().isEmpty();
@@ -90,6 +98,15 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
     private static String safeIdentifier(String value) { return value!=null && value.matches("[A-Za-z0-9_-]{1,100}")?value:null; }
     @Override public Snapshot status(ComputeNode node) {
         JsonNode state = call(node, HttpMethod.GET, "status", body(node));
+        // Real Pro GET endpoints bind instance_uuid from the query, despite the
+        // public guide's request-body example. Exact target status needs no inventory enumeration.
+        if(node.isConfigurationManaged()) {
+            String raw=state.isTextual()?state.asText():"";
+            String power="running".equals(raw)?"RUNNING":"shutdown".equals(raw)?"STOPPED":"starting".equals(raw)?"STARTING":"shutting_down".equals(raw)?"STOPPING":"UNKNOWN";
+            Snapshot direct=new Snapshot(power,"UNKNOWN","AutoDL Pro 指定实例状态；磁盘保留费用独立");
+            if("STOPPED".equals(power))direct.stoppedMode="AUTODL_PRO_PHYSICAL_STOPPED";
+            return direct;
+        }
         // The documented list owns charge_type/req_gpu_amount. Snapshot is not their
         // contract and contains unrelated SSH/Jupyter secrets; do not fetch it here.
         JsonNode page = inventoryData(node, 1, 20);
@@ -132,6 +149,8 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         if (snapshot.path("origin_pay_price").isNumber()) result.setOriginalAmount(snapshot.path("origin_pay_price").decimalValue());
         result.setMessage("价格原值已读取；缩放单位、币种及单卡/整实例口径尚未确认，不能作为收费成本，不乘卡数或猜除数"); return result;
     }
+    /** Secrets in this response must remain in the bounded runtime SSH context only. */
+    JsonNode connectionSnapshot(ComputeNode node) { return call(node,HttpMethod.GET,"snapshot",body(node)); }
     private Map<String,Object> body(ComputeNode node) { Map<String,Object> body = new LinkedHashMap<>(); body.put("instance_uuid", node.getProviderInstanceId()); return body; }
     private JsonNode call(ComputeNode node, HttpMethod method, String path, Map<String,Object> body) {
         if (!supports(node)) throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
@@ -140,7 +159,10 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
                 : json.readTree(cipher.decrypt(node.getProviderCredentialCipher())).path("token").asText();
             if (token.isEmpty() || token.contains("\r") || token.contains("\n")) throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
             HttpHeaders headers = new HttpHeaders(); headers.setContentType(MediaType.APPLICATION_JSON); headers.set("Authorization", token);
-            String response = http.exchange(BASE + path, method, new HttpEntity<>(json.writeValueAsString(body), headers), String.class).getBody();
+            String url=BASE+path;
+            String requestBody=json.writeValueAsString(body);
+            if(method==HttpMethod.GET){url+="?instance_uuid="+java.net.URLEncoder.encode(node.getProviderInstanceId(),"UTF-8");requestBody=null;}
+            String response = http.exchange(url, method, new HttpEntity<>(requestBody, headers), String.class).getBody();
             if (response == null || response.length() > 1024 * 1024) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN);
             JsonNode envelope = json.readTree(response);
             if (!"Success".equals(envelope.path("code").asText())) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN);

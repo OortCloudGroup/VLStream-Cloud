@@ -33,6 +33,21 @@ export const verifiedMarketPriceReference = Object.freeze({
   source: 'https://www.autodl.com/console/instance/pro/list'
 })
 
+// Only the market view retires this exact historical card when its configured
+// replacement is present. Stored resources, aliases and other pages are unchanged.
+export function marketDisplayResources(resources = []) {
+  const official = resource => resource?.configurationManaged === true
+    && resource.configurationCode === 'official-autodl' && resource.provider === 'autodl'
+    && String(resource.id) === '-6000'
+  if (!resources.some(official)) return resources
+  const legacy = verifiedMarketPriceReference
+  const historical = resource => String(resource?.id) === legacy.nodeId
+    && resource?.provider === legacy.provider && resource?.billingType === 'POINTS'
+    && resource?.configurationManaged === false
+    && (resource?.serverGroup === null || resource?.serverGroup === legacy.serverGroup)
+  return resources.filter(resource => !historical(resource))
+}
+
 export function marketPricePresentation(resource) {
   if (resource?.pricePolicy === 'VLS_FIXED') {
     const amount = resource.userHourlyPrice

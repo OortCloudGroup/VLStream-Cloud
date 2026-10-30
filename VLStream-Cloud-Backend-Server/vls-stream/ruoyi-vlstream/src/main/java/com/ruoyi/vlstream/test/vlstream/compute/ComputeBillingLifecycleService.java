@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private ConfiguredPaidPowerService configuredPower;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ComputePaidArchiveRecoveryService paidArchives;
     private final JdbcTemplate jdbc;
     private final ComputeNodeService nodes;
     private final ObjectProvider<ComputePowerProvider> providers;
@@ -82,9 +84,16 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
                 }
             }
             if(!jobs.isEmpty()) {
-                for(Map<String,Object> job:jobs)if(!"ARCHIVING".equals(job.get("job_state")))
-                    jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,message='计费安全停止请求，等待实例进程确认',update_time=NOW() WHERE id=? AND tenant_id=? AND public_claim_id=? AND public_owner_subject=?",job.get("id"),session.get("tenant_id"),claim.getClaimId(),claim.getOwnerSubject());
-                phase(usageId,"CANCEL_REQUESTED");return null;
+                boolean blocked=false;
+                for(Map<String,Object> job:jobs) {
+                    if(nodes.officialConfigured(node)&&paidArchives!=null&&paidArchives.pauseForStop(String.valueOf(job.get("id")),node,
+                        String.valueOf(session.get("tenant_id")),claim.getOwnerSubject(),claim.getClaimId(),
+                        String.valueOf(nodes.configurationSnapshot(node).get("targetFingerprint")),usageId,System.currentTimeMillis()))continue;
+                    blocked=true;
+                    if(!"ARCHIVING".equals(job.get("job_state"))&&!ComputePaidArchiveRecoveryService.PENDING.equals(job.get("job_state")))
+                        jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,message='计费安全停止请求，等待实例进程确认',update_time=NOW() WHERE id=? AND tenant_id=? AND public_claim_id=? AND public_owner_subject=?",job.get("id"),session.get("tenant_id"),claim.getClaimId(),claim.getOwnerSubject());
+                }
+                if(blocked){phase(usageId,"CANCEL_REQUESTED");return null;}
             }
             String operation=session.get("stop_operation_id")==null?UUID.randomUUID().toString():String.valueOf(session.get("stop_operation_id"));
             if(aliases.stream().anyMatch(n->n.getPowerOperationId()!=null)) {

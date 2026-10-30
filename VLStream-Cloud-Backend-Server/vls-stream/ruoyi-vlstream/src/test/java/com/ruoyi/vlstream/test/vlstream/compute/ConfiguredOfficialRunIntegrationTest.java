@@ -73,6 +73,40 @@ class ConfiguredOfficialRunIntegrationTest {
     void settle(String id){String usage=f.runs.get(id,f.payer).getUsageId();f.coordinator.tick(usage,f.lifecycle);for(String ref:jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice",String.class))f.settlements.dispatch(ref);}
     void finish(String id){f.runs.stop(id,f.payer);f.runs.tick(id);f.runs.tick(id);settle(id);for(int i=0;i<5;i++)f.runs.tick(id);}
 
+    @Test void officialQuoteAllowsNoSshEndpointBeforePowerOnWithoutFundingOrProviderWrites() {
+        resource.setHost(null);resource.setHostKey(null);resource.setPrivateKeyFile(null);resource.setPublicKeyFingerprint(null);
+        registry.initialize();installPower();
+        assertNull(nodes.get(-6000L).getHost());
+        assertEquals("QUOTED",f.runs.quote(-6000L,f.payer,f.config).getState());
+        assertEquals(0,f.wallet.holdPosts);
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+
+    void displaySeed(boolean mapped) {
+        for(String definition:new String[]{"username VARCHAR(64)","auth_mode VARCHAR(32)","password_cipher TEXT","host_key TEXT","python_path TEXT","work_dir TEXT","management_owner_subject VARCHAR(100)"})
+            jdbc.execute("ALTER TABLE vls_compute_node ADD COLUMN "+definition);
+        jdbc.update("INSERT INTO vls_compute_node(id,provider,provider_instance_id,resource_scope,provider_product,host,port,username,auth_mode,python_path,work_dir,management_owner_subject,enabled) VALUES(792,'autodl',?,'PLATFORM','AUTODL_PRO','expired.fixture.invalid',12345,'','UNCONFIGURED','','',?,0)",resource.getInstanceId(),"approved-company-"+resource.getInstanceId());
+        resource.setHost(null);resource.setHostKey(null);resource.setPrivateKeyFile(null);resource.setPublicKeyFingerprint(null);
+        if(mapped)resource.getLegacyNodeIds().add(792L);
+        registry.initialize();installPower();
+    }
+    @Test void explicitAliasSupersedesOnlyUnusedDisabledCompanyDisplaySeedWithoutChangingIt() {
+        displaySeed(true);
+        assertEquals("QUOTED",f.runs.quote(-6000L,f.payer,f.config).getState());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node WHERE id=792 AND enabled=0 AND auth_mode='UNCONFIGURED'",Integer.class));
+        assertEquals(0,f.wallet.holdPosts);verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void disabledDisplaySeedStillRequiresExplicitAlias() {
+        displaySeed(false);assertThrows(RuntimeException.class,()->nodes.get(-6000L));
+    }
+    @Test void mappedSeedWithAnyJobOrUserOwnerRemainsIsolated() {
+        displaySeed(true);jdbc.update("INSERT INTO vls_cloud_training_job(id,node_id,job_state) VALUES('old-job',792,'COMPLETED')");
+        assertThrows(RuntimeException.class,()->nodes.get(-6000L));
+        jdbc.update("DELETE FROM vls_cloud_training_job WHERE id='old-job'");
+        jdbc.update("UPDATE vls_compute_node SET management_owner_subject='real-user-owner' WHERE id=792");
+        assertThrows(RuntimeException.class,()->nodes.get(-6000L));
+    }
+
     @Test void yamlOnlyOfficialOrderCapturesAndReleasesWithoutRestoringAnyNodeRow() throws Exception {
         String id=accepted();assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
         running(id);Thread.sleep(1100);settle(id);finish(id);

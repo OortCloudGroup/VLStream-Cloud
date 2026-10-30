@@ -11,6 +11,9 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /** Documented merchant adapter. Read access and funds movement have separate, default-off gates. */
 @Component
@@ -86,7 +89,18 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         Reply reply = read("/api/v1/external-billing/hold-operations/" + operation + "/" + segment(businessReference), merchantKey());
         Result failure = failure(reply);
         if (failure != null) return failure;
-        // The endpoint is known; its full success/not-found schema is not. Do not infer mutation success.
+        if (reply.status != 200 || failed(reply.body)) return Result.of(Status.UNKNOWN);
+        try {
+            JsonNode evidence = data(reply.body);
+            String status = evidence.path("status").asText();
+            if ("PROCESSING".equals(status)) return new Result(Status.PROCESSING, "", evidence);
+            if ("REJECTED".equals(status) && evidence.path("error_code").isTextual()
+                && evidence.path("error_code").asText().matches("[A-Z][A-Z0-9_]{0,63}"))
+                return new Result(Status.REJECTED, evidence.path("error_code").asText(), evidence);
+            // A minimal successful lookup proves neither the amount nor this original POST.
+            // Preserve its identity fields for the recovery service's independent joint checks.
+            if ("SUCCEEDED".equals(status)) return new Result(Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", evidence);
+        } catch (IllegalArgumentException e) { return Result.of(Status.UNKNOWN); }
         return new Result(Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", null);
     }
 
@@ -184,12 +198,77 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     }
     public JsonNode config() { return read("/api/v1/external-billing/config", merchantKey()).body; }
 
-    /** Caller must pass the backend session's same independently verified SSO proof, never a payer id. */
-    public BillingPayer resolveSelf(ComputePlatformAuthorization.Context actor, String verifiedSsoProof) {
-        Reply result = read("/api/user/self", verifiedSsoProof);
+    /** Request-private verified gateway identity; deliberately has no bean getters or secret-bearing toString. */
+    public static final class SelfAuthorization {
+        private final String actorId, localTenant, platformUser, platformTenant;
+        private final String proof, requestType, appId, secretKey;
+
+        public SelfAuthorization(ComputePlatformAuthorization.Context actor, String proof,
+                                 String requestType, String appId, String secretKey) {
+            if (actor == null || !actor.isAuthorized()) throw new IllegalArgumentException("Verified platform identity required");
+            this.actorId = headerValue(actor.getVlsUserId()); this.localTenant = headerValue(actor.getVlsTenantId());
+            this.platformUser = headerValue(actor.getPlatformUserId()); this.platformTenant = headerValue(actor.getPlatformTenantId());
+            this.proof = headerValue(proof); this.requestType = headerValue(requestType);
+            this.appId = headerValue(appId); this.secretKey = headerValue(secretKey);
+        }
+
+        private boolean matches(ComputePlatformAuthorization.Context actor) {
+            return actor != null && actor.isAuthorized() && Objects.equals(actorId, actor.getVlsUserId())
+                && Objects.equals(localTenant, actor.getVlsTenantId()) && Objects.equals(platformUser, actor.getPlatformUserId())
+                && Objects.equals(platformTenant, actor.getPlatformTenantId());
+        }
+
+        private Map<String,String> headers() {
+            Map<String,String> headers = new LinkedHashMap<>();
+            // NewAPI UserAuth consumes the user's SSO Bearer (implementation plan §1.4).
+            // Gateway context is still the exact independently verified request context.
+            headers.put("Authorization", "Bearer " + proof);
+            headers.put("accesstoken", proof); headers.put("tenantid", platformTenant);
+            headers.put("requesttype", requestType); headers.put("appid", appId); headers.put("secretkey", secretKey);
+            return headers;
+        }
+
+        private static String headerValue(String value) {
+            if (value == null || value.trim().isEmpty()) throw new IllegalArgumentException("Verified gateway identity incomplete");
+            for (int i=0;i<value.length();i++) if (value.charAt(i)<32 || value.charAt(i)==127)
+                throw new IllegalArgumentException("Invalid verified gateway identity");
+            return value;
+        }
+    }
+
+    /** Uses only the same SSO proof and gateway context already verified for this actor. */
+    public BillingPayer resolveSelf(ComputePlatformAuthorization.Context actor, SelfAuthorization authorization) {
+        if (authorization == null || !authorization.matches(actor)) throw new IllegalArgumentException("Verified self identity changed");
+        Reply result = readSelf(authorization);
         if (result.status != 200 || !result.body.path("success").isBoolean() || !result.body.path("success").booleanValue()
-            || !result.body.path("data").isObject()) throw new IllegalArgumentException("Authoritative user lookup unavailable");
+            || !result.body.path("data").isObject()) throw new IllegalArgumentException("Authoritative user lookup unavailable [http="+result.status
+                +", successType="+result.body.path("success").getNodeType()
+                +", success="+(result.body.path("success").isBoolean()?String.valueOf(result.body.path("success").booleanValue()):"UNKNOWN")
+                +", dataType="+result.body.path("data").getNodeType()+", reason="+selfFailureCategory(result.body)
+                +(result.transportFailure==null?"":", transport="+result.transportFailure)
+                +", upstream="+safeSelfFailureText(result.body,authorization)+"]");
         return BillingPayer.fromVerifiedSelf(actor, result.body);
+    }
+
+    /** Classifies upstream failures without returning an upstream message or credential. */
+    private static String selfFailureCategory(JsonNode body) {
+        if (body.path("success").isBoolean() && body.path("success").booleanValue()) return "INVALID_SELF_SHAPE";
+        String message = body.path("message").asText("").toLowerCase(java.util.Locale.ROOT);
+        if (message.contains("not logged in") || message.contains("未登录")) return "LOGIN_REQUIRED";
+        if (message.contains("token") || message.contains("令牌") || message.contains("鉴权")
+            || message.contains("认证") || message.contains("appid") || message.contains("secretkey")) return "IDENTITY_REJECTED";
+        return "UPSTREAM_REJECTED_OR_UNSPECIFIED";
+    }
+
+    private String safeSelfFailureText(JsonNode body, SelfAuthorization authorization) {
+        String message = body.path("message").isTextual() ? body.path("message").textValue() : "UNSPECIFIED";
+        for (String secret : new String[]{authorization.proof, authorization.secretKey, properties.getApiKey()}) {
+            if (secret != null && !secret.isEmpty()) message = message.replace(secret, "[REDACTED]");
+        }
+        message = message.replaceAll("[\\p{Cntrl}]", " ")
+            .replaceAll("(?i)https?://\\S+", "[URL]")
+            .replaceAll("[A-Za-z0-9_./+=:-]{20,}", "[REDACTED]");
+        return message.length() > 200 ? message.substring(0, 200) : message;
     }
 
     @Override public Result byKey(String key) { return query("/operations/by-key/" + segment(key), false); }
@@ -243,11 +322,15 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         catch (java.io.UnsupportedEncodingException e) { throw new IllegalStateException("UTF-8 unavailable"); }
     }
     protected static final class Reply {
-        final int status; final JsonNode body;
-        protected Reply(int status, JsonNode body) { this.status = status; this.body = body; }
+        final int status; final JsonNode body; final String transportFailure;
+        protected Reply(int status, JsonNode body) { this(status,body,null); }
+        private Reply(int status, JsonNode body,String transportFailure) { this.status=status;this.body=body;this.transportFailure=transportFailure; }
     }
     protected Reply read(String path, String bearer) {
         return request("GET", path, bearer, null, null);
+    }
+    protected Reply readSelf(SelfAuthorization authorization) {
+        return request("GET", "/api/user/self", authorization.headers(), null, null);
     }
     protected Reply post(String path, String bearer, String key, String body) {
         return request("POST", path, bearer, key, body);
@@ -255,6 +338,12 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     private Reply request(String method, String path, String bearer, String key, String requestBody) {
         if (!properties.isEnabled()) throw new IllegalStateException("External billing disabled");
         if (bearer == null || bearer.trim().isEmpty()) throw new IllegalStateException("Billing identity unavailable");
+        Map<String,String> headers = new LinkedHashMap<>();
+        headers.put("Authorization", "Bearer " + bearer);
+        return request(method, path, headers, key, requestBody);
+    }
+    private Reply request(String method, String path, Map<String,String> headers, String key, String requestBody) {
+        if (!properties.isEnabled()) throw new IllegalStateException("External billing disabled");
         HttpURLConnection connection = null;
         try {
             URI base = URI.create(properties.getBaseUrl());
@@ -262,10 +351,11 @@ public class NewApiBillingClient implements ExternalBillingGateway {
             if ((!"https".equals(base.getScheme()) && !(loopback && "http".equals(base.getScheme()))) || base.getUserInfo() != null || base.getQuery() != null || base.getFragment() != null)
                 throw new IllegalArgumentException("Billing endpoint must be trusted HTTPS");
             String url = base.toString().replaceAll("/+$", "") + path;
-            connection = (HttpURLConnection) URI.create(url).toURL().openConnection();
+            connection = openConnection(URI.create(url));
             connection.setInstanceFollowRedirects(false); connection.setRequestMethod(method);
             connection.setConnectTimeout(5000); connection.setReadTimeout(5000);
-            connection.setRequestProperty("Authorization", "Bearer " + bearer); connection.setRequestProperty("Accept", "application/json");
+            for (Map.Entry<String,String> header : headers.entrySet()) connection.setRequestProperty(header.getKey(), header.getValue());
+            connection.setRequestProperty("Accept", "application/json");
             if (requestBody != null) {
                 connection.setRequestProperty("Idempotency-Key", key);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
@@ -288,7 +378,11 @@ public class NewApiBillingClient implements ExternalBillingGateway {
             }
         } catch (Exception e) {
             // Do not expose upstream payloads, tokens, URLs or exception causes.
-            return new Reply(0, json.createObjectNode());
+            String kind=e instanceof javax.net.ssl.SSLException?"TLS":e instanceof java.net.SocketTimeoutException?"TIMEOUT":e instanceof java.net.UnknownHostException?"DNS":e instanceof java.net.ConnectException?"CONNECT":e instanceof com.fasterxml.jackson.core.JsonProcessingException?"INVALID_JSON":"TRANSPORT";
+            return new Reply(0, json.createObjectNode(),kind);
         } finally { if (connection != null) connection.disconnect(); }
+    }
+    protected HttpURLConnection openConnection(URI target) throws java.io.IOException {
+        return (HttpURLConnection) target.toURL().openConnection();
     }
 }

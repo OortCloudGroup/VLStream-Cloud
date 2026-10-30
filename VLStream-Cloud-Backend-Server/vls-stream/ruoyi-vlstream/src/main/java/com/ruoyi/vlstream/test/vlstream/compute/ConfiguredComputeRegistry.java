@@ -169,8 +169,9 @@ public class ConfiguredComputeRegistry {
     }
     public ComputeNode resolve(Long id) {
         ComputeNode original = resources.get(canonicalId(id));
-        if (original == null || original.getHost()==null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
+        if (original == null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
         if(official(original))return resolveOfficial(original);
+        if (original.getHost()==null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
         // A reserved ID must never silently alias a persisted third-party/private node.
         List<Object> parameters=new ArrayList<>(queueIds(id));
         parameters.add(original.getHost());parameters.add(original.getPort());parameters.add(original.getGpuIndex());
@@ -195,12 +196,31 @@ public class ConfiguredComputeRegistry {
     }
     private ComputeNode resolveOfficial(ComputeNode original) {
         for(ComputeNode row:jdbc.query("SELECT * FROM vls_compute_node WHERE id=? OR (provider='autodl' AND provider_instance_id=?) OR (host=? AND port=?)",new BeanPropertyRowMapper<>(ComputeNode.class),original.getId(),original.getProviderInstanceId(),original.getHost(),original.getPort())) {
+            if (unusedCompanyDisplaySeed(original, row)) continue;
             if(!queueIds(original.getId()).contains(row.getId())||!sameTarget(original,row)||row.getPowerOperationId()!=null)
                 throw unavailable("官方实例仍存在未映射或活动的旧连接，保持隔离；不恢复数据库供给");
         }
         if(!jdbc.queryForList("SELECT instance_key FROM vls_compute_public_instance WHERE provider='autodl' AND provider_instance_id=? AND instance_key<>?",original.getProviderInstanceId(),original.getPublicInstanceKey()).isEmpty())
             throw unavailable("官方实例已有另一公共身份，不能绕过原占用或隔离记录");
         ComputeNode copy=new ComputeNode();synchronized(monitor(original.getId())){BeanUtils.copyProperties(original,copy);}return copy;
+    }
+    /** Migration 047 inserted a disabled display-only company row. An explicit YAML alias
+     * may supersede that unused seed without deleting it or treating it as SSH identity.
+     * Real connections, user owners, claims, jobs and accounting history remain blockers. */
+    private boolean unusedCompanyDisplaySeed(ComputeNode original, ComputeNode row) {
+        if (row.getId()==null || row.getId()<=0 || !queueIds(original.getId()).contains(row.getId())
+            || row.isEnabled() || !"autodl".equals(row.getProvider())
+            || !Objects.equals(original.getProviderInstanceId(),row.getProviderInstanceId())
+            || !"PLATFORM".equals(row.getResourceScope()) || !"AUTODL_PRO".equals(row.getProviderProduct())
+            || !("approved-company-"+original.getProviderInstanceId()).equals(row.getManagementOwnerSubject())
+            || !"UNCONFIGURED".equals(row.getAuthMode()) || row.isPasswordConfigured() || row.isProviderCredentialConfigured()
+            || !empty(row.getHostKey()) || !empty(row.getUsername()) || !empty(row.getPythonPath()) || !empty(row.getWorkDir())
+            || row.getPublicInstanceKey()!=null || row.getPowerOperationId()!=null || row.getPowerOperationAction()!=null
+            || row.getPowerOperationStartedAt()!=null || row.isPowerOperationSubmitted()) return false;
+        return Long.valueOf(0).equals(jdbc.queryForObject("SELECT COUNT(*) FROM vls_cloud_training_job WHERE node_id=?",Long.class,row.getId()))
+            && Long.valueOf(0).equals(jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_usage WHERE server_key=?",Long.class,"node-server:"+row.getId()))
+            && Long.valueOf(0).equals(jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_paid_run WHERE node_id=?",Long.class,row.getId()))
+            && Long.valueOf(0).equals(jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_session WHERE instance_ref=?",Long.class,"node-server:"+row.getId()));
     }
     void recordPower(ComputeNode expected,ComputePowerProvider.Snapshot observed) {
         ComputeNode node=resources.get(expected.getId());if(!official(node)||!fingerprint(node).equals(fingerprint(expected)))throw unavailable("官方实例控制身份已变化");

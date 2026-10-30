@@ -55,7 +55,7 @@ import { listComputeMarket, requestPublicComputePower, claimComputeInstance, rel
 import { translatePhrase as uiText, currentLocale } from '@/i18n'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent, bindComputeDraftToActor } from '@/utils/computePlatformAuth'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
-import { marketResourceName, marketPricePresentation } from '@/utils/computeMarketPresentation'
+import { marketResourceName, marketPricePresentation, marketDisplayResources } from '@/utils/computeMarketPresentation'
 import { getMarketSpecifications, formatMarketCpu } from '@/utils/computeMarketSpecifications'
 import ComputeBillingPanel from './components/ComputeBillingPanel.vue'
 const billingPanel = ref(null)
@@ -95,7 +95,7 @@ const load = async () => {
   loading.value = true; marketError.value = ''
   try {
     const response = await listComputeMarket()
-    if (currentMarketRequest(request, loadEpoch)) resources.value = response.data || []
+    if (currentMarketRequest(request, loadEpoch)) resources.value = marketDisplayResources(response.data || [])
   } catch {
     if (currentMarketRequest(request, loadEpoch)) marketError.value = uiText('加载失败，请刷新重试')
   } finally { if (currentMarketRequest(request, loadEpoch)) loading.value = false }

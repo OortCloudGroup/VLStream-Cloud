@@ -160,6 +160,21 @@ class ComputePaidRunIntegrationTest {
         String id=accepted();runs.tick(id);runs.tick(id);power.recordFailure(node(),new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));wallet.loseReleaseWithoutCommit=true;
         runs.tick(id);runs.tick(id);assertEquals("RELEASING",runs.get(id,payer).getState());assertTrue(wallet.remaining()>0);assertEquals(1,wallet.releasePosts);
     }
+    @Test void zeroRemainingCannotCompleteUntilOriginalLostReleaseReceiptIsRecovered() {
+        String id=accepted();runs.tick(id);runs.tick(id);power.recordFailure(node(),new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
+        wallet.loseReleaseAfterCommit=true;wallet.lookupReleaseAvailable=false;
+        runs.tick(id);assertEquals(0,wallet.remaining());assertEquals(1,wallet.releasePosts);assertEquals(1,wallet.releaseEffects);
+        String release=jdbc.queryForObject("SELECT release_intent_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        String key=jdbc.queryForObject("SELECT idempotency_key FROM vls_compute_funding_intent WHERE intent_id=?",String.class,release);
+        String body=jdbc.queryForObject("SELECT request_json FROM vls_compute_funding_intent WHERE intent_id=?",String.class,release);
+        runs.tick(id);assertEquals("RELEASING",runs.get(id,payer).getState());assertEquals(1,wallet.releasePosts);
+        assertNotNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
+        assertEquals("UNKNOWN",jdbc.queryForObject("SELECT state FROM vls_compute_funding_intent WHERE intent_id=?",String.class,release));
+        wallet.lookupReleaseAvailable=true;runs.tick(id);
+        assertEquals("CANCELLED",runs.get(id,payer).getState());assertEquals(2,wallet.releasePosts);assertEquals(1,wallet.releaseEffects);
+        assertEquals("OPERATION_CONFIRMED",jdbc.queryForObject("SELECT state FROM vls_compute_funding_intent WHERE intent_id=?",String.class,release));
+        assertEquals(body,wallet.releaseBodies.get(key));assertEquals(1,wallet.releaseReceipts.size());
+    }
     @Test void merchantIdentityChangeInvalidatesQuoteAndBlocksNewTrainingOnTheExistingRun() {
         String id=runs.quote(1L,payer,config).getRunId();properties.setMerchantId("other-fixture-merchant");
         assertThrows(RuntimeException.class,()->runs.accept(id,payer));assertEquals(0,wallet.holdPosts);
@@ -174,9 +189,12 @@ class ComputePaidRunIntegrationTest {
         assertThrows(RuntimeException.class,()->runs.get(id,other));assertThrows(RuntimeException.class,()->runs.stop(id,other));assertThrows(RuntimeException.class,()->runs.accept(id,other));assertEquals(0,wallet.holdPosts);
     }
     final class Wallet implements ExternalBillingGateway {
-        String power="STOPPED",reference,expiry;int total,captured,released,version=1,holdPosts,capturePosts,releasePosts;boolean loseHoldReply,loseReleaseWithoutCommit;JsonNode charge;
+        String power="STOPPED",reference,expiry;int total,captured,released,version=1,holdPosts,capturePosts,releasePosts,releaseEffects;
+        boolean loseHoldReply,loseReleaseWithoutCommit,loseReleaseAfterCommit,lookupReleaseAvailable=true;JsonNode charge;
         final Map<String,JsonNode> chargesByReference=new LinkedHashMap<>(),chargesByKey=new LinkedHashMap<>();
         final Map<String,String> captureBodies=new LinkedHashMap<>();
+        final Map<String,JsonNode> releaseReceipts=new LinkedHashMap<>();
+        final Map<String,String> releaseBodies=new LinkedHashMap<>();
         int remaining(){return total-captured-released;}
         ObjectNode detail(){ObjectNode d=json.createObjectNode();d.put("hold_id","1");d.put("merchant_hold_id",reference);d.put("user_id","13");d.put("hold_quota",Integer.toString(total));d.put("captured_quota",Integer.toString(captured));d.put("released_quota",Integer.toString(released));d.put("remaining_quota",Integer.toString(remaining()));d.put("hold_status",remaining()==0?"RELEASED":captured==0?"ACTIVE":"PARTIALLY_CAPTURED");d.put("balance_version",Integer.toString(version));d.put("expires_at",expiry);d.put("created_at","1");d.put("updated_at","1");return d;}
         public Result createHold(String key,String body){assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());try{JsonNode b=json.readTree(body);holdPosts++;total=b.path("hold_quota").asInt();reference=b.path("merchant_hold_id").asText();expiry=b.path("expires_at").asText();if(loseHoldReply)return Result.of(Status.UNKNOWN);ObjectNode receipt=json.createObjectNode();receipt.put("hold_id","1");receipt.put("held_quota",Integer.toString(total));receipt.put("available_quota",Integer.toString(10000000-total));return new Result(Status.SUCCEEDED,"",receipt);}catch(Exception invalid){throw new RuntimeException(invalid);}}
@@ -189,7 +207,24 @@ class ComputePaidRunIntegrationTest {
             capturePosts++;captured+=d.path("charge_quota").asInt();version++;d.put("status","SUCCEEDED");d.put("charge_id",Integer.toString(capturePosts));d.put("ledger_entry_id",Integer.toString(capturePosts));d.put("charged_quota",d.path("charge_quota").asText());
             charge=d;chargesByReference.put(reference,d);chargesByKey.put(key,d);captureBodies.put(key,body);return new Result(Status.SUCCEEDED,"",d);
         }catch(Exception invalid){throw new RuntimeException(invalid);}}
-        public Result releaseHold(String id,String key,String body){releasePosts++;if(loseReleaseWithoutCommit)return Result.of(Status.UNKNOWN);int amount=remaining();released+=amount;version++;ObjectNode d=detail();d.put("released_quota",Integer.toString(amount));d.put("held_quota","0");return new Result(Status.SUCCEEDED,"",d);}
+        public Result releaseHold(String id,String key,String body){
+            assertEquals("1",id);releasePosts++;
+            if(releaseReceipts.containsKey(key)){assertEquals(releaseBodies.get(key),body);return new Result(Status.SUCCEEDED,"",releaseReceipts.get(key));}
+            if(loseReleaseWithoutCommit)return Result.of(Status.UNKNOWN);
+            int amount=remaining();released+=amount;version++;releaseEffects++;ObjectNode d=detail();d.put("released_quota",Integer.toString(amount));d.put("held_quota","0");
+            releaseBodies.put(key,body);releaseReceipts.put(key,d);
+            return loseReleaseAfterCommit?Result.of(Status.UNKNOWN):new Result(Status.SUCCEEDED,"",d);
+        }
+        public Result holdOperation(String operation,String ref){
+            if(!lookupReleaseAvailable||!"RELEASE".equals(operation))return Result.of(Status.UNKNOWN);
+            for(Map.Entry<String,String> entry:releaseBodies.entrySet())try{
+                if(ref.equals(json.readTree(entry.getValue()).path("merchant_release_id").asText())){
+                    ObjectNode result=json.createObjectNode();result.put("status","SUCCEEDED");result.put("idempotency_key",entry.getKey());result.put("user_id","13");result.put("hold_id","1");
+                    return new Result(Status.UNKNOWN,"HOLD_OPERATION_RESPONSE_UNSPECIFIED",result);
+                }
+            }catch(Exception invalid){throw new IllegalStateException(invalid);}
+            return Result.of(Status.UNKNOWN);
+        }
         public Result byKey(String key){JsonNode receipt=chargesByKey.get(key);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
         public Result byReference(String ref){JsonNode receipt=chargesByReference.get(ref);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
         public Result balance(String id){throw new AssertionError("No implicit balance/auto-grant in workflow scheduler");}

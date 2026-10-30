@@ -389,8 +389,115 @@ class ComputeFundingIntentTest {
         ComputeFundingIntentService.Intent recovered = restarted().prepareFinalRelease(h.id, "900");
         assertEquals(legacy, recovered.body); assertEquals(r.key, recovered.key); assertNull(service.claimInitialSend(r.id, 1790000000000L));
     }
+
+    @Test void lostTopupReceiptReplaysExactOriginalOnceAndConfirmsOneFinancialEffect() {
+        ComputeFundingIntentService.Intent h = observed();
+        ComputeFundingIntentService.Intent topup = service.prepareTopup(h.id, "topup-replay", "100", "METERING", 1790000000000L);
+        ReplayGateway gateway = new ReplayGateway(h); gateway.loseFirstReply = true;
+        ComputeFundingRecoveryService recovery = coordinator(gateway);
+        assertEquals("UNKNOWN", recovery.advance(topup.id, 1790000000000L).state);
+        assertEquals(1, gateway.effects); assertEquals(1, gateway.writes);
+        assertEquals("OPERATION_CONFIRMED", recovery.advance(topup.id, 1790000000001L).state);
+        assertEquals(2, gateway.writes); assertEquals(1, gateway.effects);
+        assertEquals(topup.key, gateway.lastKey); assertEquals(topup.body, gateway.lastBody);
+        assertEquals(topup.path, restarted().recover(topup.id).path);
+        recovery.advance(topup.id, 1790000000002L); assertEquals(2, gateway.writes);
+    }
+
+    @Test void lostReleaseReceiptAfterRefundReturnsOriginalResultWithoutReleasingReturnedFunds() {
+        ComputeFundingIntentService.Intent h = observed();
+        service.recordHoldDetail(h.id, h.requestHash, detail(h, 2, "1000", "400", "0", "600"));
+        ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "600");
+        ReplayGateway gateway = new ReplayGateway(h); gateway.captured = 400; gateway.version = 2; gateway.loseFirstReply = true;
+        ComputeFundingRecoveryService recovery = coordinator(gateway);
+        assertEquals("UNKNOWN", recovery.advance(release.id, 1790000000000L).state);
+        assertEquals(600, gateway.released); assertEquals(0, gateway.remaining());
+        gateway.captured = 200; gateway.version++; // A separately proved refund returns 200 to this hold.
+        assertEquals("OPERATION_CONFIRMED", recovery.advance(release.id, 1790000000001L).state);
+        assertEquals(2, gateway.writes); assertEquals(1, gateway.effects); assertEquals(200, gateway.remaining());
+        assertEquals("600", parseBody(service.recover(release.id).receipt).path("released_quota").asText());
+        assertEquals(release.key, gateway.lastKey); assertEquals(release.body, gateway.lastBody);
+        recovery.advance(release.id, 1790000000002L); assertEquals(2, gateway.writes); assertEquals(200, gateway.remaining());
+    }
+
+    @Test void existingChildReceiptNeedsFreshParentQueryButNeverAnotherPost() {
+        ComputeFundingIntentService.Intent h = observed();
+        ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+        ReplayGateway gateway = new ReplayGateway(h); gateway.failDetail = true;
+        ComputeFundingRecoveryService recovery = coordinator(gateway);
+        assertEquals("RECEIPT_UNVERIFIED", recovery.advance(release.id, 1790000000000L).state);
+        assertEquals("RECEIPT_UNVERIFIED", recovery.advance(release.id, 1790000000001L).state);
+        assertEquals(1, gateway.writes);
+        gateway.failDetail = false;
+        assertEquals("OPERATION_CONFIRMED", recovery.advance(release.id, 1790000000002L).state);
+        assertEquals(1, gateway.writes); assertEquals(0, gateway.operations);
+    }
+
+    @Test void explicitOperationStatesBlockOriginalReplay() throws Exception {
+        for (ExternalBillingGateway.Status status : new ExternalBillingGateway.Status[]{ExternalBillingGateway.Status.PROCESSING,
+            ExternalBillingGateway.Status.REJECTED, ExternalBillingGateway.Status.CONFLICT, ExternalBillingGateway.Status.NOT_AUTHORIZED}) {
+            database(); ComputeFundingIntentService.Intent h = observed();
+            ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+            service.recordUnknown(release.id, release.requestHash);
+            ReplayGateway gateway = new ReplayGateway(h); gateway.lookup = new ExternalBillingGateway.Result(status, "TEST_REJECTED", null);
+            ComputeFundingIntentService.Intent result = coordinator(gateway).advance(release.id, 1790000000000L);
+            assertEquals(0, gateway.writes);
+            assertEquals(status == ExternalBillingGateway.Status.PROCESSING ? "UNKNOWN"
+                : status == ExternalBillingGateway.Status.CONFLICT ? "CONFLICT" : "REJECTED", result.state);
+            if (status == ExternalBillingGateway.Status.NOT_AUTHORIZED)
+                assertEquals("NOT_AUTHORIZED", fixture.jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?", String.class, usage));
+        }
+    }
+
+    @Test void partialLookupWrongOwnerOrHoldBlocksReplayWithoutInventingMissingSchema() throws Exception {
+        for (String field : new String[]{"idempotency_key", "user_id", "hold_id"}) {
+            database(); ComputeFundingIntentService.Intent h = observed();
+            ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+            service.recordUnknown(release.id, release.requestHash);
+            ReplayGateway gateway = new ReplayGateway(h);
+            com.fasterxml.jackson.databind.node.ObjectNode evidence = fixture.json.createObjectNode(); evidence.put(field, "999"); evidence.put("status", "SUCCEEDED");
+            gateway.lookup = new ExternalBillingGateway.Result(ExternalBillingGateway.Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", evidence);
+            assertEquals("CONFLICT", coordinator(gateway).advance(release.id, 1790000000000L).state);
+            assertEquals(0, gateway.writes);
+        }
+    }
+
+    @Test void expiredOrRevokedUnknownTopupAndWrongHoldCannotReplay() throws Exception {
+        ComputeFundingIntentService.Intent h = observed();
+        ComputeFundingIntentService.Intent topup = service.prepareTopup(h.id, "topup-expired-replay", "100", "METERING", 1790000000000L);
+        service.recordUnknown(topup.id, topup.requestHash); ReplayGateway gateway = new ReplayGateway(h);
+        gateway.lookup = associatedLookup(topup, h);
+        assertEquals("UNKNOWN", coordinator(gateway).advance(topup.id, Long.parseLong(expiry) + 1).state); assertEquals(0, gateway.writes);
+        fixture.jdbc.update("UPDATE vls_compute_billing_session SET risk_code='NOT_AUTHORIZED',stop_requested=1 WHERE usage_id=?", usage);
+        assertEquals("UNKNOWN", coordinator(gateway).advance(topup.id, 1790000000000L).state); assertEquals(0, gateway.writes);
+        database(); h = observed(); ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+        service.recordUnknown(release.id, release.requestHash); gateway = new ReplayGateway(h); gateway.wrongDetailOwner = true;
+        gateway.lookup = associatedLookup(release, h);
+        assertEquals("CONFLICT", coordinator(gateway).advance(release.id, 1790000000000L).state); assertEquals(0, gateway.writes);
+    }
+
+    @Test void missingOrUnspecifiedLookupCannotAuthorizeReplayEvenWithFreshZeroRemaining() throws Exception {
+        for (String missing : new String[]{"all", "status", "idempotency_key", "user_id", "hold_id"}) {
+            database(); ComputeFundingIntentService.Intent h = observed();
+            ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+            service.recordUnknown(release.id, release.requestHash); ReplayGateway gateway = new ReplayGateway(h);
+            gateway.released = 1000; gateway.version = 2;
+            com.fasterxml.jackson.databind.node.ObjectNode partial = (com.fasterxml.jackson.databind.node.ObjectNode) associatedLookup(release, h).charge;
+            partial.remove(missing);
+            gateway.lookup = new ExternalBillingGateway.Result(ExternalBillingGateway.Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", "all".equals(missing) ? null : partial);
+            assertEquals("UNKNOWN", coordinator(gateway).advance(release.id, 1790000000000L).state);
+            assertEquals(0, gateway.writes); assertNull(service.recover(release.id).receipt);
+        }
+    }
+
+    ExternalBillingGateway.Result associatedLookup(ComputeFundingIntentService.Intent intent, ComputeFundingIntentService.Intent hold) {
+        com.fasterxml.jackson.databind.node.ObjectNode partial = fixture.json.createObjectNode();
+        partial.put("status", "SUCCEEDED"); partial.put("idempotency_key", intent.key);
+        partial.put("user_id", intent.payerUserId); partial.put("hold_id", hold.holdId);
+        return new ExternalBillingGateway.Result(ExternalBillingGateway.Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", partial);
+    }
     JsonNode parseBody(String body) { try { return fixture.json.readTree(body); } catch (Exception e) { throw new IllegalStateException(e); } }
-    ComputeFundingRecoveryService coordinator(FundingGateway gateway) {
+    ComputeFundingRecoveryService coordinator(ExternalBillingGateway gateway) {
         ExternalBillingProperties properties = new ExternalBillingProperties(); properties.setEnabled(true); properties.setAllowWrites(true);
         return new ComputeFundingRecoveryService(service, (java.util.function.Supplier<ExternalBillingGateway>) () -> gateway, properties);
     }
@@ -409,6 +516,52 @@ class ComputeFundingIntentTest {
         @Override public Result holdOperation(String op, String ref) { operations++; return new Result(Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", null); }
         @Override public Result holdByReference(String ref) { references++; return new Result(Status.SUCCEEDED, "", resource); }
         @Override public Result holdById(String id) { ids++; return new Result(Status.SUCCEEDED, "", resource); }
+    }
+    /** A local model of the documented same-key + same-body result cache. HTTP attempts and
+     * wallet effects are deliberately separate counters; no real wallet is contacted. */
+    class ReplayGateway extends FundingGateway {
+        final ComputeFundingIntentService.Intent hold;
+        final Map<String, JsonNode> receipts = new java.util.LinkedHashMap<>();
+        final Map<String, String> bodies = new java.util.LinkedHashMap<>();
+        int total = 1000, captured, released, version = 1, effects;
+        boolean loseFirstReply, failDetail, wrongDetailOwner;
+        Result lookup = Result.of(Status.UNKNOWN);
+        ReplayGateway(ComputeFundingIntentService.Intent hold) { this.hold = hold; }
+        int remaining() { return total - captured - released; }
+        @Override public Result topupHold(String id, String key, String body) { return apply(id, key, body, true); }
+        @Override public Result releaseHold(String id, String key, String body) { return apply(id, key, body, false); }
+        Result apply(String id, String key, String body, boolean topup) {
+            assertEquals(hold.holdId, id); assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            writes++; lastKey = key; lastBody = body;
+            if (receipts.containsKey(key)) {
+                assertEquals(bodies.get(key), body); return new Result(Status.SUCCEEDED, "", receipts.get(key));
+            }
+            JsonNode request = parseBody(body); int actual = 0;
+            if (topup) total += request.path("topup_quota").asInt();
+            else { actual = Math.min(remaining(), request.path("release_quota").asInt()); released += actual; }
+            version++; effects++;
+            JsonNode receipt = currentDetail();
+            if (!topup) {
+                ((com.fasterxml.jackson.databind.node.ObjectNode) receipt).put("released_quota", Integer.toString(actual));
+                ((com.fasterxml.jackson.databind.node.ObjectNode) receipt).put("held_quota", Integer.toString(remaining()));
+            }
+            bodies.put(key, body); receipts.put(key, receipt);
+            return loseFirstReply ? Result.of(Status.UNKNOWN) : new Result(Status.SUCCEEDED, "", receipt);
+        }
+        JsonNode currentDetail() {
+            com.fasterxml.jackson.databind.node.ObjectNode result = (com.fasterxml.jackson.databind.node.ObjectNode)
+                detail(hold, version, Integer.toString(total), Integer.toString(captured), Integer.toString(released), Integer.toString(remaining()));
+            if (wrongDetailOwner) result.put("user_id", "999");
+            return result;
+        }
+        @Override public Result holdById(String id) { ids++; return failDetail ? Result.of(Status.UNKNOWN) : new Result(Status.SUCCEEDED, "", currentDetail()); }
+        @Override public Result holdOperation(String op, String ref) {
+            operations++;
+            if (lookup.status != Status.UNKNOWN || lookup.charge != null || lastKey == null) return lookup;
+            com.fasterxml.jackson.databind.node.ObjectNode partial = fixture.json.createObjectNode();
+            partial.put("idempotency_key", lastKey); partial.put("hold_id", hold.holdId); partial.put("user_id", hold.payerUserId); partial.put("status", "SUCCEEDED");
+            return new Result(Status.UNKNOWN, "HOLD_OPERATION_RESPONSE_UNSPECIFIED", partial);
+        }
     }
     int count() { return fixture.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_funding_intent", Integer.class); }
 }

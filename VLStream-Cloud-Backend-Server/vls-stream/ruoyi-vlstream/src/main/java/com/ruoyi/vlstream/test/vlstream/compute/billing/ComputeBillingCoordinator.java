@@ -15,23 +15,32 @@ public class ComputeBillingCoordinator {
     private final ExternalBillingProperties properties;
     private final ObjectProvider<BillingLifecycleGateway> lifecycles;
     private final ComputeBillingReconciliationService reconciliation;
+    private final ComputeBillingTrialGuard trial;
     public ComputeBillingCoordinator(JdbcTemplate jdbc, ComputeBillingSettlementService settlements, ExternalBillingProperties properties,
                                      ObjectProvider<BillingLifecycleGateway> lifecycles, ComputeBillingReconciliationService reconciliation) {
         this.jdbc = jdbc; this.settlements = settlements; this.properties = properties; this.lifecycles = lifecycles; this.reconciliation = reconciliation;
+        this.trial = new ComputeBillingTrialGuard(jdbc, new com.fasterxml.jackson.databind.ObjectMapper(), properties);
     }
     @Scheduled(fixedDelayString = "${vlstream.compute.external-billing.poll-delay-ms:15000}", initialDelayString = "${vlstream.compute.external-billing.initial-delay-ms:30000}")
     public void scan() {
         if (!properties.isEnabled()) return;
         BillingLifecycleGateway lifecycle = lifecycles.getIfAvailable(); if (lifecycle == null) return;
         if (properties.getSettlementIntervalSeconds() < 1 || properties.getSettlementIntervalSeconds() > 3600) throw new IllegalStateException("Invalid settlement interval");
-        List<String> usages = jdbc.queryForList("SELECT u.usage_id FROM vls_compute_billing_session u WHERE control_snapshot IS NOT NULL AND (safety_state<>'STOP_CONFIRMED' OR metered_until_ms<last_running_ms OR EXISTS (SELECT 1 FROM vls_compute_billing_slice s WHERE s.usage_id=u.usage_id AND s.state NOT IN ('SETTLED','NO_DEBIT','BLOCKED'))) ORDER BY next_poll_ms,u.usage_id LIMIT 100", String.class);
+        // Apply tick's confirmed-start gate before LIMIT: never-started history otherwise
+        // keeps next_poll_ms=0 and can starve every active usage. Pending/unknown starts
+        // retain their original state and stop request for ComputePaidRunService recovery.
+        List<String> usages = jdbc.queryForList("SELECT u.usage_id FROM vls_compute_billing_session u WHERE control_snapshot IS NOT NULL AND EXISTS (SELECT 1 FROM vls_compute_usage started WHERE started.id=u.usage_id AND started.billing_start_at IS NOT NULL) AND (safety_state<>'STOP_CONFIRMED' OR metered_until_ms<last_running_ms OR EXISTS (SELECT 1 FROM vls_compute_billing_slice s WHERE s.usage_id=u.usage_id AND s.state NOT IN ('SETTLED','NO_DEBIT','BLOCKED')) OR (risk_code='SUBMISSION_UNCERTAIN' AND EXISTS (SELECT 1 FROM vls_compute_billing_slice resolved WHERE resolved.usage_id=u.usage_id AND resolved.state='SETTLED'))) ORDER BY next_poll_ms,u.usage_id LIMIT 100", String.class);
         for (String usage : usages) tick(usage, lifecycle);
         reconciliation.tick();
     }
     public void tick(String usageId, BillingLifecycleGateway lifecycle) {
         if (!properties.isEnabled()) return;
+        // A DEV trial must not observe, stop, meter or release another user's historical run.
+        // Selection ignores spend-permit expiry so this original still receives safe cleanup.
+        if (!trial.selectsUsage(usageId)) return;
         try {
             if(jdbc.queryForList("SELECT id FROM vls_compute_usage WHERE id=? AND billing_start_at IS NOT NULL",usageId).isEmpty())return;
+            settlements.resumeResolvedSubmissionRisk(usageId);
             BillingLifecycleGateway.Observation observation = lifecycle.observe(usageId);
             if ("RUNNING".equals(observation.snapshot.power)) settlements.recordRunningObservation(usageId, observation.observedAt);
             else if ("STOPPED".equals(observation.snapshot.power)) {

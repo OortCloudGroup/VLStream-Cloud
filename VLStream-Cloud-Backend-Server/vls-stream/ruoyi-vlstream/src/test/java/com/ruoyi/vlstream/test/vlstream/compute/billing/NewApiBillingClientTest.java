@@ -24,6 +24,10 @@ class NewApiBillingClientTest {
             this.path = path; this.bearer = bearer;
             try { return new Reply(code, json.readTree(body)); } catch (Exception e) { throw new IllegalArgumentException("TEST_ONLY_BAD_FIXTURE"); }
         }
+        @Override protected Reply readSelf(SelfAuthorization authorization) {
+            this.path = "/api/user/self";
+            try { return new Reply(code, json.readTree(body)); } catch (Exception e) { throw new IllegalArgumentException("TEST_ONLY_BAD_FIXTURE"); }
+        }
     }
     @Test void documentedOperationStatusesAreTypedAndMalformedOr5xxStayUnknown() {
         Fixture client = new Fixture();
@@ -33,10 +37,54 @@ class NewApiBillingClientTest {
         client.code = 503; assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.byKey("fixed-key").status);
         client.code = 200; client.body = "{\"status\":\"REJECTED\"}"; assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.byKey("fixed-key").status);
     }
+    @Test void documentedConcurrentBalanceRejectionFromOriginalKeyRetainsItsRetryCode() {
+        WriteFixture client = new WriteFixture();
+        client.response = "{\"status\":\"REJECTED\",\"error_code\":\"CONCURRENT_BALANCE\",\"idempotency_key\":\"fixed-key\"}";
+        ExternalBillingGateway.Result result = client.byKey("fixed-key");
+        assertEquals(ExternalBillingGateway.Status.REJECTED, result.status);
+        assertEquals("CONCURRENT_BALANCE", result.errorCode);
+        assertEquals("fixed-key", result.charge.path("idempotency_key").asText());
+        assertEquals("/api/v1/external-billing/operations/by-key/fixed-key", client.path);
+        assertEquals(1, client.reads); assertEquals(0, client.writes);
+        // The published retry whitelist does not establish this code's POST HTTP status.
+        client.code = 409; client.response = "{\"error\":\"CONCURRENT_BALANCE\"}";
+        assertEquals(ExternalBillingGateway.Status.CONFLICT, client.capture("fixed-key", captureBody()).status);
+        for (int status : new int[]{401, 403}) {
+            client.code = status;
+            assertEquals(ExternalBillingGateway.Status.NOT_AUTHORIZED, client.capture("fixed-key", captureBody()).status);
+        }
+    }
     @Test void genericProxy404IsNotFinancialNotFound() {
         Fixture client = new Fixture(); client.code = 404;
         assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.byReference("fixed-ref").status);
         client.body = "{\"error\":\"CHARGE_NOT_FOUND\"}"; assertEquals(ExternalBillingGateway.Status.NOT_FOUND, client.byReference("fixed-ref").status);
+    }
+    @Test void originalKeyQueryPreservesDeployedCaptureProofWithoutRequiringPostReceiptFields() throws Exception {
+        WriteFixture client = new WriteFixture();
+        // Actual GET schema differs from POST: no operation_id, available_quota or balance_version.
+        client.response = "{\"idempotency_key\":\"original-key\",\"operation_type\":\"CHARGE\",\"status\":\"SUCCEEDED\","
+            + "\"charge_id\":\"101\",\"ledger_entry_id\":\"102\",\"hold_id\":9007199254740993,\"user_id\":123,"
+            + "\"merchant_id\":\"test-only-merchant\",\"merchant_charge_id\":\"original-ref\",\"usage_session_id\":\"session-1\","
+            + "\"charged_quota\":\"4\",\"refunded_quota\":\"4\",\"balance_before\":\"4999971278890\",\"balance_after\":\"4999971278886\"}";
+        ExternalBillingGateway.Result result = client.byKey("original-key");
+        assertEquals(ExternalBillingGateway.Status.SUCCEEDED, result.status);
+        assertEquals(json.readTree(client.response), result.charge);
+        assertEquals("9007199254740993", result.charge.path("hold_id").asText());
+        assertFalse(result.charge.has("operation_id"));
+        assertEquals("/api/v1/external-billing/operations/by-key/original-key", client.path);
+        assertEquals(1, client.reads); assertEquals(0, client.writes);
+    }
+    @Test void referenceQueryPreservesMeteringProofWithoutInventingHoldOrMerchantIdentity() throws Exception {
+        WriteFixture client = new WriteFixture();
+        client.response = "{\"status\":\"SUCCEEDED\",\"charge_id\":\"101\",\"ledger_entry_id\":\"102\",\"user_id\":123,"
+            + "\"merchant_charge_id\":\"original-ref\",\"usage_session_id\":\"session-1\",\"metering_ref\":\"meter-1\","
+            + "\"price_snapshot_id\":\"price-1\",\"conversion_version\":\"v1-test\",\"charged_quota\":\"4\",\"refunded_quota\":\"4\"}";
+        ExternalBillingGateway.Result result = client.byReference("original-ref");
+        assertEquals(ExternalBillingGateway.Status.SUCCEEDED, result.status);
+        assertEquals(json.readTree(client.response), result.charge);
+        assertFalse(result.charge.has("hold_id")); assertFalse(result.charge.has("merchant_id"));
+        assertEquals("/api/v1/external-billing/charges/by-reference/original-ref", client.path);
+        assertEquals(1, client.reads); assertEquals(0, client.writes);
     }
     @Test void revokedAuthorizationAndMerchantIdentityFailureAreDistinctFromMissingOperation() {
         Fixture client = new Fixture();
@@ -62,9 +110,9 @@ class NewApiBillingClientTest {
     @Test void selfUsesUserProofNotMerchantCredentialAndDoesNotAcceptCallerPayer() {
         Fixture client = new Fixture(); client.body = "{\"success\":true,\"data\":{\"id\":123}}";
         ComputePlatformAuthorization.Context actor = new ComputePlatformAuthorization.Context(); actor.setAuthorized(true);
-        actor.setVlsUserId("actor-test"); actor.setVlsTenantId("tenant-test"); actor.setPlatformUserId("platform-test");
-        BillingPayer payer = client.resolveSelf(actor, "TEST_ONLY_USER_PROOF");
-        assertEquals("123", payer.userId); assertEquals("/api/user/self", client.path); assertEquals("TEST_ONLY_USER_PROOF", client.bearer);
+        actor.setVlsUserId("actor-test"); actor.setVlsTenantId("tenant-test"); actor.setPlatformUserId("platform-test"); actor.setPlatformTenantId("platform-tenant");
+        BillingPayer payer = client.resolveSelf(actor, new NewApiBillingClient.SelfAuthorization(actor,"TEST_ONLY_USER_PROOF","app","TEST_APP","TEST_SECRET"));
+        assertEquals("123", payer.userId); assertEquals("/api/user/self", client.path); assertNull(client.bearer);
     }
     @Test void humanReadableIsNeverUsedAsExchangeRatio() {
         Fixture client = new Fixture(); client.body = "{\"human_readable\":\"1 CNY = 999999 quota\"}";
@@ -191,6 +239,41 @@ class NewApiBillingClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.holdOperation("CAPTURE", "ref"));
     }
 
+    @Test void holdOperationPreservesDefinitePendingAndRejectedOutcomesWithoutWriting() {
+        WriteFixture client = new WriteFixture();
+        client.response = "{\"status\":\"PROCESSING\",\"idempotency_key\":\"original-topup-key\"}";
+        ExternalBillingGateway.Result pending = client.holdOperation("TOPUP", "original-topup-ref");
+        assertEquals(ExternalBillingGateway.Status.PROCESSING, pending.status);
+        assertEquals("original-topup-key", pending.charge.path("idempotency_key").asText());
+        client.response = "{\"status\":\"REJECTED\",\"error_code\":\"HOLD_MISMATCH\",\"idempotency_key\":\"original-topup-key\"}";
+        ExternalBillingGateway.Result rejected = client.holdOperation("TOPUP", "original-topup-ref");
+        assertEquals(ExternalBillingGateway.Status.REJECTED, rejected.status);
+        assertEquals("HOLD_MISMATCH", rejected.errorCode);
+        assertEquals("original-topup-key", rejected.charge.path("idempotency_key").asText());
+        for (String malformed : new String[]{"{\"status\":\"REJECTED\"}", "{\"status\":\"REJECTED\",\"error_code\":3}",
+            "{\"success\":false,\"status\":\"PROCESSING\"}"}) {
+            client.response = malformed;
+            assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.holdOperation("TOPUP", "original-topup-ref").status);
+        }
+        assertEquals(5, client.reads); assertEquals(0, client.writes);
+    }
+
+    @Test void minimalSuccessfulHoldOperationIsEvidenceOnlyAndCannotOverrideAuthorizationOrConflict() throws Exception {
+        WriteFixture client = new WriteFixture();
+        client.response = "{\"idempotency_key\":\"original-release-key\",\"status\":\"SUCCEEDED\",\"hold_id\":9007199254740993,\"user_id\":123}";
+        ExternalBillingGateway.Result result = client.holdOperation("RELEASE", "original-release-ref");
+        assertEquals(ExternalBillingGateway.Status.UNKNOWN, result.status);
+        assertEquals("HOLD_OPERATION_RESPONSE_UNSPECIFIED", result.errorCode);
+        assertEquals(json.readTree(client.response), result.charge);
+        for (int status : new int[]{401, 403}) {
+            client.code = status;
+            assertEquals(ExternalBillingGateway.Status.NOT_AUTHORIZED, client.holdOperation("RELEASE", "original-release-ref").status);
+        }
+        client.code = 409;
+        assertEquals(ExternalBillingGateway.Status.CONFLICT, client.holdOperation("RELEASE", "original-release-ref").status);
+        assertEquals(4, client.reads); assertEquals(0, client.writes);
+    }
+
     @Test void holdCreationAcceptsDocumentedResponseButNotErrorDisguisedAsSuccess() {
         WriteFixture client = new WriteFixture();
         String request = FundingContracts.hold("test-only-merchant", "hold-1", "123", "20", "1700000000001", "reserve").toString();
@@ -209,8 +292,11 @@ class NewApiBillingClientTest {
             client.response = bad; assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.capture("key-1", captureBody()).status);
         }
         Fixture self = new Fixture();
+        ComputePlatformAuthorization.Context actor = new ComputePlatformAuthorization.Context(); actor.setAuthorized(true);
+        actor.setVlsUserId("actor-test"); actor.setVlsTenantId("tenant-test"); actor.setPlatformUserId("platform-test"); actor.setPlatformTenantId("platform-tenant");
+        NewApiBillingClient.SelfAuthorization authorization = new NewApiBillingClient.SelfAuthorization(actor,"TEST_ONLY_PROOF","app","TEST_APP","TEST_SECRET");
         for (String bad : new String[]{"{\"id\":123}", "{\"success\":\"true\",\"data\":{\"id\":123}}", "{\"success\":true,\"id\":123}"}) {
-            self.body = bad; assertThrows(IllegalArgumentException.class, () -> self.resolveSelf(new ComputePlatformAuthorization.Context(), "TEST_ONLY_PROOF"));
+            self.body = bad; assertThrows(IllegalArgumentException.class, () -> self.resolveSelf(actor, authorization));
         }
     }
 
