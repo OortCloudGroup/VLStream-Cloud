@@ -138,7 +138,7 @@ async function remove(row) {
 }
 
 function openTest(row) {
-  if (row.systemProvider && !row.authorized) return ElMessage.warning(uiText('请先点击页面顶部“登录 OortCloud”完成授权'))
+  if (row.systemProvider && !row.authorized) return ElMessage.warning(uiText('请在页面顶部 OortCloud 账户中点击“授权视觉复核”，确认后再使用'))
   testingProvider.value = row
   Object.assign(testForm, { prompt: '', imageBase64: '' })
   testResult.value = null

@@ -104,6 +104,7 @@
         </section>
 
         <div class="account-actions">
+          <el-button v-if="!usesPlatformSession" class="account-action" type="primary" plain round :loading="llmAuthorizationLoading" :disabled="loading || llmAuthorizationSynced" @click="handleAuthorizeLlm">{{ llmAuthorizationSynced ? $tp('本次已授权视觉复核') : $tp('授权当前账号用于视觉复核') }}</el-button>
           <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud"><el-icon><Link /></el-icon>{{ $tp('访问 OortCloud') }}</el-button>
           <el-button v-if="!usesPlatformSession" class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>{{ $tp('退出登录') }}</el-button>
         </div>
@@ -118,7 +119,7 @@ import { translatePhrase as uiText } from '@/i18n'
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Link, Refresh, SwitchButton } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getModelHubUserInfo, logoutModelHubSession } from '@/api/modelHubUser'
 import { authorizeOortCloudLlm } from '@/api/llmReview'
 import { getPlatformAccessToken } from '@/utils/request'
@@ -126,6 +127,7 @@ import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscrip
 import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
 import { getOortCloudSession } from '@/utils/oortCloudSession'
 import { redirectToPlatformLogin } from '@/utils/platformSession'
+import { authManager } from '@/utils/auth'
 import { getOortCloudTopupInfo, PLATFORM_ORIGIN } from '@/api/oortCloudAccount'
 
 const props = defineProps({ tenantMode: { type: String, default: 'single' } })
@@ -145,6 +147,9 @@ const recordsLoading = ref(false)
 const resourcePackLoading = ref(false)
 const loadError = ref('')
 const llmAuthorizationSynced = ref(false)
+const llmAuthorizationLoading = ref(false)
+let accountGeneration = 0
+let componentActive = true
 const subscriptions = ref([])
 const plans = ref([])
 const usageRecords = ref([])
@@ -238,6 +243,7 @@ const isAuthenticationFailure = (error) => {
 }
 
 const resetAccountState = () => {
+  accountGeneration++
   authVerified.value = false
   llmAuthorizationSynced.value = false
   Object.assign(account, { userId: '', userName: '', photo: '', totalCredits: 0, usedCredits: 0, remainingCredits: 0 })
@@ -290,25 +296,7 @@ const loadAccount = async () => {
     applyUserInfo(userResponse)
     authVerified.value = true
     const errors = []
-    // Viewing a shared platform account must not replace the tenant's LLM API key.
-    if (!session.usesPlatformSession && !llmAuthorizationSynced.value) {
-      try {
-        const tokens = await getOortCloudTokenList(session)
-        if (!isCurrentSession(session)) return
-        const selectedToken = tokens.find((token) => token.status === 1)
-        if (!selectedToken) throw new Error('OortCloud 账户没有启用的 API 令牌')
-        const apiKey = await getOortCloudTokenKey(selectedToken.id, session)
-        if (!isCurrentSession(session)) return
-        await authorizeOortCloudLlm({
-          platformUserId: account.userId,
-          platformUserName: account.userName,
-          apiKey
-        })
-        llmAuthorizationSynced.value = true
-      } catch (error) {
-        errors.push(error?.response?.data?.msg || error?.message || '大模型使用资格同步失败')
-      }
-    }
+    // Account reads and SSO callbacks never authorize visual review or fetch an API key.
     const results = await Promise.allSettled([getOortCloudAccountStats(session), getOortCloudSubscriptions(session), getOortCloudSubscriptionPlans(session), getOortCloudQuotaConfig(session)])
     if (!isCurrentSession(session)) return
     const authError = results.find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
@@ -342,6 +330,53 @@ const loadAccount = async () => {
   } finally {
     loading.value = false
     if (!isCurrentSession(session)) await loadAccount()
+  }
+}
+
+const handleAuthorizeLlm = async () => {
+  const session = currentSession()
+  if (session.usesPlatformSession || !componentActive || loading.value || llmAuthorizationLoading.value
+    || llmAuthorizationSynced.value || !authVerified.value || !session.accessToken || !account.userId
+    || !loadedSession || !isCurrentSession(loadedSession)) return
+  const generation = accountGeneration
+  const localIdentity = authManager.getIdentitySnapshot()
+  if (!localIdentity.token) return
+  const identity = { platformUserId: account.userId, platformUserName: account.userName }
+  const stillCurrent = () => componentActive && generation === accountGeneration
+    && !usesPlatformSession.value && isCurrentSession(session) && authVerified.value
+    && account.userId === identity.platformUserId && authManager.isIdentityCurrent(localIdentity)
+  llmAuthorizationLoading.value = true
+  try {
+    try {
+      await ElMessageBox.confirm(
+        `${uiText('将读取当前 OortCloud 账户已启用的 API 身份，并加密保存到本 VLS，用于大模型视觉复核。已有视觉复核身份会被替换，后续调用将消耗该账户额度。是否授权？')}\n${identity.platformUserName}`,
+        uiText('授权视觉复核'),
+        { confirmButtonText: uiText('确认授权'), cancelButtonText: uiText('取消'), type: 'warning', closeOnClickModal: false }
+      )
+    } catch {
+      return
+    }
+    if (!stillCurrent()) return
+    const tokens = await getOortCloudTokenList(session)
+    if (!stillCurrent()) return
+    const selectedToken = tokens.find(token => token.status === 1)
+    if (!selectedToken) {
+      ElMessage.warning(uiText('当前 OortCloud 账户没有启用的 API 身份，未执行授权'))
+      return
+    }
+    const apiKey = await getOortCloudTokenKey(selectedToken.id, session)
+    if (!stillCurrent()) return
+    if (typeof apiKey !== 'string' || !apiKey.trim()) throw new Error('Missing API identity')
+    const response = await authorizeOortCloudLlm({ ...identity, apiKey }, localIdentity, stillCurrent)
+    if (!stillCurrent()) return
+    if (Number(response?.code) !== 200) throw new Error('Authorization not confirmed')
+    llmAuthorizationSynced.value = true
+    ElMessage.success(uiText('已授权当前账户用于本 VLS 视觉复核'))
+  } catch {
+    // Remote error payloads can contain credential material; never display them.
+    if (stillCurrent()) ElMessage.error(uiText('视觉复核授权未确认，请检查授权状态后再试'))
+  } finally {
+    llmAuthorizationLoading.value = false
   }
 }
 
@@ -403,7 +438,11 @@ onMounted(async () => {
   await loadAccount()
 })
 watch(() => props.tenantMode, handleAuthChanged)
-onBeforeUnmount(() => window.removeEventListener('modelHubAuthChanged', handleAuthChanged))
+onBeforeUnmount(() => {
+  componentActive = false
+  accountGeneration++
+  window.removeEventListener('modelHubAuthChanged', handleAuthChanged)
+})
 </script>
 
 <style scoped>

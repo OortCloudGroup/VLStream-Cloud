@@ -711,7 +711,7 @@ const handleLlmReviewToggle = (enabled) => {
     ElMessage.warning(uiText('请先选择一个已启用且已配置 API Key 的视觉大模型'))
   } else if (selectedLlmProvider.value.systemProvider && !llmAuthorized.value) {
     llmReviewForm.value.enabled = false
-    ElMessage.warning(uiText('请先点击页面顶部“登录 OortCloud”完成授权'))
+    ElMessage.warning(uiText('请在页面顶部 OortCloud 账户中点击“授权视觉复核”，确认后再使用'))
   }
 }
 

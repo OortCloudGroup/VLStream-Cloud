@@ -71,7 +71,7 @@ public class LlmSystemProviderService {
 	public LlmProvider requireAuthorized() {
 		LlmProvider provider = getOrCreate();
 		if (!isAuthorized(provider)) {
-			throw new ServiceException("请先点击页面顶部“登录 OortCloud”完成授权");
+			throw new ServiceException("请在页面顶部 OortCloud 账户中点击“授权视觉复核”，确认后再使用");
 		}
 		return provider;
 	}

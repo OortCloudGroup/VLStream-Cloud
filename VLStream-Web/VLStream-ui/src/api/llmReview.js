@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 import request from '@/utils/request'
+import { CanceledError } from 'axios'
+import { authManager } from '@/utils/auth'
 
 export function getLlmProviders() {
   return request({ url: '/vlsLlmReview/providers', method: 'get' })
@@ -9,8 +11,23 @@ export function getOortCloudLlmAuthorization() {
   return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'get' })
 }
 
-export function authorizeOortCloudLlm(data) {
-  return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data })
+export function authorizeOortCloudLlm(data, identity, isCurrent = () => true) {
+  const snapshot = { ...identity }
+  const requireCurrentIdentity = () => {
+    if (!snapshot.token || !authManager.isIdentityCurrent(snapshot) || !isCurrent()) {
+      throw new CanceledError('视觉复核授权账户已变化，请重新确认')
+    }
+  }
+  requireCurrentIdentity()
+  return request({
+    url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data,
+    silentError: true,
+    localAuthToken: snapshot.token,
+    platformAuthToken: snapshot.platformToken || '',
+    // Axios transforms run after async request interceptors and before transport.
+    // Recheck here so a late account/tenant switch cannot attach the old key to a new identity.
+    transformRequest: [value => { requireCurrentIdentity(); return value }, ...[].concat(request.defaults.transformRequest || [])]
+  })
 }
 
 export function createLlmProvider(data) {
