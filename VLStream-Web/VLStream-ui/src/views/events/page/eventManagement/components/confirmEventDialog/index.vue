@@ -72,7 +72,7 @@
             <div>{{ $tp('事件位置') }}</div>
           </div>
           <div class="d_r_content">
-            {{ eventDetailData.point?.address }}
+            {{ !eventDetailData.point?.address || eventDetailData.point.address === 'null' ? '—' : eventDetailData.point.address }}
           </div>
         </div>
         <div class="detailsBox">
@@ -107,6 +107,11 @@
         </div>
       </template>
     </div>
+    <el-collapse v-if="eventDetailData.cloudAiEventId" v-model="cloudEvidenceOpen" class="cloud-evidence-fold">
+      <el-collapse-item title="云端检测证据与算法结果" name="evidence">
+        <CloudEventEvidence v-if="cloudEvidenceOpen.includes('evidence')" :event-id="eventDetailData.cloudAiEventId" />
+      </el-collapse-item>
+    </el-collapse>
     <div v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0">
       <div class="details_container">
         <div class="basicTitle codeActBox flexRowAC"> {{ $tp('事件确认') }} <div class="line" />
@@ -224,6 +229,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import CloudEventEvidence from '@/views/DecisionAI/cloudAi/CloudEventEvidence.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import { ref, computed, watch } from 'vue'
@@ -246,6 +252,7 @@ interface Props {
 }
 
 interface EventDetailData {
+  cloudAiEventId?: string
   client?: string
   created_at?: string
   describe?: string
@@ -308,6 +315,7 @@ const selectContent = (content) => {
 }
 
 const eventDetailData = ref<EventDetailData>({})
+const cloudEvidenceOpen = ref<string[]>([])
 
 let detailGeneration = 0
 const currentDetailIdentity = () => `${store.token || ''}:${store.tenantId || store.userInfo?.tenantId || store.userInfo?.tenant_id || ''}:${store.userInfo?.user_id || store.userInfo?.userId || store.userInfo?.id || ''}`
@@ -393,6 +401,7 @@ const handleSelect = (_key: string) => {
 }
 watch([() => props.visible, () => props.data?.id, currentDetailIdentity], ([visible, id]) => {
   const generation = ++detailGeneration
+  cloudEvidenceOpen.value = []
   eventDetailData.value = {}
   feedbackListData.value = []
   if (!visible || !id) return

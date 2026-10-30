@@ -126,7 +126,7 @@ class DeviceEventMqttHandlerTest {
 		assertEquals("device-event-1", stored.getDeviceEventId());
 		assertEquals("media-1", stored.getMediaId());
 		assertEquals("person_detected", stored.getEventType());
-		assertEquals("设备上报结构化识别事件：person_detected", stored.getDescription());
+		assertEquals("person_detected", stored.getDescription());
 		assertEquals("测试摄像头", stored.getDeviceName());
 		assertEquals("重点区域", stored.getDeviceTag());
 		assertEquals("测试位置", stored.getAddress());

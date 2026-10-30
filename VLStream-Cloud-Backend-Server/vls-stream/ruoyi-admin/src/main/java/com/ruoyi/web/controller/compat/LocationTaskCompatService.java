@@ -20,6 +20,7 @@ import com.ruoyi.workorder.domain.bo.WorkOrderBo;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.service.ActiveSafetyEventReportService;
+import com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiLocalEventSink;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ import java.util.concurrent.CompletableFuture;
  * Java implementation of the task APIs previously served by apaas-location-service.
  */
 @Service
-public class LocationTaskCompatService implements ActiveSafetyEventReportService {
+public class LocationTaskCompatService implements ActiveSafetyEventReportService, CloudAiLocalEventSink {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocationTaskCompatService.class);
 
@@ -238,6 +239,10 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     }
 
     private EventKey insertCameraEvent(Map<String, Object> body, ActiveSafetyEventReport mqttReport) {
+        return insertCameraEvent(body, mqttReport, null);
+    }
+
+    private EventKey insertCameraEvent(Map<String, Object> body, ActiveSafetyEventReport mqttReport, EventKey reservedKey) {
         String tenantId = singleTenantId;
         String deviceId = stringValue(body, "device_id");
         String deviceName = stringValue(body, "device_name");
@@ -247,7 +252,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         Map<String, Object> point = pointValue(body.get("point"));
         List<String> pictures = distinctStrings(body.get("pics"), true);
         List<String> videos = distinctStrings(body.get("video"), true);
-        EventKey key = nextEventKey(deviceName);
+        EventKey key = reservedKey == null ? nextEventKey(deviceName) : reservedKey;
 
         LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
         data.put("describe", describe);
@@ -255,6 +260,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         data.put("pics", pictures);
         data.put("send_pics", new ArrayList<String>());
         data.put("video", videos);
+        if (reservedKey != null) data.put("cloud_ai_event_id", key.externalId());
         if (mqttReport != null) {
             data.put("mqtt_message_id", mqttReport.getSourceMessageId());
             data.put("device_event_id", mqttReport.getDeviceEventId());
@@ -275,9 +281,10 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
                 + " (`id`,`no`,`tenant_id`,`uuid`,`name`,`data`,`status`,`item`,`client`,`mod_type`,"
                 + "`mod_status`,`device_id`,`device_name`,`device_tag`,`work_order_status`,"
                 + "`created_at`,`updated_at`,`deleted_at`) "
-                + "VALUES (?,?,?,?,?,CAST(? AS JSON),2,?,'camera',2,0,?,?,?,0,NOW(),NOW(),0)",
+                + "VALUES (?,?,?,?,?,CAST(? AS JSON),2,?,'camera',2,0,?,?,?,0,?,NOW(),0)",
             key.getId(), key.getNo(), tenantId, deviceId, name, toJson(data), item,
-            deviceId, deviceName, stringValue(body, "device_tag"));
+            deviceId, deviceName, stringValue(body, "device_tag"),
+            reservedKey != null && mqttReport != null && mqttReport.getEventTime() != null ? mqttReport.getEventTime() : new Date());
         scheduleAutomaticWorkOrder(new EventSnapshot(key, tenantId, deviceId, name, item,
             describe, point, resolveEventPictures(pictures), 2, deviceId));
         return key;
@@ -972,6 +979,35 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ActiveSafetyEventReportResult report(ActiveSafetyEventReport report) {
+        return report(report, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void create(String tenant, long eventId, ActiveSafetyEventReport report) {
+        if (!singleTenantId.equals(tenant) || eventId <= 0) {
+            throw new IllegalArgumentException("云端事件的租户或编号无效");
+        }
+        ActiveSafetyEventReportResult saved = report(report, new EventKey(String.valueOf(eventId), 0));
+        if (!String.valueOf(eventId).equals(saved.getActiveSafetyEventId())) {
+            throw new IllegalStateException("云端事件重复关联不一致");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void completeEvidence(String tenant, long eventId, List<String> images, List<String> videos) {
+        if (!singleTenantId.equals(tenant)) throw new IllegalArgumentException("云端事件租户无效");
+        // Update only media fields. Feedback, confirmation and deletion remain owned by active safety.
+        int updated = jdbc.update("UPDATE " + EVENT
+                + " SET data=JSON_SET(data,'$.pics',CAST(? AS JSON),'$.video',CAST(? AS JSON)),updated_at=NOW()"
+                + " WHERE id=? AND `no`=0 AND tenant_id=?"
+                + " AND JSON_UNQUOTE(JSON_EXTRACT(data,'$.cloud_ai_event_id'))=?",
+            toJson(mediaReferences(images)), toJson(mediaReferences(videos)), String.valueOf(eventId), tenant, String.valueOf(eventId));
+        if (updated != 1) throw new IllegalStateException("主动安全事件关联不存在");
+    }
+
+    private ActiveSafetyEventReportResult report(ActiveSafetyEventReport report, EventKey reservedKey) {
         if (report == null || string(report.getSourceMessageId()).isEmpty()
             || string(report.getDeviceEventId()).isEmpty() || string(report.getDeviceId()).isEmpty()
             || string(report.getMediaId()).isEmpty()) {
@@ -1012,7 +1048,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             : mediaReferences(report.getImageMediaIds()));
         body.put("video", mediaReferences(report.getVideoMediaIds()));
 
-        EventKey key = insertCameraEvent(body, report);
+        EventKey key = insertCameraEvent(body, report, reservedKey);
         return ActiveSafetyEventReportResult.builder()
             .activeSafetyEventId(key.externalId())
             .mediaId(report.getMediaId())
@@ -2246,6 +2282,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         String name = string(row.get("name"));
         value.put("name", name.isEmpty() ? item : name);
         Map<String, Object> data = jsonMap(row.get("data"));
+        appendIfNotEmpty(value, "cloudAiEventId", data.get("cloud_ai_event_id"));
         value.put("describe", string(data.get("describe")));
         value.put("point", pointValue(data.get("point")));
         List<String> pictures = distinctStrings(data.get("pics"), true);

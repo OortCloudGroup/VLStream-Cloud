@@ -209,7 +209,9 @@ import { translatePhrase as uiText } from '@/i18n'
 import EventRecordedVideos from './components/EventRecordedVideos.vue'
 import { hasEventVideoReferences } from './components/eventVideos.mjs'
 
-import { ref, onMounted, reactive, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { authManager } from '@/utils/auth'
 import EventColumnSettings from './components/EventColumnSettings.vue'
 import { normalizeEventColumns } from './components/eventColumns.mjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -219,7 +221,7 @@ import ConfirmEventDialog from './components/confirmEventDialog/index.vue'
 import eventDetailsDialog from './components/eventDetailsDialog/index.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import { getClassificationDeviceIds } from '@/api/device/classification'
-import { delEvent, eventList, event_item_list } from '@/api/smartCity/events'
+import { delEvent, eventList, eventDetail, event_item_list } from '@/api/smartCity/events'
 import { clacPXToVW } from '@/utils/index'
 import { useUserStore } from '@/store/modules/useraPaas'
 import EventPhoneFBack from '@/pages/events/views/page/eventManagement/eventPhoneFBack.vue'
@@ -532,6 +534,27 @@ const event_item_listFn = async() => {
   }
 }
 
+const route = useRoute(), router = useRouter()
+let linkedEventRequest = 0
+watch(() => route.query.eventId, async eventId => {
+  const request = ++linkedEventRequest
+  if (typeof eventId !== 'string' || !eventId) return
+  const identity = authManager.getIdentitySnapshot()
+  try {
+    const response: any = await eventDetail({ id: eventId })
+    if (request !== linkedEventRequest || !authManager.isIdentityCurrent(identity)) return
+    if (response.code !== 200 || !response.data?.id) throw new Error(response.msg || '事件不存在或无权访问')
+    currentItem.value = response.data
+    confirmAlertVis.value = true
+    const query = { ...route.query }
+    delete query.eventId
+    delete query.from
+    await router.replace({ path: route.path, query })
+  } catch (error: any) {
+    if (request === linkedEventRequest && authManager.isIdentityCurrent(identity)) ElMessage.error(error.message || '加载关联事件失败')
+  }
+}, { immediate: true })
+onUnmounted(() => { linkedEventRequest++; listRequestId++ })
 onMounted(() => {
   event_item_listFn() // event -list
   getList()

@@ -204,7 +204,7 @@ public class DeviceEventMqttHandler {
 	private String defaultDescription(String subBizType, JSONObject payload) {
 		return VlsMqttProtocol.FACE_EVENT.equals(subBizType)
 			? "设备上报人脸识别事件"
-			: "设备上报结构化识别事件：" + StringUtils.defaultIfBlank(payload.getStr("eventType"),
+			: StringUtils.defaultIfBlank(payload.getStr("eventType"),
 				StringUtils.defaultIfBlank(payload.getStr("type"), "unknown"));
 	}
 

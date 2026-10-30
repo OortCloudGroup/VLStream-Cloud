@@ -126,7 +126,8 @@
             <div class="detail-content-wrapper">
               <span class="detail-label">{{ $tp('事件数据') }}</span>
               <div class="detail-value event-data-block">
-                <pre v-if="selectedEvent?.eventData" class="event-data">{{ selectedEvent.eventData }}</pre>
+                <CloudEventEvidence v-if="isCloudEvent" :event-id="String(selectedEvent.id)" />
+                <pre v-else-if="selectedEvent?.eventData" class="event-data">{{ selectedEvent.eventData }}</pre>
                 <span v-else>--</span>
               </div>
             </div>
@@ -336,8 +337,9 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, onMounted, reactive, ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {computed, onMounted, reactive, ref, watch} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import CloudEventEvidence from './cloudAi/CloudEventEvidence.vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Document, Monitor, Location, Clock, User, Picture, Plus, CircleCheck} from '@element-plus/icons-vue'
 import {
@@ -350,6 +352,7 @@ import {
 import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
+const route = useRoute()
 
 const toolbarButtonList = computed(() => [
   { name: '导出', svg: 'export', clickFn: () => handleExportEvents() }
@@ -364,6 +367,12 @@ const selectedRows = ref([])
 // control
 const showDetailView = ref(false)
 const selectedEvent = ref(null)
+const isCloudEvent = computed(() => {
+  try {
+    const value = selectedEvent.value?.eventData
+    return (typeof value === 'string' ? JSON.parse(value) : value)?.source === 'CLOUD_AI'
+  } catch { return false }
+})
 
 // form
 const feedbackForm = ref({
@@ -422,9 +431,14 @@ const formatDateTime = (value) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
+const eventDescription = (item) => {
+  const legacyDescription = `设备上报结构化识别事件：${item.eventType}`
+  return item.eventType && item.eventDesc === legacyDescription ? item.eventType : item.eventDesc
+}
+
 const normalizeEvent = (item) => ({
   id: item.id,
-  eventDesc: item.eventDesc,
+  eventDesc: eventDescription(item),
   reportLocation: item.reportLocation,
   reportDevice: item.reportDevice,
   reportTime: formatDateTime(item.reportTime),
@@ -547,6 +561,7 @@ const handleDetail = async (row) => {
         ...data
       }
       selectedEvent.value.reportTime = formatDateTime(data.reportTime)
+      selectedEvent.value.eventDesc = eventDescription(data)
       selectedEvent.value.createTime = formatDateTime(data.createTime)
       selectedEvent.value.updateTime = formatDateTime(data.updateTime)
     } else {
@@ -712,7 +727,9 @@ const handleBatchOperation = () => {
 
 onMounted(() => {
   loadEvents()
+  if (route.query.eventId) handleDetail({ id: String(route.query.eventId) })
 })
+watch(() => route.query.eventId, id => { if (id) handleDetail({ id: String(id) }) })
 </script>
 
 <style scoped lang="scss">

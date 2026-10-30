@@ -1,0 +1,4 @@
+# Python 3.10+; install into the detection runtime, not the application's Python.
+aiortc==1.14.0
+aiohttp==3.13.3
+av==16.1.0

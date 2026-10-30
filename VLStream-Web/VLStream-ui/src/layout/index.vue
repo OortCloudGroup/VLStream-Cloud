@@ -34,7 +34,7 @@
             :is-expanded="!sidebarCollapsed"
             @toggle="toggleSidebar"
           />
-          <PlatformAppsEntry v-if="!localEventRoute" />
+          <PlatformAppsEntry />
         </div>
 
         <!-- menu -->
@@ -570,10 +570,11 @@ const menuRoutesMap = {
     },
     {
       path: 'cloud-intelligence-menu',
-      meta: { title: '云端智能', icon: '云端智能' },
+      meta: { title: '智能编排', icon: '云端智能' },
       children: [
         { path: '/scene-governance', meta: { title: '场景治理', icon: '场景治理' } },
         { path: '/algorithm-task', meta: { title: '任务配置', icon: '任务配置' } },
+        { path: '/task-status', meta: { title: '任务状态', icon: '任务状态' } },
         { path: '/intelligent-analysis-request', meta: { title: '智能分析', icon: '智能分析' } }
       ]
     }
@@ -1019,6 +1020,7 @@ const getMenuIcon = (iconName) => {
     '容器实例': Monitor,
     '端侧智能': DataAnalysis,
     '云端智能': Connection,
+    '任务状态': Monitor,
     '智能分析': DataAnalysis,
     '用户管理': UserFilled,
     '角色管理': User,

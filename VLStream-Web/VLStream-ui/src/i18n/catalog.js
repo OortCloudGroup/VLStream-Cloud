@@ -187,6 +187,7 @@ VLS 设备列表\tVLS device list\tLista de dispositivos VLS\tقائمة أجه�
 国标协议\tGB28181 protocol\tProtocolo GB28181\tبروتوكول GB28181\tGB28181-Protokoll\tProtocole GB28181\tGB28181 プロトコル\tProtocolo GB28181\tПротокол GB28181\tGB28181 프로토콜\tProtokol GB28181\tGB28181 protokolü
 已退出登录\tSigned out\tSesión cerrada\tتم تسجيل الخروج\tAbgemeldet\tDéconnecté\tログアウトしました\tSessão encerrada\tВы вышли из системы\t로그아웃했습니다\tBerhasil keluar\tÇıkış yapıldı
 云端智能\tCloud AI\tIA en la nube\tالذكاء الاصطناعي السحابي\tCloud-KI\tIA cloud\tクラウド AI\tIA na nuvem\tОблачный ИИ\t클라우드 AI\tAI cloud\tBulut yapay zekâ
+智能编排\tIntelligent orchestration\tOrquestación inteligente\tالتنسيق الذكي\tIntelligente Orchestrierung\tOrchestration intelligente\tインテリジェント・オーケストレーション\tOrquestração inteligente\tИнтеллектуальная оркестрация\t지능형 오케스트레이션\tOrkestrasi cerdas\tAkıllı orkestrasyon
 智能分析\tIntelligent analysis\tAnálisis inteligente\tالتحليل الذكي\tIntelligente Analyse\tAnalyse intelligente\tインテリジェント分析\tAnálise inteligente\tИнтеллектуальный анализ\t지능형 분석\tAnalisis cerdas\tAkıllı analiz
 主动安全\tActive safety\tSeguridad activa\tالسلامة النشطة\tAktive Sicherheit\tSécurité active\tアクティブセーフティ\tSegurança ativa\tАктивная безопасность\t능동 안전\tKeselamatan aktif\tAktif güvenlik
 自定义\tCustom\tPersonalizado\tمخصص\tBenutzerdefiniert\tPersonnalisé\tカスタム\tPersonalizado\tПользовательский\t사용자 지정\tKhusus\tÖzel

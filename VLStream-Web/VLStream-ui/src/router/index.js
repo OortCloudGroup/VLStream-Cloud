@@ -257,7 +257,7 @@ const routes = [
         path: '/intelligent-analysis-request',
         name: 'IntelligentAnalysisRequest',
         component: () => import('@/views/DecisionAI/IntelligentAnalysisRequest.vue'),
-        meta: { title: '智能分析申请', icon: '智能分析申请' }
+        meta: { title: '智能分析', icon: '智能分析申请' }
       },
       {
         path: '/intelligent-analysis-result',
@@ -348,6 +348,12 @@ const routes = [
         name: 'AlgorithmTask',
         component: () => import('@/views/DecisionAI/AlgorithmTask.vue'),
         meta: { title: '任务配置', icon: '任务配置' }
+      },
+      {
+        path: '/task-status',
+        name: 'CloudTaskStatus',
+        component: () => import('@/views/DecisionAI/TaskStatus.vue'),
+        meta: { title: '任务状态', icon: '任务状态' }
       },
       {
         path: '/container-instances',

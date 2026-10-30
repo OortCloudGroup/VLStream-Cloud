@@ -71,6 +71,25 @@ public class VlsEventReportApplicationService {
 		return persistDeviceEvent(event, device, null, null);
 	}
 
+	/** Cloud detection is visible immediately; external delivery waits for its bounded evidence tail. */
+	@Transactional(rollbackFor = Exception.class)
+	public EventManagement persistCloudAiEvent(EventManagement event, DeviceInfo device) {
+		if (!isMultiTenant()) throw new ServiceException("单租户云端事件必须使用主动安全事件入口");
+		if (event == null || device == null || StringUtils.isBlank(device.getTenantId())) throw new ServiceException("云端事件缺少设备归属");
+		event.setTenantId(device.getTenantId()); event.setIsReport(isMultiTenant() ? 0 : 1);
+		if (!eventManagementService.createEvent(event) || event.getId() == null) throw new ServiceException("云端事件保存失败");
+		return event;
+	}
+
+	/** Caller holds the cloud event row lock and marks final evidence in the same transaction. */
+	@Transactional(rollbackFor = Exception.class)
+	public void publishCloudAiEvidence(EventManagement event, DeviceInfo device, List<String> images, List<String> videos) {
+		if (!isMultiTenant()) return;
+		JSONObject payload = buildPayload(event, device, null);
+		payload.set("pics", mediaReferences(images)); payload.set("video", mediaReferences(videos));
+		enqueue(event, device, null, payload);
+	}
+
 	/** The same multi-tenant sink is used before and after optional LLM review. */
 	@Transactional(rollbackFor = Exception.class)
 	public EventManagement persistActiveSafetyEvent(ActiveSafetyEventReport report, DeviceInfo device) {
