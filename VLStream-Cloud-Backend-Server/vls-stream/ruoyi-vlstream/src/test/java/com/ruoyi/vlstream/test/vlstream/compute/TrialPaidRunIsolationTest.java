@@ -54,10 +54,10 @@ class TrialPaidRunIsolationTest {
         // Explicit synthetic conversion, deliberately different from the historical DEV value.
         ((ObjectNode)f.config.path("quota_per_currency_unit")).put("numerator","1000");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-        while(root!=null&&!Files.exists(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_054__compute_corrective_refund_intents.sql")))root=root.getParent();
+        while(root!=null&&!Files.exists(root.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_054__compute_corrective_refund_intents.sql")))root=root.getParent();
         assertNotNull(root);
         try(java.sql.Connection connection=f.jdbc.getDataSource().getConnection()) {
-            ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_054__compute_corrective_refund_intents.sql").toFile()));
+            ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_054__compute_corrective_refund_intents.sql").toFile()));
         }
         gateway=mock(ExternalBillingGateway.class,invocation->{
             if("config".equals(invocation.getMethod().getName()))return f.config;

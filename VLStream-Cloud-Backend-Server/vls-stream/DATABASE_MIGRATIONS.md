@@ -2,6 +2,21 @@
 
 VLStream Cloud 使用 Flyway 管理 v1.1.2 之后的数据库结构变化。后端每次启动时会先检查数据库，只执行尚未执行过的升级脚本，然后才启动业务服务。
 
+## v1.2.9 的双迁移历史
+
+公开 Release 与开发主线曾为不同数据库历史使用相同的 Flyway 版本号，因此迁移继续放在两个互斥目录中：
+
+- db/migration/mainline/：保留 origin/main 的迁移文件名和版本，供 dev、local 等开发配置使用。
+- db/migration/release/：从 v1.2.7 已发布生产历史继续，供 prod 使用；v1.2.7 到 V1_2_0_048，v1.2.9 扩展到 V1_2_0_060。
+
+application.yml 默认选择 mainline，application-prod.yml 显式选择 release。一个数据库只能使用其中一条历史，不能把两个目录合并，也不能在已有数据库上切换路径。已经执行过的迁移文件名和内容保持不变。
+
+v1.2.9 将主线新增的 V1_2_0_048 至 V1_2_0_059 按原顺序映射为生产迁移 V1_2_0_049 至 V1_2_0_060；开发目录仍保留主线编号。发布分支同时核对主线与已发布生产基线：
+
+~~~powershell
+pwsh -File tools/check-database-migrations.ps1 -MainlineBaseRef origin/main -ReleaseBaseRef v1.2.7
+~~~
+
 ## 开发时怎样新增 SQL
 
 所有新的数据库升级脚本统一放在：

@@ -119,11 +119,43 @@ public class ConfiguredComputeIntegrationTest {
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
     }
     @Test void yamlBindsStableIdsLegacyAliasesRuntimeAndApprovedAssetReferences() throws Exception {
-        java.nio.file.Path build=java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-        while(build!=null && !java.nio.file.Files.exists(build.resolve("ruoyi-admin/src/main/resources/application.yml")))build=build.getParent();
-        assertNotNull(build);
+        String yaml=String.join("\n",
+            "vlstream:",
+            "  compute:",
+            "    company-resources:",
+            "      resources:",
+            "        - code: shared-173",
+            "          node-id: -173",
+            "          legacy-node-ids: [173]",
+            "          name: Fixture shared GPU",
+            "          gpu-model: Fixture GPU",
+            "          asset-host: 192.168.88.173",
+            "          python-path: /usr/bin/python3",
+            "          work-dir: /srv/vlstream/localhost",
+            "        - code: shared-99",
+            "          node-id: -99",
+            "          legacy-node-ids: [99]",
+            "          name: Fixture second GPU",
+            "          gpu-model: Fixture GPU",
+            "          python-path: /usr/bin/python3",
+            "          work-dir: /srv/vlstream/second",
+            "        - code: official-6000",
+            "          provider: autodl",
+            "          node-id: -6000",
+            "          legacy-node-ids: [6000]",
+            "          instance-id: pro-0123456789ab",
+            "          account-scope: fixture-account",
+            "          tenant-id: fixture-tenant",
+            "          name: Fixture official GPU",
+            "          gpu-model: Fixture GPU",
+            "          python-path: /usr/bin/python3",
+            "          work-dir: /srv/vlstream/official",
+            "          fixed-price:",
+            "            currency: CNY",
+            "            per-instance-hour: 13.00",
+            "");
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
-        for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
+        for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.ByteArrayResource(yaml.getBytes(StandardCharsets.UTF_8))))environment.getPropertySources().addLast(source);
         ConfiguredComputeProperties bound=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.company-resources",org.springframework.boot.context.properties.bind.Bindable.of(ConfiguredComputeProperties.class)).get();
         assertEquals(3,bound.getResources().size());assertEquals(-173L,bound.getResources().get(0).getNodeId());assertEquals(-99L,bound.getResources().get(1).getNodeId());
         assertEquals(-6000L,bound.getResources().get(2).getNodeId());assertEquals(0,new java.math.BigDecimal("13.00").compareTo(bound.getResources().get(2).getFixedPrice().getPerInstanceHour()));

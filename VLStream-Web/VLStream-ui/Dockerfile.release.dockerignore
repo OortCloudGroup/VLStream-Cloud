@@ -1,0 +1,16 @@
+**
+!docs
+!docs/NEW_GPU_ONBOARDING.md
+!VLStream-Web
+!VLStream-Web/VLStream-ui
+!VLStream-Web/VLStream-ui/**
+VLStream-Web/VLStream-ui/node_modules
+VLStream-Web/VLStream-ui/node_modules/**
+VLStream-Web/VLStream-ui/dist
+VLStream-Web/VLStream-ui/dist/**
+VLStream-Web/VLStream-ui/codex
+VLStream-Web/VLStream-ui/codex/**
+VLStream-Web/VLStream-ui/.git
+VLStream-Web/VLStream-ui/.git/**
+VLStream-Web/VLStream-ui/coverage
+VLStream-Web/VLStream-ui/coverage/**

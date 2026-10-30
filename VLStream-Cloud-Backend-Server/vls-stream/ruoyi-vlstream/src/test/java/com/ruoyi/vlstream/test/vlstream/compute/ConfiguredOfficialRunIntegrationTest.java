@@ -43,9 +43,9 @@ class ConfiguredOfficialRunIntegrationTest {
         jdbc.execute("CREATE TABLE vls_compute_public_instance(instance_key VARCHAR(64) PRIMARY KEY,provider VARCHAR(20),account_scope VARCHAR(128),provider_instance_id VARCHAR(100),public_state VARCHAR(20) DEFAULT 'FREE',owner_subject VARCHAR(64),claim_id VARCHAR(36),generation BIGINT DEFAULT 0,workspace_dirty BOOLEAN DEFAULT FALSE)");
         jdbc.execute("ALTER TABLE vls_cloud_training_job ADD COLUMN public_instance_key VARCHAR(64)");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-        while(root!=null&&!Files.exists(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_057__configured_official_power_outbox.sql")))root=root.getParent();
+        while(root!=null&&!Files.exists(root.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_057__configured_official_power_outbox.sql")))root=root.getParent();
         assertNotNull(root);
-        try(java.sql.Connection connection=jdbc.getDataSource().getConnection()){ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_057__configured_official_power_outbox.sql").toFile()));}
+        try(java.sql.Connection connection=jdbc.getDataSource().getConnection()){ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_057__configured_official_power_outbox.sql").toFile()));}
         properties=new ConfiguredComputeProperties();resource=new ConfiguredComputeProperties.Resource();
         resource.setCode("official-autodl");resource.setProvider("autodl");resource.setNodeId(-6000L);resource.setName("Official fixture");resource.setGpuModel("RTX 6000D");
         resource.setInstanceId("pro-123456abcdef");resource.setAccountScope("official-fixture");resource.setTenantId("official-platform");

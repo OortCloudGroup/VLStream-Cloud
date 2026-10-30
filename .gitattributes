@@ -1,2 +1,4 @@
 tools/compute/*.sh text eol=lf
 tools/compute/*.py text eol=lf
+deploy/release/sql/init/*.sh text eol=lf
+scripts/release/*.sh text eol=lf

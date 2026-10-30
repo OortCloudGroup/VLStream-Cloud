@@ -42,7 +42,7 @@ class ComputeProviderAdapterTest {
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on")).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization","test-only-token"))
             .andExpect(content().json("{\"instance_uuid\":\"pro-test-only\",\"payload\":\"gpu\"}"))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":null,\"request_id\":\"test-id\"}",MediaType.APPLICATION_JSON));
-        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"status")).andExpect(method(HttpMethod.GET)).andExpect(content().json("{\"instance_uuid\":\"pro-test-only\"}"))
+        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"status?instance_uuid=pro-test-only")).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":\"running\"}",MediaType.APPLICATION_JSON));
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"list")).andExpect(method(HttpMethod.POST))
             .andExpect(content().json("{\"page_index\":1,\"page_size\":20}"))
@@ -117,7 +117,7 @@ class ComputeProviderAdapterTest {
     }
     @Test void proPriceScalingAndCardScopeRemainUnknownInsteadOfGuessingTheExampleDivisor() {
         RestTemplate http=AutoDlProPowerProvider.transport(); MockRestServiceServer mock=MockRestServiceServer.bindTo(http).build();
-        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot")).andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"payg_price\":1970,\"origin_pay_price\":2500,\"root_password\":\"test-secret\"}}",MediaType.APPLICATION_JSON));
+        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot?instance_uuid=pro-test-only")).andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"payg_price\":1970,\"origin_pay_price\":2500,\"root_password\":\"test-secret\"}}",MediaType.APPLICATION_JSON));
         ComputeCostProvider.Observation cost=new AutoDlProPowerProvider(cipher,true,http).cost(node("autodl"));
         assertEquals(new java.math.BigDecimal("1970"),cost.getAmount()); assertEquals("UNKNOWN",cost.getAmountUnit()); assertEquals("UNKNOWN",cost.getResourceScope()); assertFalse(cost.isBillableCost()); mock.verify();
     }
