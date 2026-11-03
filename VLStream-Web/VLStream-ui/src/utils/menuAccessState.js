@@ -7,7 +7,7 @@ export const menuIsSystemAdmin = shallowRef(false)
 
 export function setMenuPermissions(userInfo) {
   menuPermissions.value = Array.isArray(userInfo?.permissions) ? [...userInfo.permissions] : []
-  menuIsSystemAdmin.value = userInfo?.isAdmin === true && String(userInfo?.user?.userId ?? userInfo?.userId ?? '') === '1'
+  menuIsSystemAdmin.value = userInfo?.isAdmin === true
 }
 
 export function clearMenuPermissions() {

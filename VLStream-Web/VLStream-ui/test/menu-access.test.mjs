@@ -4,7 +4,17 @@ import { readFile } from 'node:fs/promises'
 import { canAccessPage, filterMenuRoutes, isManagedMenuRoute, permissionForPage } from '../src/utils/menuAccess.mjs'
 import { hiddenGrantedMenuIds, selectedMenuIds, orderedVisibleGrants, changedVisibleGrants, preserveGrantableHiddenGrants } from '../src/utils/menuGrant.mjs'
 import TreeStore from '../node_modules/element-plus/es/components/tree/src/model/tree-store.mjs'
+import { setMenuPermissions, clearMenuPermissions, menuIsSystemAdmin } from '../src/utils/menuAccessState.js'
 import { cameraRtcIdFromUrl, squareCameraRtcConfig } from '../src/utils/squareCameraRtc.mjs'
+
+test('grant editor follows verified administrator state and clears it after revocation', () => {
+  setMenuPermissions({ user: { userId: '99' }, isAdmin: true, permissions: ['*:*:*'] })
+  assert.equal(menuIsSystemAdmin.value, true)
+  setMenuPermissions({ user: { userId: '99' }, isAdmin: false, roles: ['admin'], permissions: [] })
+  assert.equal(menuIsSystemAdmin.value, false)
+  clearMenuPermissions()
+  assert.equal(menuIsSystemAdmin.value, false)
+})
 
 test('each application route is either deliberately public or has a page permission', async () => {
   const source = await readFile(new URL('../src/router/index.js', import.meta.url), 'utf8')

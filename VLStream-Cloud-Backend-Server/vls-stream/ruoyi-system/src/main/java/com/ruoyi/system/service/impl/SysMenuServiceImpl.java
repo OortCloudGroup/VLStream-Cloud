@@ -229,6 +229,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
                 .setWeight(menu.getOrderNum());
             tree.putExtra("perms", menu.getPerms());
             tree.putExtra("menuType", menu.getMenuType());
+            tree.putExtra("status", menu.getStatus());
         });
     }
 

@@ -361,10 +361,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (user.getRoleIds() != null) {
             insertUserAuth(userId, user.getRoleIds());
         }
-        // Delete user and
-        userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
-        // Add user and
-        insertUserPost(user);
+        if (user.getPostIds() != null) {
+            userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
+            insertUserPost(user);
+        }
         return baseMapper.updateById(user);
     }
 

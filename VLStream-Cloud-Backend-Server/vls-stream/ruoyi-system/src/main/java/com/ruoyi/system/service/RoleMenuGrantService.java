@@ -133,10 +133,11 @@ public class RoleMenuGrantService {
 
     private Set<Long> grantableIds(SysRole role) {
         String userId = currentUserId();
+        boolean administrator = currentUserIsAdmin();
         List<SysMenu> menus = menuService.selectMenuList(userId);
         Set<Long> active = new HashSet<>();
         for (SysMenu menu : menus) {
-            if ("0".equals(menu.getStatus())) {
+            if (administrator || "0".equals(menu.getStatus())) {
                 active.add(menu.getMenuId());
             }
         }
@@ -161,7 +162,7 @@ public class RoleMenuGrantService {
         // The presentation query includes bindings for disabled roles. It is not
         // sufficient as an authorization boundary, so intersect it with active
         // same-tenant role assignments for every non-superuser.
-        if (!currentUserIsAdmin()) {
+        if (!administrator) {
             grantable.retainAll(roleMenuMapper.selectGrantableMenuIds(userId, role.getTenantId()));
         }
         return grantable;

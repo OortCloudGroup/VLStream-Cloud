@@ -152,7 +152,12 @@ public class SysRoleServiceImpl implements ISysRoleService {
      * @return roleobjectinfo
      */
     @Override
-    public SysRole selectRoleById(String roleId) {
+    public SysUserRoleView selectRoleById(String roleId) {
+        return userRoleMapper.selectByCondition(null, roleId);
+    }
+
+    @Override
+    public SysRole selectRoleDefinitionById(String roleId) {
         return baseMapper.selectById(roleId);
     }
 

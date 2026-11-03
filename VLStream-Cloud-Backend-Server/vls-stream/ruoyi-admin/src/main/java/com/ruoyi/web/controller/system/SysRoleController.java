@@ -81,7 +81,7 @@ public class SysRoleController extends BaseController {
     @GetMapping(value = "/{roleId}")
     public R<SysRole> getInfo(@PathVariable String  roleId) {
         roleService.checkRoleDataScope(roleId);
-        return R.ok(roleService.selectRoleById(roleId));
+        return R.ok(roleService.selectRoleDefinitionById(roleId));
     }
 
     @SaCheckPermission("system:role:query")

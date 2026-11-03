@@ -40,7 +40,7 @@ class MultiUserRoleDetailTest {
         view.setRoleKey("custom_role");
         when(roleMapper.selectById("42")).thenReturn(view);
 
-        SysRole result = service.selectRoleById("42");
+        SysRole result = service.selectRoleDefinitionById("42");
 
         assertEquals("多用户验证角色", result.getRoleName());
         assertEquals("custom_role", result.getRoleKey());

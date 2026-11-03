@@ -22,6 +22,7 @@
       <el-tabs v-model="activeTab">
         <!-- menu item -->
         <el-tab-pane :label="$tp('菜单权限')" name="menu">
+          <el-alert v-if="String(role?.id) === '1' && menuIsSystemAdmin" :title="$tp('超级管理员的通用功能权限不受此处勾选限制；停用菜单的授权不会启用该菜单')" type="info" :closable="false" />
           <el-alert v-if="String(role?.id) === '1' && !menuIsSystemAdmin" :title="$tp('只有超级管理员可以修改该角色的菜单授权')" type="info" :closable="false" />
           <el-alert v-if="hiddenGrantedMenuIds.length" :title="$tp('部分权限不在当前账号可配置范围内，保存时将保留')" type="info" :closable="false" />
           <div class="grant-tools">
@@ -149,6 +150,7 @@ const loadGrantData = async () => {
     grantableMenuIds.value = new Set(checkedPayload.grantableMenuIds.map(String))
     const markUnavailable = nodes => nodes.map(node => ({
       ...node,
+      label: node.status === '1' ? `${node.label}（${uiText('已停用')}）` : node.label,
       disabled: !grantableMenuIds.value.has(String(node.id)),
       children: markUnavailable(node.children || [])
     }))
@@ -220,6 +222,11 @@ const handleClose = () => {
   align-items: center;
   gap: 8px;
   margin: 12px 0;
+}
+
+.grant-dialog :deep(.el-tree) {
+  max-height: 52vh;
+  overflow-y: auto;
 }
 
 .grant-title {

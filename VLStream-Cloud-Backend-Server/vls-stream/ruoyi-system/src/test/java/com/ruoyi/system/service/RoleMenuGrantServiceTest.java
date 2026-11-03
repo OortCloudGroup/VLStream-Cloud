@@ -99,6 +99,27 @@ class RoleMenuGrantServiceTest {
     }
 
     @Test
+    void actualSuperuserCanManageDisabledCatalogueBindingsWithoutEnablingMenus() {
+        doReturn("1").when(service).currentUserId();
+        SysMenu disabled = menu(2);
+        disabled.setStatus("1");
+        when(menuService.selectMenuList("1")).thenReturn(Arrays.asList(menu(1), disabled));
+        assertEquals(Arrays.asList("1", "2"), service.getGrantableMenuIds("9"));
+        assertEquals("1", disabled.getStatus());
+    }
+
+    @Test
+    void currentAdminRoleCanManageFullCatalogueWithoutUserOneIdentity() {
+        doReturn("99").when(service).currentUserId();
+        doReturn(true).when(service).currentUserIsAdmin();
+        SysMenu disabled = menu(2);
+        disabled.setStatus("1");
+        when(menuService.selectMenuList("99")).thenReturn(Arrays.asList(menu(1), disabled));
+        assertEquals(Arrays.asList("1", "2"), service.getGrantableMenuIds("9"));
+        verify(grants, never()).selectGrantableMenuIds(anyString(), anyString());
+    }
+
+    @Test
     void preservesAndCannotAddAnAssignedMenuMissingFromTheVisibleTree() {
         when(menuService.selectMenuList("operator")).thenReturn(Arrays.asList(menu(1), menu(3)));
         when(menuService.buildMenuTreeSelect(anyList())).thenReturn(Collections.singletonList(tree(1)));
