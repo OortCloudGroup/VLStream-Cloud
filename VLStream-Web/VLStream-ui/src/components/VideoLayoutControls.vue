@@ -8,7 +8,8 @@
 <template>
   <div class="map-top-controls">
     <!-- controlbutton - in -->
-    <div class="layout-button-group">
+    <div class="layout-button-group" v-floating-drag>
+      <button type="button" class="floating-drag-handle" data-drag-handle aria-label="拖动工具栏" title="拖动工具栏">⠿</button>
       <!-- MasterGo 309:32968 / 309:32903 — 视频徽标 + 分隔线 -->
       <span class="video-badge" aria-hidden="true">
         <img :src="videoBadgeIcon" width="24" height="24" alt="" />
@@ -124,6 +125,7 @@
 </template>
 
 <script setup>
+import vFloatingDrag from '@/utils/floatingDrag'
 import defaultPresentationIcon from '@/assets/mastergo/video-square/presentation-default.svg'
 import bottomPresentationIcon from '@/assets/mastergo/video-square/presentation-bottom.svg'
 import fourLayoutIcon from '@/assets/mastergo/video-square/layout-four.svg'

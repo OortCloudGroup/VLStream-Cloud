@@ -1350,7 +1350,7 @@ const handleUserTokenUpdated = async (event) => {
 /* 设备统计条：固定在侧栏底部，菜单滚动时不动 */
 .app-sidebar-stats { flex: 0 0 auto; padding: 12px 16px; border-top: 1px solid #e8e8e8; box-sizing: border-box; }
 .app-sidebar-stats:empty { display: none; }
-.app-sidebar-stats .device-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.app-sidebar-stats .device-stats { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .app-sidebar-stats .stat-item { display: flex; align-items: center; gap: 6px; }
 .app-sidebar-stats .stat-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }

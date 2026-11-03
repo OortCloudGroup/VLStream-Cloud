@@ -11,7 +11,7 @@
     <!-- main need to -->
     <div class="main-content" :style="{ '--toolbar-inset': toolbarInset + 'px' }">
       <div ref="bottomWorkspace" class="square-bottom-workspace" :class="{ 'is-bottom': presentationMode === 'bottom' }"
-        :style="{ '--toolbar-inset': toolbarInset + 'px', zIndex:devicePanelFront ? 5 : 7 }" @pointerdown.capture="devicePanelFront = false"></div>
+        :style="{ '--toolbar-inset': toolbarInset + 'px' }"></div>
       <!-- info -->
       <div v-if="showDebugInfo" class="debug-panel">
         <div class="debug-header">
@@ -122,7 +122,8 @@
             <div id="video-square-map" class="leaflet-map-container"></div>
 
             <!-- control -->
-            <div class="map-controls">
+            <div class="map-control-column">
+              <div class="map-controls">
               <button class="map-control-btn" @click="fitBounds" :title="$tp('显示全部摄像头')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
@@ -164,6 +165,7 @@
                 </svg>
               </button>
           </div>
+            </div>
         </div>
       </div>
       </div>
@@ -326,7 +328,7 @@ const workspacePreferences = readVideoSquarePreferences()
 const layoutChoice = ref(workspacePreferences.layout)
 const layoutMode = ref(({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[layoutChoice.value.count] || `custom-${layoutChoice.value.count}`)
 // MasterGo 257:28183 默认态为「视频展示」
-const viewMode = ref(workspacePreferences.view)
+const viewMode = ref('video')
 const showSharing = ref(false)
 const sharingOwnerId = ref('')
 const openSharing = device => {
@@ -356,7 +358,7 @@ const setSquareView = async value => {
 const bottomWorkspace = ref(null)
 const floatingTools = ref(null)
 const toolbarInset = ref(82)
-const devicePanelCollapsed = ref(false)
+const devicePanelCollapsed = ref(true)
 const devicePanelFront = ref(false)
 const collapseDevicePanel = side => {
   if (side !== (viewMode.value === 'map' ? 'right' : 'left')) return
@@ -398,9 +400,9 @@ const handleDeviceSelect = device => {
   active.activeWindowIndex = 0
 }
 const showDevicePicker = ref(false)
-const presentationMode = ref(workspacePreferences.presentation)
+const presentationMode = ref('default')
 const defaultAutoPreview = ref(false)
-const layoutClosed = ref(workspacePreferences.closed === true)
+const layoutClosed = ref(false)
 watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presentation, layout, closed]) => {
   saveVideoSquarePreferences({view, presentation, layout, closed})
 }, {deep:true, flush:'sync'})
@@ -470,8 +472,8 @@ const videoDialogs = ref([])
 const nextDialogId = ref(1)
 
 // dialog
-const initialLayoutCount = workspacePreferences.presentation === 'default' ? 1 : workspacePreferences.layout.count
-const initialLayoutVariant = workspacePreferences.presentation === 'default' ? 'grid' : workspacePreferences.layout.variant
+const initialLayoutCount = 1
+const initialLayoutVariant = 'grid'
 const layoutDialogs = ref([createEmptyVideoLayout({id:1000,count:initialLayoutCount,variant:initialLayoutVariant,zIndex:3001,closed:layoutClosed.value})])
 const openWindowCount = computed(() => layoutDialogs.value.reduce((total, dialog) => total + (dialog.layoutCount || 0), 0))
 const nextLayoutDialogId = ref(1001)
@@ -2179,6 +2181,9 @@ onMounted(async () => {
 
     // Load device
     await loadDeviceList()
+    if (!isComponentMounted) return
+    // Enter the square ready to watch, after the authorized device catalog has arrived.
+    selectPresentation('default')
     statusTimer = window.setInterval(refreshPresence, 30000)
     window.addEventListener('focus', refreshPresence)
     window.addEventListener('resize', resizeVideoDialogs)
@@ -2996,25 +3001,28 @@ body::-webkit-scrollbar {
 }
 
 /* control */
-.map-controls {
+/* 地图控件列统一负责定位与纵向间距，两组控件在列内顺序排列，避免各自绝对定位后互相压叠 */
+.map-control-column {
   position: absolute;
-  top: 235px;
+  top: 20px;
   left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   z-index: 500;
+}
+
+.map-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* controlbutton */
 .zoom-controls {
-  position: absolute;
-  top: 160px;
-  left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  z-index: 500;
+  gap: 8px;
 }
 
 .zoom-btn {

@@ -110,16 +110,14 @@
 .video-square.is-bg-swap .square-video-stage > .el-empty { display: none; }
 
 /* MasterGo 257:28182: keep the existing dark canvas, restore the two-column geometry. */
-.video-square.is-default-video { --catalog-width: 0px; }
-.video-square.is-default-video.is-device-panel-open { --catalog-width: 341px; }
 .video-square.is-default-video .square-floating-tools { right: 0; gap: 20px; flex-wrap: nowrap; }
-.video-square.is-default-video.is-device-panel-open .square-view-tools { flex-basis: 301px; }
+.video-square.is-device-panel-open .square-view-tools { flex-basis: 301px; }
 .video-square.is-default-video :deep(.map-top-controls) { display: flex; justify-content: center; flex: 1; }
-.video-square.is-default-video .square-bottom-workspace:not(.is-bottom) {
-  left: var(--catalog-width);
+.video-square .square-bottom-workspace {
+  left: 0;
   padding: var(--toolbar-inset, 82px) 0 0;
 }
-.video-square.is-default-video :deep(.square-device-panel) { width: 341px; max-width: 341px; box-shadow: none; }
+.video-square :deep(.square-device-panel) { width: 341px; max-width: 341px; box-shadow: 4px 0 20px rgb(0 0 0 / 20%); }
 .video-square :deep(.square-classification) { display: contents; }
 .video-square :deep(.square-classification > .el-tabs) { order: 0; margin: 0 20px; }
 .video-square :deep(.device-list-header) { order: 1; border: 0; padding: 12px 20px 4px; }
@@ -152,7 +150,7 @@
 .video-square.is-default-video :deep(.square-thumbnail) { border-width: 0; box-shadow: none; }
 .video-square.is-default-video :deep(.square-thumbnail.active) { border: 2px solid #026fff; }
 .video-square :deep(.classification-tree) { max-height: none; min-height: 0; flex: 1; padding: 0 20px 20px; }
-.video-square.is-default-video :deep(.square-thumbnail-strip) { width: 100%; gap: 20px; padding: 0 20px 20px; box-sizing: border-box; }
+.video-square.is-default-video :deep(.square-thumbnail-strip) { width: 100%; gap: 8px; padding: 0 8px 20px; box-sizing: border-box; }
 .video-square.is-default-video :deep(.square-thumbnail:first-child) { margin-left: auto; }
 .video-square.is-default-video :deep(.square-thumbnail:last-of-type) { margin-right: auto; }
 .video-square.is-default-video :deep(.square-thumbnail) { flex: 0 0 140px; width: 140px; height: 140px; }
@@ -167,12 +165,18 @@
 .video-square.is-panel-right .square-view-tools { order: 2; flex-basis: 300px; }
 .video-square.is-panel-right :deep(.map-top-controls) { order: 1; flex: 1; display: flex; justify-content: center; }
 @media (max-width: 1100px) {
-  .video-square.is-default-video.is-device-panel-open { --catalog-width: 280px; }
-  .video-square.is-default-video.is-device-panel-open .square-view-tools { flex-basis: 240px; }
-  .video-square.is-default-video :deep(.square-device-panel) { width: 280px; max-width: 280px; }
+  .video-square.is-device-panel-open .square-view-tools { flex-basis: 240px; }
+  .video-square :deep(.square-device-panel) { width: 280px; max-width: 280px; }
 }
 @media (max-width: 700px) {
-  .video-square.is-default-video.is-device-panel-open { --catalog-width: 0px; }
   .video-square.is-default-video .square-floating-tools { flex-wrap: wrap; }
   .video-square.is-default-video .square-bottom-workspace:not(.is-bottom) { padding-inline: 10px; }
 }
+
+.video-square.is-panel-right .square-bottom-workspace { left: 0; right: 0; }
+.video-square .square-bottom-workspace.is-bottom { padding-top: 0; }
+
+.video-square :deep(.floating-drag-handle) { cursor:grab; touch-action:none; border:0; background:transparent; color:#778da2; font-size:22px; }
+.video-square :deep(.square-device-panel) { top:82px !important; bottom:auto; height:min(760px, calc(100% - 100px)); padding-top:12px !important; border-radius:12px; box-shadow:0 10px 32px #0004; }
+.video-square :deep(.playback-control:not(:disabled):hover), .video-square :deep(.playback-control:focus-visible) { background:#2278ff !important; transform:translateY(-3px) scale(1.08); box-shadow:0 4px 16px #2278ff99; outline:2px solid #90bcff; }
+.video-square :deep(.playback-control) { transition:transform .15s, background .15s, box-shadow .15s; }

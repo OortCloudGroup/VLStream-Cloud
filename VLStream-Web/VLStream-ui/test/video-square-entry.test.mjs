@@ -8,7 +8,7 @@ import {applyVideoPresentation} from '../src/utils/videoSquarePresentation.mjs'
 const descriptor=parse(readFileSync(new URL('../src/views/VideoAggregation/VideoSquareRefactored.vue',import.meta.url),'utf8')).descriptor
 const compiled=compileScript(descriptor,{id:'square-entry'})
 const code=compiled.content.replace(/^import .*$/gm,'').replaceAll('import.meta.env','({})').replaceAll('import.meta.url',JSON.stringify(import.meta.url)).replace('export default','return')
-function square(view='video',presentation='default',count=1,closed=false) {
+function square(view='video',presentation='default',count=1,closed=false,configureWorkspace=true) {
     const scope=Vue.effectScope(),calls=[]
     const deps=Object.fromEntries(Object.keys(compiled.imports).map(name=>[name,()=>{}]))
     Object.assign(deps,Vue,layout,{onMounted:()=>{},onUnmounted:()=>{},applyVideoPresentation,
@@ -19,15 +19,23 @@ function square(view='video',presentation='default',count=1,closed=false) {
         normalizeVideoDevice:device=>device,videoDeviceForProtocols:device=>device,matchesVideoDevice:()=>true})
     delete deps['module.exports']
     const component=new Function(...Object.keys(deps),code)(...Object.values(deps))
-    return {state:scope.run(()=>component.setup({},{expose(){}})),calls,stop:()=>scope.stop()}
+    const state=scope.run(()=>component.setup({},{expose(){}}))
+    // Interaction cases start from an existing workspace; entry cases use the real defaults.
+    if(configureWorkspace) {
+        state.viewMode.value=view
+        state.presentationMode.value=presentation
+        state.layoutClosed.value=closed
+        state.layoutDialogs.value=[layout.createEmptyVideoLayout({id:1000,count:presentation==='default'?1:count,variant:'grid',zIndex:3001,closed})]
+    }
+    return {state,calls,stop:()=>scope.stop()}
 }
-test('first entry mounts the saved layout with no selected or requested video and expanded catalogue',()=>{
+test('entry uses the requested default video presentation and collapsed catalogue before loading devices',()=>{
     for(const view of ['video','map','list']) for(const mode of ['default','grid','bottom']) {
-        const h=square(view,mode,8),s=h.state,d=s.layoutDialogs.value[0]
-        assert.equal(s.viewMode.value,view);assert.equal(s.presentationMode.value,mode)
-        assert.equal(d.layoutCount,mode==='default'?1:8)
+        const h=square(view,mode,8,true,false),s=h.state,d=s.layoutDialogs.value[0]
+        assert.equal(s.viewMode.value,'video');assert.equal(s.presentationMode.value,'default')
+        assert.equal(d.layoutCount,1);assert.equal(s.layoutClosed.value,false)
         assert.ok(d.cameras.every(camera=>camera===null))
-        assert.equal(s.devicePanelCollapsed.value,false);assert.deepEqual(h.calls,[]);h.stop()
+        assert.equal(s.devicePanelCollapsed.value,true);assert.deepEqual(h.calls,[]);h.stop()
     }
 })
 test('layouts and repeated bottom selection preserve the view and never auto-bind directory devices',()=>{
@@ -65,7 +73,7 @@ test('double click enlarges the clicked source instead of playing the first dire
 
 
 
-test('all views restore a deliberately closed workspace with zero windows until an explicit action',()=>{
+test('an explicitly closed workspace stays empty in each view until a restore action',()=>{
     for(const view of ['video','map','list']) for(const mode of ['default','grid','bottom']) {
         const h=square(view,mode,8,true),s=h.state,d=s.layoutDialogs.value[0]
         assert.equal(d.layoutCount,0);assert.deepEqual(d.cameras,[])

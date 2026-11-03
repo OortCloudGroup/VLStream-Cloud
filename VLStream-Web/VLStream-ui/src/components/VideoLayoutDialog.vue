@@ -154,9 +154,13 @@
               </div>
 
               <!-- MasterGo 257:28182 / 309:26171: controls follow the picture. -->
+              <div v-if="presentationMode === 'bottom' && dialog.layoutCount" class="carousel-edge-controls" :style="{ height: carouselSize.height + 'px' }">
+                <button type="button" :disabled="carouselOffset <= 0" :aria-label="$tp('向左滚动视频')"
+                  @pointerenter="carouselHover.start(-1)" @pointerleave="carouselHover.stop" @pointercancel="carouselHover.stop" @blur="carouselHover.stop" @click="scrollCarousel(-1)">‹</button>
+                <button type="button" :disabled="carouselOffset >= carouselWidth - workspaceSize.width - 1" :aria-label="$tp('向右滚动视频')"
+                  @pointerenter="carouselHover.start(1)" @pointerleave="carouselHover.stop" @pointercancel="carouselHover.stop" @blur="carouselHover.stop" @click="scrollCarousel(1)">›</button>
+              </div>
               <div v-if="presentationMode === 'bottom'" class="window-carousel-navigation" :style="{ bottom: (carouselSize.height + 28) + 'px' }">
-                <button v-if="dialog.layoutCount" type="button" :disabled="carouselOffset <= 0" :aria-label="$tp('上一组视频')" @click="scrollCarousel(-1)">‹</button>
-                <button v-if="dialog.layoutCount" type="button" :disabled="carouselOffset >= carouselWidth - workspaceSize.width - 1" :aria-label="$tp('下一组视频')" @click="scrollCarousel(1)">›</button>
                 <button type="button" @click="restoreWindowLayout(true)">{{ $tp('恢复布局') }}</button>
               </div>
 
@@ -186,6 +190,7 @@ import { translatePhrase as uiText } from '@/i18n'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import VideoSquareDevicePlayer from '@/views/VideoAggregation/components/VideoSquareDevicePlayer.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useHoverScroll } from '@/composables/useHoverScroll'
 import VideoSquareFloatingPtz from '@/views/VideoAggregation/components/VideoSquareFloatingPtz.vue'
 import VideoSquareThumbnailStrip from '@/views/VideoAggregation/components/VideoSquareThumbnailStrip.vue'
 import VideoSquarePlaybackControls from '@/views/VideoAggregation/components/VideoSquarePlaybackControls.vue'
@@ -290,6 +295,7 @@ const workspaceElement = ref(null)
 const windowKey = index => props.dialog.windowIds?.[index] || `${props.dialog.id}:legacy:${index}`
 const videoAreaElement = ref(null)
 const carouselElement = ref(null)
+const carouselHover = useHoverScroll(carouselElement)
 const workspaceSize = ref({width: 0, height: 0})
 const availableGridSize = ref({width:0, height:0})
 const carouselOffset = ref(0)
@@ -403,6 +409,7 @@ const startWindowDrag = (event, index) => {
   window.addEventListener('blur', stopWindowDrag)
 }
 const restoreWindowLayout = (revive = false) => {
+  carouselHover.stop()
   if (revive === true && !props.dialog.layoutCount) emit('restore-windows', props.dialog.id)
   stopWindowDrag()
   floatingWindows.value = {}
@@ -1919,6 +1926,11 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-area.presentation-bottom .video-window > .oplayer-container,
 .video-area.presentation-bottom .video-window > .video-placeholder { flex:1 1 0; height:0; min-height:0; }
 .window-carousel-scroll { position:absolute; inset:auto 0 0; height:18px; overflow-x:auto; overflow-y:hidden; overscroll-behavior:contain; }
+.video-area.presentation-bottom .video-grid { width:calc(100% - 72px); margin-inline:36px; }
+.carousel-edge-controls { position:absolute; bottom:0; inset-inline:0; display:flex; justify-content:space-between; pointer-events:none; z-index:40; }
+.carousel-edge-controls button { width:28px; flex:0 0 28px; border:0; border-radius:6px; padding:0; background:#171d26; color:#99aec7; font-size:28px; cursor:pointer; pointer-events:auto; transition:background .15s,color .15s; }
+.carousel-edge-controls button:hover:not(:disabled), .carousel-edge-controls button:focus-visible { background:#20334e; color:#70aaff; }
+.carousel-edge-controls button:disabled { opacity:.25; cursor:default; }
 .window-carousel-navigation { order:2; display:flex; justify-content:center; align-items:center; flex-wrap:wrap; flex:0 0 auto; gap:8px; padding:6px 0; }
 /* 底部排列：导航浮在底边，网格铺满整个画面区，窗口一排才能贴到最底下 */
 .video-area.presentation-bottom .window-carousel-navigation { position:absolute; right:12px; bottom:20px; z-index:13; padding:0; gap:6px; }
@@ -1973,7 +1985,7 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-area.presentation-default .video-window:has(.window-titlebar) > .no-signal-placeholder { padding-top:0; }
 
 /* Current selection 309:28524: continuous 356px windows, 56px blue header, 20px card inset. */
-.video-area.presentation-bottom > .video-grid { margin:0; width:100%; overflow:visible; }
+.video-area.presentation-bottom > .video-grid { margin:0 36px; width:calc(100% - 72px); overflow:hidden; }
 .video-area.presentation-bottom .video-window,
 .video-area.presentation-bottom .video-window.active { border:0; border-radius:0; touch-action:none; user-select:none; cursor:grab; }
 .video-area.presentation-bottom .video-window.is-moving { cursor:grabbing; }

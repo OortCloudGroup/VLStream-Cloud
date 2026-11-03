@@ -1,7 +1,8 @@
 <template>
-  <aside v-loading="loading" class="device-list-panel square-device-panel">
+  <aside v-floating-drag v-loading="loading" class="device-list-panel square-device-panel">
     <slot name="views" />
     <div class="device-list-header">
+      <button type="button" class="floating-drag-handle" data-drag-handle aria-label="拖动设备卡片" title="拖动设备卡片">⠿</button>
       <strong class="device-list-title">{{ $tp('数据展示') }}</strong>
       <span class="header-rule" aria-hidden="true"></span>
       <div class="device-list-actions">
@@ -57,6 +58,7 @@
   </aside>
 </template>
 <script setup>
+import vFloatingDrag from '@/utils/floatingDrag'
 import { computed, ref } from 'vue'
 import settingsIcon from '@/assets/mastergo/video-square/panel-settings.svg'
 import collapseIcon from '@/assets/mastergo/video-square/chevron-up.svg'
@@ -86,7 +88,7 @@ const props = defineProps({
 })
 defineEmits(['device-click', 'settings', 'search', 'protocols-change', 'status-change', 'classification-change'])
 const treeView = ref(true)
-const protocolsCollapsed = ref(false)
+const protocolsCollapsed = ref(true)
 const toggleTreeView = () => { treeView.value = true; ElMessage.success(translatePhrase('已切换到树形结构')) }
 const toggleListView = () => { treeView.value = false; ElMessage.success(translatePhrase('已切换到列表结构')) }
 const collapsed = ref(new Set())
@@ -208,9 +210,11 @@ function toggleGroup(id) {
 .protocol-menu img { width: 16px; height: 16px; }
 .protocol-option :deep(.el-checkbox__label) { font-size: 14px; padding-left: 8px; color: #333; }
 .protocol-option :deep(.el-checkbox.is-checked .el-checkbox__label) { color: #2278ff; }
-.protocol-option :deep(.el-checkbox__inner) { width: 16px; height: 16px; border-radius: 0; border-color: #ddd; }
-.protocol-option :deep(.el-checkbox__inner::after) { left: 5px; top: 2px; }
+.protocol-option :deep(.el-checkbox__inner) { width: 16px; height: 16px; border-radius: 4px; border-color: #c8d3e2; transition: background-color .15s, border-color .15s; }
+.protocol-option :deep(.el-checkbox__inner::after) { box-sizing: content-box; width: 4px; height: 8px; left: 5px; top: 1px; border-width: 0 2px 2px 0; }
+.protocol-option :deep(.el-checkbox__input.is-focus .el-checkbox__inner) { outline: 2px solid #b9d5ff; outline-offset: 2px; }
 .protocol-option :deep(.el-checkbox__input.is-checked .el-checkbox__inner) { background: #026fff; border-color: #026fff; }
+.protocol-option :deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) { transform: rotate(45deg) scaleY(1); transform-origin: center; }
 .device-group-label { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tree-caret { width: 12px; color: #a0a7b2; }
 .device-name { font-size: 14px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
