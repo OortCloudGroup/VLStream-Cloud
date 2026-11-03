@@ -24,9 +24,6 @@
 .square-floating-tools { position:absolute; top:20px; left:20px; right:20px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px 20px; z-index:60; pointer-events:none; }
 .square-floating-tools > * { pointer-events:auto; }
 .square-view-tools { display:flex; align-items:center; flex:0 0 auto; }
-.square-device-toggle { display:flex; align-items:center; justify-content:center; padding:0; width:24px; height:42px; border:0; border-radius:4px; background:#f2f7ff; color:#2278ff; cursor:pointer; }
-.square-device-toggle svg { display:block; width:18px; height:18px; }
-.square-device-toggle:focus-visible { outline:2px solid #2278ff; outline-offset:2px; }
 /* MasterGo 257:28183 — 视图切换：232×42 @20,20，gap20，图标 24×24，激活 #2278FF */
 .square-view-switch { display: flex; gap: 20px; align-items: center; margin:0; padding: 9px 16px; width: fit-content; border-radius: 4px; background: #f2f7ff; }
 .square-view-switch button { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding:0; border: 0; border-radius: 2px; background: transparent; color: #778da2; cursor: pointer; }
@@ -45,9 +42,23 @@
 .video-square :deep(.stat-label), .video-square :deep(.stat-value) { font-size: 12px; }
 .square-video-stage { display: flex; flex: 1; min-height: 0; min-width: 0; position: relative; overflow: hidden; }
 .square-video-stage > .el-empty { margin: auto; }
-.extended-layout-dialog { width: min(400px, calc(100vw - 24px)); max-height: min(520px, 65dvh); overflow: auto; border: 0; }
-.extended-layout-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 12px; }
-.extended-layout-option { background: transparent; border: 0; padding: 8px; text-align: start; border-radius: 4px; }
+/* 默认展示态画面区「幕布」：NVR 监看感的深色底衬 + 轻内阴影，画面居中并留边距；
+   只在视频视图的默认展示生效，底部排列、列表/地图视图不受影响。 */
+.video-square.is-video-view .square-video-stage {
+  background: #0f1216;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+.video-square.is-video-view .map-area,
+.video-square.is-video-view :deep(.video-area),
+.video-square.is-video-view :deep(.video-grid) { background: #0f1216; }
+.video-square.is-default-video .square-bottom-workspace:not(.is-bottom) {
+  padding: calc(var(--toolbar-inset, 82px) + 12px) 20px 20px;
+}
+/* 视频视图下画面层统一深色底：分屏窗口间隙与幕布同色，不再露出白色底或表格。 */
+.video-square:not(.is-bg-swap) .square-bottom-workspace :deep(.video-area:not(.presentation-bottom)) {
+  background: #0f1216;
+  box-shadow: none;
+}
 :global(.square-custom-layout.el-dialog) { max-width: calc(100vw - 32px); }
 .video-square.is-dark { background: #282c34; }
 .video-square.is-dark :deep(.square-device-panel), .video-square.is-dark :deep(.device-list-header) { background: #282c34; color: #e8f4fd; border-color: #4b5563; }
@@ -97,3 +108,71 @@
 .video-square.is-bg-swap :deep(.square-floating-ptz) { pointer-events: auto; }
 /* 地图/列表下不放「请选择设备播放视频」空态，避免压在背景之上；要加画面用工具栏布局按钮即可 */
 .video-square.is-bg-swap .square-video-stage > .el-empty { display: none; }
+
+/* MasterGo 257:28182: keep the existing dark canvas, restore the two-column geometry. */
+.video-square.is-default-video { --catalog-width: 0px; }
+.video-square.is-default-video.is-device-panel-open { --catalog-width: 341px; }
+.video-square.is-default-video .square-floating-tools { right: 0; gap: 20px; flex-wrap: nowrap; }
+.video-square.is-default-video.is-device-panel-open .square-view-tools { flex-basis: 301px; }
+.video-square.is-default-video :deep(.map-top-controls) { display: flex; justify-content: center; flex: 1; }
+.video-square.is-default-video .square-bottom-workspace:not(.is-bottom) {
+  left: var(--catalog-width);
+  padding: var(--toolbar-inset, 82px) 0 0;
+}
+.video-square.is-default-video :deep(.square-device-panel) { width: 341px; max-width: 341px; box-shadow: none; }
+.video-square :deep(.square-classification) { display: contents; }
+.video-square :deep(.square-classification > .el-tabs) { order: 0; margin: 0 20px; }
+.video-square :deep(.device-list-header) { order: 1; border: 0; padding: 12px 20px 4px; }
+.video-square :deep(.device-list-title) { font-size: 14px; border-left: 3px solid #2278ff; padding-left: 5px; }
+.video-square :deep(.square-filters) { order: 2; padding: 8px 20px 12px; }
+.video-square :deep(.square-protocol-options) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.video-square :deep(.square-protocol-options .el-checkbox) { margin: 0; min-width: 0; }
+.video-square :deep(.square-protocol-options .el-checkbox__label) { overflow: hidden; text-overflow: ellipsis; }
+.video-square :deep(.classification-tree) { order: 3; padding-inline: 20px; }
+.video-square :deep(.device-list-items) { order: 4; }
+.video-square :deep(.tree-group-header) { font-size: 14px; font-weight: 400; padding: 6px; }
+.video-square :deep(.square-device-item) { padding: 6px 8px; gap: 2px; }
+.video-square.is-default-video :deep(.no-signal-placeholder) { background: #0f1216; }
+.video-square.is-panel-right :deep(.square-device-panel) { left: auto; right: 0; }
+.video-square.is-default-video :deep(.empty-placeholder),
+.video-square.is-default-video :deep(.video-window video) { background: #0f1216; }
+.video-square :deep(.close-all-videos-btn) { color: #026fff; }
+.video-square :deep(.device-list-header) { gap: 8px; flex-wrap: nowrap; height: 40px; padding: 8px 20px; }
+.video-square :deep(.device-list-title) { font-weight: 400; white-space: nowrap; }
+.video-square :deep(.square-filters) { gap: 16px; padding-top: 8px; padding-bottom: 16px; }
+.video-square :deep(.square-protocol-options) { gap: 8px 12px; }
+.video-square :deep(.square-filters > .el-input) { width: calc(100% - 40px); margin: 0 20px; height: 36px; }
+.video-square :deep(.square-classification .el-tabs__header) { margin-bottom: 8px; }
+.video-square :deep(.square-device-item) { display: flex; align-items: center; gap: 8px; height: 32px; padding: 6px 8px 6px 52px; border: 0; }
+.video-square :deep(.square-device-item.is-selected) { background: rgb(34 120 255 / 12%); }
+.video-square :deep(.device-list-items) { padding: 0 20px 20px; }
+.video-square :deep(.tree-group-header) { height: 32px; padding: 6px 8px 6px 20px; color: #333; }
+.video-square :deep(.tree-group-header > span:last-child) { color: #999; }
+.video-square.is-default-video :deep(.video-window video) { object-fit: cover; }
+.video-square.is-default-video :deep(.square-thumbnail) { border-width: 0; box-shadow: none; }
+.video-square.is-default-video :deep(.square-thumbnail.active) { border: 2px solid #026fff; }
+.video-square :deep(.classification-tree) { max-height: none; min-height: 0; flex: 1; padding: 0 20px 20px; }
+.video-square.is-default-video :deep(.square-thumbnail-strip) { width: 100%; gap: 20px; padding: 0 20px 20px; box-sizing: border-box; }
+.video-square.is-default-video :deep(.square-thumbnail:first-child) { margin-left: auto; }
+.video-square.is-default-video :deep(.square-thumbnail:last-of-type) { margin-right: auto; }
+.video-square.is-default-video :deep(.square-thumbnail) { flex: 0 0 140px; width: 140px; height: 140px; }
+.video-square.is-default-video :deep(.square-thumbnail img) { object-fit: cover; }
+.video-square.is-default-video :deep(.thumbnail-name) { height: 25px; padding: 4px 6px; font-weight: 600; line-height: 17px; box-sizing: border-box; background: rgb(0 0 0 / 40%); }
+.video-square.is-default-video :deep(.square-thumbnail:hover),
+.video-square.is-default-video :deep(.square-thumbnail:focus-visible) { outline-color: #026fff; }
+/* The panel surface includes its view toolbar, so the catalog reads as one continuous column. */
+.video-square :deep(.square-device-panel) { box-sizing: border-box; border-radius: 6px 0 0 0; }
+.video-square.is-panel-right :deep(.square-device-panel) { border-radius: 0 6px 0 0; }
+.video-square.is-panel-right .square-floating-tools { flex-wrap: nowrap; }
+.video-square.is-panel-right .square-view-tools { order: 2; flex-basis: 300px; }
+.video-square.is-panel-right :deep(.map-top-controls) { order: 1; flex: 1; display: flex; justify-content: center; }
+@media (max-width: 1100px) {
+  .video-square.is-default-video.is-device-panel-open { --catalog-width: 280px; }
+  .video-square.is-default-video.is-device-panel-open .square-view-tools { flex-basis: 240px; }
+  .video-square.is-default-video :deep(.square-device-panel) { width: 280px; max-width: 280px; }
+}
+@media (max-width: 700px) {
+  .video-square.is-default-video.is-device-panel-open { --catalog-width: 0px; }
+  .video-square.is-default-video .square-floating-tools { flex-wrap: wrap; }
+  .video-square.is-default-video .square-bottom-workspace:not(.is-bottom) { padding-inline: 10px; }
+}

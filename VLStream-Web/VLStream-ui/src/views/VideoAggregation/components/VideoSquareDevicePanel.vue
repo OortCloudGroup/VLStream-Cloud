@@ -2,73 +2,67 @@
   <aside v-loading="loading" class="device-list-panel square-device-panel">
     <slot name="views" />
     <div class="device-list-header">
-      <strong class="device-list-title">{{ $tp('设备列表') }}</strong>
+      <strong class="device-list-title">{{ $tp('数据展示') }}</strong>
+      <span class="header-rule" aria-hidden="true"></span>
       <div class="device-list-actions">
-        <button class="device-action-btn" @click="$emit('settings')" :title="$tp('设置')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
-          </svg>
+        <button class="protocol-collapse" type="button" :aria-expanded="!protocolsCollapsed" @click="protocolsCollapsed = !protocolsCollapsed">
+          {{ $tp(protocolsCollapsed ? '展开' : '收起') }}
+          <img :src="collapseIcon" alt="" :class="{ 'is-collapsed': protocolsCollapsed }" />
         </button>
-        <button class="device-action-btn" @click="toggleTreeView" :class="{ active: treeView }" :title="$tp('树形结构')">
-          <img src="@/assets/组织-选中@2x.png" :alt="$tp('树形结构')" width="16" height="16">
-        </button>
-        <button class="device-action-btn" @click="toggleListView" :class="{ active: !treeView }" :title="$tp('列表结构')">
-          <img src="@/assets/人员列表-未选中@2x.png" :alt="$tp('列表结构')" width="16" height="16">
-        </button>
+        <el-popover trigger="click" placement="bottom-end" :width="240">
+          <template #reference><button class="device-action-btn" :aria-label="$tp('设置')"><img :src="settingsIcon" width="20" height="20" alt="" /></button></template>
+          <div class="catalog-settings">
+            <el-select :model-value="selectedStatus" :placeholder="$tp('全部')" clearable @update:model-value="$emit('status-change', $event)">
+              <el-option v-for="status in statuses" :key="status.value" :value="status.value" :label="$tp(status.label)" />
+            </el-select>
+            <el-button @click="toggleTreeView">{{ $tp('树形结构') }}</el-button>
+            <el-button @click="toggleListView">{{ $tp('列表结构') }}</el-button>
+            <el-button @click="$emit('settings')">{{ $tp('显示设置') }}</el-button>
+            <small>{{ $tp('地图位置') }}: {{ locatedCount }} / {{ devices.length }}</small>
+          </div>
+        </el-popover>
       </div>
     </div>
-    <VideoSquareClassificationTree v-if="classificationEnabled" :devices="classificationDevices || devices" :show-tree="treeView" @filter-change="$emit('classification-change', $event)" />
+    <VideoSquareClassificationTree v-if="classificationEnabled" :devices="classificationDevices || devices" :visible-devices="visibleDevices" :selected-device-id="selectedId" filter-empty :show-tree="treeView" @filter-change="$emit('classification-change', $event)" @device-click="$emit('device-click', $event)" />
     <el-alert v-if="error" type="error" :title="$tp(error)" :closable="false" />
     <div class="square-filters">
-      <el-select :model-value="selectedProtocols" multiple collapse-tags :placeholder="$tp('全部')"
-        @update:model-value="$emit('protocols-change', $event)">
-        <el-option v-for="protocol in availableProtocols" :key="protocol.value" :value="protocol.value" :label="$tp(protocol.label)" />
-      </el-select>
-      <el-select :model-value="selectedStatus" :placeholder="$tp('全部')" clearable
-        @update:model-value="$emit('status-change', $event)">
-        <el-option v-for="status in statuses" :key="status.value" :value="status.value" :label="$tp(status.label)" />
-      </el-select>
-      <el-input :model-value="keyword" :placeholder="$tp('搜索设备...')" clearable
-        @update:model-value="$emit('search', $event)" />
-      <div class="square-location-summary">{{ $tp('地图位置') }}: {{ locatedCount }} / {{ devices.length }}</div>
+      <el-checkbox-group v-show="!protocolsCollapsed" class="square-protocol-options" :model-value="selectedProtocols" @update:model-value="$emit('protocols-change', $event)">
+        <div v-for="protocol in availableProtocols" :key="protocol.value" class="protocol-option">
+          <el-checkbox :label="protocol.value">{{ $tp(protocol.label) }}{{ $tp('协议') }}</el-checkbox>
+          <el-dropdown trigger="click" @command="value => $emit('protocols-change', value === 'all' ? availableProtocols.map(item => item.value) : [protocol.value])">
+            <button class="protocol-menu" :aria-label="$tp(protocol.label) + $tp('协议')"><img :src="protocolArrowIcon" alt="" /></button>
+            <template #dropdown><el-dropdown-menu><el-dropdown-item command="only">{{ $tp('仅显示此协议') }}</el-dropdown-item><el-dropdown-item command="all">{{ $tp('全部') }}</el-dropdown-item></el-dropdown-menu></template>
+          </el-dropdown>
+        </div>
+      </el-checkbox-group>
+      <el-input :model-value="keyword" :placeholder="$tp('搜索')" clearable @update:model-value="$emit('search', $event)">
+        <template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6" stroke="currentColor"/><path d="m15 15 5 5" stroke="currentColor"/></svg></template>
+      </el-input>
     </div>
-    <div class="device-list-items">
+    <div v-if="!classificationEnabled || !treeView" class="device-list-items">
       <el-empty v-if="!visibleDevices.length && !loading" :description="$tp('暂无数据')" :image-size="55" />
       <template v-for="group in groups" :key="group.id">
         <button v-if="treeView" class="tree-group-header" @click="toggleGroup(group.id)">
-          <span>{{ collapsed.has(group.id) ? '▸' : '▾' }} {{ $tp(group.label) }} · {{ $tp(statusLabel(group.status)) }}</span>
-          <span>({{ group.children.length }})</span>
+          <span class="device-group-label"><span class="tree-caret">{{ collapsed.has(group.id) ? '▸' : '▾' }}</span><img :src="folderIcon" width="18" height="18" alt="" />{{ $tp(group.label) }}</span><span>{{ group.children.length }}</span>
         </button>
         <template v-if="!treeView || !collapsed.has(group.id)">
-          <button v-for="device in group.children" :key="device.id" class="square-device-item"
-            @click="$emit('device-click', device)">
+          <button v-for="device in group.children" :key="device.id" class="square-device-item" :class="{ 'is-selected': device.id === selectedId }" :title="device.deviceName + ' · ' + $tp(statusLabel(device.status))" @click="$emit('device-click', device)">
+            <img :src="cameraIcon" width="18" height="18" alt="" />
             <span class="device-name" data-i18n-ignore>{{ device.deviceName }}</span>
-            <small data-i18n-ignore>{{ device.deviceId || device.ipAddress || device.id }}</small>
-            <div class="device-details">
-              <el-tag v-for="protocol in device.protocols" :key="protocol" size="small">{{ $tp(protocolLabel(protocol)) }}</el-tag>
-              <span class="device-status" :class="device.status.toLowerCase()">{{ $tp(statusLabel(device.status)) }}</span>
-            </div>
-            <small v-if="device.sources?.length > 1 || device.protocols?.includes('CUSTOM')" class="source-statuses">
-              <span v-for="source in device.sources" :key="source.protocol + ':' + source.rowId">
-                {{ $tp(protocolLabel(source.protocol)) }} ·
-                <CustomAvailabilityBadge v-if="source.protocol === 'CUSTOM'" :device="source" :now="now" :show-reason="device.status === 'UNKNOWN'" />
-                <template v-else>{{ $tp(statusLabel(source.state)) }}</template>
-              </span>
-            </small>
-            <small v-if="device.status === 'UNKNOWN' && !device.protocols?.includes('CUSTOM')" class="unknown-reason">
-              {{ $tp(unknownReason(device)) }}
-            </small>
-            <small v-if="savedVideoDeviceAddress(device)" class="saved-device-address" :title="savedVideoDeviceAddress(device)" data-i18n-ignore>{{ savedVideoDeviceAddress(device) }}</small>
-            <small v-if="!videoDeviceCoordinates(device)">{{ $tp('未上报位置') }}</small>
+            <span class="device-state" :class="device.status.toLowerCase()">{{ $tp(statusLabel(device.status)) }}</span>
           </button>
         </template>
       </template>
     </div>
   </aside>
 </template>
-
 <script setup>
 import { computed, ref } from 'vue'
+import settingsIcon from '@/assets/mastergo/video-square/panel-settings.svg'
+import collapseIcon from '@/assets/mastergo/video-square/chevron-up.svg'
+import protocolArrowIcon from '@/assets/mastergo/video-square/protocol-arrow.svg'
+import folderIcon from '@/assets/mastergo/video-square/folder.svg'
+import cameraIcon from '@/assets/mastergo/video-square/device-camera.svg'
 import { ElMessage } from 'element-plus'
 import { translatePhrase } from '@/i18n'
 import { VIDEO_PROTOCOLS, videoDeviceCoordinates, videoDeviceGroups, sortVideoDevices } from '@/utils/videoSquareCatalog'
@@ -77,6 +71,7 @@ import { savedVideoDeviceAddress } from '@/utils/videoDeviceAddress.mjs'
 import VideoSquareClassificationTree from './VideoSquareClassificationTree.vue'
 
 const props = defineProps({
+  selectedId: { type: [String, Number], default: '' },
   now: { type: Number, default: () => Date.now() },
   devices: { type: Array, default: () => [] },
   classificationDevices: { type: Array, default: undefined },
@@ -91,6 +86,7 @@ const props = defineProps({
 })
 defineEmits(['device-click', 'settings', 'search', 'protocols-change', 'status-change', 'classification-change'])
 const treeView = ref(true)
+const protocolsCollapsed = ref(false)
 const toggleTreeView = () => { treeView.value = true; ElMessage.success(translatePhrase('已切换到树形结构')) }
 const toggleListView = () => { treeView.value = false; ElMessage.success(translatePhrase('已切换到列表结构')) }
 const collapsed = ref(new Set())
@@ -113,6 +109,9 @@ function toggleGroup(id) {
 
 <style scoped>
 .saved-device-address { white-space: normal; overflow-wrap: anywhere; }
+.protocol-collapse { padding: 0; border: 0; background: transparent; color: #2278ff; font-size: 12px; cursor: pointer; }
+.square-protocol-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.square-protocol-options .el-checkbox { margin-right: 0; }
 /* MasterGo 257:28228 — 面板列 340 = 20 + 300 + 20，分隔线 #E8E8E8 */
 .square-device-panel {
   position: relative;
@@ -193,4 +192,30 @@ function toggleGroup(id) {
   .square-location-summary { align-self: center; }
   .device-list-header { padding: 8px 16px; }
 }
+</style>
+
+<style scoped>
+.device-list-actions { align-items: center; gap: 20px; }
+.header-rule { flex: 1; min-width: 4px; border-top: 1px dashed #e8e8e8; }
+.protocol-collapse { display: flex; gap: 8px; align-items: center; font-size: 14px; white-space: nowrap; }
+.protocol-collapse img { width: 16px; height: 16px; }
+.protocol-collapse img.is-collapsed { transform: rotate(180deg); }
+.device-action-btn, .device-action-btn:hover { width: 20px; height: 20px; padding: 0; background: transparent; color: #333; border-radius: 0; }
+.catalog-settings { display: grid; gap: 8px; }
+.catalog-settings .el-button { margin: 0; }
+.protocol-option { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.protocol-menu { display: flex; align-items: center; justify-content: center; width: 16px; height: 20px; border: 0; background: transparent; padding: 0; cursor: pointer; }
+.protocol-menu img { width: 16px; height: 16px; }
+.protocol-option :deep(.el-checkbox__label) { font-size: 14px; padding-left: 8px; color: #333; }
+.protocol-option :deep(.el-checkbox.is-checked .el-checkbox__label) { color: #2278ff; }
+.protocol-option :deep(.el-checkbox__inner) { width: 16px; height: 16px; border-radius: 0; border-color: #ddd; }
+.protocol-option :deep(.el-checkbox__inner::after) { left: 5px; top: 2px; }
+.protocol-option :deep(.el-checkbox__input.is-checked .el-checkbox__inner) { background: #026fff; border-color: #026fff; }
+.device-group-label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tree-caret { width: 12px; color: #a0a7b2; }
+.device-name { font-size: 14px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.device-state { flex: none; border-radius: 4px; padding: 0 6px; line-height: 18px; font-size: 12px; }
+.device-state.online { color: #2278ff; background: rgb(34 120 255 / 12%); }
+.device-state.offline { color: #999; background: #f5f5f5; }
+.device-state.unknown { color: #ff8d22; background: rgb(255 141 34 / 12%); }
 </style>

@@ -11,11 +11,13 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
-import { getMqttDeviceStreams, getMqttDeviceDetail, createMqttDevicePreview } from '@/api/vlstreamMqttDevice'
+import { getMqttDeviceStreams, getMqttDeviceDetail, createMqttDevicePreview,
+  getMqttSquareStatus, getMqttSquareStreams, createMqttSquarePreview } from '@/api/vlstreamMqttDevice'
 import { monitorDevicePreview } from '@/utils/devicePreviewGuard'
-import { parseCameraRtcConfig } from '@/utils/oplayer'
+import { CAMERA_RTC_SOCKET_URL, parseCameraRtcConfig } from '@/utils/oplayer'
+import { squareCameraRtcConfig } from '@/utils/squareCameraRtc.mjs'
 
-const props = defineProps({ device: { type: Object, required: true }, compactStatus: { type: Boolean, default: false } })
+const props = defineProps({ device: { type: Object, required: true }, compactStatus: { type: Boolean, default: false }, square: { type: Boolean, default: false } })
 const loading = ref(false)
 const error = ref('')
 const cameraConfig = ref(null)
@@ -37,13 +39,14 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
       error.value = '设备离线，不允许播放'
       return
     }
-    const device = (await getMqttDeviceDetail(id))?.data?.device
+    const getStatus = props.square ? getMqttSquareStatus : getMqttDeviceDetail
+    const device = (await getStatus(id))?.data?.device
     if (current !== generation) return
     if (device?.online !== true) {
       error.value = '设备离线，不允许播放'
       return
     }
-    stopMonitor = monitorDevicePreview(async () => (await getMqttDeviceDetail(id))?.data?.device, () => {
+    stopMonitor = monitorDevicePreview(async () => (await getStatus(id))?.data?.device, () => {
       generation += 1
       cameraConfig.value = null
       rtcUrl.value = ''
@@ -51,14 +54,14 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
       loading.value = false
       error.value = '设备离线或状态无法确认，已停止播放'
     })
-    const streams = (await getMqttDeviceStreams(id))?.data || []
+    const streams = (await (props.square ? getMqttSquareStreams(id) : getMqttDeviceStreams(id)))?.data || []
     if (current !== generation) return
     const preferred = streams.find(stream => stream.defaultStream) || streams[0]
     if (!preferred) return
-    const preview = (await createMqttDevicePreview(id, preferred.id))?.data || {}
+    const preview = (await (props.square ? createMqttSquarePreview(id, preferred.id) : createMqttDevicePreview(id, preferred.id)))?.data || {}
     if (current !== generation) return
-    if (preview.playMode === 'cameraRTC' && preview.url) {
-      cameraConfig.value = parseCameraRtcConfig(preview.url)
+    if (preview.playMode === 'cameraRTC' && (preview.cameraId || preview.url)) {
+      cameraConfig.value = preview.cameraId ? squareCameraRtcConfig(preview.cameraId, CAMERA_RTC_SOCKET_URL) : parseCameraRtcConfig(preview.url)
     } else {
       rtcUrl.value = location.protocol === 'https:' ? (preview.rtcs || preview.webrtcUrl) : (preview.rtc || preview.webrtcUrl)
       if (!rtcUrl.value) error.value = 'WVP 未返回可用播放地址'

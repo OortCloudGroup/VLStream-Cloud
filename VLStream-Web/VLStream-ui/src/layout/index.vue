@@ -51,6 +51,7 @@
         </div>
 
         <div class="header-right">
+          <el-button v-if="!localEventRoute" link @click="$router.push('/compute-safety')">{{ tp('算力安全停机') }}</el-button>
           <LocaleSwitcher v-if="localEventRoute || tenantMode !== 'multi' || !rightInfoReady" />
           <OortCloudPopover v-if="!localEventRoute && ((tenantMode === 'multi' && !rightInfoReady) || (tenantMode !== 'multi' && isSuperAdmin))" :tenant-mode="tenantMode" />
 
@@ -89,6 +90,7 @@
       <div
         v-if="showSidebar"
         class="layout-sidebar"
+        :class="{ 'is-collapsed': sidebarCollapsed }"
         :style="{ width: sidebarCollapsed ? '64px' : '260px' }"
       >
         <el-menu
@@ -108,6 +110,26 @@
             :get-menu-icon="getMenuIcon"
           />
         </el-menu>
+        <!-- 设备统计条：固定在侧栏底部，不随菜单滚动 -->
+        <div v-if="sidebarDeviceStats.active" id="app-sidebar-stats" class="app-sidebar-stats">
+          <div class="device-stats">
+            <div class="stat-item total">
+              <div class="stat-icon"><img src="@/assets/设备-总设备@3x.png" :alt="$tp('总设备')" width="20" height="20"></div>
+              <div class="stat-content"><span class="stat-label">{{ $tp('总设备：') }}</span><span class="stat-value">{{ sidebarDeviceStats.total }}</span></div>
+            </div>
+            <div class="stat-item online">
+              <div class="stat-icon"><img src="@/assets/设备-在线@3x.png" :alt="$tp('在线')" width="20" height="20"></div>
+              <div class="stat-content"><span class="stat-label">{{ $tp('在线：') }}</span><span class="stat-value">{{ sidebarDeviceStats.online }}</span></div>
+            </div>
+            <div class="stat-item offline">
+              <div class="stat-icon"><img src="@/assets/设备-离线@3x.png" :alt="$tp('离线')" width="20" height="20"></div>
+              <div class="stat-content"><span class="stat-label">{{ $tp('离线：') }}</span><span class="stat-value">{{ sidebarDeviceStats.offline }}</span></div>
+            </div>
+            <div class="stat-item unknown">
+              <div class="stat-content"><span class="stat-label">{{ $tp('未知状态') }}：</span><span class="stat-value">{{ sidebarDeviceStats.unknown }}</span></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!--  -->
@@ -131,6 +153,9 @@ import { getCloudPlatformUserPath } from '@/utils/modelHubAuth'
 import { getTenantMode, getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
 import { isLocalEventRoute } from '@/utils/localEventAccess.mjs'
+import { filterMenuRoutes } from '@/utils/menuAccess.mjs'
+import { menuPermissions } from '@/utils/menuAccessState'
+import { sidebarDeviceStats } from '@/utils/sidebarDeviceStats.mjs'
 import {
   User,
   ArrowDown,
@@ -488,10 +513,10 @@ const allTopMenus = [
   { key: 'system-management', title: '系统管理' }
 ]
 
-const topMenus = computed(() => tenantMode.value === 'single'
-  ? allTopMenus.map(menu => ({ ...menu, title: translatePhrase(menu.title) }))
-  : allTopMenus.filter(menu => menu.key !== 'system-management').map(menu => ({ ...menu, title: translatePhrase(menu.title) }))
-)
+const topMenus = computed(() => allTopMenus
+  .filter(menu => menu.key !== 'system-management' || tenantMode.value === 'single')
+  .filter(menu => menu.key === 'workspace' || getMenuRoutes(menu.key).length > 0)
+  .map(menu => ({ ...menu, title: translatePhrase(menu.title) })))
 
 const tp = source => translatePhrase(source)
 
@@ -615,7 +640,7 @@ const menuRoutesMap = {
 const getMenuRoutes = (menuKey) => {
   const routes = menuRoutesMap[menuKey] || []
   if (menuKey !== 'decision-ai') {
-    return routes
+    return filterMenuRoutes(routes, menuPermissions.value)
   }
 
   // not menu, user menu.
@@ -624,16 +649,16 @@ const getMenuRoutes = (menuKey) => {
   }
 
   if (tenantMode.value !== 'multi') {
-    return routes
+    return filterMenuRoutes(routes, menuPermissions.value)
   }
 
-  return [
+  return filterMenuRoutes([
     { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
     { path: '/llm-review-tasks', meta: { title: '大模型复核', icon: '智能分析结果' } },
     ...routes.filter(item => item.path !== 'event-management-menu'
       && item.path !== '/active-safety/work-orders'
       && item.path !== '/active-safety/settings')
-  ]
+  ], menuPermissions.value)
 }
 
 // whether
@@ -1315,10 +1340,25 @@ const handleUserTokenUpdated = async (event) => {
   flex-shrink: 0;
   resize: none;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   --el-menu-bg-color: transparent;
   --el-menu-hover-bg-color: #ffffff;
   --el-menu-active-color: var(--el-color-primary);
 }
+
+/* 设备统计条：固定在侧栏底部，菜单滚动时不动 */
+.app-sidebar-stats { flex: 0 0 auto; padding: 12px 16px; border-top: 1px solid #e8e8e8; box-sizing: border-box; }
+.app-sidebar-stats:empty { display: none; }
+.app-sidebar-stats .device-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.app-sidebar-stats .stat-item { display: flex; align-items: center; gap: 6px; }
+.app-sidebar-stats .stat-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
+.app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }
+.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: #666; white-space: nowrap; }
+.app-sidebar-stats .stat-value { font-size: 12px; line-height: 18px; font-weight: 600; color: #333; white-space: nowrap; }
+/* 折叠成 64px 图标条时隐藏统计，避免压住菜单图标 */
+.layout-sidebar.is-collapsed .app-sidebar-stats { display: none; }
 
 /* Element Plus can */
 .layout-sidebar :deep(.el-aside) {
@@ -1340,7 +1380,8 @@ const handleUserTokenUpdated = async (event) => {
 
 .sidebar-menu {
   border-right: none !important;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding-top: 16px;
   padding-left: 12px;

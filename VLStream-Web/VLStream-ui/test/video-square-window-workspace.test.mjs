@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { clampVideoWindow, uniformWindowSize, isWindowDragGesture, fitVideoPicture, packVideoWindows } from '../src/utils/videoSquareWindowWorkspace.mjs'
 import { applyVideoPresentation } from '../src/utils/videoSquarePresentation.mjs'
+import { resolveLayoutSpec, VIDEO_LAYOUT_OPTIONS } from '../src/utils/videoSquareLayout.mjs'
 test('bottom keeps every mounted camera and grid restores without replacing identities', () => {
     const cameras = [{id:1}, {id:2}, null, {id:4}]
     const dialog = {cameras, layoutCount:4, activeWindowIndex:1}
@@ -36,46 +37,92 @@ test('picture fits its decoded ratio without crop or a forced tall canvas', () =
 })
 
 const near=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-6,`${actual} != ${expected}`)
-test('mixed-aspect rows pack actual picture edges together and scale both dimensions when height is limited', () => {
-    const result=packVideoWindows({width:1300,height:711,count:4,aspects:[704/480,16/9]})
-    near(result.boxes[0].x+result.boxes[0].width,result.boxes[1].x)
-    near(result.boxes[0].y+result.boxes[0].height,result.boxes[2].y)
-    assert.ok(result.width<1300)
-    near(result.height,711)
-    near(result.boxes[0].width/result.boxes[0].height,704/480)
-    near(result.boxes[1].width/result.boxes[1].height,16/9)
-})
-test('every layout preserves complete picture ratios, reachable boxes and zero adjacent seams across sizes', () => {
-    for (const width of [118,320,910,1600]) for (const height of [180,600,1200]) {
-        for (const count of [1,2,3,4,5,6,8,9,16,25]) for(const variant of ['grid',...(count===2?['two-overlay']:count===3?['three-top','three-left']:[])]) {
-            const aspects=Array.from({length:count},(_,i)=>[704/480,16/9,9/16][i%3])
-            const insets=Array.from({length:count},()=>count===1?32:0)
-            const result=packVideoWindows({width,height,count,variant,aspects,insets})
-            assert.equal(result.boxes.length,count)
-            assert.ok(result.width<=width+1e-6 && result.height<=height+1e-6)
-            for(const [index,box]of result.boxes.entries()) {
-                assert.ok(box.x>=-1e-6 && box.y>=-1e-6 && box.width>0 && box.height>0)
-                assert.ok(box.x+box.width<=result.width+1e-6 && box.y+box.height<=result.height+1e-6)
-                near(box.width/(box.height-insets[index]),aspects[index])
-            }
-            if(variant!=='two-overlay')for(let i=0;i<count;i++)for(let j=i+1;j<count;j++) {
-                const a=result.boxes[i],b=result.boxes[j]
-                const x=Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)
-                const y=Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)
-                assert.ok(x<1e-6 || y<1e-6,'automatic slots overlap')
-            }
+test('manual layouts keep every window inside the 16:9 canvas with the documented order', () => {
+    for (const option of VIDEO_LAYOUT_OPTIONS) {
+        const spec = resolveLayoutSpec(option.count, option.variant)
+        assert.equal(spec.cells.length, option.count)
+        const result = packVideoWindows({width:1600, height:900, ...spec})
+        near(result.width, 1600)
+        near(result.height, 900)
+        for (const box of result.boxes) {
+            assert.ok(box.x >= 0 && box.y >= 0)
+            assert.ok(box.x + box.width <= result.width + 1e-6)
+            assert.ok(box.y + box.height <= result.height + 1e-6)
+            assert.ok(box.width > 0 && box.height > 0)
         }
     }
 })
-test('large-main six/eight and the three-window variants keep touching side and bottom blocks',()=>{
-    for(const count of [6,8]) {
-        const result=packVideoWindows({width:1200,height:700,count,aspects:[704/480,16/9]})
-        near(result.boxes[0].width,result.boxes[1].x)
-        near(result.boxes[1].height,result.boxes[2].y)
-        const bottom=count===6?4:5
-        near(result.boxes[0].height,result.boxes[bottom].y)
-        near(result.boxes[bottom].x+result.boxes[bottom].width,result.boxes[bottom+1].x)
+test('three-window defaults center the single top window and split the bottom row', () => {
+    for (const variant of ['grid', 'three-top']) {
+        const result = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(3, variant)})
+        near(result.boxes[0].x, 400)
+        near(result.boxes[0].width, 800)
+        near(result.boxes[0].height, 450)
+        near(result.boxes[1].y, 450)
+        near(result.boxes[1].width, 800)
+        near(result.boxes[2].x, 800)
     }
+    const left = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(3, 'three-left')})
+    near(left.boxes[0].y, 225)
+    near(left.boxes[0].width, 800)
+    near(left.boxes[1].x, 800)
+})
+test('the one-big-one-small variant overlays the second window at the bottom right', () => {
+    const result = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(2, 'two-overlay')})
+    near(result.boxes[0].width, 1600)
+    near(result.boxes[0].height, 900)
+    near(result.boxes[1].x, 1600 * 2 / 3)
+    near(result.boxes[1].y, 900 * 2 / 3)
+    near(result.boxes[1].width, 1600 / 3)
+})
+test('five, six and eight keep the big window and the documented bottom row order', () => {
+    const five = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(5)})
+    near(five.boxes[0].x, 200)
+    near(five.boxes[0].width, 1200)
+    near(five.boxes[0].height, 675)
+    near(five.boxes[1].y, 675)
+    near(five.boxes[1].x, 0)
+    near(five.boxes[4].x, 1200)
+    const six = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(6)})
+    near(six.boxes[5].x, 0)
+    near(six.boxes[4].x, 1600 / 3)
+    near(six.boxes[3].x, 1600 * 2 / 3)
+    near(six.boxes[5].y, 600)
+    const eight = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(8)})
+    near(eight.boxes[7].x, 0)
+    near(eight.boxes[4].x, 1200)
+    near(eight.boxes[4].y, 675)
+})
+test('twenty-three follows the design glyph: two big left blocks, a 3x5 right block and a bottom row', () => {
+    const spec = resolveLayoutSpec(23)
+    assert.equal(spec.cells.length, 23)
+    const result = packVideoWindows({width:1600, height:900, ...spec})
+    near(result.boxes[0].width, 800)
+    near(result.boxes[0].height, 450)
+    near(result.boxes[10].y, 450)
+    near(result.boxes[10].width, 800)
+    near(result.boxes[10].height, 300)
+    near(result.boxes[1].x, 800)
+    near(result.boxes[3].x, result.boxes[1].x + result.boxes[1].width * 2)
+    near(result.boxes[17].y, 750)
+    near(result.boxes[22].x + result.boxes[22].width, 1600)
+    for (const box of result.boxes) {
+        assert.ok(box.width > 0 && box.height > 0)
+        assert.ok(box.x + box.width <= result.width + 1e-6 && box.y + box.height <= result.height + 1e-6)
+    }
+    for (let i = 0; i < 23; i++) for (let j = i + 1; j < 23; j++) {
+        const a = result.boxes[i], b = result.boxes[j]
+        const x = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)
+        const y = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+        assert.ok(x < 1e-6 || y < 1e-6, `windows ${i}/${j} overlap`)
+    }
+})
+test('every count from one to twenty-five has a defined layout spec', () => {
+    for (let count = 1; count <= 25; count++) {
+        assert.equal(resolveLayoutSpec(count).cells.length, count)
+    }
+    assert.equal(VIDEO_LAYOUT_OPTIONS.length, 27)
+    assert.deepEqual(VIDEO_LAYOUT_OPTIONS.slice(-4).map(option => option.label), ['二十二画面', '二十三画面', '二十四画面', '二十五画面'])
 })
 test('bottom windows keep one 4:3 cell size so fewer than four stay left aligned',()=>{
     const size=uniformWindowSize(1600,900)

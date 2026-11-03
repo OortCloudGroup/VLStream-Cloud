@@ -1,6 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { categorySubtreeIds, createClassificationReader } from '../src/utils/videoSquareClassification.mjs'
+import { categorySubtreeIds, createClassificationReader, countClassificationTree } from '../src/utils/videoSquareClassification.mjs'
+
+test('protocol filters prune empty regions and count logical devices across descendant regions', async () => {
+  const tree = [{ id: 1, children: [{ id: 2 }, { id: 3 }] }, { id: 4 }]
+  const devices = [{ id: 'merged', preferredProtocols: ['ONVIF'], sources: [{ protocol: 'ONVIF', rowId: 1 }, { protocol: 'RTSP', rowId: 1 }] }]
+  const calls = []
+  const reader = createClassificationReader(async protocol => { calls.push(protocol); return { regionId: protocol === 'ONVIF' ? 2 : 4 } })
+  const result = await countClassificationTree(tree, devices, 'REGION', reader, true)
+  assert.deepEqual(result.map(node => [node.id, node.deviceCount]), [[1, 1]])
+  assert.deepEqual(result[0].children.map(node => [node.id, node.deviceCount]), [[2, 1]])
+  assert.deepEqual(calls, ['ONVIF'])
+  assert.deepEqual(await reader.matches(devices, 'REGION', new Set(['4'])), [])
+  assert.deepEqual(await countClassificationTree(tree, devices, 'REGION', reader, true, () => false), [])
+  assert.equal((await countClassificationTree(tree, devices, 'REGION', reader, false)).length, 2)
+})
 
 test('a parent category includes descendants but no siblings', () => {
   const tree = [{ id: 1, children: [{ id: 2, children: [{ id: 3 }] }] }, { id: 4 }]

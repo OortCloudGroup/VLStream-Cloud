@@ -8,6 +8,72 @@ export function videoGridStyle(count, variant = 'grid') {
   return { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(count / columns)}, minmax(0, 1fr))` }
 }
 
+// 画面排布以接入手册第 80 页的布局表为准：16:9 画布按 cols × rows 等分，
+// 每个画面占据整数个格子，cells 顺序即画面序号（0 起）。
+const cell = (col, row, colSpan = 1, rowSpan = 1) => ({col, row, colSpan, rowSpan})
+const uniformCells = (cols, rows) => Array.from({length: cols * rows}, (_, index) => cell(index % cols, Math.floor(index / cols)))
+
+export const VIDEO_LAYOUT_SPECS = {
+  '1': {cols: 1, rows: 1, cells: [cell(0, 0)]},
+  '2A': {cols: 2, rows: 4, cells: [cell(0, 1, 1, 2), cell(1, 1, 1, 2)]},
+  '2B': {cols: 3, rows: 3, cells: [cell(0, 0, 3, 3), cell(2, 2)]},
+  '3A': {cols: 4, rows: 4, cells: [cell(1, 0, 2, 2), cell(0, 2, 2, 2), cell(2, 2, 2, 2)]},
+  '3B': {cols: 4, rows: 4, cells: [cell(0, 1, 2, 2), cell(2, 0, 2, 2), cell(2, 2, 2, 2)]},
+  '4': {cols: 2, rows: 2, cells: uniformCells(2, 2)},
+  '5': {cols: 8, rows: 4, cells: [cell(1, 0, 6, 3), cell(0, 3, 2), cell(2, 3, 2), cell(4, 3, 2), cell(6, 3, 2)]},
+  '6': {cols: 3, rows: 3, cells: [cell(0, 0, 2, 2), cell(2, 0), cell(2, 1), cell(2, 2), cell(1, 2), cell(0, 2)]},
+  '7': {cols: 4, rows: 4, cells: [cell(0, 0, 2, 2), cell(2, 0, 2, 2), cell(0, 2, 2, 2), cell(2, 2), cell(3, 2), cell(2, 3), cell(3, 3)]},
+  '8': {cols: 4, rows: 4, cells: [cell(0, 0, 3, 3), cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3), cell(2, 3), cell(1, 3), cell(0, 3)]},
+  '9': {cols: 3, rows: 3, cells: uniformCells(3, 3)},
+  '10': {cols: 4, rows: 4, cells: [cell(0, 1, 2, 2), cell(2, 1, 2, 2), cell(0, 0), cell(1, 0), cell(2, 0), cell(3, 0), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3)]},
+  '11': {cols: 5, rows: 5, cells: [cell(1, 0, 3, 3), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4)]},
+  '12': {cols: 6, rows: 6, cells: [cell(0, 0, 3, 3), cell(3, 0, 3, 3), cell(0, 3, 3, 3), cell(3, 3), cell(4, 3), cell(5, 3), cell(3, 4), cell(4, 4), cell(5, 4), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '13': {cols: 4, rows: 4, cells: [cell(1, 1, 2, 2), cell(0, 0), cell(1, 0), cell(2, 0), cell(3, 0), cell(0, 1), cell(3, 1), cell(0, 2), cell(3, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3)]},
+  '14': {cols: 5, rows: 4, cells: [cell(0, 0, 2, 2), cell(2, 0, 2, 2), cell(4, 0), cell(4, 1), cell(0, 2), cell(1, 2), cell(2, 2), cell(3, 2), cell(4, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3)]},
+  '15': {cols: 6, rows: 4, cells: [cell(0, 0, 2, 2), cell(2, 0, 2, 2), cell(4, 0, 2, 2), cell(0, 2), cell(1, 2), cell(2, 2), cell(3, 2), cell(4, 2), cell(5, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(5, 3)]},
+  '16': {cols: 4, rows: 4, cells: uniformCells(4, 4)},
+  '17': {cols: 5, rows: 5, cells: [cell(0, 0, 3, 3), cell(3, 0), cell(4, 0), cell(3, 1), cell(4, 1), cell(3, 2), cell(4, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4)]},
+  '18': {cols: 6, rows: 6, cells: [cell(0, 1, 2, 2), cell(2, 1, 2, 2), cell(4, 1, 2, 2), cell(0, 3, 2, 2), cell(2, 3, 2, 2), cell(4, 3, 2, 2), cell(0, 0), cell(1, 0), cell(2, 0), cell(3, 0), cell(4, 0), cell(5, 0), cell(0, 5), cell(1, 5), cell(2, 5), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '19': {cols: 5, rows: 5, cells: [cell(0, 0, 2, 2), cell(2, 0), cell(3, 0), cell(4, 0), cell(2, 1), cell(3, 1), cell(4, 1), cell(0, 2), cell(1, 2), cell(2, 2), cell(3, 2), cell(4, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4)]},
+  '20': {cols: 6, rows: 6, cells: [cell(0, 0, 3, 3), cell(3, 0, 3, 3), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(5, 3), cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4), cell(5, 4), cell(0, 5), cell(1, 5), cell(2, 5), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '21': {cols: 6, rows: 6, cells: [cell(1, 1, 4, 4), cell(0, 0), cell(1, 0), cell(2, 0), cell(3, 0), cell(4, 0), cell(5, 0), cell(0, 1), cell(5, 1), cell(0, 2), cell(5, 2), cell(0, 3), cell(5, 3), cell(0, 4), cell(5, 4), cell(0, 5), cell(1, 5), cell(2, 5), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '22': {cols: 5, rows: 5, cells: [cell(0, 0, 2, 2), cell(2, 0), cell(3, 0), cell(4, 0), cell(2, 1), cell(3, 1), cell(4, 1), cell(0, 2), cell(1, 2), cell(2, 2), cell(3, 2), cell(4, 2), cell(0, 3), cell(1, 3), cell(2, 3), cell(3, 3), cell(4, 3), cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4)]},
+  // 手册未定义本项；格位按 MasterGo 设计稿图标反推：左列两个大块（3×3、3×2），右侧 3×5，底行 6。
+  '23': {cols: 6, rows: 6, cells: [cell(0, 0, 3, 3), cell(3, 0), cell(4, 0), cell(5, 0), cell(3, 1), cell(4, 1), cell(5, 1), cell(3, 2), cell(4, 2), cell(5, 2), cell(0, 3, 3, 2), cell(3, 3), cell(4, 3), cell(5, 3), cell(3, 4), cell(4, 4), cell(5, 4), cell(0, 5), cell(1, 5), cell(2, 5), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '24': {cols: 6, rows: 6, cells: [cell(1, 1, 2, 2), cell(3, 1, 2, 2), cell(1, 3, 2, 2), cell(3, 3, 2, 2), cell(0, 0), cell(1, 0), cell(2, 0), cell(3, 0), cell(4, 0), cell(5, 0), cell(0, 1), cell(5, 1), cell(0, 2), cell(5, 2), cell(0, 3), cell(5, 3), cell(0, 4), cell(5, 4), cell(0, 5), cell(1, 5), cell(2, 5), cell(3, 5), cell(4, 5), cell(5, 5)]},
+  '25': {cols: 5, rows: 5, cells: uniformCells(5, 5)},
+}
+
+const DEFAULT_LAYOUT_KEY = count => count === 2 ? '2A' : count === 3 ? '3A' : String(count)
+const VARIANT_LAYOUT_KEY = { 'two-overlay': '2B', 'three-left': '3B', 'three-top': '3A' }
+
+// 手册未定义且设计稿也没有的数量才回退到按行铺满的通用宫格，避免出现无法排布的画面。
+const fallbackLayoutSpec = count => {
+  const cols = Math.max(1, Math.ceil(Math.sqrt(count)))
+  return {cols, rows: Math.ceil(count / cols), cells: Array.from({length: count}, (_, index) => cell(index % cols, Math.floor(index / cols)))}
+}
+
+export function resolveLayoutSpec(count, variant = 'grid') {
+  const cells = VIDEO_LAYOUT_SPECS[VARIANT_LAYOUT_KEY[variant] || DEFAULT_LAYOUT_KEY(count)]
+  return cells && cells.cells.length === count ? cells : fallbackLayoutSpec(count)
+}
+
+const numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五']
+const layoutOption = (key, count, variant, label) => ({key, count, variant, label, ...VIDEO_LAYOUT_SPECS[key]})
+
+// 顺序以设计稿/手册布局表为准（含二十三画面，排在二十四画面之前）。
+export const VIDEO_LAYOUT_OPTIONS = [
+  layoutOption('1', 1, 'grid', '一画面'),
+  layoutOption('2A', 2, 'grid', '二画面（等大）'),
+  layoutOption('2B', 2, 'two-overlay', '二画面（一大一小右下）'),
+  layoutOption('3A', 3, 'three-top', '三画面（一上二下）'),
+  layoutOption('3B', 3, 'three-left', '三画面（一左二右）'),
+  ...numerals.slice(3).map((numeral, index) => {
+    const count = index + 4
+    return layoutOption(String(count), count, 'grid', `${numeral}画面`)
+  }),
+]
+
 let nextWindowId = 1
 export function ensureVideoWindowIds(dialog) {
   const ids = (dialog.windowIds || []).slice(0, dialog.layoutCount)

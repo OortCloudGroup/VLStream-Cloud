@@ -18,15 +18,30 @@ export function assignmentMatches(assignment, type, categoryIds) {
   return ids.some(id => id != null && categoryIds.has(String(id)))
 }
 
+// Count authorized logical devices once per subtree, using only selected protocol sources.
+export async function countClassificationTree(tree, devices, type, reader, filterEmpty, isCurrent = () => true) {
+  const result = []
+  for (const node of tree) {
+    if (!isCurrent()) return []
+    const ids = await reader.matches(devices, type, categorySubtreeIds([node], node.id), isCurrent)
+    const deviceIds = await reader.matches(devices, type, new Set([String(node.id)]), isCurrent)
+    const children = await countClassificationTree(node.children || [], devices, type, reader, filterEmpty, isCurrent)
+    const deviceCount = new Set(ids).size
+    if (!filterEmpty || deviceCount > 0) result.push({ ...node, deviceCount, deviceIds, children })
+  }
+  return result
+}
+
 // Classification assignments use the protocol's row key, never an unqualified
 // logical ID that can collide with another protocol's device identifier.
 export function createClassificationReader(fetchAssignment) {
   const cache = new Map()
+  const selectedSources = device => (device.sources || []).filter(source => !device.preferredProtocols?.length || device.preferredProtocols.includes(source.protocol))
   return {
     clear: () => cache.clear(),
     async matches(devices, type, categoryIds, isCurrent = () => true) {
       const sources = new Map()
-      for (const device of devices) for (const source of device.sources || []) {
+      for (const device of devices) for (const source of selectedSources(device)) {
         if (source.protocol && source.rowId != null) sources.set(`${source.protocol}:${source.rowId}`, source)
       }
       const queue = [...sources.entries()]
@@ -43,7 +58,7 @@ export function createClassificationReader(fetchAssignment) {
         }
       }))
       if (!isCurrent()) return []
-      return devices.filter(device => (device.sources || []).some(source => matching.has(`${source.protocol}:${source.rowId}`))).map(device => device.id)
+      return devices.filter(device => selectedSources(device).some(source => matching.has(`${source.protocol}:${source.rowId}`))).map(device => device.id)
     },
   }
 }

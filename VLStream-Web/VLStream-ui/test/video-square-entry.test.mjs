@@ -21,13 +21,13 @@ function square(view='video',presentation='default',count=1,closed=false) {
     const component=new Function(...Object.keys(deps),code)(...Object.values(deps))
     return {state:scope.run(()=>component.setup({},{expose(){}})),calls,stop:()=>scope.stop()}
 }
-test('first entry mounts the saved layout with no selected or requested video and collapsed catalogue',()=>{
+test('first entry mounts the saved layout with no selected or requested video and expanded catalogue',()=>{
     for(const view of ['video','map','list']) for(const mode of ['default','grid','bottom']) {
         const h=square(view,mode,8),s=h.state,d=s.layoutDialogs.value[0]
         assert.equal(s.viewMode.value,view);assert.equal(s.presentationMode.value,mode)
         assert.equal(d.layoutCount,mode==='default'?1:8)
         assert.ok(d.cameras.every(camera=>camera===null))
-        assert.equal(s.devicePanelCollapsed.value,true);assert.deepEqual(h.calls,[]);h.stop()
+        assert.equal(s.devicePanelCollapsed.value,false);assert.deepEqual(h.calls,[]);h.stop()
     }
 })
 test('layouts and repeated bottom selection preserve the view and never auto-bind directory devices',()=>{

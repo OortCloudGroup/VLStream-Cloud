@@ -3,7 +3,8 @@
         <button v-for="device in devices" :key="device.id" type="button" class="square-thumbnail"
             :class="{ active: device.id === selectedId }" :aria-pressed="device.id === selectedId"
             :aria-label="device.deviceName || device.name" @click="$emit('select', device.id)">
-            <img v-if="frames[device.id]" :src="frames[device.id]" alt="" />
+            <VideoSquareDevicePlayer v-if="autoPreview && device.id !== selectedId && device.status !== 'OFFLINE'" class="thumbnail-live-player" :device="device" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
+            <img v-else-if="frames[device.id]" :src="frames[device.id]" alt="" />
             <span v-else class="thumbnail-unavailable">{{ $tp(device.status === 'OFFLINE' ? '无信号' : '未预览') }}</span>
             <span class="thumbnail-name" data-i18n-ignore>{{ device.deviceName || device.name }}</span>
         </button>
@@ -12,8 +13,12 @@
 </template>
 
 <script setup>
-defineProps({ devices: { type: Array, default: () => [] }, selectedId: { type: [String, Number], default: '' }, frames: { type: Object, default: () => ({}) } })
+import VideoSquareDevicePlayer from './VideoSquareDevicePlayer.vue'
+defineProps({ devices: { type: Array, default: () => [] }, selectedId: { type: [String, Number], default: '' }, frames: { type: Object, default: () => ({}) }, autoPreview: Boolean })
 defineEmits(['select'])
+function mutePreview(event) {
+    if (event.target instanceof HTMLMediaElement) event.target.muted = true
+}
 </script>
 
 <style scoped>
@@ -25,4 +30,8 @@ defineEmits(['select'])
 .thumbnail-unavailable { font-size: 12px; }
 .thumbnail-name { position: absolute; inset: auto 0 0; padding: 5px 6px; background: rgb(0 0 0 / 55%); color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .thumbnail-empty { padding: 12px; color: #778da2; font-size: 12px; }
+.thumbnail-live-player { position: absolute; inset: 0; pointer-events: none; }
+.thumbnail-live-player :deep(.source-selector), .thumbnail-live-player :deep(.player-overlay), .thumbnail-live-player :deep(.oplayer-controller) { display: none; }
+.thumbnail-live-player :deep(video) { object-fit: cover; }
+.thumbnail-name { z-index: 2; }
 </style>

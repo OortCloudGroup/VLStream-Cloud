@@ -54,8 +54,9 @@
           <div class="video-player-section">
             <div ref="videoAreaElement" class="video-area" :class="[`presentation-${presentationMode}`, { 'is-multi-screen': presentationMode !== 'bottom' && dialog.layoutCount > 1 }]" @playing.capture="rememberFrame" @loadeddata.capture="rememberFrame"
               @loadedmetadata.capture="rememberAspect" @resize.capture="rememberAspect" @emptied.capture="refreshMediaState" @volumechange.capture="refreshMediaState">
-              <VideoSquareThumbnailStrip v-if="presentationMode === 'default'" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
-                :frames="thumbnailFrames" @select="$emit('select-thumbnail', $event)" />
+              <!-- 缩略图横条随窗口数量联动：收起所有视频后一并隐藏，重新打开视频时自动恢复 -->
+              <VideoSquareThumbnailStrip v-if="presentationMode === 'default' && dialog.layoutCount > 0" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
+                :frames="thumbnailFrames" :auto-preview="autoPreview" @select="$emit('select-thumbnail', $event)" />
               <!--  -->
               <div ref="workspaceElement" class="video-grid" :class="[`layout-${getLayoutClass(dialog.layoutCount)}`, `variant-${dialog.layoutVariant || 'grid'}`]"
                 :style="compactGridStyle"
@@ -94,11 +95,10 @@
                   @drop="handleDrop($event, index - 1)"
                   @dragend="handleDragEnd"
                 >
-                  <div v-if="(dialog.cameras[index - 1] && presentationMode !== 'default') || presentationMode === 'bottom'" class="window-titlebar"
+                  <div v-if="dialog.cameras[index - 1]" class="window-titlebar" :class="{ 'is-narrow': compactToolbar(index - 1) }"
                     @click.stop @dblclick.stop>
                     <span v-if="presentationMode === 'bottom'" data-i18n-ignore :title="dialog.cameras[index - 1]?.name">{{ dialog.cameras[index - 1]?.name || $tp('空白窗口') }}</span>
-                    <VideoSquarePlaybackControls v-if="presentationMode !== 'default'" :compact="presentationMode === 'bottom' || dialog.layoutCount > 1"
-                      :overlay="presentationMode !== 'bottom' && dialog.layoutCount > 1"
+                    <VideoSquarePlaybackControls overlay :compact="compactToolbar(index - 1)"
                       :ptz-open="showPtz && activeWindowIndex === index - 1" :muted="windowMedia[index - 1]?.muted ?? true"
                       :can-mute="windowMedia[index - 1]?.canMute" :can-screenshot="windowMedia[index - 1]?.canScreenshot"
                       can-close :fullscreen="playerFullscreen" :busy="capturing"
@@ -154,12 +154,6 @@
               </div>
 
               <!-- MasterGo 257:28182 / 309:26171: controls follow the picture. -->
-              <VideoSquarePlaybackControls v-if="presentationMode === 'default' && dialog.layoutCount > 0" class="default-playback-controls"
-                :ptz-open="showPtz" :muted="mediaState.muted" :can-mute="mediaState.canMute"
-                :can-screenshot="mediaState.canScreenshot" can-close :fullscreen="playerFullscreen" :busy="capturing"
-                @toggle-mute="toggleSpeaker" @screenshot="captureActiveFrame" @toggle-ptz="showPtz = !showPtz"
-                @toggle-fullscreen="togglePlayerFullscreen" @close-video="$emit('remove-device', dialog.id, activeWindowIndex, windowKey(activeWindowIndex))" />
-
               <div v-if="presentationMode === 'bottom'" class="window-carousel-navigation" :style="{ bottom: (carouselSize.height + 28) + 'px' }">
                 <button v-if="dialog.layoutCount" type="button" :disabled="carouselOffset <= 0" :aria-label="$tp('上一组视频')" @click="scrollCarousel(-1)">‹</button>
                 <button v-if="dialog.layoutCount" type="button" :disabled="carouselOffset >= carouselWidth - workspaceSize.width - 1" :aria-label="$tp('下一组视频')" @click="scrollCarousel(1)">›</button>
@@ -203,12 +197,14 @@ import { videoSourceKey } from '@/utils/videoSquareCatalog'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from '@/views/VideoAggregation/deviceUtils.js'
-import { uniformWindowSize, clampVideoWindow, isWindowDragGesture, fitVideoPicture, packVideoWindows } from '@/utils/videoSquareWindowWorkspace.mjs'
+import { uniformWindowSize, clampVideoWindow, isWindowDragGesture, packVideoWindows } from '@/utils/videoSquareWindowWorkspace.mjs'
+import { resolveLayoutSpec } from '@/utils/videoSquareLayout.mjs'
 
 // Props
 const props = defineProps({
   presentationMode: { type: String, default: 'grid' },
   thumbnailDevices: { type: Array, default: () => [] },
+  autoPreview: Boolean,
   embedded: Boolean,
   active: { type: Boolean, default: true },
   dialog: {
@@ -224,25 +220,12 @@ const showPtz = ref(false)
 const activeWindowIndex = ref(0)
 const selectedSources = ref({})
 const thumbnailFrames = ref({})
-const mediaState = ref({muted:true,canMute:false,canScreenshot:false})
 const windowMedia = ref({})
-const videoAspects = ref({})
-const videoInsets = ref({})
-const rememberAspect = event => {
-  const video = event.target
-  const index = Number(video.closest?.('.video-window')?.dataset.windowIndex)
-  if (video.tagName === 'VIDEO' && video.videoWidth && video.videoHeight && Number.isInteger(index)) {
-    videoAspects.value = {...videoAspects.value, [index]:video.videoWidth / video.videoHeight}
-    videoInsets.value = {...videoInsets.value, [index]:video.closest('.video-window').querySelector('.source-selector')?.offsetHeight || 0}
-  }
-  refreshMediaState()
-}
+const rememberAspect = () => refreshMediaState()
 const capturing = ref(false)
 const playerFullscreen = ref(false)
 const getActiveVideo = () => dialogElement.value?.querySelector(`[data-window-index="${activeWindowIndex.value}"] video`)
 const refreshMediaState = () => {
-  const video = getActiveVideo()
-  mediaState.value = {muted:video?.muted ?? true,canMute:!!video,canScreenshot:canCaptureVideoFrame(video)}
   const states = {}
   dialogElement.value?.querySelectorAll('.video-window').forEach(element => {
     const media = element.querySelector('video')
@@ -323,29 +306,33 @@ const dockedWindowOffset = index => windowSize().width * index
 const carouselWidth = computed(() => dockedWindowOffset(props.dialog.layoutCount))
 // Use the same browser layout-unit edge for both neighbours, avoiding fractional hairline seams.
 const layoutEdge = value => Math.round(value * 64) / 64
-const packedGrid = computed(() => props.dialog.layoutCount ? packVideoWindows({...availableGridSize.value, count:props.dialog.layoutCount,
-  variant:props.dialog.layoutVariant || 'grid', aspects:Array.from({length:props.dialog.layoutCount}, (_, index) => videoAspects.value[index]),
-  insets:Array.from({length:props.dialog.layoutCount}, (_, index) => (videoInsets.value[index] || 0) + (props.presentationMode === 'grid' && props.dialog.layoutCount === 1 ? 32 : 0))}) : {width:0,height:0,boxes:[]})
+const layoutSpec = computed(() => resolveLayoutSpec(props.dialog.layoutCount, props.dialog.layoutVariant || 'grid'))
+const packedGrid = computed(() => props.dialog.layoutCount ? packVideoWindows({...availableGridSize.value, ...layoutSpec.value}) : {width:0,height:0,boxes:[]})
+// Unified window chrome: every presentation fills the packed slot, keeps a 4px gap,
+// and switches the in-picture toolbar to its narrow tier on small cells.
+const WINDOW_GAP = 4
+const NARROW_TOOLBAR_WIDTH = 300
+const NARROW_TOOLBAR_HEIGHT = 170
 const compactGridStyle = computed(() => {
   if (!props.dialog.layoutCount) return {flex:'0 0 0px',height:'0px',width:'100%'}
+  if (props.presentationMode === 'default' && props.dialog.layoutCount === 1) return { display: 'flex', flex: '1 1 0', width: '100%', minHeight: '0' }
   if (props.presentationMode === 'bottom') return undefined
   if (!availableGridSize.value.width) return undefined
-  if (props.presentationMode === 'default') {
-    const picture = fitVideoPicture(availableGridSize.value.width, availableGridSize.value.height, videoAspects.value[0])
-    return {flex:'0 0 auto', height:picture.height + 'px'}
-  }
   return {display:'block', flex:'0 0 auto', width:layoutEdge(packedGrid.value.width) + 'px', height:layoutEdge(packedGrid.value.height) + 'px', alignSelf:'center'}
 })
+const compactToolbar = index => {
+  if (props.presentationMode === 'bottom') return windowSize().width < NARROW_TOOLBAR_WIDTH
+  const box = packedGrid.value.boxes[index]
+  return !box || box.width < NARROW_TOOLBAR_WIDTH || box.height < NARROW_TOOLBAR_HEIGHT
+}
 const windowPlacement = index => {
-  if (props.presentationMode === 'default') {
-    const size = fitVideoPicture(workspaceSize.value.width, workspaceSize.value.height, videoAspects.value[index])
-    return {width:`${size.width}px`, height:`${size.height}px`, justifySelf:'center', alignSelf:'start'}
-  }
+  if (props.presentationMode === 'default' && props.dialog.layoutCount === 1) return { position: 'relative', inset: 'auto', width: '100%', height: '100%', flex: '1 1 0', margin: '0', padding: '0' }
   if (props.presentationMode !== 'bottom') {
     const box = packedGrid.value.boxes[index]
-    return {position:'absolute', left:`${layoutEdge(box.x)}px`, top:`${layoutEdge(box.y)}px`,
-      width:`${layoutEdge(box.x + box.width) - layoutEdge(box.x)}px`, height:`${layoutEdge(box.y + box.height) - layoutEdge(box.y)}px`,
-      right:'auto', bottom:'auto', gridArea:'auto', border:'0', margin:'0', padding:'0'}
+    return {position:'absolute', left:`${layoutEdge(box.x) + WINDOW_GAP / 2}px`, top:`${layoutEdge(box.y) + WINDOW_GAP / 2}px`,
+      width:`${Math.max(0, layoutEdge(box.x + box.width) - layoutEdge(box.x) - WINDOW_GAP)}px`,
+      height:`${Math.max(0, layoutEdge(box.y + box.height) - layoutEdge(box.y) - WINDOW_GAP)}px`,
+      right:'auto', bottom:'auto', gridArea:'auto', margin:'0', padding:'0'}
   }
   const size = windowSize()
   const position = floatingWindows.value[index] || {
@@ -365,7 +352,7 @@ const measureWorkspace = () => {
   workspaceSize.value = {width:workspaceElement.value.clientWidth, height:workspaceElement.value.clientHeight}
   const area = videoAreaElement.value
   if (area) {
-    const reserved = ['.square-thumbnail-strip', '.default-playback-controls'].reduce((sum, selector) => sum + (area.querySelector(selector)?.offsetHeight || 0), 0)
+    const reserved = ['.square-thumbnail-strip'].reduce((sum, selector) => sum + (area.querySelector(selector)?.offsetHeight || 0), 0)
     availableGridSize.value = {width:area.clientWidth, height:Math.max(1, area.clientHeight - reserved)}
   }
   const positions = {}
@@ -444,8 +431,6 @@ watch(() => props.dialog.windowIds?.slice(), (ids, oldIds) => {
   }))
   floatingWindows.value = reindex(floatingWindows.value)
   windowLayers.value = reindex(windowLayers.value)
-  videoAspects.value = reindex(videoAspects.value)
-  videoInsets.value = reindex(videoInsets.value)
   selectedSources.value = reindex(selectedSources.value)
   nextTick(measureWorkspace)
 })
@@ -455,7 +440,7 @@ const observeWorkspace = () => {
   if (workspaceElement.value) workspaceObserver?.observe(workspaceElement.value)
   if (videoAreaElement.value) {
     workspaceObserver?.observe(videoAreaElement.value)
-    videoAreaElement.value.querySelectorAll('.square-thumbnail-strip, .default-playback-controls').forEach(element => workspaceObserver?.observe(element))
+    videoAreaElement.value.querySelectorAll('.square-thumbnail-strip').forEach(element => workspaceObserver?.observe(element))
   }
   measureWorkspace()
 }
@@ -473,7 +458,6 @@ onMounted(() => {
   observeWorkspace()
 })
 onBeforeUnmount(() => { stopWindowDrag(); workspaceObserver?.disconnect() })
-watch(videoAspects, () => nextTick(measureWorkspace), {deep:true})
 
 // Clamp after viewport changes and native dialog resizing, without restarting streams.
 const fitDialog = () => {
@@ -2003,20 +1987,19 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-area.presentation-bottom .window-titlebar :deep(svg),
 .video-area.presentation-bottom .window-titlebar :deep(.playback-control::before) { width:24px; height:24px; }
 .video-area.presentation-bottom .window-carousel-scroll { bottom:0; height:12px; z-index:30; }
-.video-window:hover::after, .video-window:focus-visible::after {
+.video-window:focus-visible::after {
   content:'';
   position:absolute;
   inset:0;
   box-sizing:border-box;
-  border:2px solid #f5222d;
+  border:2px solid #409eff;
   border-radius:inherit;
   z-index:30;
   pointer-events:none;
 }
 /* Empty-slot actions stay reachable even in the small cells of 8/16/25-window layouts. */
 .video-area.presentation-default .video-grid { gap:4px; }
-.video-area:not(.presentation-default) .video-grid .video-window { border:0; border-radius:0; transition:none; container-type:size; container-name:video-slot; }
-.video-area:not(.presentation-default) .video-grid .empty-placeholder { border:0; box-sizing:border-box; }
+.video-area .video-grid .empty-placeholder { border:0; box-sizing:border-box; }
 .video-area:not(.presentation-default) .video-grid .empty-placeholder .placeholder-content { max-height:100%; box-sizing:border-box; padding:4px; }
 .empty-placeholder .placeholder-content { display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
 .empty-placeholder .placeholder-text { margin:0; }
@@ -2031,4 +2014,177 @@ const handleDrop = (event, targetWindowIndex) => {
   .empty-placeholder .placeholder-actions { right:2px; bottom:2px; height:24px; }
   .empty-placeholder .action-btn { min-height:0; height:100%; max-height:28px; max-width:100%; padding:0 2px; font-size:10px; }
 }
+
+/* ===== 统一窗口观感：单画面 / 四分屏 / 底部排列共用同一套圆角、描边与内部控制条 =====
+   窗口由 windowPlacement 按布局槽位铺满（含 4px 间隔），这里只负责外观；
+   控制条固定在窗口内部左上角，默认透明不可点，hover 或键盘 focus-within 时渐显。 */
+.video-area .video-grid .video-window {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: #0f1216;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  container-type: size;
+  container-name: video-slot;
+}
+.video-area .video-grid .video-window.active {
+  border-color: #409eff;
+  box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.55);
+}
+.video-area .video-grid .video-window:has(.window-titlebar) { padding: 0; }
+.video-area .video-grid .video-window video { object-fit: contain; background: #0f1216; }
+/* 加载遮罩跟随幕布色系，避免窗口里出现刺眼白块 */
+.video-area .video-grid .video-window :deep(.el-loading-mask) { background-color: rgba(10, 14, 19, 0.72); }
+
+.video-area .video-grid .video-window > .window-titlebar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: auto;
+  bottom: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 34px;
+  max-width: calc(100% - 16px);
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: rgba(10, 14, 19, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  /* 高于播放器自带的 el-loading-mask，避免加载遮罩盖住控制条并吞掉点击 */
+  z-index: 3000;
+  cursor: default;
+}
+/* 画面左上角已有通道选择器或播放器标题条时，控制条让到其下方 4px */
+.video-area .video-grid .video-window:has(.source-selector) > .window-titlebar,
+.video-area .video-grid .video-window:has(.player-overlay) > .window-titlebar {
+  top: 40px;
+}
+.video-area .video-grid .video-window:hover > .window-titlebar,
+.video-area .video-grid .video-window:focus-within > .window-titlebar {
+  opacity: 1;
+  pointer-events: auto;
+}
+.video-area .video-grid .video-window > .window-titlebar > span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
+}
+.video-area .video-grid .video-window > .window-titlebar :deep(.square-playback-controls) {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 2px;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control) {
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: transparent;
+}
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control svg) {
+  width: 16px;
+  height: 16px;
+}
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control.close-control) {
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  border-radius: 4px;
+  background: #dc362e;
+}
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control:focus-visible) {
+  outline-offset: 1px;
+}
+
+/* 窄档：小窗口（<300px 宽或 <170px 高，约 20 画面以上）收紧到左上角 4px，
+   隐藏麦克风/AI/PTZ，只保留声音、截屏、全屏、关闭这几个关键键。 */
+.video-area .video-grid .video-window > .window-titlebar.is-narrow {
+  top: 4px;
+  left: 4px;
+  height: 28px;
+  max-width: calc(100% - 8px);
+  padding: 0 4px;
+  gap: 2px;
+}
+.video-area .video-grid .video-window > .window-titlebar.is-narrow > span {
+  display: none;
+}
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control) {
+  flex-basis: 22px;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 22px;
+}
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control svg) {
+  width: 13px;
+  height: 13px;
+}
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control.close-control) {
+  flex-basis: 26px;
+  width: 26px;
+  min-width: 26px;
+  max-width: 26px;
+}
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep([data-action="microphone"]),
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep([data-action="ai-hosting"]),
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep([data-action="ptz"]) {
+  display: none;
+}
+
+/* MasterGo 399:25604: default single-view controls stay on the bottom of the picture. */
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar {
+  inset: auto 0 0;
+  height: 108px;
+  width: 100%;
+  max-width: none;
+  padding: 40px 12px 20px;
+  justify-content: center;
+  border-radius: 0;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 50%));
+  backdrop-filter: none;
+  opacity: 1;
+  pointer-events: none;
+}
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.square-playback-controls) { gap: 12px; justify-content: center; overflow: visible; pointer-events: auto; }
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.playback-control) {
+  display: inline-flex;
+  flex: 0 1 56px;
+  width: 56px;
+  min-width: 28px;
+  max-width: 56px;
+  height: 48px;
+  border-radius: 200px;
+  background: #343537;
+  opacity: 1;
+}
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.playback-control::before) { width: 24px; height: 24px; }
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.playback-control.close-control) { flex-basis: 72px; width: 72px; max-width: 72px; margin: 0; background: #dc362e; }
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.playback-control.is-active) { background: #2278ff; }
 </style>

@@ -6,7 +6,7 @@
         :label="sourceLabel(source)" />
     </el-select>
     <VlsDevicePlayer v-if="selected?.protocol === 'VLSTREAM' && canPreviewVideoSource(selected)" :key="`vls:${selectedKey}`"
-      :device="{ id: selected.rowId, online: videoSourceOnline(selected) }" compact-status />
+      :device="{ id: selected.rowId, online: videoSourceOnline(selected) }" square compact-status />
     <RtspDevicePlayer v-else-if="['RTSP', 'ONVIF'].includes(selected?.protocol) && (!selected.playType || selected.playType === '1')"
       :key="`rtsp:${selectedKey}`" :device-id="selected.rowId" :protocol="selected.protocol" compact-status />
     <SquareProtocolDevicePlayer v-else-if="selected?.protocol === 'CUSTOM' ||

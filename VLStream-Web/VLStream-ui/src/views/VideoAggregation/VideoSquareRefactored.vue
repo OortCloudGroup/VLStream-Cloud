@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-video-view': viewMode === 'video', 'is-panel-right': viewMode === 'map', 'is-device-panel-open': !devicePanelCollapsed, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content" :style="{ '--toolbar-inset': toolbarInset + 'px' }">
@@ -57,12 +57,6 @@
                   <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
                 </button>
               </nav>
-              <button class="square-device-toggle" type="button" :aria-expanded="!devicePanelCollapsed" aria-controls="square-device-catalog"
-                :aria-label="$tp(devicePanelCollapsed ? '展开设备列表' : '收起设备列表')" :title="$tp(devicePanelCollapsed ? '展开设备列表' : '收起设备列表')" @click="toggleDevicePanel">
-                <svg viewBox="0 0 24 24" aria-hidden="true" :style="{ transform: devicePanelCollapsed ? 'none' : 'rotate(180deg)' }">
-                  <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/>
-                </svg>
-              </button>
             </div>
             <VideoLayoutControls
             show-presentation
@@ -70,15 +64,16 @@
             :layout-mode="layoutMode"
             :show-extended-layout="showExtendedLayout"
             :is-fullscreen="isFullscreen"
-            :device-count="deviceList.length"
-            :online-count="onlineDeviceCount"
-            :offline-count="offlineDeviceCount"
-            :unknown-count="unknownDeviceCount"
+            :open-window-count="openWindowCount"
+            :panel-side="viewMode === 'map' ? 'right' : 'left'"
+            :panel-collapsed="devicePanelCollapsed"
             @layout-select="handleLayoutSelect"
             @extended-layout="showExtendedLayoutDialog"
             @custom-layout="openCustomVideoDialogs"
+            @close-all-videos="closeAllVideos"
             @toggle-fullscreen="toggleFullscreen"
             @presentation-select="selectPresentation"
+            @collapse-panel="collapseDevicePanel"
             />
           </div>
           <!-- main -->
@@ -94,6 +89,7 @@
               active
               :presentation-mode="presentationMode"
               :thumbnail-devices="visibleDevices"
+              :auto-preview="defaultAutoPreview"
               embedded
               @close="closeLayoutDialog"
               @minimize="minimizeLayoutDialog"
@@ -176,11 +172,12 @@
           <VideoSquareDevicePanel
             v-show="!devicePanelCollapsed"
             id="square-device-catalog"
-            :style="{ top: toolbarInset + 'px' }"
+            :style="{ top: '0px', paddingTop: toolbarInset + 'px' }"
             :devices="currentDevices"
             :classification-devices="classificationCandidates"
             :now="statusClock"
             :visible-devices="visibleDevices"
+            :selected-id="layoutDialogs[0]?.cameras[layoutDialogs[0]?.activeWindowIndex || 0]?.id || ''"
             :protocols="availableProtocols"
             :selected-protocols="displaySettings.deviceTypes"
             :selected-status="selectedStatus"
@@ -245,13 +242,18 @@
 
   <!-- dialog -->
   <div v-if="showExtendedLayout" class="extended-layout-overlay" @click="hideExtendedLayoutDialog">
-    <div class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
+    <div ref="extendedLayoutDialogRef" class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
       <div class="extended-layout-content">
-        <button v-for="option in extendedLayouts" :key="`${option.count}-${option.variant}`" class="extended-layout-option" @click="handleExtendedLayoutSelect(option.count, option.variant)">
-          <span class="layout-option-icon" aria-hidden="true">▦</span>
-          <span class="layout-option-text">{{ option.label ? $tp(option.label) : uiText('{value0}画面', { value0: option.count }) }}</span>
+        <button v-for="option in extendedLayouts" :key="option.key" class="extended-layout-option" :class="{ active: isExtendedLayoutActive(option) }" @click="handleExtendedLayoutSelect(option.count, option.variant)">
+          <span class="layout-option-icon" aria-hidden="true">
+            <span v-for="(cell, index) in option.cells" :key="index" class="layout-icon-cell" :style="layoutPreviewCellStyle(option, cell)"></span>
+          </span>
+          <span class="layout-option-text">{{ $tp(option.label) }}</span>
         </button>
-        <button class="extended-layout-option" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">{{ $tp('自定义') }}</button>
+        <button class="extended-layout-option is-custom" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">
+          <span class="layout-option-icon icon-custom" aria-hidden="true"></span>
+          <span class="layout-option-text">{{ $tp('自定义') }}</span>
+        </button>
       </div>
     </div>
   </div>
@@ -273,11 +275,11 @@ import { translatePhrase as uiText } from '@/i18n'
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
 import {Close} from '@element-plus/icons-vue'
-import videoViewIcon from '@/assets/mastergo/video-square/view-video.svg'
-import mapViewIcon from '@/assets/mastergo/video-square/view-map.svg'
-import listViewIcon from '@/assets/mastergo/video-square/view-list.svg'
-import topologyViewIcon from '@/assets/mastergo/video-square/view-topology.svg'
-import bimViewIcon from '@/assets/mastergo/video-square/view-bim.svg'
+import videoViewIcon from '@/assets/mastergo/video-square/design-view-video.svg'
+import mapViewIcon from '@/assets/mastergo/video-square/design-view-map.svg'
+import listViewIcon from '@/assets/mastergo/video-square/design-view-list.svg'
+import topologyViewIcon from '@/assets/mastergo/video-square/design-view-topology.svg'
+import bimViewIcon from '@/assets/mastergo/video-square/design-view-bim.svg'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -296,7 +298,7 @@ import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
 import VideoSquareCatalogTable from './components/VideoSquareCatalogTable.vue'
 import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
 import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
-import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows } from '@/utils/videoSquareLayout.mjs'
+import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
@@ -305,6 +307,7 @@ import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from './deviceUtils.js'
+import { setSidebarDeviceStats, clearSidebarDeviceStats } from '@/utils/sidebarDeviceStats.mjs'
 import { reverseGeocode } from '@/utils/amap'
 import { createVideoAddressResolver, createVideoDeviceLocationPopup } from '@/utils/videoDeviceAddress.mjs'
 
@@ -345,15 +348,18 @@ const setSquareView = async value => {
     return
   }
   viewMode.value = value
+  devicePanelCollapsed.value = false
+  devicePanelFront.value = true
   await nextTick()
   if (value === 'map') mapInstance?.invalidateSize()
 }
 const bottomWorkspace = ref(null)
 const floatingTools = ref(null)
 const toolbarInset = ref(82)
-const devicePanelCollapsed = ref(true)
+const devicePanelCollapsed = ref(false)
 const devicePanelFront = ref(false)
-const toggleDevicePanel = () => {
+const collapseDevicePanel = side => {
+  if (side !== (viewMode.value === 'map' ? 'right' : 'left')) return
   devicePanelCollapsed.value = !devicePanelCollapsed.value
   devicePanelFront.value = !devicePanelCollapsed.value
 }
@@ -393,6 +399,7 @@ const handleDeviceSelect = device => {
 }
 const showDevicePicker = ref(false)
 const presentationMode = ref(workspacePreferences.presentation)
+const defaultAutoPreview = ref(false)
 const layoutClosed = ref(workspacePreferences.closed === true)
 watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presentation, layout, closed]) => {
   saveVideoSquarePreferences({view, presentation, layout, closed})
@@ -404,6 +411,11 @@ const selectPresentation = mode => {
   if (!layoutDialogs.value[0]?.layoutCount) restoreLayoutWindows()
   const dialog = layoutDialogs.value[0] || ensureLayoutDialog()
   if (dialog.presentationMode !== mode) applyVideoPresentation(dialog, mode)
+  defaultAutoPreview.value = mode === 'default'
+  if (mode === 'default' && visibleDevices.value.length && !visibleDevices.value.some(device => device.id === dialog.cameras[0]?.id)) {
+    dialog.cameras[0] = catalogVideoCamera(visibleDevices.value[0])
+    dialog.activeWindowIndex = 0
+  }
   // 底部排列默认四个窗口：保留已有画面，空位按在线优先自动补设备
   if (mode === 'bottom') fillLayoutWindows(dialog, currentDevices.value, BOTTOM_DEFAULT_WINDOW_COUNT)
 }
@@ -416,13 +428,14 @@ const selectThumbnail = (dialogId, deviceId) => {
 const devicePickerTarget = ref(null)
 const showCustomLayout = ref(false)
 const customWindowCount = ref(4)
-const extendedLayouts = [
-  { count: 2, variant: 'grid', label: '二画面（等大）' },
-  { count: 2, variant: 'two-overlay', label: '二画面（一大一小）' },
-  { count: 3, variant: 'three-top', label: '三画面（一上二下）' },
-  { count: 3, variant: 'three-left', label: '三画面（一左二右）' },
-  ...[5, 7, ...Array.from({ length: 16 }, (_, index) => index + 10)].map(count => ({ count, variant: 'grid' })),
-]
+const extendedLayouts = VIDEO_LAYOUT_OPTIONS
+const isExtendedLayoutActive = option => layoutChoice.value.count === option.count && layoutChoice.value.variant === option.variant
+const layoutPreviewCellStyle = (option, cell) => ({
+  left: `calc(${(cell.col / option.cols) * 100}% + 0.5px)`,
+  top: `calc(${(cell.row / option.rows) * 100}% + 0.5px)`,
+  width: `calc(${(cell.colSpan / option.cols) * 100}% - 1px)`,
+  height: `calc(${(cell.rowSpan / option.rows) * 100}% - 1px)`,
+})
 const assignSelectedDevice = device => {
   if (!assignVideoWindow(layoutDialogs.value, devicePickerTarget.value, device, currentDevices.value)) {
     ElMessage.warning(uiText('设备或窗口已变化，请重新选择'))
@@ -460,6 +473,7 @@ const nextDialogId = ref(1)
 const initialLayoutCount = workspacePreferences.presentation === 'default' ? 1 : workspacePreferences.layout.count
 const initialLayoutVariant = workspacePreferences.presentation === 'default' ? 'grid' : workspacePreferences.layout.variant
 const layoutDialogs = ref([createEmptyVideoLayout({id:1000,count:initialLayoutCount,variant:initialLayoutVariant,zIndex:3001,closed:layoutClosed.value})])
+const openWindowCount = computed(() => layoutDialogs.value.reduce((total, dialog) => total + (dialog.layoutCount || 0), 0))
 const nextLayoutDialogId = ref(1001)
 const maxLayoutZIndex = ref(3001)
 const ensureLayoutDialog = () => {
@@ -612,7 +626,7 @@ const playDialogOPlayer = async (dialog) => {
 
 const showSettingsDialog = ref(false)
 const displaySettings = ref({
-  deviceTypes: [],
+  deviceTypes: VIDEO_PROTOCOLS.map(protocol => protocol.value),
   showOnline: true,
   showOffline: true
 })
@@ -623,17 +637,40 @@ const getDeviceCoordinates = videoDeviceCoordinates
 const isDeviceOnline = status => status === 'ONLINE'
 const currentDevices = computed(() => deviceList.value.map(device => normalizeVideoDevice(device, statusClock.value)))
 const classificationDeviceIds = ref(null)
-const classificationCandidates = computed(() => currentDevices.value.map(device =>
+const classificationCandidates = computed(() => !displaySettings.value.deviceTypes.length ? [] : currentDevices.value.map(device =>
   videoDeviceForProtocols(device, displaySettings.value.deviceTypes, statusClock.value)).filter(Boolean))
 const onlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'ONLINE').length)
 const offlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'OFFLINE').length)
 const unknownDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'UNKNOWN').length)
+// 设备统计同步到左侧导航侧栏底部（离开页面时清空）
+watch([currentDevices, onlineDeviceCount, offlineDeviceCount, unknownDeviceCount], () => {
+  setSidebarDeviceStats({
+    total: currentDevices.value.length,
+    online: onlineDeviceCount.value,
+    offline: offlineDeviceCount.value,
+    unknown: unknownDeviceCount.value,
+  })
+}, {immediate: true})
 const visibleDevices = computed(() => classificationCandidates.value.filter(device =>
   (classificationDeviceIds.value === null || classificationDeviceIds.value.includes(device.id)) &&
   (!selectedStatus.value || device.status === selectedStatus.value) &&
   matchesVideoDevice(device, mapSearchKeyword.value)
 ))
 watch(visibleDevices, () => updateMapMarkers())
+watch(() => displaySettings.value.deviceTypes, () => {
+  const allowed = new Map(classificationCandidates.value.map(device => [device.id, device]))
+  for (const dialog of layoutDialogs.value) {
+    dialog.cameras = dialog.cameras.map(camera => camera && allowed.has(camera.id) ? catalogVideoCamera(allowed.get(camera.id)) : null)
+  }
+}, { deep: true })
+watch(visibleDevices, devices => {
+  const dialog = layoutDialogs.value[0]
+  if (!defaultAutoPreview.value || presentationMode.value !== 'default' || !dialog?.layoutCount) return
+  if (!devices.some(device => device.id === dialog.cameras[0]?.id)) {
+    dialog.cameras[0] = devices.length ? catalogVideoCamera(devices[0]) : null
+    dialog.activeWindowIndex = 0
+  }
+})
 
 const deviceMapMarkers = computed(() => {
   const markers = []
@@ -985,14 +1022,14 @@ const showExtendedLayoutDialog = () => {
     const button = document.querySelector('.extended-layout-btn')
     if (button) {
       const rect = button.getBoundingClientRect()
-      const dialogWidth = Math.min(400, window.innerWidth - 24)
+      const dialogWidth = Math.min(392, window.innerWidth - 24)
 
       // dialog : button , in
       const left = Math.max(12, Math.min(window.innerWidth - dialogWidth - 12, rect.right - dialogWidth))
       const top = rect.bottom + 8 // button 8px
-
+      const dialogHeight = document.querySelector('.extended-layout-dialog')?.offsetHeight || 0
       extendedLayoutPosition.value = {
-        top: `${top}px`,
+        top: `${Math.max(12, Math.min(top, window.innerHeight - dialogHeight - 12))}px`,
         left: `${left}px`
       }
     }
@@ -1013,6 +1050,24 @@ const hideExtendedLayoutDialog = () => {
   showExtendedLayout.value = false
   console.log('隐藏扩展布局弹窗')
 }
+
+// dialog outside/Esc : dialog contains , button toggle ; capture map/canvas handler stopPropagation
+const extendedLayoutDialogRef = ref(null)
+const handleExtendedLayoutOutside = event => {
+  const dialog = extendedLayoutDialogRef.value
+  if (!dialog || dialog.contains(event.target)) return
+  if (event.target.closest?.('.extended-layout-btn')) return
+  hideExtendedLayoutDialog()
+}
+// Esc fullscreen Esc fullscreen
+const handleExtendedLayoutEsc = event => {
+  if (event.key === 'Escape' && !isFullscreen.value) hideExtendedLayoutDialog()
+}
+watch(showExtendedLayout, visible => {
+  const method = visible ? 'addEventListener' : 'removeEventListener'
+  document[method]('pointerdown', handleExtendedLayoutOutside, true)
+  document[method]('keydown', handleExtendedLayoutEsc)
+})
 
 // Process item
 const handleExtendedLayoutSelect = (count, variant = 'grid') => {
@@ -1047,12 +1102,6 @@ const applyExtendedLayoutDarkMode = () => {
     const layoutOptionTexts = extendedLayoutDialog.querySelectorAll('.layout-option-text')
     layoutOptionTexts.forEach(text => {
       text.style.setProperty('color', '#ffffff', 'important')
-    })
-
-    //
-    const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
-    layoutOptionIcons.forEach(icon => {
-      icon.style.setProperty('color', '#7db8ff', 'important')
     })
 
     console.log('强制应用扩展布局弹窗深色模式样式')
@@ -1115,22 +1164,64 @@ const minimizeLayoutDialog = (dialogId) => {
   }
 }
 
+// 关闭窗口＝清空相机与窗口 ID，播放器组件随 v-for 卸载自行停流（与单窗关闭同一条清理路径）。
+const clearLayoutWindows = dialog => {
+  if (!dialog) return false
+  dialog.cameras = []
+  dialog.windowIds = []
+  dialog.layoutCount = 0
+  dialog.activeWindowIndex = 0
+  return true
+}
+
 const closeLayoutDialog = (dialogId) => {
-  const dialogIndex = layoutDialogs.value.findIndex(dialog => dialog.id === dialogId)
-  if (dialogIndex === -1) return
+  const dialog = layoutDialogs.value.find(item => item.id === dialogId)
+  if (!dialog) return
 
   //
   // if (dialog.recording?.timer) {
   //   clearInterval(dialog.recording.timer)
   // }
 
-  const dialog = layoutDialogs.value[dialogIndex]
-  dialog.cameras = []
-  dialog.windowIds = []
-  dialog.layoutCount = 0
-  dialog.activeWindowIndex = 0
+  clearLayoutWindows(dialog)
   layoutClosed.value = true
   console.log('关闭布局弹窗:', dialogId)
+}
+
+// Save bindings, not playback URLs; restore only devices still in the authorized filtered catalog.
+let collapsedVideoWorkspace = null
+const closeAllVideos = () => {
+  const open = layoutDialogs.value.filter(dialog => dialog.layoutCount > 0)
+  if (!open.length) {
+    if (collapsedVideoWorkspace) {
+      const allowed = new Map(visibleDevices.value.map(device => [device.id, device]))
+      presentationMode.value = collapsedVideoWorkspace.presentation
+      for (const saved of collapsedVideoWorkspace.dialogs) {
+        const dialog = layoutDialogs.value.find(item => item.id === saved.id)
+        if (!dialog) continue
+        resizeVideoLayout(dialog, saved.count, saved.variant)
+        dialog.cameras = saved.cameraIds.map(id => allowed.has(id) ? catalogVideoCamera(allowed.get(id)) : null)
+        dialog.activeWindowIndex = saved.active
+      }
+      defaultAutoPreview.value = collapsedVideoWorkspace.autoPreview
+      collapsedVideoWorkspace = null
+      layoutClosed.value = false
+    } else {
+      restoreLayoutWindows()
+      if (presentationMode.value === 'default') selectPresentation('default')
+    }
+    return
+  }
+  collapsedVideoWorkspace = {
+    presentation: presentationMode.value,
+    autoPreview: defaultAutoPreview.value,
+    dialogs: open.map(dialog => ({ id: dialog.id, count: dialog.layoutCount, variant: dialog.layoutVariant,
+      active: dialog.activeWindowIndex || 0, cameraIds: dialog.cameras.map(camera => camera?.id) })),
+  }
+  defaultAutoPreview.value = false
+  open.forEach(clearLayoutWindows)
+  layoutClosed.value = true
+  ElMessage.success(uiText('已收起所有视频'))
 }
 
 // Process
@@ -1521,11 +1612,6 @@ const toggleDarkMode = () => {
           text.style.color = '#ffffff'
         })
 
-        const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
-        layoutOptionIcons.forEach(icon => {
-          icon.style.color = '#7db8ff'
-        })
-
         console.log('强制应用扩展布局弹窗深色样式')
       }
 
@@ -1654,11 +1740,6 @@ const toggleDarkMode = () => {
         const layoutOptionTexts = extendedLayoutDialog.querySelectorAll('.layout-option-text')
         layoutOptionTexts.forEach(text => {
           text.style.color = '#333'
-        })
-
-        const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
-        layoutOptionIcons.forEach(icon => {
-          icon.style.color = '#1A53FF'
         })
 
         console.log('恢复扩展布局弹窗浅色样式')
@@ -2141,6 +2222,7 @@ onUnmounted(() => {
   window.removeEventListener('focus', refreshPresence)
   window.removeEventListener('resize', resizeVideoDialogs)
   document.removeEventListener('visibilitychange', refreshPresence)
+  clearSidebarDeviceStats()
   catalogGeneration += 1
   console.log('VideoSquareRefactored组件开始卸载')
   isComponentMounted = false
@@ -2152,6 +2234,8 @@ onUnmounted(() => {
   document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
   document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
   document.removeEventListener('keydown', handleEscKey)
+  document.removeEventListener('pointerdown', handleExtendedLayoutOutside, true)
+  document.removeEventListener('keydown', handleExtendedLayoutEsc)
 
   //
   if (mapInstance) {
@@ -3400,49 +3484,91 @@ body::-webkit-scrollbar {
 
 .extended-layout-dialog {
   position: fixed;
-  background: white;
+  width: 392px;
+  max-width: calc(100vw - 24px);
+  background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
   pointer-events: auto;
-  border: 1px solid #e0e0e0;
-  min-width: 200px;
   z-index: 4001;
 }
 
 .extended-layout-content {
-  padding: 12px;
+  padding: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  row-gap: 12px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
 }
 
 .extended-layout-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 6px;
+  gap: 8px;
+  width: 180px;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.2s ease;
   color: #333;
 }
 
 .extended-layout-option:hover {
-  background: rgba(26, 83, 255, 0.1);
-  transform: translateY(-1px);
+  background: rgba(26, 83, 255, 0.08);
+}
+
+.extended-layout-option.active .layout-option-text {
+  color: #1A53FF;
+}
+
+.extended-layout-option.active .layout-option-icon {
+  color: #1A53FF;
 }
 
 .layout-option-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1A53FF;
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: #718096;
+}
+
+.layout-icon-cell {
+  position: absolute;
+  box-sizing: border-box;
+  background: currentColor;
+  border-radius: 0.5px;
+}
+
+.layout-option-icon.icon-custom {
+  border: 1px dashed currentColor;
+  border-radius: 2px;
+}
+
+.layout-option-icon.icon-custom::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  border-radius: 1px;
 }
 
 .layout-option-text {
   font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  line-height: 22px;
+  font-family: 'Microsoft YaHei', sans-serif;
+  color: #333333;
+  white-space: nowrap;
 }
 
 /* dialog */
@@ -3461,8 +3587,13 @@ body::-webkit-scrollbar {
   background: rgba(100, 149, 237, 0.2) !important;
 }
 
-.map-area.dark-mode .layout-option-icon {
+.map-area.dark-mode .extended-layout-option.active .layout-option-text,
+.map-area.dark-mode .extended-layout-option.active .layout-option-icon {
   color: #7db8ff !important;
+}
+
+.map-area.dark-mode .layout-option-icon {
+  color: #a0aec0 !important;
 }
 
 .map-area.dark-mode .layout-option-text {
@@ -4062,10 +4193,6 @@ body.dark-mode .el-popover.device-stats-popover .el-checkbox__input.is-checked .
 
 .map-area.dark-mode .extended-layout-option:hover {
   background: rgba(100, 149, 237, 0.2) !important;
-}
-
-.map-area.dark-mode .layout-option-icon {
-  color: #7db8ff !important;
 }
 
 .map-area.dark-mode .layout-option-text {

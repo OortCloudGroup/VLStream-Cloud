@@ -29,6 +29,13 @@ export const getMqttDeviceDetail = (deviceRowId, options = {}) => request({
   silentError: options.silentError === true
 })
 
+// The square receives only online state and channel labels, never original source URLs.
+export const getMqttSquareStatus = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-status`, method: 'get' })
+export const getMqttSquareStreams = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-streams`, method: 'get' })
+export const createMqttSquarePreview = (deviceRowId, streamId) => request({
+  url: `/vlstream/device/${deviceRowId}/square-preview`, method: 'post', data: { streamId }
+})
+
 export const deployMqttDeviceFirmware = (deviceRowId, firmwareId) => request({
   url: `/vlstream/device/${deviceRowId}/firmware-upgrades`,
   method: 'post',

@@ -18,9 +18,11 @@ components.ElButton = defineComponent({ setup: (_, { slots }) => () => h('button
 function harness(path, values, dependencies = {}) {
   const descriptor = parse(readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')).descriptor
   const script = compileScript(descriptor, { id: `no-signal-${path}` }).content
-    .replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '').replace(/import\.meta\.env/g, '__testEnv').replace('export default', 'return')
+    .replace(/^import\s+[\s\S]*?\s+from\s+['"][^'"]+['"];?\s*$/gm, '').replace(/import\.meta\.env/g, '__testEnv').replace('export default', 'return')
   const unmounts = [], mounts = [], events = [], routes = []
   const deps = { computed, reactive, ref, watch, nextTick, __testEnv: {}, location: { protocol: 'http:' }, ...components,
+    getMqttSquareStatus() {}, getMqttSquareStreams() {}, createMqttSquarePreview() {},
+    CAMERA_RTC_SOCKET_URL: 'wss://fixture.invalid', squareCameraRtcConfig: value => value,
     onBeforeUnmount: action => unmounts.push(action), onMounted: action => mounts.push(action),
     useRouter: () => ({ push: route => routes.push(route) }),
     translatePhrase: value => value, translateUiMessage: value => value,
@@ -118,6 +120,77 @@ test('custom and pushed protocol errors use compact display without changing req
   assert.equal(player.instance.error.value, internalFailure)
   await player.instance.connect()
   assert.equal(calls.length, 2)
+  player.close()
+})
+
+test('CUSTOM square DIRECT uses scoped preview without querying device management details', async () => {
+  const calls = [], url = 'https://camera.example.invalid/videocall/CAM-1?access=fixture#view'
+  const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+    { source: { protocol: 'CUSTOM', rowId: '17' }, compactStatus: true }, {
+      request: async options => { calls.push(options); return { data: { playMode: 'DIRECT', url } } },
+      getCustomDevice: async () => { throw new Error('management details must not be requested') },
+      startPlay() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
+      ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType: () => 'cameraRTC',
+      parseCameraRtcConfig: value => ({ cameraId: value, socketUrl: 'wss://fixture.invalid' }),
+    })
+  await flush()
+  assert.equal(player.instance.error.value, '')
+  assert.equal(player.instance.directUrl.value, url)
+  assert.equal(player.instance.directCamera.value.cameraId, url)
+  assert.deepEqual(calls.map(({ url, method }) => ({ url, method })), [
+    { url: '/custom/device/17/preview', method: 'post' }
+  ])
+  player.close()
+})
+
+test('legacy CUSTOM fallback never converts a denied management detail into square access', async () => {
+  let details = 0
+  const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+    { source: { protocol: 'CUSTOM', rowId: '17' }, compactStatus: true }, {
+      request: async () => { throw new Error('仅RTSP/RTMP流需要通过ZLM预览') },
+      getCustomDevice: async () => { details++; throw new Error('没有设备查询权限') },
+      startPlay() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
+      ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType: () => 'cameraRTC',
+      parseCameraRtcConfig: value => value,
+    })
+  await flush()
+  assert.equal(details, 1)
+  assert.equal(player.instance.error.value, '没有设备查询权限')
+  assert.equal(player.instance.directUrl.value, '')
+  assert.equal(player.instance.directCamera.value, null)
+  player.close()
+})
+
+test('legacy CUSTOM fallback keeps direct playback when the existing detail permission permits it', async () => {
+  const url = 'https://camera.example.invalid/videocall/CAM-1?access=fixture#view'
+  const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+    { source: { protocol: 'CUSTOM', rowId: '17' }, compactStatus: true }, {
+      request: async () => { throw new Error('仅RTSP/RTMP流需要通过ZLM预览') },
+      getCustomDevice: async id => { assert.equal(id, '17'); return { data: { streamUrl: url } } },
+      startPlay() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
+      ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType: () => 'cameraRTC',
+      parseCameraRtcConfig: value => ({ cameraId: value, socketUrl: 'wss://fixture.invalid' }),
+    })
+  await flush()
+  assert.equal(player.instance.error.value, '')
+  assert.equal(player.instance.directUrl.value, url)
+  player.close()
+})
+
+test('CUSTOM preview permission rejection never falls back to management details', async () => {
+  let details = 0
+  const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+    { source: { protocol: 'CUSTOM', rowId: '17' }, compactStatus: true }, {
+      request: async () => { throw new Error('没有预览权限') },
+      getCustomDevice: async () => { details++; return { data: { streamUrl: 'https://fixture.invalid/videocall/CAM-1' } } },
+      startPlay() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
+      ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType: () => 'cameraRTC',
+      parseCameraRtcConfig: value => value,
+    })
+  await flush()
+  assert.equal(details, 0)
+  assert.equal(player.instance.error.value, '没有预览权限')
+  assert.equal(player.instance.directUrl.value, '')
   player.close()
 })
 

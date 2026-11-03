@@ -5,6 +5,8 @@
  * Updated by: ChaoQun Lei
  */
 
+import { cameraRtcIdFromUrl } from './squareCameraRtc.mjs'
+
 const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
 
 const cameraRtcSocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -65,14 +67,7 @@ export const ensureOPlayer = async () => {
 
 /** Parse the CameraRTC camera ID and WebSocket signaling endpoint from its HTTP URL. */
 export const parseCameraRtcConfig = (streamUrl) => {
-  const url = new URL(String(streamUrl || '').trim())
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash) {
-    throw new Error('CameraRTC requires an HTTP(S) URL')
-  }
-  const segments = url.pathname.split('/').filter(Boolean)
-  const markerIndex = segments.findIndex(segment => segment.toLowerCase() === 'videocall')
-  const cameraId = markerIndex >= 0 ? segments[markerIndex + 1] : ''
-  if (!/^[A-Za-z0-9_-]{1,100}$/.test(cameraId)) throw new Error('CameraRTC URL is missing a valid camera ID')
+  const cameraId = cameraRtcIdFromUrl(streamUrl)
   return {
     cameraId,
     socketUrl: CAMERA_RTC_SOCKET_URL

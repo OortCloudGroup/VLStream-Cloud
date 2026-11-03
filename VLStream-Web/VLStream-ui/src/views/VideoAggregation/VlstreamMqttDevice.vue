@@ -47,8 +47,9 @@
             </template>
           </el-table-column>
           <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="deviceId" :label="$tp('设备 ID')" min-width="190" show-overflow-tooltip />
-          <el-table-column prop="deviceModel" :label="$tp('设备型号')" min-width="150" show-overflow-tooltip />
+          <!-- 按现有最长值实测（14px 字体：设备 ID 232px、设备型号 169px）加单元格内边距与余量，避免省略号截断 -->
+          <el-table-column prop="deviceId" :label="$tp('设备 ID')" min-width="270" />
+          <el-table-column prop="deviceModel" :label="$tp('设备型号')" min-width="210" />
           <el-table-column v-if="hasDeviceSerial" prop="deviceSerial" :label="$tp('序列号')" min-width="140" show-overflow-tooltip />
           <el-table-column prop="ipAddr" label="IP" min-width="120" />
           <el-table-column prop="firmwareVersion" :label="$tp('RootFS 版本')" min-width="110" />

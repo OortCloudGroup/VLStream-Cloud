@@ -11,18 +11,18 @@
     <div class="layout-button-group">
       <!-- MasterGo 309:32968 / 309:32903 — 视频徽标 + 分隔线 -->
       <span class="video-badge" aria-hidden="true">
-        <span class="video-badge-icon"></span>
+        <img :src="videoBadgeIcon" width="24" height="24" alt="" />
         <span class="video-badge-text">{{ $tp('视频') }}</span>
       </span>
       <span class="toolbar-divider" aria-hidden="true"></span>
       <template v-if="showPresentation">
         <el-button class="layout-btn presentation-btn" :type="presentationMode === 'default' ? 'primary' : 'default'"
           :title="$tp('默认展示')" :aria-label="$tp('默认展示')" :aria-pressed="presentationMode === 'default'" @click="$emit('presentation-select', 'default')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 3v18M3 8h5M3 13h5M3 18h5" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span class="design-toolbar-icon default-presentation-icon" :style="{ maskImage: `url(${defaultPresentationIcon})` }"></span>
         </el-button>
         <el-button class="layout-btn presentation-btn" :type="presentationMode === 'bottom' ? 'primary' : 'default'"
           :title="$tp('底部排列')" :aria-label="$tp('底部排列')" :aria-pressed="presentationMode === 'bottom'" @click="$emit('presentation-select', 'bottom')">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/><path d="M3 15h18M8 15v6M15 15v6" stroke="currentColor" stroke-width="1.7"/><path d="M5 5v2m0 3v2m14-7v2m0 3v2" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span class="design-toolbar-icon" :style="{ maskImage: `url(${bottomPresentationIcon})` }"></span>
         </el-button>
       </template>
       <el-button
@@ -41,12 +41,7 @@
         :title="$tp('四分屏视频播放')"
         class="layout-btn four-grid-btn"
       >
-        <div class="four-grid">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
+        <img :src="fourLayoutIcon" alt="" class="layout-mode-icon" />
       </el-button>
       <el-button
         :type="presentationMode === 'grid' && layoutMode === '3x3' ? 'primary' : 'default'"
@@ -97,13 +92,10 @@
           <div class="dot"></div>
         </div>
       </el-button>
-      <el-button
-        size="small"
-        @click="$emit('custom-layout')"
-        :title="$tp('自定义视频播放')"
-        class="layout-btn custom-layout-btn"
-      > {{ $tp('自定义') }} </el-button>
       <span class="toolbar-divider" aria-hidden="true"></span>
+      <el-button class="layout-btn" :aria-label="$tp(panelSide === 'left' && panelCollapsed ? '展开左侧设备栏' : '收起左侧设备栏')" :title="$tp(panelSide === 'left' && panelCollapsed ? '展开左侧设备栏' : '收起左侧设备栏')" :aria-expanded="panelSide === 'left' && !panelCollapsed" aria-controls="square-device-catalog" @click="$emit('collapse-panel', 'left')"><img :src="panelLeftIcon" alt="" class="layout-mode-icon" /></el-button>
+      <span class="layout-btn panel-decoration" aria-hidden="true"><img :src="panelBottomIcon" alt="" class="layout-mode-icon" /></span>
+      <el-button class="layout-btn" :aria-label="$tp(panelSide === 'right' && panelCollapsed ? '展开右侧设备栏' : '收起右侧设备栏')" :title="$tp(panelSide === 'right' && panelCollapsed ? '展开右侧设备栏' : '收起右侧设备栏')" :aria-expanded="panelSide === 'right' && !panelCollapsed" aria-controls="square-device-catalog" @click="$emit('collapse-panel', 'right')"><img :src="panelRightIcon" alt="" class="layout-mode-icon" /></el-button>
       <el-button
         size="small"
         @click="$emit('toggle-fullscreen')"
@@ -111,63 +103,48 @@
         :type="isFullscreen ? 'primary' : 'default'"
         class="layout-btn"
       >
-        <el-icon><FullScreen /></el-icon>
+        <img :src="toolbarFullscreenIcon" alt="" class="layout-mode-icon" />
+      </el-button>
+      <span class="toolbar-divider" aria-hidden="true"></span>
+      <el-button
+        size="small"
+        @click="$emit('close-all-videos')"
+        :title="$tp(openWindowCount ? '收起所有视频' : '展开视频')"
+        :aria-label="$tp(openWindowCount ? '收起所有视频' : '展开视频')"
+        :aria-expanded="openWindowCount > 0"
+        class="layout-btn close-all-videos-btn custom-layout-btn"
+      >
+        {{ $tp(openWindowCount ? '收起视频' : '展开视频') }}
+        <img :src="chevronDownIcon" :style="{ transform: openWindowCount ? 'none' : 'rotate(180deg)' }" width="16" height="16" alt="" />
       </el-button>
     </div>
 
     <!-- device info - -->
-    <div class="device-stats">
-      <div class="stat-item total">
-        <div class="stat-icon">
-          <img src="@/assets/设备-总设备@3x.png" :alt="$tp('总设备')" width="32" height="32">
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">{{ $tp('总设备：') }}</span>
-          <span class="stat-value">{{ deviceCount }}</span>
-        </div>
-      </div>
-
-      <div class="stat-item online">
-        <div class="stat-icon">
-          <img src="@/assets/设备-在线@3x.png" :alt="$tp('在线')" width="32" height="32">
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">{{ $tp('在线：') }}</span>
-          <span class="stat-value">{{ onlineCount }}</span>
-        </div>
-      </div>
-
-      <div class="stat-item offline">
-        <div class="stat-icon">
-          <img src="@/assets/设备-离线@3x.png" :alt="$tp('离线')" width="32" height="32">
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">{{ $tp('离线：') }}</span>
-          <span class="stat-value">{{ offlineCount }}</span>
-        </div>
-      </div>
-      <div class="stat-item unknown">
-        <div class="stat-content">
-          <span class="stat-label">{{ $tp('未知状态') }}：</span>
-          <span class="stat-value">{{ unknownCount }}</span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { FullScreen } from '@element-plus/icons-vue'
+import defaultPresentationIcon from '@/assets/mastergo/video-square/presentation-default.svg'
+import bottomPresentationIcon from '@/assets/mastergo/video-square/presentation-bottom.svg'
+import fourLayoutIcon from '@/assets/mastergo/video-square/layout-four.svg'
+import toolbarFullscreenIcon from '@/assets/mastergo/video-square/toolbar-fullscreen.svg'
+import chevronDownIcon from '@/assets/mastergo/video-square/chevron-down.svg'
+import videoBadgeIcon from '@/assets/mastergo/video-square/video-badge.svg'
+import panelLeftIcon from '@/assets/mastergo/video-square/panel-left.svg'
+import panelBottomIcon from '@/assets/mastergo/video-square/panel-bottom.svg'
+import panelRightIcon from '@/assets/mastergo/video-square/panel-right.svg'
 
 // Import PNG
-import mode1Icon from '@/assets/mode1_default.png'
-import mode3Icon from '@/assets/mode3_default.png'
-import mode4Icon from '@/assets/mode4_default.png'
-import mode5Icon from '@/assets/mode5_default.png'
-import mode6Icon from '@/assets/mode6_default.png'
+import mode1Icon from '@/assets/mastergo/video-square/layout-one.svg'
+import mode3Icon from '@/assets/mastergo/video-square/layout-six.svg'
+import mode4Icon from '@/assets/mastergo/video-square/layout-eight.svg'
+import mode5Icon from '@/assets/mastergo/video-square/layout-nine.svg'
+import mode6Icon from '@/assets/mastergo/video-square/layout-sixteen.svg'
 
 // props
 const props = defineProps({
+  panelSide: { type: String, default: 'left' },
+  panelCollapsed: Boolean,
   showPresentation: Boolean,
   presentationMode: { type: String, default: 'grid' },
   layoutMode: {
@@ -182,19 +159,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  deviceCount: {
-    type: Number,
-    default: 0
-  },
-  onlineCount: {
-    type: Number,
-    default: 0
-  },
-  offlineCount: {
-    type: Number,
-    default: 0
-  },
-  unknownCount: {
+  openWindowCount: {
     type: Number,
     default: 0
   }
@@ -202,9 +167,11 @@ const props = defineProps({
 
 // emits
 const emit = defineEmits([
+  'collapse-panel',
   'layout-select',
   'extended-layout',
   'custom-layout',
+  'close-all-videos',
   'toggle-fullscreen',
   'presentation-select'
 ])
@@ -219,6 +186,10 @@ const handleLayoutSelect = (count) => {
 </script>
 
 <style scoped>
+.design-toolbar-icon { display: block; width: 24px; height: 24px; background: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+.default-presentation-icon { width: 18px; height: 18px; }
+.panel-decoration { display: inline-flex; align-items: center; justify-content: center; }
+.close-all-videos-btn :deep(span) { gap: 2px; }
 /* MasterGo 309:32968 — 绿色「视频」徽标：高 24、r4、padding 0 8、gap 4、文字 12px 白 */
 .video-badge {
   display: inline-flex;
@@ -331,7 +302,7 @@ const handleLayoutSelect = (count) => {
 .layout-btn.custom-layout-btn {
   width: auto;
   min-width: 24px;
-  padding: 0 6px;
+  padding: 0;
   font-size: 12px;
 }
 
