@@ -322,7 +322,11 @@ public class SysMenuServiceImpl implements ISysMenuService {
         String permission = existing.getPerms();
         if (DefaultMemberRoleService.BASIC_MENU_PERMISSIONS.contains(permission)
             || DefaultMemberRoleService.BUSINESS_PERMISSIONS.contains(permission)
-            || DefaultMemberRoleService.COMPATIBLE_PAGE_PERMISSIONS.contains(permission)) {
+            || DefaultMemberRoleService.COMPATIBLE_PAGE_PERMISSIONS.contains(permission)
+            || "active-safety:settings:workorder".equals(permission)
+            || ("0".equals(existing.getParentId()) && "system".equals(existing.getPath()))
+            || (permission != null && permission.matches(
+                "(?:system:(?:user|role|menu|dept|post|platformLogo)|vls:firmware):[a-zA-Z]+"))) {
             throw new ServiceException("系统内置菜单由初始化迁移维护，请通过角色授权控制访问");
         }
     }

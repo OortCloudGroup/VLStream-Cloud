@@ -355,12 +355,28 @@ public class SysRoleServiceImpl implements ISysRoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int authDataScope(SysRole role) {
-        // Update roleinfo
-        baseMapper.updateById(role);
+        checkRoleAllowed(role);
+        checkRoleDataScope(role.getRoleId());
+        SysRole stored = baseMapper.selectById(role.getRoleId());
+        if (stored == null || role.getDataScope() == null || !role.getDataScope().matches("[1-5]")) {
+            throw new ServiceException("角色或数据范围无效");
+        }
+        if ("2".equals(role.getDataScope())) {
+            if (role.getDeptIds() == null) throw new ServiceException("部门列表不能为空");
+            for (String deptId : role.getDeptIds()) {
+                if (StringUtils.isBlank(deptId) || baseMapper.countAccessibleDepartment(deptId) != 1) {
+                    throw new ServiceException("部门不存在或不在当前租户范围");
+                }
+            }
+        }
+        SysRole update = new SysRole(role.getRoleId());
+        update.setDataScope(role.getDataScope());
+        int rows = baseMapper.updateById(update);
         // Delete role and department
         roleDeptMapper.delete(new LambdaQueryWrapper<SysRoleDept>().eq(SysRoleDept::getRoleId, role.getRoleId()));
         // Add role and departmentinfo (data )
-        return insertRoleDept(role);
+        if (rows > 0 && "2".equals(role.getDataScope())) insertRoleDept(role);
+        return rows;
     }
 
     /**

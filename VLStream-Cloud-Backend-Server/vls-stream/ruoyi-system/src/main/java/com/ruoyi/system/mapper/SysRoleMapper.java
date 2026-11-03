@@ -35,6 +35,9 @@ public interface SysRoleMapper extends BaseMapperPlus<SysRoleMapper, SysRole, Sy
     @org.apache.ibatis.annotations.Select("SELECT menu_id FROM sys_role_menu WHERE role_id=#{roleId}")
     List<Long> selectRoleMenuIds(String roleId);
 
+    @org.apache.ibatis.annotations.Select("SELECT COUNT(*) FROM sys_dept WHERE dept_id=#{deptId} AND del_flag='0'")
+    int countAccessibleDepartment(String deptId);
+
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id")
     })
