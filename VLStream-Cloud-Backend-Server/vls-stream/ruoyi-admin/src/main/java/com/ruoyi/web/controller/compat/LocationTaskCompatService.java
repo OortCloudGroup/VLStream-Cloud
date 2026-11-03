@@ -1814,11 +1814,17 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             throw new IllegalArgumentException("没有获取到流程中心的配置参数");
         }
 
+        Map<String, Object> persistedEvent = firstRow("SELECT created_at FROM " + EVENT
+                + " WHERE BINARY tenant_id = BINARY ? AND BINARY id = BINARY ? AND `no` = ? AND deleted_at = 0 LIMIT 1",
+            tenantId, event.key.getId(), event.key.getNo());
+        String eventTime = persistedEvent == null ? "" : formatDate(persistedEvent.get("created_at"));
+        if (eventTime.isEmpty()) throw new IllegalStateException("事件业务时间无法可信确认");
+
         LinkedHashMap<String, Object> variables = new LinkedHashMap<String, Object>();
         variables.put("no", event.key.externalId());
         variables.put("item", event.item);
         variables.put("name", event.name);
-        variables.put("time", DATE_TIME_FORMAT.format(LocalDateTime.now()));
+        variables.put("time", eventTime);
         variables.put("address", string(event.point.get("address")));
         variables.put("describe", event.describe);
         variables.put("image", workflowImages(event.pictures));
@@ -1834,6 +1840,8 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         workOrder.setEventNumber(event.key.externalId());
         ProcessStartBo request = new ProcessStartBo();
         request.setProcessDefId(processId);
+        request.setRequestId(java.util.UUID.nameUUIDFromBytes((tenantId + "\u0000" + event.key.externalId()
+            + "\u0000" + processId + "\u0000" + toJson(configuration)).getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString());
         request.setAutoGetFormFlag(true);
         request.setAppId(appId);
         request.setEventName(event.name);
@@ -1846,7 +1854,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         workflowUser.setUserId(userId);
         workflowUser.setUserName(userId);
         workflowUser.setLoginId(userId);
-        processService.startProcessByDefId(request, workflowUser);
+        processService.startVerifiedEventWorkOrder(request, workflowUser);
         return request.getWorkOrder();
     }
 

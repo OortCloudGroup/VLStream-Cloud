@@ -169,7 +169,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
                         if (StringUtils.isNotBlank(identityLink.getGroupId())) {
                             if (identityLink.getGroupId().startsWith(TaskConstants.ROLE_GROUP_PREFIX)) {
                                 String roleId = StringUtils.stripStart(identityLink.getGroupId(), TaskConstants.ROLE_GROUP_PREFIX);
-                                SysUserRoleView role = roleService.selectRoleById(roleId);
+                                com.ruoyi.common.core.domain.entity.SysRole role = roleService.selectRoleById(roleId);
                                 stringBuilder.append(role.getRoleName()).append(",");
                             } else if (identityLink.getGroupId().startsWith(TaskConstants.DEPT_GROUP_PREFIX)) {
                                 String deptId = StringUtils.stripStart(identityLink.getGroupId(), TaskConstants.DEPT_GROUP_PREFIX);

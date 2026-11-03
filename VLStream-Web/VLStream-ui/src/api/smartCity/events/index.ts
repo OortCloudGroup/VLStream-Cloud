@@ -6,6 +6,7 @@
  */
 
 import { request } from '@/utils/service'
+import axios from 'axios'
 
 // function commonFunc<T, K>(interfaceName: string, data: T, method = 'post') {
 //   return request<K>({
@@ -65,6 +66,15 @@ export function eventList(data) {
 // taskevent
 export function addFeedback(data) {
   return commonFuncB('task/v1/event_back_add', data, 'post')
+}
+
+// A work-order follow-up must remain bound to the identity that initiated it.
+export function addWorkOrderFeedback(data, identity, assertCurrent) {
+  return request({
+    url: '/task/v1/event_back_add', method: 'post', data: removeLegacyAccessToken(data),
+    localAuthToken: identity.token, platformAuthToken: identity.platformToken,
+    transformRequest: [value => { assertCurrent(); return value }, ...[].concat(axios.defaults.transformRequest || [])]
+  } as any)
 }
 // taskevent
 export function eventDetail(data) {

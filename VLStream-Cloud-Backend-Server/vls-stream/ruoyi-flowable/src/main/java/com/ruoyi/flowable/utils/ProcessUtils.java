@@ -10,6 +10,7 @@ package com.ruoyi.flowable.utils;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.flowable.common.constant.ProcessConstants;
@@ -24,7 +25,8 @@ import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
 import org.flowable.task.api.TaskQuery;
 import org.flowable.task.api.history.HistoricTaskInstanceQuery;
-import org.springframework.util.CollectionUtils;
+import org.flowable.task.service.impl.TaskQueryImpl;
+import org.flowable.task.service.impl.HistoricTaskInstanceQueryImpl;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -109,13 +111,19 @@ public class ProcessUtils {
                 .processInstanceTenantId(sysUser.getTenantId())
                 .startedAfter(instanceBeginTime)
                 .startedBefore(instanceEndTime);
-            List<String> instanceIds = processInstanceQuery.list().stream()
+            List<String> instanceIds = processInstanceQuery.listPage(0, 10001).stream()
                 .map(ProcessInstance::getId)
                 .collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(instanceIds)) {
-                instanceIds.add(String.valueOf(UUID.randomUUID()));
+            if (!(query instanceof TaskQueryImpl)) {
+                throw new ServiceException("无法安全合并流程筛选条件");
             }
-            query.processInstanceIdIn(instanceIds);
+            List<String> scoped = intersectInstanceIds(((TaskQueryImpl) query).getProcessInstanceIds(), instanceIds);
+            if (scoped.isEmpty()) {
+                // Both predicates address the same column and cannot simultaneously match.
+                query.processInstanceId("0").processInstanceIdIn(Collections.singletonList("1"));
+            } else {
+                query.processInstanceIdIn(scoped);
+            }
         }
     }
 
@@ -148,14 +156,28 @@ public class ProcessUtils {
                 .processInstanceTenantId(sysUser.getTenantId())
                 .startedAfter(instanceBeginTime)
                 .startedBefore(instanceEndTime);
-            List<String> instanceIds = processInstanceQuery.list().stream()
+            List<String> instanceIds = processInstanceQuery.listPage(0, 10001).stream()
                 .map(ProcessInstance::getId)
                 .collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(instanceIds)) {
-                instanceIds.add(String.valueOf(UUID.randomUUID()));
+            if (!(query instanceof HistoricTaskInstanceQueryImpl)) {
+                throw new ServiceException("无法安全合并流程筛选条件");
             }
-            query.processInstanceIdIn(instanceIds);
+            List<String> scoped = intersectInstanceIds(((HistoricTaskInstanceQueryImpl) query).getProcessInstanceIds(), instanceIds);
+            if (scoped.isEmpty()) {
+                query.processInstanceId("0").processInstanceIdIn(Collections.singletonList("1"));
+            } else {
+                query.processInstanceIdIn(scoped);
+            }
         }
+    }
+
+    static List<String> intersectInstanceIds(Collection<String> authorized, List<String> timed) {
+        if (timed.size() > 10000 || (authorized != null && authorized.size() > 10000)) {
+            throw new ServiceException("流程筛选结果超过临时安全上限，请缩小查询范围");
+        }
+        if (authorized == null) return timed;
+        Set<String> allowed = new HashSet<>(authorized);
+        return timed.stream().filter(allowed::contains).collect(Collectors.toList());
     }
 
     /**

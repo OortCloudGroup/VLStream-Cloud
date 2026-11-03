@@ -25,6 +25,8 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ProcessStartBo extends BaseEntity {
+    /** Stable idempotency key for one explicit work-order creation intent. */
+    private String requestId;
     /**
      * workflow definitionid
      */

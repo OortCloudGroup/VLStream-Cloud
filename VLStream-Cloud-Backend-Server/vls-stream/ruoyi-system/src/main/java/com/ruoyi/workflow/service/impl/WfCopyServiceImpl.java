@@ -30,6 +30,7 @@ import com.ruoyi.workflow.service.IWfAppService;
 import com.ruoyi.workflow.service.IWfCopyService;
 import com.ruoyi.workflow.service.IWfSynthesisService;
 import com.ruoyi.workflow.service.IWfTaskService;
+import com.ruoyi.workflow.service.WorkflowOwnershipService;
 import lombok.RequiredArgsConstructor;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -52,6 +53,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyService {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private WorkflowOwnershipService workflowOwnership;
 
     private final WfCopyMapper baseMapper;
     private final IWfAppService wfAppService;
@@ -81,8 +85,10 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
      */
     @Override
     public TableDataInfo<WfCopyVo> selectPageList(WfCopyBo bo, PageQuery pageQuery, SysUser sysUser) {
+        workflowOwnership.requireCurrentTenant(sysUser.getTenantId());
         bo.setUserId(sysUser.getUserId());
         LambdaQueryWrapper<WfCopy> lqw = buildQueryWrapper(bo);
+        restrictOwnership(lqw, sysUser.getTenantId());
         lqw.eq(StringUtils.isNotBlank(bo.getCategoryId()), WfCopy::getCategoryId, bo.getCategoryId());
         if (Boolean.TRUE.equals(bo.getWfAppAll())) {
             List<String> appList = wfAppService.list()
@@ -142,8 +148,20 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
      */
     @Override
     public List<WfCopyVo> selectList(WfCopyBo bo) {
+        com.ruoyi.common.core.domain.model.LoginUser login = com.ruoyi.common.helper.LoginHelper.getLoginUser();
+        if (login == null) return Collections.emptyList();
+        workflowOwnership.requireCurrentTenant(login.getTenantId());
         LambdaQueryWrapper<WfCopy> lqw = buildQueryWrapper(bo);
+        restrictOwnership(lqw, login.getTenantId());
         return baseMapper.selectVoList(lqw);
+    }
+
+    private void restrictOwnership(LambdaQueryWrapper<WfCopy> query, String tenant) {
+        query.apply("BINARY wf_copy.tenant_id = BINARY {0}", tenant)
+            .apply("EXISTS (SELECT 1 FROM vls_workflow_ownership vwo WHERE vwo.tenant_id = CAST({0} AS BINARY) "
+                + "AND vwo.proc_ins_id = CAST(wf_copy.instance_id AS BINARY) AND "
+                + "(vwo.business_type IN ('OTHER_WORKFLOW','PERIODIC_WORK_ORDER') OR (vwo.business_type = 'WORK_ORDER' AND {1} = 1)))",
+                tenant, workflowOwnership.canAccessWorkOrders() ? 1 : 0);
     }
 
     private LambdaQueryWrapper<WfCopy> buildQueryWrapper(WfCopyBo bo) {

@@ -27,6 +27,7 @@ import com.ruoyi.workorder.domain.WorkOrder;
 import com.ruoyi.workorder.domain.bo.WorkOrderBo;
 import com.ruoyi.workorder.domain.vo.WorkOrderVo;
 import com.ruoyi.workorder.service.IWorkOrderService;
+import com.ruoyi.workflow.service.WorkflowOwnershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -52,6 +53,7 @@ import java.util.List;
 public class WorkOrderController extends BaseController {
 
     private final IWorkOrderService iWorkOrderService;
+    private final WorkflowOwnershipService workflowOwnership;
 
     /**
      * work order
@@ -155,7 +157,7 @@ public class WorkOrderController extends BaseController {
     @GetMapping("/{id}")
     public R<WorkOrderVo> getInfo(@NotNull(message = "主键不能为空")
                                   @PathVariable String id) {
-        return R.ok(iWorkOrderService.queryById(id));
+        return R.ok(requireOwnedOrder(id));
     }
 
     /**
@@ -166,6 +168,7 @@ public class WorkOrderController extends BaseController {
     @RepeatSubmit()
     @PostMapping()
     public R<WorkOrder> add(@Validated(AddGroup.class) @RequestBody WorkOrderBo bo) {
+        workflowOwnership.requireForInstance(bo.getProcInsId());
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         return R.ok(iWorkOrderService.insertByBo(bo, sysUser));
     }
@@ -178,6 +181,11 @@ public class WorkOrderController extends BaseController {
     @RepeatSubmit()
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody WorkOrderBo bo) {
+        WorkOrderVo previous = requireOwnedOrder(bo.getId());
+        if (com.ruoyi.common.utils.StringUtils.isNotBlank(bo.getProcInsId())
+            && !bo.getProcInsId().equals(previous.getProcInsId())) {
+            throw new com.ruoyi.common.exception.ServiceException("不允许更改工单流程归属");
+        }
         return toAjax(iWorkOrderService.updateByBo(bo));
     }
 
@@ -191,6 +199,7 @@ public class WorkOrderController extends BaseController {
     @DeleteMapping("/{ids}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空")
                           @PathVariable String[] ids) {
+        for (String id : ids) requireOwnedOrder(id);
         return toAjax(iWorkOrderService.deleteWithValidByIds(Arrays.asList(ids), true));
     }
 
@@ -203,6 +212,7 @@ public class WorkOrderController extends BaseController {
     @SaCheckPermission("workorder:workorder:exportPdf")
     @PostMapping("/exportPdf")
     public void exportPdf(@RequestBody List<String> wordOrderIds, HttpServletResponse response) {
+        for (String id : wordOrderIds) requireOwnedOrder(id);
         try {
             // Set ( Update : inline)
             response.setContentType("application/pdf");
@@ -223,5 +233,13 @@ public class WorkOrderController extends BaseController {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private WorkOrderVo requireOwnedOrder(String id) {
+        WorkOrderVo order = iWorkOrderService.queryById(id);
+        if (order == null) throw new com.ruoyi.common.exception.ServiceException("工单不存在或无权访问");
+        workflowOwnership.requireCurrentTenant(order.getTenantId());
+        workflowOwnership.requireForInstance(order.getProcInsId());
+        return order;
     }
 }

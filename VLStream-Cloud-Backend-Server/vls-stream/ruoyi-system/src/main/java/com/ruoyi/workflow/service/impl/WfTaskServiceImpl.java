@@ -215,6 +215,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (Objects.isNull(task)) {
             throw new ServiceException("任务不存在");
         }
+        WorkflowTaskBinding.requireSameInstance(task.getProcessInstanceId(), taskBo.getProcInsId());
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(user.getTenantId()).processInstanceId(task.getProcessInstanceId())
                 .singleResult();
@@ -344,6 +345,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isNull(task)) {
             throw new RuntimeException("获取任务信息异常！");
         }
+        WorkflowTaskBinding.requireSameInstance(task.getProcessInstanceId(), taskBo.getProcInsId());
         if (task.isSuspended()) {
             throw new RuntimeException("任务处于挂起状态");
         }
@@ -436,6 +438,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isNull(task)) {
             throw new RuntimeException("获取任务信息异常！");
         }
+        WorkflowTaskBinding.bindOptionalInstance(task.getProcessInstanceId(), bo);
         if (task.isSuspended()) {
             throw new RuntimeException("任务处于挂起状态");
         }
@@ -662,6 +665,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isEmpty(task)) {
             throw new ServiceException("获取任务失败！");
         }
+        WorkflowTaskBinding.bindOptionalInstance(task.getProcessInstanceId(), bo);
 
         StringBuilder commentBuilder = new StringBuilder(sysUser.getUserName())
                 .append("->");
@@ -711,6 +715,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isEmpty(task)) {
             throw new ServiceException("获取任务失败！");
         }
+        WorkflowTaskBinding.bindOptionalInstance(task.getProcessInstanceId(), bo);
         StringBuilder commentBuilder = new StringBuilder(sysUser.getUserName())
                 .append("->");
         String userName = sysUserService.selectUserNameById(bo.getUserId());
@@ -870,6 +875,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isNull(currTaskIns)) {
             throw new RuntimeException("当前任务不存在，无法执行撤回操作");
         }
+        WorkflowTaskBinding.requireSameInstance(currTaskIns.getProcessInstanceId(), procInsId);
         // Get bpmn model
         BpmnModel bpmnModel = repositoryService.getBpmnModel(currTaskIns.getProcessDefinitionId());
         UserTask currUserTask = ModelUtils.getUserTaskByKey(bpmnModel, currTaskIns.getTaskDefinitionKey());

@@ -19,6 +19,7 @@ import com.ruoyi.workflow.domain.bo.WfSavePdfBo;
 import com.ruoyi.workflow.domain.bo.WfTaskBo;
 import com.ruoyi.workflow.service.IWfProcessService;
 import com.ruoyi.workflow.service.IWfTaskService;
+import com.ruoyi.workflow.service.WorkflowOwnershipService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +47,7 @@ public class WfTaskController {
     private final IWfTaskService flowTaskService;
     private final SysDictTypeServiceImpl sysDictTypeService;
     private final IWfProcessService processService;
+    private final WorkflowOwnershipService workflowOwnership;
 
     /**
      * workflow
@@ -53,6 +55,7 @@ public class WfTaskController {
     @PostMapping(value = "/stopProcess")
     @SaCheckPermission("workflow:process:stopProcess")
     public R stopProcess(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTaskOrInstance(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.stopProcess(bo);
         return R.ok();
     }
@@ -63,6 +66,7 @@ public class WfTaskController {
     @PostMapping(value = "/revokeProcess")
     @SaCheckPermission("workflow:process:revokeProcess")
     public R revokeProcess(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.revokeProcess(bo);
         return R.ok();
     }
@@ -75,6 +79,7 @@ public class WfTaskController {
     @GetMapping(value = "/processVariables/{taskId}")
     @SaCheckPermission("workflow:process:processVariables")
     public R processVariables(@PathVariable(value = "taskId") String taskId) {
+        workflowOwnership.requireForTask(taskId, null);
         return R.ok(flowTaskService.getProcessVariables(taskId));
     }
 
@@ -84,6 +89,7 @@ public class WfTaskController {
     @PostMapping(value = "/complete")
     @SaCheckPermission("workflow:process:complete")
     public R<String> complete(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         flowTaskService.complete(bo);
         String taskId = processService.getTaskId(bo.getProcInsId(), sysUser);
@@ -96,6 +102,7 @@ public class WfTaskController {
     @PostMapping(value = "/reject")
     @SaCheckPermission("workflow:process:taskReject")
     public R taskReject(@RequestBody WfTaskBo taskBo) {
+        workflowOwnership.requireForTask(taskBo.getTaskId(), taskBo.getProcInsId());
         SysUser user = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         flowTaskService.taskReject(taskBo, user);
         return R.ok();
@@ -107,6 +114,7 @@ public class WfTaskController {
     @PostMapping(value = "/return")
     @SaCheckPermission("workflow:process:taskReturn")
     public R taskReturn(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         flowTaskService.taskReturn(bo, sysUser);
         return R.ok();
@@ -118,6 +126,7 @@ public class WfTaskController {
     @PostMapping(value = "/returnList")
     @SaCheckPermission("workflow:process:findReturnTaskList")
     public R findReturnTaskList(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         return R.ok(flowTaskService.findReturnTaskList(bo));
     }
 
@@ -127,6 +136,7 @@ public class WfTaskController {
     @DeleteMapping(value = "/delete")
     @SaCheckPermission("workflow:process:delete")
     public R delete(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.deleteTask(bo);
         return R.ok();
     }
@@ -137,6 +147,7 @@ public class WfTaskController {
     @PostMapping(value = "/claim")
     @SaCheckPermission("workflow:process:claim")
     public R claim(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.claim(bo);
         return R.ok();
     }
@@ -147,6 +158,7 @@ public class WfTaskController {
     @PostMapping(value = "/unClaim")
     @SaCheckPermission("workflow:process:unClaim")
     public R unClaim(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.unClaim(bo);
         return R.ok();
     }
@@ -160,6 +172,7 @@ public class WfTaskController {
         if (ObjectUtil.hasNull(bo.getTaskId(), bo.getUserId())) {
             return R.fail("参数错误！");
         }
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.delegateTask(bo);
         return R.ok();
     }
@@ -173,6 +186,7 @@ public class WfTaskController {
         if (ObjectUtil.hasNull(bo.getTaskId(), bo.getUserId())) {
             return R.fail("参数错误！");
         }
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.transferTask(bo);
         return R.ok();
     }
@@ -187,6 +201,7 @@ public class WfTaskController {
     @SaCheckPermission("workflow:process:genProcessDiagram")
     public void genProcessDiagram(HttpServletResponse response, @PathVariable("processId") String processId
     ) {
+        workflowOwnership.requireForInstance(processId);
         InputStream inputStream = flowTaskService.diagram(processId);
         OutputStream os = null;
         BufferedImage image = null;
@@ -217,6 +232,7 @@ public class WfTaskController {
     @PostMapping(value = "/savePdf")
     @SaCheckPermission("workflow:process:savePdf")
     public R savePDF(@RequestBody WfSavePdfBo bo) {
+        workflowOwnership.requireForTaskOrInstance(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.savePDF(bo);
         return R.ok();
     }
@@ -227,6 +243,7 @@ public class WfTaskController {
     @SaCheckPermission("workflow:process:getApproverIds")
     @GetMapping(value = "/getApproverIds/{procInstId}")
     public R<List<String>> getApproverIds(@PathVariable String procInstId) {
+        workflowOwnership.requireForInstance(procInstId);
         return R.ok(flowTaskService.getApproverIds(procInstId));
     }
 
@@ -236,6 +253,7 @@ public class WfTaskController {
     @SaCheckPermission("workflow:process:addSignTask")
     @PostMapping("/addSignTask")
     public R<Void> addSignTask(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTaskOrInstance(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.addSignTask(bo);
         return R.ok();
     }
@@ -246,6 +264,7 @@ public class WfTaskController {
     @SaCheckPermission("workflow:process:subSignTask")
     @PostMapping("/subSignTask")
     public R<Void> subSignTask(@RequestBody WfTaskBo bo) {
+        workflowOwnership.requireForTask(bo.getTaskId(), bo.getProcInsId());
         flowTaskService.subSignTask(bo);
         return R.ok();
     }

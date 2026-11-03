@@ -30,6 +30,7 @@ import com.ruoyi.workflow.domain.bo.WfCopyBo;
 import com.ruoyi.workflow.domain.vo.*;
 import com.ruoyi.workflow.service.IWfCopyService;
 import com.ruoyi.workflow.service.IWfProcessService;
+import com.ruoyi.workflow.service.WorkflowOwnershipService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.HistoryService;
@@ -59,6 +60,7 @@ public class WfProcessController extends BaseController {
     private final IWfCopyService copyService;
     private final ISysDictTypeService dictTypeService;
     private final HistoryService historyService;
+    private final WorkflowOwnershipService workflowOwnership;
 
     /**
      * Query workflow list
@@ -245,6 +247,8 @@ public class WfProcessController extends BaseController {
     public R<?> getForm(@RequestParam(value = "definitionId") String definitionId,
             @RequestParam(value = "deployId") String deployId,
             @RequestParam(value = "procInsId", required = false) String procInsId) {
+        // A definition ID alone cannot prove whether this form belongs to an authorized instance.
+        workflowOwnership.requireForInstance(procInsId);
         return R.ok(processService.selectFormContent(definitionId, deployId, procInsId));
     }
 
@@ -254,12 +258,21 @@ public class WfProcessController extends BaseController {
     @SaCheckPermission("workflow:process:start")
     @PostMapping("/start")
     public R<Map<String, Object>> start(@RequestBody ProcessStartBo processStartBo) {
-        SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
-        String processInstanceId = processService.startProcessByDefId(processStartBo, sysUser);
+        throw new com.ruoyi.common.exception.ServiceException("通用流程尚无可信归属，不能启动；事件工单请使用专用入口");
+    }
+
+    @SaCheckPermission("workflow:process:start")
+    @PostMapping("/start-work-order")
+    public R<Map<String, Object>> startWorkOrder(@RequestBody ProcessStartBo request) {
+        workflowOwnership.requireWorkOrderPage();
+        SysUser user = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
+        if (user == null) throw new com.ruoyi.common.exception.ServiceException("用户身份不存在");
+        workflowOwnership.requireCurrentTenant(user.getTenantId());
+        String instance = processService.startVerifiedEventWorkOrder(request, user);
         Map<String, Object> result = new HashMap<>();
-        result.put("ProcessInstanceId", processInstanceId);
-        result.put("TaskId", processService.getTaskId(processInstanceId, sysUser));
-        result.put("workOrder", processStartBo.getWorkOrder());
+        result.put("ProcessInstanceId", instance);
+        result.put("TaskId", request.getWorkOrder().getTaskId());
+        result.put("workOrder", request.getWorkOrder());
         return R.ok("流程启动成功", result);
     }
 
@@ -271,6 +284,7 @@ public class WfProcessController extends BaseController {
     @DeleteMapping("/instance/{instanceIds}")
     @SaCheckPermission("workflow:process:delete")
     public R<Void> delete(@PathVariable String[] instanceIds) {
+        workflowOwnership.requireForInstances(instanceIds);
         processService.deleteProcessByIds(instanceIds);
         return R.ok();
     }
@@ -309,6 +323,7 @@ public class WfProcessController extends BaseController {
     @GetMapping("/detail")
     public R detail(String procInsId, String taskId,
             @RequestParam(value = "includeApproverIds", required = false, defaultValue = "false") Boolean includeApproverIds) {
+        workflowOwnership.requireForTaskOrInstance(taskId, procInsId);
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         return R.ok(processService.queryProcessDetail(procInsId, taskId, sysUser, includeApproverIds));
     }
@@ -352,6 +367,7 @@ public class WfProcessController extends BaseController {
     @SaCheckPermission("workflow:process:getPDF")
     @PostMapping(value = "/getPDF/{procInstId}")
     public R<List<WfAttachment>> getPDF(@PathVariable String procInstId) {
+        workflowOwnership.requireForInstance(procInstId);
         return R.ok(processService.getPDF(procInstId));
     }
 
@@ -361,6 +377,7 @@ public class WfProcessController extends BaseController {
     @SaCheckPermission("workflow:process:getLatestHisProInsInfo")
     @GetMapping(value = "/getLatestHisProInsInfo/{procInstId}")
     public R<WfLastHisTaskInfoVo> getLatestHisProInsInfo(@PathVariable String procInstId) {
+        workflowOwnership.requireForInstance(procInstId);
         return R.ok(processService.getLatestHisTaskInfo(procInstId));
     }
 
@@ -373,6 +390,7 @@ public class WfProcessController extends BaseController {
     @SaCheckPermission("workflow:process:historyProcNodeList")
     @GetMapping(value = "/historyProcNodeList")
     public R<List<WfProcNodeVo>> historyProcNodeList(String historicProcIns) {
+        workflowOwnership.requireForInstance(historicProcIns);
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         return R.ok(processService.historyProcNodeList(historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(historicProcIns).processInstanceTenantId(sysUser.getTenantId()).singleResult(),

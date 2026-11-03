@@ -95,6 +95,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import com.ruoyi.workflow.service.WorkflowOwnershipService;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -114,6 +115,9 @@ import static com.ruoyi.flowable.common.constant.ProcessConstants.PROCESS_STATUS
 @Service
 @Slf4j
 public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder> implements IWorkOrderService {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.workflow.service.WorkflowOwnershipService workflowOwnership;
 
     private final WorkOrderMapper workOrderMapper;
     private final RepositoryService repositoryService;
@@ -188,7 +192,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             if (ObjectUtil.isNotEmpty(appList)) {
                 for (String appId : appList) {
                     List<HistoricProcessInstance> list = historicProcessInstanceQuery.processDefinitionCategory(appId)
-                            .list();
+                            .listPage(0, 10001);
+                    WorkflowOwnershipService.requireWithinTemporaryLimit(result.size() + list.size());
                     if (ObjectUtil.isNotEmpty(list)) {
                         result.addAll(list);
                     }
@@ -202,7 +207,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             if (ObjectUtil.isNotEmpty(wfSynthesisList)) {
                 for (String synthesisId : wfSynthesisList) {
                     List<HistoricProcessInstance> list = historicProcessInstanceQuery
-                            .processDefinitionCategory(synthesisId).list();
+                            .processDefinitionCategory(synthesisId).listPage(0, 10001);
+                    WorkflowOwnershipService.requireWithinTemporaryLimit(result.size() + list.size());
                     if (ObjectUtil.isNotEmpty(list)) {
                         result.addAll(list);
                     }
@@ -215,11 +221,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             if (pageTotal <= 0) {
                 return TableDataInfo.build();
             }
-            filteredDef = historicProcessInstanceQuery.list();
+            WorkflowOwnershipService.requireWithinTemporaryLimit((int) Math.min(pageTotal, 10001));
+            filteredDef = historicProcessInstanceQuery.listPage(0, 10001);
+            WorkflowOwnershipService.requireWithinTemporaryLimit(filteredDef.size());
         }
 
         // Get workOrderMap, after
-        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo);
+        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo, "active-safety:workorder:my");
 
         // in HistoricProcessInstance and workOrderMap in data
         List<HistoricProcessInstance> matchedList = filteredDef.stream()
@@ -521,7 +529,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     public TableDataInfo<WorkOrderVo> selectPageTodoWorkOrderList(
             ProcessQuery processQuery, WorkOrderBo workOrderBo,
             PageQuery pageQuery, SysUser sysUser) {
-        Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo);
+        Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo, "active-safety:workorder:pending");
         Set<String> processInstances = baseMap.keySet();
 
         // if workflow instance, null / empty
@@ -644,7 +652,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             PageQuery pageQuery, SysUser sysUser) {
 
         // 1. Build work order map, after fill
-        Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo);
+        Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo, "active-safety:workorder:completed");
         Set<String> processInstances = baseMap.keySet();
 
         // if workflow instance, null / empty ( processInstanceIdIn null / empty collection )
@@ -683,7 +691,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         }
 
         // 4. all history task ( to )
-        List<HistoricTaskInstance> allHistoricTasks = taskQuery.list();
+        List<HistoricTaskInstance> allHistoricTasks = taskQuery.listPage(0, 10001);
+        WorkflowOwnershipService.requireWithinTemporaryLimit(allHistoricTasks.size());
 
         // 5. processInstanceId : only createTime new
         Map<String, HistoricTaskInstance> latestByProcIns = new HashMap<>(allHistoricTasks.size());
@@ -773,7 +782,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             PageQuery pageQuery, SysUser sysUser) {
         Page<WorkOrderVo> page = new Page<>();
         TaskQuery taskQuery = null;
-        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo);
+        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo, "active-safety:workorder:claimable");
         Set<String> processInstances = workOrderMap.keySet();
         if (CollUtil.isEmpty(processInstances)) {
             return TableDataInfo.build(Collections.emptyList());
@@ -830,13 +839,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             workOrders.setTitle(workOrders.getTitle());
             flowList.add(workOrders);
         }
-        page.setTotal(flowList.size());
+        page.setTotal(pageTotal);
         page.setRecords(flowList);
         return TableDataInfo.build(page);
     }
 
-    private Map<String, WorkOrderVo> getWorkOrderMap(WorkOrderBo workOrderBo) {
-        List<WorkOrderVo> workOrderList = queryList(workOrderBo);
+    private Map<String, WorkOrderVo> getWorkOrderMap(WorkOrderBo workOrderBo, String requiredPage) {
+        boolean ordinaryAllowed = requiredPage == null ? workflowOwnership.canAccessWorkOrders()
+            : cn.dev33.satoken.stp.StpUtil.hasPermission(requiredPage);
+        List<WorkOrderVo> workOrderList = workOrderMapper.selectVoList(recognizedWorkOrders(buildQueryWrapper(workOrderBo, false), ordinaryAllowed).last("LIMIT 10001"));
+        WorkflowOwnershipService.requireWithinTemporaryLimit(workOrderList.size());
         return workOrderList.stream()
                 .filter(wo -> wo.getProcInsId() != null) // null key
                 .collect(Collectors.toMap(
@@ -963,6 +975,9 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     @Override
     public Boolean updateByBo(WorkOrderBo bo) {
         WorkOrder update = BeanUtil.toBean(bo, WorkOrder.class);
+        // Identity is fixed at creation; mutable payloads cannot rebind an order or its tenant.
+        update.setProcInsId(null);
+        update.setTenantId(null);
         validEntityBeforeSave(update);
         return workOrderMapper.updateById(update) > 0;
     }
@@ -1050,7 +1065,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
      */
     @Override
     public TableDataInfo<WorkOrderVo> queryImmediatePageList(WorkOrderBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<WorkOrder> lqw = buildQueryWrapper(bo, false);
+        LambdaQueryWrapper<WorkOrder> lqw = recognizedWorkOrders(buildQueryWrapper(bo, false), workflowOwnership.canAccessWorkOrders());
         Page<WorkOrderVo> result = workOrderMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
@@ -1060,8 +1075,25 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
      */
     @Override
     public List<WorkOrderVo> queryImmediateList(WorkOrderBo bo) {
-        LambdaQueryWrapper<WorkOrder> lqw = buildQueryWrapper(bo, false);
-        return workOrderMapper.selectVoList(lqw);
+        LambdaQueryWrapper<WorkOrder> lqw = recognizedWorkOrders(buildQueryWrapper(bo, false), workflowOwnership.canAccessWorkOrders());
+        List<WorkOrderVo> orders = workOrderMapper.selectVoList(lqw.last("LIMIT 10001"));
+        WorkflowOwnershipService.requireWithinTemporaryLimit(orders.size());
+        return orders;
+    }
+
+    /** Filter before pagination/counting, using only immutable, exact tenant/instance ownership. */
+    private LambdaQueryWrapper<WorkOrder> recognizedWorkOrders(LambdaQueryWrapper<WorkOrder> query, boolean ordinaryAllowed) {
+        com.ruoyi.common.core.domain.model.LoginUser login = com.ruoyi.common.helper.LoginHelper.getLoginUser();
+        String tenant = login == null ? null : login.getTenantId();
+        if (com.ruoyi.common.utils.StringUtils.isBlank(tenant)) {
+            throw new com.ruoyi.common.exception.ServiceException("缺少可信租户标识");
+        }
+        return query.eq(WorkOrder::getTenantId, tenant).apply(
+            "EXISTS (SELECT 1 FROM vls_workflow_ownership vwo WHERE vwo.tenant_id = CAST({0} AS BINARY) "
+            + "AND vwo.tenant_id = CAST(work_order.tenant_id AS BINARY) "
+            + "AND vwo.proc_ins_id = CAST(work_order.proc_ins_id AS BINARY) AND "
+            + "(vwo.business_type = 'PERIODIC_WORK_ORDER' OR (vwo.business_type = 'WORK_ORDER' AND {1} = 1)))",
+            tenant, ordinaryAllowed ? 1 : 0);
     }
 
     @Override
@@ -1071,7 +1103,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         List<String> fieldCodes = JSON.parseArray(wfUserInterfaceFieldService.getFieldCodes(sysUser.getUserId(),
                 bo.getApiPath()), String.class);
         int offset = (pageQuery.getPageNum() - 1) * pageQuery.getPageSize();
-        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(bo);
+        Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(bo, null);
         if (ObjectUtils.isEmpty(workOrderMap)) {
             return TableDataInfo.build();
         }

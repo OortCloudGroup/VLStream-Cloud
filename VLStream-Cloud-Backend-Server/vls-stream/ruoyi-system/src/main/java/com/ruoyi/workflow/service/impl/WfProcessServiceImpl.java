@@ -112,6 +112,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProcessService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private WorkflowOwnershipService workflowOwnership;
+
     private static final Logger logger = LoggerFactory.getLogger(WfProcessServiceImpl.class);
     private final IWfTaskService wfTaskService;
     private final IReModeJsonService reModeJsonService;
@@ -411,6 +414,8 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public TableDataInfo<Object> selectPageOwnProcessList(ProcessQuery processQuery, PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return TableDataInfo.build();
         List<String> fieldCodes = JSON.parseArray(wfUserInterfaceFieldService.getFieldCodes(sysUser.getUserId(),
                 processQuery.getApiPath()), String.class);
 
@@ -419,6 +424,7 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
         Page<Object> page = pageQuery.build();
         HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId()).startedBy(sysUser.getUserId())
+                .processInstanceIds(allowed)
                 .orderByProcessInstanceStartTime().desc();
         // Build
         ProcessUtils.buildProcessSearch(historicProcessInstanceQuery, processQuery, processEngine, sysUser);
@@ -437,7 +443,8 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             if (ObjectUtil.isNotEmpty(appList)) {
                 for (String appId : appList) {
                     List<HistoricProcessInstance> list = historicProcessInstanceQuery.processDefinitionCategory(appId)
-                            .list();
+                            .listPage(0, 10001);
+                    WorkflowOwnershipService.requireWithinTemporaryLimit(result.size() + list.size());
                     if (ObjectUtil.isNotEmpty(list)) {
                         result.addAll(list);
                     }
@@ -450,7 +457,8 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             if (ObjectUtil.isNotEmpty(wfSynthesisList)) {
                 for (String synthesisId : wfSynthesisList) {
                     List<HistoricProcessInstance> list = historicProcessInstanceQuery
-                            .processDefinitionCategory(synthesisId).list();
+                            .processDefinitionCategory(synthesisId).listPage(0, 10001);
+                    WorkflowOwnershipService.requireWithinTemporaryLimit(result.size() + list.size());
                     if (ObjectUtil.isNotEmpty(list)) {
                         result.addAll(list);
                     }
@@ -462,25 +470,25 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             if (pageTotal <= 0) {
                 return TableDataInfo.build();
             }
-            result = historicProcessInstanceQuery.list();
+            WorkflowOwnershipService.requireWithinTemporaryLimit((int) Math.min(pageTotal, 10001));
+            result = historicProcessInstanceQuery.listPage(0, 10001);
+            WorkflowOwnershipService.requireWithinTemporaryLimit(result.size());
         }
 
         result.sort(Comparator.comparing(HistoricProcessInstance::getStartTime).reversed());
-        Integer offset = (int) (page.getSize() * (page.getCurrent() - 1));
-        Integer toIndex;
-        if (Integer.MAX_VALUE < offset + page.getSize()) {
-            // , if and can int value , to
-            toIndex = Math.toIntExact(pageTotal);
-        } else {
-            // finish
-            toIndex = (int) Math.min(offset + page.getSize(), pageTotal);
+        long offset = page.getSize() * (page.getCurrent() - 1);
+        if (offset >= result.size()) {
+            page.setTotal(pageTotal);
+            page.setRecords(Collections.emptyList());
+            return TableDataInfo.build(page);
         }
-        List<HistoricProcessInstance> historicProcessInstances = result.subList(offset, toIndex);
+        int toIndex = (int) Math.min(offset + page.getSize(), result.size());
+        List<HistoricProcessInstance> historicProcessInstances = result.subList((int) offset, toIndex);
         int count = historicProcessInstances.size();
         if (count == 0) {
             return TableDataInfo.build();
         }
-        page.setTotal(count);
+        page.setTotal(pageTotal);
         Map<String, SysUser> sysUserMap = sysUserService.list().stream().filter(user -> user.getUserId() != null)
                 .collect(Collectors.toMap(
                         SysUser::getUserId,
@@ -586,7 +594,7 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
         Page<Object> resultPage = new Page<>();
         resultPage.setCurrent(page.getCurrent());
         resultPage.setSize(page.getSize());
-        resultPage.setTotal(count);
+        resultPage.setTotal(pageTotal);
         resultPage.setRecords(result2);
         return TableDataInfo.build(resultPage);
     }
@@ -595,11 +603,14 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     public TableDataInfo<WfTaskVo> selectPageAllProcessList(ProcessQuery processQuery, PageQuery pageQuery,
             String token) {
         SysUser user = getSysUser(token);
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(user.getTenantId());
+        if (allowed.isEmpty()) return TableDataInfo.build();
         // Page<WfTaskVo> page = new Page<>();
         // PageQuery build() method Build object
         Page<WfTaskVo> page = pageQuery.build();
         HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceTenantId(user.getTenantId())
+                .processInstanceIds(allowed)
                 // .startedBy(user.getUserId())
                 // .startedBy(TaskUtils.getUserId())
                 .orderByProcessInstanceStartTime().desc();
@@ -679,8 +690,11 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public List<WfTaskVo> selectOwnProcessList(ProcessQuery processQuery, boolean allFlag, String token) {
         SysUser sysUser = getSysUser(token);
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return Collections.emptyList();
         HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId()).startedBy(TaskUtils.getUserId())
+                .processInstanceIds(allowed)
                 .orderByProcessInstanceStartTime().desc();
         if (allFlag) {
             historicProcessInstanceQuery.startedBy(sysUser.getUserId());
@@ -756,8 +770,11 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public TableDataInfo<WfTaskVo> selectPageTodoProcessList(ProcessQuery processQuery, PageQuery pageQuery,
             SysUser sysUser) {
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return TableDataInfo.build();
         Page<WfTaskVo> page = new Page<>();
         TaskQuery taskQuery = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).active()
+                .processInstanceIdIn(allowed)
                 .includeProcessVariables()
                 .taskAssignee(String.valueOf(sysUser.getUserId())).orderByTaskCreateTime().desc();
         // Build
@@ -814,7 +831,10 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public List<WfTaskVo> selectTodoProcessList(ProcessQuery processQuery, String token) {
         SysUser sysUser = getSysUser(token);
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return Collections.emptyList();
         TaskQuery taskQuery = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).active()
+                .processInstanceIdIn(allowed)
                 .includeProcessVariables().taskCandidateOrAssigned(sysUser.getUserId())
                 .taskCandidateGroupIn(TaskUtils.getCandidateGroup(sysUser)).orderByTaskCreateTime().desc();
         // Build
@@ -824,7 +844,8 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @NotNull
     private List<WfTaskVo> getWfTaskVos(ProcessQuery processQuery, SysUser sysUser, TaskQuery taskQuery) {
         ProcessUtils.buildProcessSearch(taskQuery, processQuery, processEngine, sysUser);
-        List<Task> taskList = taskQuery.list();
+        List<Task> taskList = taskQuery.listPage(0, 10001);
+        WorkflowOwnershipService.requireWithinTemporaryLimit(taskList.size());
         List<WfTaskVo> taskVoList = new ArrayList<>();
         for (Task task : taskList) {
             WfTaskVo taskVo = new WfTaskVo();
@@ -860,10 +881,13 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public TableDataInfo<WfTaskVo> selectPageClaimProcessList(ProcessQuery processQuery, PageQuery pageQuery,
             SysUser sysUser) {
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return TableDataInfo.build();
         Page<WfTaskVo> page = new Page<>();
         TaskQuery taskQuery = null;
         try {
             taskQuery = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).active()
+                    .processInstanceIdIn(allowed)
                     .includeProcessVariables().taskCandidateUser(sysUser.getUserId())
                     .taskCandidateGroupIn(TaskUtils.getCandidateGroup(sysUser)).orderByTaskCreateTime().desc();
         } catch (Exception e) {
@@ -947,7 +971,10 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
 
     @Override
     public List<WfTaskVo> selectClaimProcessList(ProcessQuery processQuery, SysUser sysUser) {
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return Collections.emptyList();
         TaskQuery taskQuery = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).active()
+                .processInstanceIdIn(allowed)
                 .includeProcessVariables().taskCandidateUser(sysUser.getUserId())
                 .taskCandidateGroupIn(TaskUtils.getCandidateGroup(sysUser)).orderByTaskCreateTime().desc();
         // Build
@@ -957,10 +984,13 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public TableDataInfo<WfTaskVo> selectPageFinishedProcessList(ProcessQuery processQuery, PageQuery pageQuery,
             SysUser sysUser) {
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return TableDataInfo.build();
         Page<WfTaskVo> page = new Page<>();
 
         // Build HistoricTaskInstanceQuery ( )
         HistoricTaskInstanceQuery taskInstanceQuery = historyService.createHistoricTaskInstanceQuery()
+                .taskTenantId(sysUser.getTenantId()).processInstanceIdIn(allowed)
                 .includeProcessVariables()
                 .finished()
                 .taskAssignee(String.valueOf(sysUser.getUserId()))
@@ -982,7 +1012,8 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             }
         }
 
-        List<HistoricTaskInstance> allHistoricTasks = taskInstanceQuery.list();
+        List<HistoricTaskInstance> allHistoricTasks = taskInstanceQuery.listPage(0, 10001);
+        WorkflowOwnershipService.requireWithinTemporaryLimit(allHistoricTasks.size());
 
         // processInstanceId , only createTime new
 
@@ -1093,12 +1124,16 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
     @Override
     public List<WfTaskVo> selectFinishedProcessList(ProcessQuery processQuery, String token) {
         SysUser sysUser = getSysUser(token);
+        Set<String> allowed = workflowOwnership.allowedInstanceIds(sysUser.getTenantId());
+        if (allowed.isEmpty()) return Collections.emptyList();
         HistoricTaskInstanceQuery taskInstanceQuery = historyService.createHistoricTaskInstanceQuery()
+                .taskTenantId(sysUser.getTenantId()).processInstanceIdIn(allowed)
                 .includeProcessVariables().finished().taskAssignee(TaskUtils.getUserId())
                 .orderByHistoricTaskInstanceEndTime().desc();
         // Build
         ProcessUtils.buildProcessSearch(taskInstanceQuery, processQuery, processEngine, sysUser);
-        List<HistoricTaskInstance> historicTaskInstanceList = taskInstanceQuery.list();
+        List<HistoricTaskInstance> historicTaskInstanceList = taskInstanceQuery.listPage(0, 10001);
+        WorkflowOwnershipService.requireWithinTemporaryLimit(historicTaskInstanceList.size());
         List<WfTaskVo> hisTaskList = new ArrayList<>();
         for (HistoricTaskInstance histTask : historicTaskInstanceList) {
             WfTaskVo flowTask = new WfTaskVo();
@@ -1210,6 +1245,56 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServiceException("流程启动错误: " + e.getMessage());
+        }
+    }
+
+    /** Dedicated server path: event, order and immutable ownership share the surrounding transaction. */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String startVerifiedEventWorkOrder(ProcessStartBo request, SysUser user) {
+        if (request == null || user == null || request.getWorkOrderBo() == null) {
+            throw new ServiceException("缺少事件工单参数");
+        }
+        String hash = workOrderRequestHash(request);
+        com.ruoyi.workflow.domain.WorkflowStartRecord previous = workflowOwnership.claimStart(
+            user.getTenantId(), user.getUserId(), request.getRequestId(), hash);
+        if (previous != null) {
+            WorkOrder order = workOrderService.getById(previous.getWorkOrderId());
+            if (order == null || !user.getTenantId().equals(order.getTenantId())
+                || !previous.getProcInsId().equals(order.getProcInsId())
+                || !workflowOwnership.isRecordedWorkOrder(user.getTenantId(), previous.getProcInsId())) {
+                throw new ServiceException("已创建工单状态无法核实，请联系管理员");
+            }
+            request.setWorkOrder(order);
+            return previous.getProcInsId();
+        }
+        workflowOwnership.requireVerifiedLocalEvent(user.getTenantId(), request.getWorkOrderBo().getEventNumber());
+        ProcessDefinition selectedDefinition = repositoryService.createProcessDefinitionQuery()
+            .processDefinitionTenantId(user.getTenantId()).processDefinitionId(request.getProcessDefId()).singleResult();
+        if (selectedDefinition == null) throw new ServiceException("未找到当前租户指定的流程定义");
+        String instance = startProcess(selectedDefinition, request, user, true);
+        if (!workflowOwnership.recordVerifiedRunningOrder(user.getTenantId(), instance, request.getWorkOrder())) {
+            throw new ServiceException("工单流程定义或归属无法可信验证");
+        }
+        workflowOwnership.completeStart(user.getTenantId(), user.getUserId(), request.getRequestId(),
+            instance, request.getWorkOrder().getId());
+        return instance;
+    }
+
+    private static String workOrderRequestHash(ProcessStartBo request) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper()
+                .configure(com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+                .configure(com.fasterxml.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+            com.fasterxml.jackson.databind.node.ObjectNode input = mapper.valueToTree(request);
+            input.remove("requestId");
+            input.remove("workOrder");
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(mapper.writeValueAsBytes(input));
+            StringBuilder hash = new StringBuilder(64);
+            for (byte value : digest) hash.append(String.format("%02x", value & 0xff));
+            return hash.toString();
+        } catch (Exception e) {
+            throw new ServiceException("无法校验工单请求内容");
         }
     }
 
@@ -1403,7 +1488,10 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
                     .includeProcessVariables()
                     .list();
             if (!ObjectUtil.isNotEmpty(task)) {
-                log.error("没有可办理的任务！");
+                throw new ServiceException("没有可办理的任务！");
+            }
+            for (HistoricTaskInstance historicTask : task) {
+                WorkflowTaskBinding.requireSameInstance(historicTask.getProcessInstanceId(), historicProcIns.getId());
             }
             detailVo.setTaskFormData(currTaskFormData(historicProcIns.getDeploymentId(), task));
         }
@@ -1591,6 +1679,11 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
      * workflow instance
      */
     private String startProcess(ProcessDefinition procDef, ProcessStartBo processStartBo, SysUser sysUser) {
+        return startProcess(procDef, processStartBo, sysUser, false);
+    }
+
+    private String startProcess(ProcessDefinition procDef, ProcessStartBo processStartBo, SysUser sysUser,
+                                boolean useExactDefinition) {
         if (ObjectUtil.isNotNull(procDef) && procDef.isSuspended()) {
             throw new ServiceException("流程已被挂起，请先激活流程");
         }
@@ -1621,9 +1714,7 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             processStartBo.setVariables(new HashMap<>());
         }
 
-        HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                .getRequest();
-        String applicationId = httpRequest.getHeader("Appid");
+        String applicationId = currentRequestApplicationId();
         processStartBo.getVariables().put("appid", applicationId);
         // if Get formfield
         if (processStartBo.isAutoGetFormFlag()) {
@@ -1633,7 +1724,9 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
             log.info("表单字段映射完成");
         }
         // workflow instance
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKeyAndTenantId(procDef.getKey(),
+        ProcessInstance processInstance = useExactDefinition
+            ? runtimeService.startProcessInstanceById(procDef.getId(), processStartBo.getVariables())
+            : runtimeService.startProcessInstanceByKeyAndTenantId(procDef.getKey(),
                 processStartBo.getVariables(), sysUser.getTenantId());
 
         // null / empty value
@@ -1806,6 +1899,13 @@ public class WfProcessServiceImpl extends FlowServiceFactory implements IWfProce
         }
         // workflow instanceid
         return processInstance.getId();
+    }
+
+    static String currentRequestApplicationId() {
+        org.springframework.web.context.request.RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (!(attributes instanceof ServletRequestAttributes)) return null;
+        HttpServletRequest request = ((ServletRequestAttributes) attributes).getRequest();
+        return request == null ? null : request.getHeader("Appid");
     }
 
     /**

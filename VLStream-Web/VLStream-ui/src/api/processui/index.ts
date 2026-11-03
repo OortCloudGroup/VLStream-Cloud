@@ -7,6 +7,7 @@
 
 import { request } from '@/utils/service'
 import { apaasServiceUrl } from '@/utils/apaasApiBase'
+import axios from 'axios'
 function commonFunc<T, K>(interfaceName: string, data: T, method: string, isParams = false) {
   let params = method === 'get' || method === 'delete' || method === 'GET' || method === 'DELETE' ? { params: data } : { data: data }
   if (isParams) {
@@ -196,6 +197,23 @@ export function getProcessForm(data) {
 // workflow ( workflow instance)
 export function startProcess(data) {
   return commonFunc('/workflow/process/start', data, 'post')
+}
+
+// Event work orders use a dedicated server-side classification boundary.
+function eventWorkOrderRequest(path, data, identity, assertCurrent) {
+  return request({
+    url: apaasServiceUrl('apaas-workflowforms', path), method: 'post', data,
+    localAuthToken: identity.token, platformAuthToken: identity.platformToken,
+    transformRequest: [value => { assertCurrent(); return value }, ...[].concat(axios.defaults.transformRequest || [])]
+  } as any)
+}
+
+export function startEventWorkOrder(data, identity, assertCurrent) {
+  return eventWorkOrderRequest('/workflow/process/start-work-order', data, identity, assertCurrent)
+}
+
+export function stopEventWorkOrder(data, identity, assertCurrent) {
+  return eventWorkOrderRequest('/workflow/task/stopProcess', data, identity, assertCurrent)
 }
 
 // Delete workflow instance

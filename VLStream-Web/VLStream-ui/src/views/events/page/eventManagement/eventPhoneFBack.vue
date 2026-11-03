@@ -121,11 +121,13 @@ import MultiImageUpload from './components/multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
 import FeedbackRecord from './components/eventDetailsDialog/feedbackRecord.vue'
 import WorkOrderRecord from './components/eventDetailsDialog/workOrderRecord.vue'
-import { eventDetail, addFeedback, feedbackList } from '@/api/smartCity/events'
+import { eventDetail, addFeedback, addWorkOrderFeedback, feedbackList } from '@/api/smartCity/events'
+import { AuthManager } from '@/utils/auth'
 import { useUserStore } from '@/store/modules/useraPaas'
 import { ElMessage } from 'element-plus'
 import FlowForm from '@/pages/events/views/page/eventManagement/components/flowForm.vue'
 const store = useUserStore()
+const auth = new AuthManager()
 const activeIndex = ref('1')
 interface Props {
   data?: any
@@ -305,6 +307,14 @@ const formRules = ref({
 
 // event
 const addFeedbackForm = async() => {
+  const identity = auth.getIdentitySnapshot()
+  const eventId = String(formData.value.id || '')
+  const withWorkOrder = formData.value.work_order_status === 1
+  const assertCurrent = () => {
+    if (!auth.isIdentityCurrent(identity) || String(formData.value.id || '') !== eventId
+      || (formData.value.work_order_status === 1) !== withWorkOrder)
+      throw new Error('登录账户、租户、事件或工单选择已变化，请刷新后核实')
+  }
   // form
   if (!formRef.value) return
 
@@ -314,12 +324,24 @@ const addFeedbackForm = async() => {
     return // failed,
   }
   // whether work order 1: is 0: ( ) work order is event, eventonly can 1 work order already
-  if (formData.value.work_order_status === 1) {
-    await flowFormRef.value?.addWorkorderFn()
-    formData.value.work_order_data = flowFormRef.value?.form.work_order_data
+  if (withWorkOrder) {
+    const workOrder = await flowFormRef.value?.addWorkorderFn()
+    if (!workOrder?.procInsId) return
+    try { assertCurrent() } catch { ElMessage.error(uiText('登录账户、租户或事件已变化，请刷新后核实')); return }
+    formData.value.work_order_data = workOrder
   }
-  const res: any = await addFeedback(formData.value)
+  let res: any
+  try {
+    res = withWorkOrder
+      ? await addWorkOrderFeedback(JSON.parse(JSON.stringify(formData.value)), identity, assertCurrent)
+      : await addFeedback(formData.value)
+    if (withWorkOrder) assertCurrent()
+  } catch {
+    ElMessage.error(uiText('反馈状态未确认，请刷新并核实后再试'))
+    return
+  }
   if (res.code === 200) {
+    flowFormRef.value?.clearConfirmedIntent()
     ElMessage.success(uiText('反馈成功'))
     const currentId = formData.value.id
     const currentPoint = formData.value.point
