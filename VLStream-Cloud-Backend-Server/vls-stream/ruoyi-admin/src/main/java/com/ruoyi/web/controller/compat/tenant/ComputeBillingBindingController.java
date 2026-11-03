@@ -37,19 +37,24 @@ public class ComputeBillingBindingController {
                                          ComputeBillingSettlementService settlements,ComputeBillingLifecycleService lifecycle){
         this.authorization=authorization;this.clients=clients;this.settlements=settlements;this.lifecycle=lifecycle;
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/identity")
     public R<BillingPayer> identity(){return R.data(authorization.billingPayer(client()));}
     /** Configuration presence only: never contacts NewAPI or creates permissions. */
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/capabilities")
     public R<Map<String,Object>> capabilities(){
         Map<String,Object> view=new LinkedHashMap<>();
         view.put("accountAvailable",properties.isEnabled()&&clients.getIfAvailable()!=null);
         view.put("paidAdmissionEnabled",properties.isEnabled()&&properties.isAllowWrites()&&properties.isSafetyStopEnabled()&&properties.isPaidAdmissionEnabled());
+        view.put("mode",properties.getMode()==null?"LEGACY":properties.getMode().name());
+        view.put("unavailableReason",properties.unavailableReason());
         return R.data(view);
     }
     public static class AccountCheck {
         public boolean acceptBillingPermissions;
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/account/check")
     public R<ComputeBillingAccountService.Account> account(@RequestBody AccountCheck request){
         if(request==null||!request.acceptBillingPermissions)throw new ServiceException("请先确认平台余额查询与GPU计费权限");
@@ -58,24 +63,34 @@ public class ComputeBillingBindingController {
         try{return R.data(accounts.check(payer,client,client.config(),true));}
         catch(IllegalStateException unavailable){throw new ServiceException("BILLING_NOT_AUTHORIZED".equals(unavailable.getMessage())?"平台尚未接受当前账户的计费授权，请稍后重试":"平台余额暂未确认，请稍后重试");}
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/nodes/{nodeId}/quote")
     public R<ComputePaidRunService.View> quote(@PathVariable Long nodeId){
         NewApiBillingClient client=client();
         BillingPayer payer=newOperationPayer(client);
         return R.data(paidRuns.quote(nodeId,payer,client.config()));
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs")
     public R<java.util.List<ComputePaidRunService.View>> runs(){return R.data(paidRuns.list(authorization.billingPayer(client())));}
+    /** A revoked market grant must not hide the caller's still-active paid work. */
+    @GetMapping("/safety/active-runs")
+    public R<java.util.List<ComputePaidRunService.SafetyRun>> safetyRuns(){
+        return R.data(paidRuns.activeRunsForSafety(authorization.billingPayer(client())));
+    }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs/{runId}")
     public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.get(runId,authorization.billingPayer(client())));}
     /** The original run identifies the pending archive; payer, instance and price stay server-owned.
      * This only prepares a fresh quote. The existing explicit accept flow owns funding/start. */
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{sourceRunId}/archive-recovery-quote")
     public R<ComputePaidRunService.View> archiveRecoveryQuote(@PathVariable String sourceRunId){
         NewApiBillingClient client=client();
         BillingPayer payer=newOperationPayer(client);
         return R.data(paidRuns.quoteArchiveRecovery(sourceRunId,payer,client.config()));
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/accept")
     public R<ComputePaidRunService.View> accept(@PathVariable String runId,@RequestBody AccountCheck request){
         if(request==null||!request.acceptBillingPermissions)throw new ServiceException("请确认本次报价与平台计费权限");
@@ -88,8 +103,19 @@ public class ComputeBillingBindingController {
         }
         return R.data(paidRuns.accept(runId,payer));
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/stop")
     public R<ComputePaidRunService.View> stop(@PathVariable String runId){return R.data(paidRuns.stop(runId,authorization.billingPayer(client())));}
+    /** Separate minimal emergency operation: no historical order detail or quote cancellation. */
+    @PostMapping("/safety/runs/{runId}/stop")
+    public R<Boolean> safetyStop(@PathVariable String runId){
+        BillingPayer payer=authorization.billingPayer(client());
+        boolean active=paidRuns.activeRunsForSafety(payer).stream().anyMatch(run->runId.equals(run.getRunId()));
+        if(!active)throw new ServiceException("当前付费占用不存在、已结束或无权访问，请刷新状态");
+        paidRuns.stop(runId,payer);
+        return R.data(Boolean.TRUE);
+    }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/sessions/{usageId}/bind")
     public R<String> bind(@PathVariable String usageId){
         NewApiBillingClient client=client();BillingPayer payer=newOperationPayer(client);
@@ -104,5 +130,5 @@ public class ComputeBillingBindingController {
         ComputeBillingTrialGuard.requirePayerScope(properties,payer);
         return payer;
     }
-    private NewApiBillingClient client(){NewApiBillingClient client=clients.getIfAvailable();if(client==null)throw new ServiceException("计费接入默认关闭，未配置外部受限身份");return client;}
+    private NewApiBillingClient client(){NewApiBillingClient client=clients.getIfAvailable();if(client==null)throw new ServiceException(properties.unavailableReason()==null?"平台计费客户端不可用，请检查服务启动错误":properties.unavailableReason());return client;}
 }

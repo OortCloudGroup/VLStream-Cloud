@@ -97,7 +97,20 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
             }
             String operation=session.get("stop_operation_id")==null?UUID.randomUUID().toString():String.valueOf(session.get("stop_operation_id"));
             if(aliases.stream().anyMatch(n->n.getPowerOperationId()!=null)) {
-                phase(usageId,operation.equals(node.getPowerOperationId())&&"stop".equals(node.getPowerOperationAction())?"STOP_REQUESTED":"WAITING_OPERATION");return null;
+                boolean ownUncertainStart=false;
+                if(nodes.officialConfigured(node)) {
+                    List<Map<String,Object>> original=jdbc.queryForList("SELECT start_operation_id,power_start_state FROM vls_compute_paid_run WHERE usage_id=? AND active_instance_key IS NOT NULL",usageId);
+                    if(original.size()==1) {
+                        String start=String.valueOf(original.get(0).get("start_operation_id"));
+                        String state=String.valueOf(original.get(0).get("power_start_state"));
+                        ownUncertainStart=("SUBMITTED".equals(state)||"UNKNOWN".equals(state)||"ACCEPTED".equals(state))
+                            &&aliases.stream().allMatch(n->n.getPowerOperationId()==null
+                                ||(start.equals(n.getPowerOperationId())&&"start".equals(n.getPowerOperationAction())));
+                    }
+                }
+                // Preserve the original start outbox; a separate durable stop may
+                // supersede only this same order's start, never another operation.
+                if(!ownUncertainStart){phase(usageId,operation.equals(node.getPowerOperationId())&&"stop".equals(node.getPowerOperationAction())?"STOP_REQUESTED":"WAITING_OPERATION");return null;}
             }
             if(nodes.officialConfigured(node)) {
                 if(configuredPower==null)throw new IllegalStateException("Official power outbox unavailable");

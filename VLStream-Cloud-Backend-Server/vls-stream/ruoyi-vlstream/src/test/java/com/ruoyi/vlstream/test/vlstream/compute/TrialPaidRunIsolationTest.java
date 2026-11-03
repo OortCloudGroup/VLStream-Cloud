@@ -246,8 +246,16 @@ class TrialPaidRunIsolationTest {
     @Test void capRejectedUnsentMeteringDoesNotPreventConfirmedStopReleasingOriginalRemainder() {
         String id=accepted(),blocked=budgetOverrun(id);int captured=f.wallet.captured,remaining=f.wallet.remaining();
         String amount=f.jdbc.queryForObject("SELECT amount_text FROM vls_compute_billing_slice WHERE merchant_charge_id=?",String.class,blocked);
+        // This scenario has no further metered interval after its rejected slice.
+        // Pin the fixture's provider stop event instead of allowing machine load
+        // to create an incidental, independently payable tail during the test.
+        Instant stopAt=Instant.ofEpochMilli(f.jdbc.queryForObject("SELECT last_running_ms FROM vls_compute_billing_session",Long.class));
+        doAnswer(call->{official.stopped=stopAt;f.wallet.power="STOPPED";return null;}).when(f.supplier).submit(any(),eq("stop"),anyString());
         confirmedStopAndTail(id);for(int i=0;i<5;i++)f.runs.tick(id);
-        assertEquals("COMPLETED",f.runs.get(id,f.payer).getState());assertEquals(0,f.wallet.remaining());
+        assertEquals("COMPLETED",f.runs.get(id,f.payer).getState(),()->"run="+f.jdbc.queryForList("SELECT state,error_code,power_stop_state FROM vls_compute_paid_run")
+            +" funding="+f.jdbc.queryForList("SELECT operation_kind,state,error_code FROM vls_compute_funding_intent")
+            +" session="+f.jdbc.queryForList("SELECT safety_state,risk_code,metered_until_ms,last_running_ms FROM vls_compute_billing_session")
+            +" slices="+f.jdbc.queryForList("SELECT state,error_code,charge_id,ledger_entry_id,lease_token,lease_until_ms FROM vls_compute_billing_slice"));assertEquals(0,f.wallet.remaining());
         assertEquals(captured,f.wallet.captured);assertEquals(remaining,f.wallet.released);assertEquals(1,f.wallet.releaseEffects);
         assertEquals("BLOCKED",f.jdbc.queryForObject("SELECT state FROM vls_compute_billing_slice WHERE merchant_charge_id=?",String.class,blocked));
         assertEquals("TRIAL_UNALLOCATED_BUDGET",f.jdbc.queryForObject("SELECT error_code FROM vls_compute_billing_slice WHERE merchant_charge_id=?",String.class,blocked));

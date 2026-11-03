@@ -4,8 +4,16 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 public class ComputeProviderException extends RuntimeException {
     public enum Kind { NO_STOCK, AUTHORIZATION, BALANCE, QUOTA, LOCKED, WRONG_STATE, UNKNOWN }
     private final Kind kind;
-    public ComputeProviderException(Kind kind) { super(message(kind)); this.kind = kind; }
+    private final Integer httpStatus;
+    private final String diagnostic;
+    public ComputeProviderException(Kind kind) { this(kind, null, "UNCLASSIFIED"); }
+    public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic) {
+        super(message(kind)); this.kind = kind; this.httpStatus = httpStatus;
+        this.diagnostic = diagnostic != null && diagnostic.matches("(?:UNCLASSIFIED|BUSINESS_(?:BAD_REQUEST|AUTHORIZATION|NOT_FOUND|OTHER)|HTTP_ERROR|EMPTY_RESPONSE|INVALID_RESPONSE|TIMEOUT|DNS|TLS|TRANSPORT)") ? diagnostic : "UNCLASSIFIED";
+    }
     public Kind getKind() { return kind; }
+    public Integer getHttpStatus() { return httpStatus; }
+    public String getDiagnostic() { return diagnostic; }
     public static Kind aliyunKind(String code) {
         if ("InvalidAccessKeyId.NotFound".equals(code) || "SignatureDoesNotMatch".equals(code)
             || "Forbidden.RAM".equals(code) || "Forbidden".equals(code)) return Kind.AUTHORIZATION;

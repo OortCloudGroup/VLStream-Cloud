@@ -104,7 +104,7 @@ class ComputeProviderInventoryIntegrationTest {
         Class<?> type=com.ruoyi.vlstream.test.vlstream.controller.VlsComputeController.class;
         for(String method:Arrays.asList("inventory","syncInventory","refreshInventory")) {
             java.lang.reflect.Method target=Arrays.stream(type.getDeclaredMethods()).filter(m->m.getName().equals(method)).findFirst().get();
-            assertArrayEquals(new String[]{"vls:compute:configure"},target.getAnnotation(cn.dev33.satoken.annotation.SaCheckPermission.class).value());
+            assertArrayEquals(new String[]{"vls:compute:configure", "vls:menu:compute-management"},target.getAnnotation(cn.dev33.satoken.annotation.SaCheckPermission.class).value());
         }
     }
     @Test void discoveredRunningProWithUnknownPriceUnitsAndStopProofCannotBecomePaidSupply() {

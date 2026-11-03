@@ -132,6 +132,42 @@ class ConfiguredOfficialRunIntegrationTest {
         registry.initialize();installPower();f.runs.tick(id);f.runs.tick(id);
         verify(f.supplier,never()).submit(any(),anyString(),anyString());assertTrue(f.wallet.remaining()>0);assertEquals(0,f.wallet.releasePosts);
     }
+    @Test void originalUnknownStartCanQueueOneStopAndReleaseAfterAcknowledgedPhysicalShutdown() {
+        doThrow(new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN)).when(f.supplier).submit(any(),eq("start"),anyString());
+        String id=accepted();queued(id);f.runs.tick(id);
+        String original=jdbc.queryForObject("SELECT start_operation_id FROM vls_compute_paid_run",String.class);
+        assertNotNull(node().getPowerOperationId());assertEquals(0,f.wallet.releasePosts);
+        f.runs.stop(id,f.payer);for(int i=0;i<8;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals("ACCEPTED",jdbc.queryForObject("SELECT power_stop_state FROM vls_compute_paid_run",String.class));
+        assertNull(jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage",java.sql.Timestamp.class));
+        assertEquals(0,f.wallet.capturePosts);assertEquals(1,f.wallet.releasePosts);assertEquals(0,f.wallet.remaining());
+        verify(f.supplier,times(1)).submit(any(),eq("start"),eq(original));verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @Test void stoppedObservationCannotReleaseUnknownStartWhenItsStopIsAlsoUnknown() {
+        doThrow(new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN)).when(f.supplier).submit(any(),anyString(),anyString());
+        String id=accepted();queued(id);f.runs.tick(id);f.runs.stop(id,f.payer);
+        for(int i=0;i<6;i++)f.runs.tick(id);
+        assertEquals("STOPPING",f.runs.get(id,f.payer).getState());assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_stop_state FROM vls_compute_paid_run",String.class));
+        assertEquals(0,f.wallet.releasePosts);assertEquals(0,f.wallet.capturePosts);assertTrue(f.wallet.remaining()>0);
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @Test void fundingConflictStillStopsTheOriginalInstanceWithoutReleasingOrCapturing() {
+        String id=accepted();running(id);
+        jdbc.update("UPDATE vls_compute_funding_intent SET state='CONFLICT',error_code='HOLD_VERSION_CONFLICT' WHERE operation_kind='HOLD'");
+        for(int i=0;i<5;i++)f.runs.tick(id);
+        assertEquals("STOPPED",f.wallet.power);assertEquals("ACCEPTED",jdbc.queryForObject("SELECT power_stop_state FROM vls_compute_paid_run",String.class));
+        assertEquals(0,f.wallet.releasePosts);assertEquals(0,f.wallet.capturePosts);assertTrue(f.wallet.remaining()>0);
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @Test void foreignPendingOperationCannotBeSupersededByOriginalUnknownStartStop() {
+        doThrow(new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN)).when(f.supplier).submit(any(),eq("start"),anyString());
+        String id=accepted();queued(id);f.runs.tick(id);
+        registry.pending(node(),"different-order-operation","start",true);
+        f.runs.stop(id,f.payer);f.lifecycle.requestSafeStop(f.runs.get(id,f.payer).getUsageId());
+        assertEquals("WAITING_OPERATION",jdbc.queryForObject("SELECT safety_state FROM vls_compute_billing_session",String.class));
+        verify(f.supplier,never()).submit(any(),eq("stop"),anyString());assertEquals(0,f.wallet.releasePosts);
+    }
     @Test void cancellingPreparedOfficialStartReleasesOnlyItsOriginalHold() {
         String id=accepted();queued(id);f.runs.stop(id,f.payer);f.runs.tick(id);f.runs.tick(id);
         assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals(0,f.wallet.remaining());verify(f.supplier,never()).submit(any(),anyString(),anyString());

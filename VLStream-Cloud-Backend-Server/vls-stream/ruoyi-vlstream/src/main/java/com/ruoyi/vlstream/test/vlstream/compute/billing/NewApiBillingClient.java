@@ -3,7 +3,7 @@ package com.ruoyi.vlstream.test.vlstream.compute.billing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePlatformAuthorization;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -17,13 +17,18 @@ import java.util.Objects;
 
 /** Documented merchant adapter. Read access and funds movement have separate, default-off gates. */
 @Component
-@ConditionalOnProperty(prefix = "vlstream.compute.external-billing", name = "enabled", havingValue = "true")
+@Conditional(ExternalBillingClientCondition.class)
 public class NewApiBillingClient implements ExternalBillingGateway {
     private final ExternalBillingProperties properties;
     private final ObjectMapper json;
 
     public NewApiBillingClient(ExternalBillingProperties properties, ObjectMapper json) {
         this.properties = properties; this.json = json;
+    }
+
+    /** Non-secret merchant binding for administrative evidence import. */
+    public boolean servesMerchant(String merchantId) {
+        return merchantId != null && merchantId.equals(properties.getMerchantId());
     }
 
     @Override public boolean supportsAtomicCapture() { return properties.isEnabled() && properties.isAllowWrites(); }

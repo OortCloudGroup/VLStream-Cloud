@@ -235,6 +235,22 @@ public class ComputePaidRunService {
     }
 
     public View get(String id,BillingPayer payer){return view(owned(id,payer,false));}
+    /** Minimal owner-scoped stop inventory, independent of the market page and quote history. */
+    @Getter
+    public static final class SafetyRun {
+        private final String runId, nodeId, state;
+        private SafetyRun(Map<String,Object> row) {
+            runId=text(row,"run_id"); nodeId=text(row,"node_id"); state=text(row,"state");
+        }
+    }
+
+    public List<SafetyRun> activeRunsForSafety(BillingPayer payer) {
+        actor(payer);
+        return jdbc.queryForList("SELECT run_id,node_id,state FROM vls_compute_paid_run WHERE tenant_id=? AND opening_user_id=? AND platform_subject=? AND payer_user_id=? AND active_instance_key IS NOT NULL ORDER BY create_time DESC",
+            payer.tenantId,payer.actorId,payer.platformSubject,payer.userId).stream()
+            .map(SafetyRun::new).collect(java.util.stream.Collectors.toList());
+    }
+
     public List<View> list(BillingPayer payer) {
         actor(payer);
         java.util.LinkedHashMap<String,Map<String,Object>> visible=new java.util.LinkedHashMap<>();
@@ -318,6 +334,15 @@ public class ComputePaidRunService {
             });return;
         }
         if(ComputeFundingIntentService.CONFLICT.equals(hold.state)||ComputeFundingIntentService.REJECTED.equals(hold.state)) {
+            // Funds reconciliation must never prevent this original instance's
+            // safety stop. This branch cannot submit a start or a money request.
+            jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);
+            lifecycle.requestSafeStop(usage);
+            Map<String,Object> stopping=row(id,false);
+            if(configuredPower!=null&&"STOPPING".equals(text(stopping,"state"))) {
+                ComputeNode controlled=lifecycle.controlledNode(usage);
+                if(nodes.officialConfigured(controlled))configuredPower.advance(stopping,controlled);
+            }
             jdbc.update("UPDATE vls_compute_paid_run SET error_code='FUNDING_REQUIRES_REVIEW' WHERE run_id=?",id);return;
         }
         Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);

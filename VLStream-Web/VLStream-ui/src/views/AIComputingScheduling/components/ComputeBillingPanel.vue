@@ -4,6 +4,7 @@
       <div><strong>平台账户余额</strong><span v-if="account">可用 {{ currency(account.availableQuota) }} {{ account.currency }} · 冻结 {{ currency(account.heldQuota) }} {{ account.currency }}（上次查询 {{ accountCheckedAt }}）</span><span v-else>{{ capabilities.accountAvailable ? '使用当前统一平台账户' : '账户服务暂未开放' }}</span></div>
       <el-button :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">查询余额</el-button>
     </div>
+    <el-alert v-if="capabilities.unavailableReason" type="info" :title="capabilities.unavailableReason" :closable="false" show-icon />
     <el-alert v-if="error" type="warning" :title="error" :closable="false" show-icon />
     <div v-for="run in visibleRuns" :key="run.runId" class="paid-run" :data-run-id="run.runId">
       <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ paidRunState(run.state) }}</span><small>已结算 {{ run.chargedQuota }} {{ run.quotaUnit }}<template v-if="run.remainingQuota !== null"> · 待释放/可抵扣 {{ run.remainingQuota }} {{ run.quotaUnit }}</template></small><small v-if="run.archiveRecovery">本次为付费归档恢复，仅取回原任务产物，不重新训练。</small><small v-if="run.archiveRecoveryAvailable">原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。</small><small v-if="run.errorCode">状态确认暂未完成，系统会查询原单；请勿重复开机。</small></div>

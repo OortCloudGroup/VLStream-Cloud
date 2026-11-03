@@ -110,6 +110,20 @@ class AutoDlProStatusContractTest {
         provider.submit(node,"stop","fixture-original-stop");
         assertEquals("UNKNOWN",provider.status(node).power);
     }
+    @Test void businessRejectionRetainsOnlySafeHttpAndCategoryWithoutVendorSecrets() {
+        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on")).andExpect(method(HttpMethod.POST))
+            .andExpect(content().json("{\"instance_uuid\":\"pro-fixture\",\"payload\":\"gpu\"}"))
+            .andRespond(withSuccess("{\"code\":\"BadRequest\",\"msg\":\"SYNTHETIC_SECRET_NEVER_LOG\",\"data\":{\"token\":\"SYNTHETIC_SECRET_NEVER_LOG\"}}",MediaType.APPLICATION_JSON));
+        ComputeProviderException error=assertThrows(ComputeProviderException.class,()->provider.submit(node,"start","original-operation"));
+        assertEquals(ComputeProviderException.Kind.UNKNOWN,error.getKind());assertEquals(Integer.valueOf(200),error.getHttpStatus());assertEquals("BUSINESS_BAD_REQUEST",error.getDiagnostic());
+        assertFalse(error.toString().contains("SYNTHETIC_SECRET"));assertNull(error.getCause());
+    }
+    @Test void readTimeoutIsDistinctFromVendorRejectionWithoutRetainingItsMessage() {
+        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on"))
+            .andRespond(request->{throw new java.net.SocketTimeoutException("SYNTHETIC_SECRET_NEVER_LOG");});
+        ComputeProviderException error=assertThrows(ComputeProviderException.class,()->provider.submit(node,"start","original-operation"));
+        assertEquals("TIMEOUT",error.getDiagnostic());assertNull(error.getHttpStatus());assertNull(error.getCause());assertFalse(error.toString().contains("SYNTHETIC_SECRET"));
+    }
     @Test void rawPriceCannotBecomeCurrencyHourlyCostOrAUserLedgerRate() throws Exception {
         transport.expect(requestTo(AutoDlProPowerProvider.BASE+"snapshot?instance_uuid=pro-fixture")).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":{\"payg_price\":1970,\"origin_pay_price\":3030,\"root_password\":\"SYNTHETIC_SENSITIVE_FIELD\"}}",MediaType.APPLICATION_JSON));

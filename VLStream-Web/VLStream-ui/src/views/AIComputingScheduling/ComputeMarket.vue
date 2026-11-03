@@ -26,6 +26,7 @@
             <p v-if="!(item.billingType === 'FREE' && item.schedulingMode === 'SHARED_GPU_QUEUE')" class="price-note">{{ marketText(item.billingType === 'FREE' ? '整实例独享' : item.paidAdmissionEnabled ? '确认报价后按用量结算' : marketPricePresentation(item)?.reference ? '参考价 · 磁盘另费' : '收费暂未开放') }}</p>
             <el-button v-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
             <el-button v-else-if="item.billingType === 'POINTS'" type="primary" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || (item.powerState !== 'STOPPED' && !(item.configurationManaged && item.provider === 'autodl' && item.powerState === 'UNKNOWN'))" @click="billingPanel?.start(item)">{{ marketText(item.paidAdmissionEnabled ? '付费开机' : '租赁暂未开放') }}</el-button>
+            <p v-if="item.billingType === 'POINTS' && item.paidUnavailableReason" class="price-note">{{ item.paidUnavailableReason }}</p>
             <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE'" type="primary" @click="router.push('/algorithm-training')">{{ marketText('前往训练') }}</el-button>
           </div>
         </div>

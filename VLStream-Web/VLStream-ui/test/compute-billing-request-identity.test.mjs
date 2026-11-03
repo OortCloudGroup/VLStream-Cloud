@@ -12,7 +12,7 @@ const strip = source => source.replace(/^import .*$/gm, '').replace(/^export /gm
 const identityFactory = new Function('request', 'authManager', 'getOortCloudSession', 'isMultiTenantMode', 'window',
   strip(identitySource) + '\nreturn { currentIdentityRequest, captureComputeIdentity, computePathPart };')
 const apiFactory = new Function('currentIdentityRequest', 'computePathPart', 'captureComputeIdentity', 'axios',
-  strip(apiSource) + '\nreturn { quoteComputeArchiveRecovery, acceptComputePaidRun, listComputePaidRuns };')
+  strip(apiSource) + '\nreturn { quoteComputeArchiveRecovery, acceptComputePaidRun, listComputePaidRuns, listComputeSafetyRuns, stopComputeSafetyRun };')
 const headerFunction = requestSource.slice(requestSource.indexOf('export const applyAuthHeaders ='), requestSource.indexOf('\n}', requestSource.indexOf('export const applyAuthHeaders =')) + 2)
 const headersFactory = new Function('__deps', `
   const {isTrustedApiRequest,clearIdentityHeaders,captureRequestIdentity,isSessionRedirecting,
@@ -92,6 +92,21 @@ test('list remains a GET and does not call account check or acceptance', async (
   assert.equal(h.sent.length, 1)
   assert.equal(h.sent[0].method, 'get')
   assert.equal(h.sent[0].url, '/vlsCompute/billing/runs')
+})
+
+test('safety list and stop use pinned dual identity without opening a paid run', async () => {
+  const h = harness()
+  await h.api.listComputeSafetyRuns()
+  await h.api.stopComputeSafetyRun('9007199254740993')
+  assert.deepEqual(h.sent.map(({ method, url }) => ({ method, url })), [
+    { method: 'get', url: '/vlsCompute/billing/safety/active-runs' },
+    { method: 'post', url: '/vlsCompute/billing/safety/runs/9007199254740993/stop' }
+  ])
+  for (const config of h.sent) {
+    assert.equal(config.data, undefined)
+    assert.equal(config.localAuthToken, 'fixture-local-a')
+    assert.equal(config.platformAuthToken, 'fixture-independent-sso-a')
+  }
 })
 
 test('identity change before identity-wrapper dispatch prevents sending', async () => {

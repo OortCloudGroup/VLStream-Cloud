@@ -291,11 +291,74 @@ class ComputeFundingIntentTest {
         assertNotNull(service.claimInitialSend(release.id, Long.parseLong(expiry) + 1));
         assertEquals("2000", fixture.json.valueToTree(parseBody(release.body)).path("release_quota").asText());
     }
+    @Test void explicitExpiredHoldReleaseRecoversLostReplyUsingSameKeyBodyAndOneEffect() {
+        ComputeFundingIntentService.Intent h=observed();
+        com.fasterxml.jackson.databind.node.ObjectNode expired=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,2,"1000","0","0","1000");expired.put("hold_status","EXPIRED");
+        service.recordHoldDetail(h.id,h.requestHash,expired);
+        assertThrows(IllegalStateException.class,()->service.prepareTopup(h.id,"expired-new-topup","10","METERING",Long.parseLong(expiry)+1));
+        ComputeFundingIntentService.Intent release=service.prepareFinalRelease(h.id,"1000");
+        ReplayGateway gateway=new ReplayGateway(h){@Override JsonNode currentDetail(){com.fasterxml.jackson.databind.node.ObjectNode n=(com.fasterxml.jackson.databind.node.ObjectNode)super.currentDetail();n.put("hold_status","EXPIRED");return n;}};
+        gateway.version=2;gateway.loseFirstReply=true;ComputeFundingRecoveryService recovery=coordinator(gateway);
+        assertEquals("UNKNOWN",recovery.advance(release.id,Long.parseLong(expiry)+1).state);
+        assertEquals(1,gateway.effects);assertEquals(0,gateway.remaining());
+        assertEquals("OPERATION_CONFIRMED",recovery.advance(release.id,Long.parseLong(expiry)+2).state);
+        assertEquals(release.key,gateway.lastKey);assertEquals(release.body,gateway.lastBody);assertEquals(2,gateway.writes);assertEquals(1,gateway.effects);
+        recovery.advance(release.id,Long.parseLong(expiry)+3);assertEquals(2,gateway.writes);assertEquals(2,count());
+    }
+    @Test void rejectedExpiredReleaseCannotBeRetriedWithANewKeyOrMarkedComplete() {
+        ComputeFundingIntentService.Intent h=observed();
+        com.fasterxml.jackson.databind.node.ObjectNode expired=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,2,"1000","0","0","1000");expired.put("hold_status","EXPIRED");service.recordHoldDetail(h.id,h.requestHash,expired);
+        ComputeFundingIntentService.Intent release=service.prepareFinalRelease(h.id,"1000");
+        ReplayGateway gateway=new ReplayGateway(h){@Override public Result releaseHold(String id,String key,String body){writes++;lastKey=key;lastBody=body;return new Result(Status.REJECTED,"INSUFFICIENT_AVAILABLE_QUOTA",null);}};
+        ComputeFundingRecoveryService recovery=coordinator(gateway);
+        assertEquals("REJECTED",recovery.advance(release.id,Long.parseLong(expiry)+1).state);
+        assertEquals("REJECTED",recovery.advance(release.id,Long.parseLong(expiry)+2).state);
+        assertEquals(1,gateway.writes);assertEquals(0,gateway.effects);assertEquals(release.key,service.recover(release.id).key);assertEquals(release.body,service.recover(release.id).body);assertEquals(2,count());
+    }
     @Test void actualClippedReleaseIsRecordedWithoutClaimingTheRequestedAmountReleased() throws Exception {
         ComputeFundingIntentService.Intent h = observed(); ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "2000");
         ComputeFundingIntentService.Intent done = service.recordReceipt(release.id, release.requestHash, releaseReceipt(h.holdId, "1000", "0"));
         assertTrue(done.receipt.contains("\"released_quota\":\"1000\"")); assertTrue(done.body.contains("\"release_quota\":\"2000\""));
         assertEquals("RECEIPT_UNVERIFIED", done.state); assertFalse(done.safeToSend);
+    }
+    @Test void clockDerivedExpiryAtTheSameVersionPreservesCountersAndAllowsOriginalRelease() {
+        String expired=Long.toString(System.currentTimeMillis()-1000);
+        ComputeFundingIntentService.Intent h=service.prepareInitialHold(usage,"1000",expired,"GPU_COMPUTE");
+        com.fasterxml.jackson.databind.node.ObjectNode active=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,0,"1000","0","0","1000");active.put("expires_at",expired);
+        h=service.recordHoldDetail(h.id,h.requestHash,active);
+        com.fasterxml.jackson.databind.node.ObjectNode aged=active.deepCopy().put("hold_status","EXPIRED");
+        assertEquals(ComputeFundingIntentService.DETAIL_OBSERVED,service.recordHoldDetail(h.id,h.requestHash,aged).state);
+        assertEquals("EXPIRED",fixture.jdbc.queryForObject("SELECT hold_status FROM vls_compute_funding_hold_observation",String.class));
+        assertNotNull(service.prepareFinalRelease(h.id,"1000"));
+        assertEquals(0,fixture.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_slice",Integer.class));
+    }
+    @Test void expiryCannotHideAChangedCounterAtTheSameVersion() {
+        String expired=Long.toString(System.currentTimeMillis()-1000);
+        ComputeFundingIntentService.Intent h=service.prepareInitialHold(usage,"1000",expired,"GPU_COMPUTE");
+        com.fasterxml.jackson.databind.node.ObjectNode active=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,0,"1000","0","0","1000");active.put("expires_at",expired);h=service.recordHoldDetail(h.id,h.requestHash,active);
+        com.fasterxml.jackson.databind.node.ObjectNode changed=active.deepCopy().put("hold_status","EXPIRED").put("captured_quota","1").put("remaining_quota","999");
+        assertEquals(ComputeFundingIntentService.CONFLICT,service.recordHoldDetail(h.id,h.requestHash,changed).state);
+        assertEquals(ComputeFundingIntentService.CONFLICT,service.recordHoldDetail(h.id,h.requestHash,changed).state);
+    }
+    @Test void oldClockOnlyVersionConflictRecoversWithoutClearingItsStopRequest() throws Exception {
+        String expired=Long.toString(System.currentTimeMillis()-1000);
+        ComputeFundingIntentService.Intent h=service.prepareInitialHold(usage,"1000",expired,"GPU_COMPUTE");
+        com.fasterxml.jackson.databind.node.ObjectNode active=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,0,"1000","0","0","1000");active.put("expires_at",expired);h=service.recordHoldDetail(h.id,h.requestHash,active);
+        com.fasterxml.jackson.databind.node.ObjectNode oldConflict=(com.fasterxml.jackson.databind.node.ObjectNode)fixture.json.readTree(fixture.jdbc.queryForObject("SELECT detail_json FROM vls_compute_funding_hold_observation",String.class));oldConflict.put("hold_status","EXPIRED");
+        fixture.jdbc.update("UPDATE vls_compute_funding_hold_observation SET conflicting_detail_json=?",oldConflict.toString());
+        fixture.jdbc.update("UPDATE vls_compute_funding_intent SET state='CONFLICT',error_code='HOLD_VERSION_CONFLICT'");
+        fixture.jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code='HOLD_VERSION_CONFLICT'");
+        com.fasterxml.jackson.databind.node.ObjectNode fresh=active.deepCopy().put("hold_status","EXPIRED");
+        ComputeFundingIntentService.Intent recovered=restarted().recordHoldDetail(h.id,h.requestHash,fresh);
+        assertEquals(ComputeFundingIntentService.DETAIL_OBSERVED,recovered.state);assertEquals(h.key,recovered.key);assertEquals(h.body,recovered.body);
+        assertEquals(1,fixture.jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        assertNull(fixture.jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session",String.class));
+        assertNotNull(service.prepareFinalRelease(h.id,"1000"));
+    }
+    @Test void expiryBeforeItsActualDeadlineRemainsAConflict() {
+        ComputeFundingIntentService.Intent h=observed();
+        com.fasterxml.jackson.databind.node.ObjectNode changed=(com.fasterxml.jackson.databind.node.ObjectNode)detail(h,1,"1000","0","0","1000");changed.put("hold_status","EXPIRED");
+        assertEquals(ComputeFundingIntentService.CONFLICT,service.recordHoldDetail(h.id,h.requestHash,changed).state);
     }
     @Test void contradictoryHoldReceiptAfterDetailClearsBindingAndKeepsStickyConflict() throws Exception {
         ComputeFundingIntentService.Intent h = observed();

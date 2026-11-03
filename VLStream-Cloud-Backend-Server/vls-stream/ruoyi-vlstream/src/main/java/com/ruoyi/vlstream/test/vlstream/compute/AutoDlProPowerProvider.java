@@ -25,8 +25,12 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
     private final ObjectMapper json = new ObjectMapper();
     @Autowired(required = false)
     private ConfiguredComputeRegistry configured;
-    @Value("${vlstream.compute.official-autodl-control.enabled:false}")
-    private boolean officialControl;
+    @Value("${vlstream.compute.official-autodl-control.enabled:#{null}}")
+    private Boolean officialControl;
+    @Autowired(required = false)
+    private com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties billing;
+    @Autowired(required = false)
+    private ComputeBillingPolicy billingPolicy;
     @Value("${vlstream.compute.official-autodl-control.instance-id:}")
     private String officialControlInstanceId;
     @Autowired
@@ -50,14 +54,39 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         return new RestTemplate(factory);
     }
     @Override public boolean supports(ComputeNode node) {
-        boolean scoped=officialControl&&node.isConfigurationManaged()&&Long.valueOf(-6000L).equals(node.getId())
+        boolean unified=billing!=null&&billing.getMode()!=null;
+        boolean officialEnabled=unified?billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID:Boolean.TRUE.equals(officialControl);
+        boolean scoped=officialEnabled&&node.isConfigurationManaged()&&Long.valueOf(-6000L).equals(node.getId())
             &&"official-autodl".equals(node.getConfigurationCode())&&officialControlInstanceId!=null
             &&officialControlInstanceId.matches("pro-[a-f0-9]{12}")&&officialControlInstanceId.equals(node.getProviderInstanceId());
-        if(officialControl&&!scoped)return false;
+        if(unified&&officialEnabled&&configured!=null&&configured.official(node)&&Long.valueOf(-6000L).equals(node.getId())&&"official-autodl".equals(node.getConfigurationCode())
+            &&node.getProviderInstanceId()!=null&&node.getProviderInstanceId().matches("pro-[a-f0-9]{12}"))scoped=true;
+        if(node.isConfigurationManaged()&&unified&&!scoped)return false;
+        if(!unified&&Boolean.TRUE.equals(officialControl)&&!scoped)return false;
         return (enabled||scoped) && "API".equals(node.getControlMode()) && "autodl".equals(node.getProvider())
             && "AUTODL_PRO".equals(node.getProviderProduct()) && (node.isConfigurationManaged()
                 ? configured!=null&&configured.providerTokenPresent(node) : node.isProviderCredentialConfigured())
             && node.getProviderInstanceId() != null && !node.getProviderInstanceId().isEmpty();
+    }
+    @javax.annotation.PostConstruct
+    public void validateOfficialMode() {
+        if(billing!=null&&billing.getMode()!=null&&officialControl!=null
+            &&officialControl!=(billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID))
+            throw new IllegalStateException("external-billing.mode 与旧 official-autodl-control.enabled 冲突，请移除旧开关");
+        if(billing!=null&&billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID&&billingPolicy!=null) {
+            int budget=billingPolicy.checkedStopBudgetSeconds(billing.getVerifiedProviderStopSeconds());
+            if(billing.getHoldStopLeadSeconds()<budget||billing.getSettlementIntervalSeconds()<1)
+                throw new IllegalStateException("PAID 模式停机提前量未覆盖 billing-policy.stop-budget-seconds，或结算周期无效");
+        }
+        if(billing!=null&&billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID&&configured!=null) {
+            for(ComputeNode node:configured.published())if(configured.official(node)) {
+                if(!Long.valueOf(-6000L).equals(node.getId())||!"official-autodl".equals(node.getConfigurationCode())
+                    ||!configured.providerTokenPresent(node)||!"VLS_FIXED".equals(node.getPricePolicy())||node.getUserHourlyPrice()==null)
+                    throw new IllegalStateException("PAID 模式的官方 AutoDL 资源缺少匹配的实例控制身份或固定价格，请检查 company-resources 配置");
+                if(officialControlInstanceId!=null&&!officialControlInstanceId.isEmpty()&&!officialControlInstanceId.equals(node.getProviderInstanceId()))
+                    throw new IllegalStateException("旧 official-autodl-control.instance-id 与当前官方资源不一致，请移除旧配置并核对实例");
+            }
+        }
     }
     @Override public void submit(ComputeNode node, String action, String operationId) {
         if (!"start".equals(action) && !"stop".equals(action)) throw new IllegalArgumentException("Unsupported power action");
@@ -96,16 +125,28 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         return data;
     }
     private static String safeIdentifier(String value) { return value!=null && value.matches("[A-Za-z0-9_-]{1,100}")?value:null; }
+    /** Explicit administrative read, independent of paid power admission. No inventory,
+     * snapshot, boot or stop is reachable from this method. */
+    Snapshot reconciliationStatus(ComputeNode node) {
+        if(configured==null || !Long.valueOf(-6000L).equals(node.getId()) || !"official-autodl".equals(node.getConfigurationCode())
+            || node.getProviderInstanceId()==null || !node.getProviderInstanceId().matches("pro-[a-f0-9]{12}"))
+            throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
+        configured.verifyOfficial(node);
+        return configuredStatus(call(node,HttpMethod.GET,"status",body(node),true));
+    }
+    private Snapshot configuredStatus(JsonNode state) {
+        String raw=state.isTextual()?state.asText():"";
+        String power="running".equals(raw)?"RUNNING":"shutdown".equals(raw)?"STOPPED":"starting".equals(raw)?"STARTING":"shutting_down".equals(raw)?"STOPPING":"UNKNOWN";
+        Snapshot direct=new Snapshot(power,"UNKNOWN","AutoDL Pro 指定实例状态；磁盘保留费用独立");
+        if("STOPPED".equals(power))direct.stoppedMode="AUTODL_PRO_PHYSICAL_STOPPED";
+        return direct;
+    }
     @Override public Snapshot status(ComputeNode node) {
         JsonNode state = call(node, HttpMethod.GET, "status", body(node));
         // Real Pro GET endpoints bind instance_uuid from the query, despite the
         // public guide's request-body example. Exact target status needs no inventory enumeration.
         if(node.isConfigurationManaged()) {
-            String raw=state.isTextual()?state.asText():"";
-            String power="running".equals(raw)?"RUNNING":"shutdown".equals(raw)?"STOPPED":"starting".equals(raw)?"STARTING":"shutting_down".equals(raw)?"STOPPING":"UNKNOWN";
-            Snapshot direct=new Snapshot(power,"UNKNOWN","AutoDL Pro 指定实例状态；磁盘保留费用独立");
-            if("STOPPED".equals(power))direct.stoppedMode="AUTODL_PRO_PHYSICAL_STOPPED";
-            return direct;
+            return configuredStatus(state);
         }
         // The documented list owns charge_type/req_gpu_amount. Snapshot is not their
         // contract and contains unrelated SSH/Jupyter secrets; do not fetch it here.
@@ -153,7 +194,13 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
     JsonNode connectionSnapshot(ComputeNode node) { return call(node,HttpMethod.GET,"snapshot",body(node)); }
     private Map<String,Object> body(ComputeNode node) { Map<String,Object> body = new LinkedHashMap<>(); body.put("instance_uuid", node.getProviderInstanceId()); return body; }
     private JsonNode call(ComputeNode node, HttpMethod method, String path, Map<String,Object> body) {
-        if (!supports(node)) throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
+        return call(node,method,path,body,false);
+    }
+    private JsonNode call(ComputeNode node, HttpMethod method, String path, Map<String,Object> body, boolean reconciliation) {
+        if(reconciliation) {
+            if(method!=HttpMethod.GET || !"status".equals(path) || configured==null)throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
+            configured.verifyOfficial(node);
+        } else if (!supports(node)) throw new ComputeProviderException(ComputeProviderException.Kind.AUTHORIZATION);
         try {
             String token = node.isConfigurationManaged() ? configured.providerToken(node)
                 : json.readTree(cipher.decrypt(node.getProviderCredentialCipher())).path("token").asText();
@@ -162,16 +209,35 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
             String url=BASE+path;
             String requestBody=json.writeValueAsString(body);
             if(method==HttpMethod.GET){url+="?instance_uuid="+java.net.URLEncoder.encode(node.getProviderInstanceId(),"UTF-8");requestBody=null;}
-            String response = http.exchange(url, method, new HttpEntity<>(requestBody, headers), String.class).getBody();
-            if (response == null || response.length() > 1024 * 1024) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN);
+            ResponseEntity<String> reply = http.exchange(url, method, new HttpEntity<>(requestBody, headers), String.class);
+            String response = reply.getBody();
+            if (response == null || response.length() > 1024 * 1024) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN, reply.getStatusCodeValue(), "EMPTY_RESPONSE");
             JsonNode envelope = json.readTree(response);
-            if (!"Success".equals(envelope.path("code").asText())) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN);
+            if (!"Success".equals(envelope.path("code").asText())) {
+                // No raw vendor code/message/body reaches logs: these responses may
+                // contain credentials. Generic BadRequest is not a no-power proof.
+                String code=envelope.path("code").asText();
+                String category="BadRequest".equals(code)?"BUSINESS_BAD_REQUEST":
+                    ("Unauthorized".equals(code)||"Forbidden".equals(code))?"BUSINESS_AUTHORIZATION":
+                    "NotFound".equals(code)?"BUSINESS_NOT_FOUND":"BUSINESS_OTHER";
+                throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,reply.getStatusCodeValue(),category);
+            }
             return envelope.path("data");
         } catch (ComputeProviderException e) { throw e; }
         catch (HttpStatusCodeException e) {
             throw new ComputeProviderException(e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.FORBIDDEN
-                ? ComputeProviderException.Kind.AUTHORIZATION : ComputeProviderException.Kind.UNKNOWN);
-        } catch (Exception e) { throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN); }
+                ? ComputeProviderException.Kind.AUTHORIZATION : ComputeProviderException.Kind.UNKNOWN,e.getRawStatusCode(),"HTTP_ERROR");
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,"INVALID_RESPONSE");
+        } catch (Exception e) { throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,transportDiagnostic(e)); }
+    }
+    private static String transportDiagnostic(Throwable failure) {
+        for(Throwable e=failure;e!=null;e=e.getCause()) {
+            if(e instanceof java.net.SocketTimeoutException||e instanceof org.apache.http.conn.ConnectTimeoutException)return "TIMEOUT";
+            if(e instanceof java.net.UnknownHostException)return "DNS";
+            if(e instanceof javax.net.ssl.SSLException)return "TLS";
+        }
+        return "TRANSPORT";
     }
     static String safeLabel(String value) { return value != null && value.matches("[a-zA-Z0-9_-]{1,30}") ? value : null; }
 }

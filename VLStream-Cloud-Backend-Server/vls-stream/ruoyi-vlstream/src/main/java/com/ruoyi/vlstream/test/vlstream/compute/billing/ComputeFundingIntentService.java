@@ -28,6 +28,8 @@ public class ComputeFundingIntentService {
     public static final String RECEIPT_UNVERIFIED = "RECEIPT_UNVERIFIED";
     public static final String OPERATION_CONFIRMED = "OPERATION_CONFIRMED";
     public static final String CONFLICT = "CONFLICT";
+    public static final String EXTERNAL_RELEASE_ADOPTED = "EXTERNAL_RELEASE_ADOPTED";
+    public static final String ADOPTED_RELEASE_CONTRACT = "ADOPTED_RELEASE_V1";
     private static final String BASE = "/api/v1/external-billing/holds";
     private static final String CURRENT_CONTRACT = "HOLDS_V3";
     private final JdbcTemplate jdbc;
@@ -167,7 +169,6 @@ public class ComputeFundingIntentService {
             Intent hold = checked(session, row(holdIntentId));
             requireHash(hold, expectedRequestHash);
             if (!"HOLD".equals(hold.operation)) throw new IllegalArgumentException("Hold detail must bind the original hold intent");
-            if (CONFLICT.equals(hold.state)) return hold;
             ObjectNode canonical = canonicalDetail(detail);
             String evidence = canonical.toString();
             if (!hold.reference.equals(detail.merchantHoldId) || !hold.payerUserId.equals(detail.userId)
@@ -177,6 +178,20 @@ public class ComputeFundingIntentService {
             }
             List<Map<String, Object>> previous = jdbc.queryForList("SELECT * FROM vls_compute_funding_hold_observation WHERE hold_intent_id=? FOR UPDATE", hold.id);
             long version = ExactQuota.integer(detail.balanceVersion, false).longValueExact();
+            if (CONFLICT.equals(hold.state)) {
+                // Repair only the old false-positive clock transition. Counter,
+                // ownership and operation conflicts remain quarantined. The stop
+                // request remains set, so recovery cannot silently restart work.
+                if (!"HOLD_VERSION_CONFLICT".equals(text(row(hold.id),"error_code")) || previous.size() != 1
+                    || !"HOLD_VERSION_CONFLICT".equals(text(session, "risk_code"))) return hold;
+                Map<String,Object> prior=previous.get(0);
+                if (text(prior,"conflicting_detail_json")==null || version != number(prior,"balance_version")
+                    || !derivedExpiry(parse(text(prior,"detail_json")),parse(text(prior,"conflicting_detail_json")))
+                    || !derivedExpiry(parse(text(prior,"detail_json")),canonical)) return hold;
+                jdbc.update("UPDATE vls_compute_funding_intent SET state=?,error_code='HOLD_DETAIL_OBSERVED' WHERE intent_id=?",DETAIL_OBSERVED,hold.id);
+                jdbc.update("UPDATE vls_compute_billing_session SET risk_code=NULL WHERE usage_id=? AND risk_code='HOLD_VERSION_CONFLICT'",usageId);
+                hold=checked(session,row(hold.id));
+            }
             if (previous.isEmpty() && !requiredText(parse(hold.body), "hold_quota").equals(detail.holdQuota))
                 return conflict(session, hold, "HOLD_INITIAL_AMOUNT_MISMATCH", evidence);
             if (!previous.isEmpty()) {
@@ -184,6 +199,14 @@ public class ComputeFundingIntentService {
                 if (version < number(prior, "balance_version")) return hold;
                 if (version == number(prior, "balance_version")) {
                     if (!evidence.equals(text(prior, "detail_json"))) {
+                        // EXPIRED is derived from the clock, not a balance mutation. The
+                        // upstream may expose it without incrementing balance_version.
+                        // Every identity, amount and expiry must still be byte-for-byte equal.
+                        if (derivedExpiry(parse(text(prior,"detail_json")),canonical)) {
+                            jdbc.update("UPDATE vls_compute_funding_hold_observation SET hold_status='EXPIRED',detail_json=?,detail_hash=?,query_started_at_ms=?,observed_at_ms=? WHERE hold_intent_id=?",
+                                evidence, ComputeBillingSettlementService.hash(evidence), Math.max(queryStartedAtMs, number(prior, "query_started_at_ms")), System.currentTimeMillis(), hold.id);
+                            return hold;
+                        }
                         jdbc.update("UPDATE vls_compute_funding_hold_observation SET conflicting_detail_json=? WHERE hold_intent_id=?", evidence, hold.id);
                         return conflict(session, hold, "HOLD_VERSION_CONFLICT", evidence);
                     }
@@ -207,6 +230,14 @@ public class ComputeFundingIntentService {
                 hold.id, detail.holdId, ExactQuota.integer(detail.expiresAt, true).longValueExact(), usageId);
             return checked(session, row(hold.id));
         });
+    }
+
+    private boolean derivedExpiry(JsonNode previous,JsonNode current) {
+        if(previous==null||!previous.isObject()||current==null||!current.isObject())return false;
+        String status=previous.path("hold_status").asText();
+        if(!("ACTIVE".equals(status)||"PARTIALLY_CAPTURED".equals(status))||!"EXPIRED".equals(current.path("hold_status").asText()))return false;
+        ObjectNode expected=((ObjectNode)previous).deepCopy();expected.put("hold_status","EXPIRED");
+        return expected.equals(current)&&System.currentTimeMillis()>=ExactQuota.integer(current.path("expires_at").asText(),true).longValueExact();
     }
 
     /** Resource counters cannot establish whether one particular TOPUP/RELEASE committed.
@@ -452,6 +483,7 @@ public class ComputeFundingIntentService {
 
     private Intent checked(Map<String, Object> session, Map<String, Object> row) {
         Intent intent = new Intent(row);
+        if (ADOPTED_RELEASE_CONTRACT.equals(intent.contractVersion)) return checkedAdopted(session, intent);
         if (!intent.usageId.equals(text(session, "usage_id")) || !intent.merchantId.equals(text(session, "merchant_id"))
             || !intent.payerUserId.equals(text(session, "payer_user_id")) || !intent.key.matches("[0-9a-f-]{36}")
             || !ComputeBillingSettlementService.hash(intent.body).equals(intent.requestHash))
@@ -519,6 +551,35 @@ public class ComputeFundingIntentService {
         }
         if (OPERATION_CONFIRMED.equals(intent.state) && ("HOLD".equals(intent.operation) || !CURRENT_CONTRACT.equals(intent.contractVersion)))
             throw new IllegalStateException("Invalid confirmed funding operation");
+        return intent;
+    }
+
+    /** A quarantined parent is intentionally preserved. Imported proofs are never dispatchable.
+     * Non-UUID keys are accepted only for this terminal, independently audited contract. */
+    private Intent checkedAdopted(Map<String,Object> session, Intent intent) {
+        if (!EXTERNAL_RELEASE_ADOPTED.equals(intent.state) || !"RELEASE".equals(intent.operation)
+            || !intent.usageId.equals(text(session,"usage_id")) || !intent.merchantId.equals(text(session,"merchant_id"))
+            || !intent.payerUserId.equals(text(session,"payer_user_id")) || !intent.key.matches("[A-Za-z0-9][A-Za-z0-9._:-]{0,79}")
+            || !ComputeBillingSettlementService.hash(intent.body).equals(intent.requestHash) || intent.receipt==null)
+            throw new IllegalStateException("Invalid adopted release integrity/state");
+        Intent parent=checked(session,row(intent.parentId));
+        JsonNode audit=parse(intent.receipt), original=parse(intent.body);
+        FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(audit.path("release_receipt"));
+        FundingContracts.HoldDetail detail=FundingContracts.holdDetail(audit.path("authority").path("hold"));
+        JsonNode operation=audit.path("authority").path("operation");
+        if (!"HOLD".equals(parent.operation) || !CONFLICT.equals(parent.state) || !parent.holdId.equals(intent.holdId)
+            || !intent.path.equals(BASE+"/"+parent.holdId+"/release") || !intent.reference.equals("vls-release:"+intent.usageId+":final")
+            || !FundingContracts.release(intent.merchantId,intent.reference,intent.payerUserId,requiredText(original,"release_quota")).toString().equals(intent.body)
+            || !com.ruoyi.common.helper.LoginHelper.isAdmin(audit.path("administrator").asText())
+            || !text(session,"tenant_id").equals(audit.path("tenant_id").asText()) || !audit.path("reason").asText().matches("[A-Z][A-Z0-9_]{0,63}")
+            || !intent.holdId.equals(receipt.holdId) || !detail.holdId.equals(intent.holdId) || !parent.reference.equals(detail.merchantHoldId)
+            || !intent.payerUserId.equals(detail.userId) || !"0".equals(detail.remainingQuota) || !"0".equals(detail.capturedQuota)
+            || !"RELEASED".equals(detail.holdStatus) || !detail.holdQuota.equals(detail.releasedQuota)
+            || !detail.releasedQuota.equals(receipt.releasedQuota) || !detail.releasedQuota.equals(original.path("release_quota").asText())
+            || !"0".equals(receipt.remainingQuota) || !"0".equals(receipt.heldQuota) || !"RELEASED".equals(receipt.holdStatus)
+            || !intent.key.equals(operation.path("idempotency_key").asText()) || !"SUCCEEDED".equals(operation.path("status").asText())
+            || !intent.holdId.equals(operation.path("hold_id").asText()) || !intent.payerUserId.equals(operation.path("user_id").asText()))
+            throw new IllegalStateException("Invalid adopted release association/evidence");
         return intent;
     }
 

@@ -14,6 +14,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * No API retry token is assumed: after SUBMITTED, only status queries are automatic. */
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class ConfiguredPaidPowerService {
     @org.springframework.beans.factory.annotation.Autowired
     private ComputeBillingTrialGuard trialGuard;
@@ -60,6 +61,8 @@ public class ConfiguredPaidPowerService {
                 supplier.submit(verified,stop?"stop":"start",operation);
                 jdbc.update("UPDATE vls_compute_paid_run SET "+column+"='ACCEPTED',error_code=NULL WHERE run_id=? AND "+column+"='SUBMITTED'",id);
             } catch(ComputeProviderException rejected) {
+                log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={}",
+                    id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic());
                 if(!stop&&rejected.getKind()!=ComputeProviderException.Kind.UNKNOWN) {
                     jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='REJECTED',error_code='START_REJECTED' WHERE run_id=?",id);
                     ledger.startFailed(usage);configured.cancelled(verified);return;
@@ -97,7 +100,16 @@ public class ConfiguredPaidPowerService {
             if(runtimeSsh!=null)runtimeSsh.clear(verified);
             if(usageRow.get("billing_start_at")==null) {
                 Instant start=validStartEvent(run,observed,now);
-                if(start==null||observed.providerStoppedAt==null||observed.providerStoppedAt.isBefore(start))return;
+                if(start==null||observed.providerStoppedAt==null||observed.providerStoppedAt.isBefore(start)) {
+                    // A plain stopped observation cannot resolve an unknown start.
+                    // An acknowledged original stop followed by physical shutdown
+                    // does resolve current control. No observed running interval
+                    // means there is no evidence from which to invent a debit.
+                    if(stop&&"ACCEPTED".equals(text(run,"power_stop_state"))&&run.get("power_stop_attempt_ms") instanceof Number) {
+                        jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED' WHERE id=? AND billing_start_at IS NULL AND state IN ('RESERVED','RECONCILE')",usage);
+                    }
+                    return;
+                }
                 ledger.confirmedRunning(usage,now,start,"PROVIDER_EVENT");
                 usageRow=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
             }

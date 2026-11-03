@@ -9,6 +9,7 @@ import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePlatformAuthorization;
 import com.ruoyi.web.controller.compat.BladeTokenUserStore;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -18,6 +19,7 @@ import java.util.Objects;
 /** Reuses the existing gateway and bound multi-tenant session. No new token/user persistence. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ComputePlatformAuthorizationService implements ComputePlatformAuthorization {
     private final PlatformTenantClient client;
     private final PlatformTenantSessionStore sessions;
@@ -73,6 +75,17 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
             request.setAttribute(ATTRIBUTE,result); return result;
         } catch (Exception e) {
             // Never echo upstream messages, URLs, credentials or exception causes.
+            if (e instanceof PlatformTenantCallException) {
+                PlatformTenantCallException failure = (PlatformTenantCallException) e;
+                Throwable cause = failure.getCause();
+                String transport = cause instanceof java.net.SocketTimeoutException ? "TIMEOUT"
+                    : cause instanceof java.net.UnknownHostException ? "DNS"
+                    : cause instanceof javax.net.ssl.SSLException ? "TLS" : "UNCLASSIFIED";
+                log.warn("Compute platform verification failed: kind={}, http={}, business={}, transport={}",
+                    failure.getKind(), failure.getHttpStatus(), failure.getBusinessCode(), transport);
+            } else {
+                log.warn("Compute platform verification failed: kind=UNCLASSIFIED");
+            }
             return deny(result,"UNAVAILABLE","平台授权无法确认（可能已失效或服务不可用），请重新授权或稍后重试");
         }
     }

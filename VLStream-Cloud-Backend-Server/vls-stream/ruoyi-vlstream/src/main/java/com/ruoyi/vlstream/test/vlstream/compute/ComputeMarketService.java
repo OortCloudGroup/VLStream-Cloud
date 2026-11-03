@@ -86,6 +86,7 @@ public class ComputeMarketService {
         private String actualStoppedMode;
         private String providerChargeType;
         private boolean paidAdmissionEnabled;
+        private String paidUnavailableReason;
     }
 
     public List<Resource> list(boolean selection) {
@@ -132,6 +133,7 @@ public class ComputeMarketService {
                 boolean configured=billingProperties!=null&&billingProperties.isEnabled()&&billingProperties.isAllowWrites()&&billingProperties.isSafetyStopEnabled()&&billingProperties.isPaidAdmissionEnabled()
                     &&(nodes.officialConfigured(node)?"VLS_FIXED".equals(node.getPricePolicy())&&node.getUserHourlyPrice()!=null:billingProperties.getRates().containsKey(String.valueOf(node.getId())));
                 resource.setPaidAdmissionEnabled(configured);
+                if(!configured)resource.setPaidUnavailableReason(billingProperties==null?"平台计费配置不可用":billingProperties.unavailableReason()==null?"实例固定价格或计费报价未配置":billingProperties.unavailableReason());
                 ComputePaidRunService paid=paidRuns==null?null:paidRuns.getIfAvailable();
                 resource.setSchedulable(configured&&paid!=null&&"MINE".equals(claim)&&ComputeAvailability.ready(node,now)&&paid.trainingAvailable(node));
             }
