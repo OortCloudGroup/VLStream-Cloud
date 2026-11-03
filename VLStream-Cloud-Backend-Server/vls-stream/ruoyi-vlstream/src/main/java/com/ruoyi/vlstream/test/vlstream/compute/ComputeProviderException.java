@@ -6,14 +6,21 @@ public class ComputeProviderException extends RuntimeException {
     private final Kind kind;
     private final Integer httpStatus;
     private final String diagnostic;
+    private final String providerRequestId;
     public ComputeProviderException(Kind kind) { this(kind, null, "UNCLASSIFIED"); }
     public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic) {
+        this(kind, httpStatus, diagnostic, null);
+    }
+    public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic, String providerRequestId) {
         super(message(kind)); this.kind = kind; this.httpStatus = httpStatus;
         this.diagnostic = diagnostic != null && diagnostic.matches("(?:UNCLASSIFIED|BUSINESS_(?:BAD_REQUEST|AUTHORIZATION|NOT_FOUND|OTHER)|HTTP_ERROR|EMPTY_RESPONSE|INVALID_RESPONSE|TIMEOUT|DNS|TLS|TRANSPORT)") ? diagnostic : "UNCLASSIFIED";
+        // AutoDL documents an opaque hexadecimal request_id for supplier-side tracing.
+        this.providerRequestId = providerRequestId != null && providerRequestId.matches("[a-fA-F0-9]{16,64}") ? providerRequestId : null;
     }
     public Kind getKind() { return kind; }
     public Integer getHttpStatus() { return httpStatus; }
     public String getDiagnostic() { return diagnostic; }
+    public String getProviderRequestId() { return providerRequestId; }
     public static Kind aliyunKind(String code) {
         if ("InvalidAccessKeyId.NotFound".equals(code) || "SignatureDoesNotMatch".equals(code)
             || "Forbidden.RAM".equals(code) || "Forbidden".equals(code)) return Kind.AUTHORIZATION;

@@ -215,12 +215,13 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
             JsonNode envelope = json.readTree(response);
             if (!"Success".equals(envelope.path("code").asText())) {
                 // No raw vendor code/message/body reaches logs: these responses may
-                // contain credentials. Generic BadRequest is not a no-power proof.
+                // contain credentials. Only the documented, bounded request_id can be
+                // retained for tracing. Generic BadRequest is not a no-power proof.
                 String code=envelope.path("code").asText();
                 String category="BadRequest".equals(code)?"BUSINESS_BAD_REQUEST":
                     ("Unauthorized".equals(code)||"Forbidden".equals(code))?"BUSINESS_AUTHORIZATION":
                     "NotFound".equals(code)?"BUSINESS_NOT_FOUND":"BUSINESS_OTHER";
-                throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,reply.getStatusCodeValue(),category);
+                throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,reply.getStatusCodeValue(),category,safeRequestId(envelope,token));
             }
             return envelope.path("data");
         } catch (ComputeProviderException e) { throw e; }
@@ -230,6 +231,15 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,"INVALID_RESPONSE");
         } catch (Exception e) { throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,transportDiagnostic(e)); }
+    }
+    private static String safeRequestId(JsonNode envelope,String token) {
+        JsonNode field=envelope.path("request_id");
+        if(!field.isTextual())return null;
+        String value=field.textValue();
+        // A malformed response must not turn an echoed authorization token into a trace ID.
+        if(!value.matches("[a-fA-F0-9]{16,64}"))return null;
+        String lower=value.toLowerCase(java.util.Locale.ROOT),credential=token.toLowerCase(java.util.Locale.ROOT);
+        return credential.contains(lower) || lower.contains(credential) ? null : value;
     }
     private static String transportDiagnostic(Throwable failure) {
         for(Throwable e=failure;e!=null;e=e.getCause()) {

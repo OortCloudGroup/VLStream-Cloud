@@ -61,8 +61,8 @@ public class ConfiguredPaidPowerService {
                 supplier.submit(verified,stop?"stop":"start",operation);
                 jdbc.update("UPDATE vls_compute_paid_run SET "+column+"='ACCEPTED',error_code=NULL WHERE run_id=? AND "+column+"='SUBMITTED'",id);
             } catch(ComputeProviderException rejected) {
-                log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={}",
-                    id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic());
+                log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={} providerRequestId={}",
+                    id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic(),rejected.getProviderRequestId());
                 if(!stop&&rejected.getKind()!=ComputeProviderException.Kind.UNKNOWN) {
                     jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='REJECTED',error_code='START_REJECTED' WHERE run_id=?",id);
                     ledger.startFailed(usage);configured.cancelled(verified);return;
