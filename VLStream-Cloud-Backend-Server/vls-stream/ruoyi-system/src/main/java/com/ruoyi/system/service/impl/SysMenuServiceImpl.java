@@ -19,6 +19,8 @@ import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.helper.LoginHelper;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.service.DefaultMemberRoleService;
 import com.ruoyi.common.utils.StreamUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.TreeBuildUtils;
@@ -216,11 +218,29 @@ public class SysMenuServiceImpl implements ISysMenuService {
         if (CollUtil.isEmpty(menus)) {
             return CollUtil.newArrayList();
         }
-        return TreeBuildUtils.build(menus, (menu, tree) ->
+        Map<String, String> parents = new HashMap<>();
+        for (SysMenu menu : menus) {
+            parents.put(String.valueOf(menu.getMenuId()), menu.getParentId());
+        }
+        return cn.hutool.core.lang.tree.TreeUtil.build(menus, "0", TreeBuildUtils.DEFAULT_CONFIG, (menu, tree) ->
             tree.setId(String.valueOf(menu.getMenuId()))
-                .setParentId(menu.getParentId())
+                .setParentId(treeParent(String.valueOf(menu.getMenuId()), parents))
                 .setName(menu.getMenuName())
                 .setWeight(menu.getOrderNum()));
+    }
+
+    private String treeParent(String id, Map<String, String> parents) {
+        String parent = parents.get(id);
+        Set<String> visited = new HashSet<>();
+        visited.add(id);
+        String cursor = parent;
+        while (cursor != null && !"0".equals(cursor)) {
+            if (!parents.containsKey(cursor) || !visited.add(cursor)) {
+                return "0";
+            }
+            cursor = parents.get(cursor);
+        }
+        return parent == null ? "0" : parent;
     }
 
     /**
@@ -275,6 +295,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
      */
     @Override
     public int updateMenu(SysMenu menu) {
+        checkMenuMutable(menu.getMenuId());
         return baseMapper.updateById(menu);
     }
 
@@ -286,7 +307,21 @@ public class SysMenuServiceImpl implements ISysMenuService {
      */
     @Override
     public int deleteMenuById(Long menuId) {
+        checkMenuMutable(menuId);
         return baseMapper.deleteById(menuId);
+    }
+
+    private void checkMenuMutable(Long menuId) {
+        SysMenu existing = baseMapper.selectById(menuId);
+        if (existing == null) {
+            throw new ServiceException("菜单不存在");
+        }
+        String permission = existing.getPerms();
+        if (DefaultMemberRoleService.BASIC_MENU_PERMISSIONS.contains(permission)
+            || DefaultMemberRoleService.BUSINESS_PERMISSIONS.contains(permission)
+            || DefaultMemberRoleService.COMPATIBLE_PAGE_PERMISSIONS.contains(permission)) {
+            throw new ServiceException("系统内置菜单由初始化迁移维护，请通过角色授权控制访问");
+        }
     }
 
     /**

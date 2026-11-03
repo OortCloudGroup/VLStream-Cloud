@@ -2,7 +2,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdtempSync, readFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -41,7 +40,7 @@ const server = await createServer({ root, configFile: false, base: '/bus/vls-ui/
         if (normalized.endsWith(suffix)) return mocks[mock]
       }
     } }],
-  cacheDir: mkdtempSync(path.join(tmpdir(), 'vls-session-test-')), logLevel: 'error',
+  cacheDir: mkdtempSync(path.join(root, '../../codex/menu-flyway-20261102/vls-session-test-')), logLevel: 'error',
   server: { middlewareMode: true, hmr: false }, appType: 'custom' })
 let checks = 0
 const check = (condition, message) => { assert.ok(condition, message); checks++ }
@@ -57,6 +56,13 @@ try {
   const platform = await server.ssrLoadModule('/src/utils/platformSession.js')
   const localEvents = await server.ssrLoadModule('/src/utils/localEventAccess.mjs')
   const { stripAuthCallbackParams } = await server.ssrLoadModule('/src/utils/authCallbackParams.mjs')
+  const menuAccess = await server.ssrLoadModule('/src/utils/menuAccess.mjs')
+  const menuAccessState = await server.ssrLoadModule('/src/utils/menuAccessState.js')
+  menuAccessState.setMenuPermissions({ isAdmin: true, user: { userId: '1' }, permissions: ['*:*:*'] })
+  check(menuAccessState.menuIsSystemAdmin.value, 'user 1 cannot configure its role menu')
+  menuAccessState.setMenuPermissions({ isAdmin: false, user: { userId: '7' }, permissions: ['*:*:*'] })
+  check(!menuAccessState.menuIsSystemAdmin.value, 'wildcard without user 1 incorrectly unlocks role 1')
+  menuAccessState.clearMenuPermissions()
   const { ElMessage } = await server.ssrLoadModule('\0mock:element-plus')
   expiry.installSessionMessageGuard(ElMessage)
   const clients = [vls.default, vls.authRequest, vls.imageUploadRequest, wvp, service]
@@ -226,10 +232,11 @@ try {
   managerForGuard.hasPlatformCallbackToken = () => false
   let guard
   const routerStub = { beforeEach: value => { guard = value }, resolve: fullPath => ({ fullPath, path: fullPath.split('?')[0], query: {}, hash: '' }) }
-  new Function('router', 'authManager', 'stripAuthCallbackParams', 'consumeCapturedModelHubCallback', 'logSafeRequestError', 'safeAuthReturnPath', 'beginAuthCheck', 'failAuthCheck', 'selectRouteAuthScope', 'isLocalEventRoute',
+  new Function('router', 'authManager', 'stripAuthCallbackParams', 'consumeCapturedModelHubCallback', 'logSafeRequestError', 'safeAuthReturnPath', 'beginAuthCheck', 'failAuthCheck', 'selectRouteAuthScope', 'isLocalEventRoute', 'canAccessPage', 'setMenuPermissions', 'clearMenuPermissions', 'ElMessage', 'translatePhrase',
     guardSource)(routerStub, managerForGuard, stripAuthCallbackParams, () => false, () => {}, redirects.safeAuthReturnPath,
-    authCheckState.beginAuthCheck, authCheckState.failAuthCheck, localEvents.selectRouteAuthScope, localEvents.isLocalEventRoute)
-  const route = { path: '/workspace', fullPath: '/workspace', meta: { requiresAuth: true } }
+    authCheckState.beginAuthCheck, authCheckState.failAuthCheck, localEvents.selectRouteAuthScope, localEvents.isLocalEventRoute,
+    menuAccess.canAccessPage, menuAccessState.setMenuPermissions, menuAccessState.clearMenuPermissions, ElMessage, value => value)
+  const route = { path: '/workspace', fullPath: '/workspace', matched: [{ path: '/workspace' }], meta: { requiresAuth: true } }
   identity()
   vls.authRequest.defaults.adapter = adapter({ code: 503 }, 503)
   let nextResult
@@ -245,8 +252,110 @@ try {
   check(nextResult === false && authCheckState.authCheckFailed.value && authCheckState.authCheckRetryPath.value === '/workspace'
     && vls.getLocalSessionToken() === 'fixture-local' && !sessionTestRedirects.length, 'ambiguous validation 500 leaves a blank route or forces login')
 
+  // Real Axios user-info response shape supplies the route and menu permission state.
+  const computeRoute = { path: '/compute-market', fullPath: '/compute-market',
+    matched: [{ path: '/compute-market' }], meta: { requiresAuth: true } }
+  const roleRoute = { path: '/system/roles', fullPath: '/system/roles',
+    matched: [{ path: '/system/roles' }], meta: { requiresAuth: true } }
+  for (const mode of ['single', 'multi']) {
+    identity(mode)
+    const calls = []
+    vls.authRequest.defaults.adapter = async config => {
+      calls.push(config.url)
+      const data = config.url.endsWith('/mode') ? { tenantType: mode }
+        : config.url.endsWith('/user/info') ? { user: { tenantId: 'fixture-tenant' }, permissions: ['vls:menu:compute-market'] }
+          : {}
+      return { config, status: 200, headers: {}, data: { code: 200, data } }
+    }
+    nextResult = 'not called'
+    await guard(computeRoute, route, value => { nextResult = value })
+    check(nextResult === undefined && menuAccessState.menuPermissions.value.includes('vls:menu:compute-market')
+      && calls.some(url => url.endsWith('/user/info')), mode + ' real user-info permissions did not allow page')
+    await guard(roleRoute, computeRoute, value => { nextResult = value })
+    check(nextResult?.path === '/workspace' && vls.getLocalSessionToken() === 'fixture-local', mode + ' denied route did not preserve session')
+  }
+
+  // A callback/exchange can return identity without permissions. Fetch the newly
+  // established session's actual user-info rather than denying it prematurely.
+  identity('multi')
+  managerForGuard.checkExternalPlatformLogin = async () => ({ tenantId: 'fixture-tenant' })
+  const callbackCalls = []
+  vls.authRequest.defaults.adapter = async config => {
+    callbackCalls.push(config.url)
+    assert.equal(config.headers.get('Authorization'), 'Bearer fixture-local')
+    return { config, status: 200, headers: {}, data: { code: 200,
+      data: { user: { tenantId: 'fixture-tenant' }, permissions: ['vls:menu:compute-market'] } } }
+  }
+  nextResult = 'not called'
+  await guard(computeRoute, route, value => { nextResult = value })
+  check(nextResult === undefined && callbackCalls.length === 1 && callbackCalls[0].endsWith('/user/info'),
+    'SSO exchange without permissions did not verify new session')
+  delete managerForGuard.checkExternalPlatformLogin
+
+  identity('multi')
+  delete managerForGuard.hasPlatformCallbackToken
+  window.location.href = 'https://fixture.invalid:9443/bus/vls-ui/compute-market?accessToken=fixture-callback&tenantId=fixture-tenant'
+  window.history = { replaceState: (_state, _title, url) => { window.location.href = new URL(url, window.location.origin).toString() } }
+  const realCallbackCalls = []
+  vls.authRequest.defaults.adapter = async config => {
+    realCallbackCalls.push(config.url)
+    if (config.url.endsWith('/exchangeToken')) return { config, status: 200, headers: {}, data: { code: 200, data: {
+      accessToken: 'fixture-exchanged', platformAccessToken: 'fixture-callback', tenantId: 'fixture-tenant',
+      user: { userId: '7', tenantId: 'fixture-tenant' }
+    } } }
+    assert.equal(config.url, '/blade-system/user/info')
+    assert.equal(config.headers.get('Authorization'), 'Bearer fixture-exchanged')
+    return { config, status: 200, headers: {}, data: { code: 200, data: {
+      user: { userId: '7', tenantId: 'fixture-tenant' }, permissions: ['vls:menu:compute-market']
+    } } }
+  }
+  nextResult = 'not called'
+  await guard(computeRoute, route, value => { nextResult = value })
+  check(nextResult === undefined && realCallbackCalls[0].endsWith('/exchangeToken') && realCallbackCalls[1].endsWith('/user/info')
+    && vls.getLocalSessionToken() === 'fixture-exchanged' && !window.location.href.includes('accessToken='),
+  'actual SSO callback did not exchange, verify permissions and clean credentials')
+  managerForGuard.hasPlatformCallbackToken = () => false
+  window.location.href = 'https://fixture.invalid:9443/bus/vls-ui/workspace?tab=2#list'
+
+  identity('multi')
+  const switchedCalls = []
+  vls.authRequest.defaults.adapter = async config => {
+    switchedCalls.push(config.url)
+    const data = config.url.endsWith('/switchTenant')
+      ? { accessToken: 'fixture-switched', tenantId: 'tenant-switched', platformAccessToken: 'fixture-platform' }
+      : config.url.endsWith('/user/info')
+        ? { user: { tenantId: 'tenant-switched' }, permissions: ['vls:menu:data-management'] }
+        : config.url.endsWith('/mode') ? { tenantType: 'multi' } : {}
+    return { config, status: 200, headers: {}, data: { code: 200, data } }
+  }
+  check(await managerForGuard.switchTenant('tenant-switched'), 'trusted tenant switch failed')
+  const datasetRoute = { path: '/data-management', fullPath: '/data-management',
+    matched: [{ path: '/data-management' }], meta: { requiresAuth: true } }
+  nextResult = 'not called'
+  await guard(datasetRoute, route, value => { nextResult = value })
+  check(nextResult === undefined && menuAccessState.menuPermissions.value.includes('vls:menu:data-management')
+    && !menuAccessState.menuPermissions.value.includes('vls:menu:compute-market')
+    && switchedCalls.some(url => url.endsWith('/switchTenant')), 'tenant switch retained old permissions')
+
+  // An old permission response cannot replace the result after an identity switch.
+  identity('single')
+  let finishOldPermissions
+  vls.authRequest.defaults.adapter = async config => {
+    if (config.url.endsWith('/mode')) return { config, status: 200, headers: {}, data: { code: 200, data: { tenantType: 'single' } } }
+    return new Promise(resolve => { finishOldPermissions = () => resolve({ config, status: 200, headers: {},
+      data: { code: 200, data: { user: { tenantId: 'fixture-tenant' }, permissions: ['vls:menu:compute-market'] } } }) })
+  }
+  menuAccessState.setMenuPermissions({ permissions: ['new-session-permission'] })
+  const oldGuard = guard(computeRoute, route, value => { nextResult = value })
+  while (!finishOldPermissions) await new Promise(resolve => setTimeout(resolve, 0))
+  managerForGuard.saveUserToLocal({ accessToken: 'new-guard-login', tenantId: 'new-tenant' })
+  finishOldPermissions(); await oldGuard
+  check(nextResult === false && menuAccessState.menuPermissions.value.includes('new-session-permission'),
+    'late old identity permissions replaced a new session')
+
   // Local event navigation executes the real local user-info validation, without SSO polling.
   const eventRoute = { path: '/event-management', fullPath: '/event-management',
+    matched: [{ path: '/event-management' }],
     meta: { requiresAuth: true, authScope: localEvents.LOCAL_EVENT_AUTH_SCOPE } }
   check(routerSource.includes("meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE }"), 'event route lost its local auth scope')
   for (const platformToken of ['', 'fixture-expired-platform']) {
@@ -263,7 +372,7 @@ try {
       assert.equal(config.headers.get('Authorization'), 'Bearer fixture-local')
       assert.equal(config.headers.get('accesstoken'), 'fixture-local')
       assert.equal(config.headers.get('tenantId'), 'fixture-tenant')
-      return { config, status: 200, headers: {}, data: { code: 200, data: { user: { tenantId: 'fixture-tenant' } } } }
+      return { config, status: 200, headers: {}, data: { code: 200, data: { user: { tenantId: 'fixture-tenant' }, permissions: ['active-safety:events:list'] } } }
     }
     await guard(eventRoute, route, value => { nextResult = value })
     check(nextResult === undefined && !authCheckState.authCheckFailed.value && localEvents.isLocalEventScopeActive()

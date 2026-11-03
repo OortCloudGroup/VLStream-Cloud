@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmRepository;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@SaCheckPermission("vls:menu:algorithm-management")
 @RequestMapping("/vlsAlgorithmCatalog")
 public class AlgorithmCatalogController {
     private final AlgorithmCatalogService catalog;

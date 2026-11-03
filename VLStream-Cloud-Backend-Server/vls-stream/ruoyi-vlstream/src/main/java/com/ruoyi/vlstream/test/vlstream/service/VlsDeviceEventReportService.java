@@ -74,7 +74,8 @@ public class VlsDeviceEventReportService {
             JSONObject payload = new JSONObject();
             payload.set("device_id", deviceId); payload.set("device_tenant_id", device.getTenantId());
             payload.set("device_name", device.getDeviceName()); payload.set("device_tag", string(body, "device_tag"));
-            payload.set("name", string(body, "name")); payload.set("item", item); payload.set("describe", event.getEventDesc());
+            payload.set("name", string(body, "name")); payload.set("item", StringUtils.defaultIfBlank(item, string(body, "name")));
+            payload.set("describe", event.getEventDesc());
             payload.set("point", body.get("point")); payload.set("pics", pictures); payload.set("video", videos);
             event.setEventData(payload.toString());
             resolved.add(new ResolvedCameraEvent(event, device, payload));

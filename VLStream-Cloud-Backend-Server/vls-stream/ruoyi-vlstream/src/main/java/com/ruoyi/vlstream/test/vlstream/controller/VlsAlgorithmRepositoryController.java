@@ -47,6 +47,7 @@ import java.util.Map;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/vlsAlgorithmRepository")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-management")
 @Tag(name = "算法仓库表", description = "算法仓库表接口")
 public class VlsAlgorithmRepositoryController extends BladeController {
 

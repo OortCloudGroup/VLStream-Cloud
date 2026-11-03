@@ -331,12 +331,12 @@
               </el-tab-pane>
               <el-tab-pane :label="$tp('预置点')" name="presets" :disabled="!canPtzPreset">
                 <div style="display: flex; align-items: center;">
-                  <el-input style="width: 300px; margin-right: 10px;" v-model="presetName" :disabled="!canPtzPreset"
+                  <el-input style="width: 300px; margin-right: 10px;" v-model="presetName" :disabled="!canPtzPreset || presetBusy"
                             :placeholder="$tp('请输入预置点名称')"/>
-                  <el-button type="primary" @click="presetAdd" :disabled="!canPtzPreset">{{ $tp('添 加') }}</el-button>
+                  <el-button type="primary" @click="presetAdd" :disabled="!canPtzPreset || presetBusy">{{ $tp('添 加') }}</el-button>
                 </div>
                 <div style="margin-top: 10px;">
-                  <el-tag v-loading="showPresets" :closable="canPtzPreset" :aria-disabled="!canPtzPreset"
+                  <el-tag v-loading="showPresets" :closable="canPtzPreset && !presetBusy" :aria-disabled="!canPtzPreset || presetBusy"
                           :class="{ 'is-disabled': !canPtzPreset }" @close="closePresets(item)" @click="gotoPresets(item)"
                           :style="{ marginRight: '10px', cursor: canPtzPreset ? 'pointer' : 'not-allowed' }" v-for="item in optionsPresetsToken"
                           :key="item.token">{{ item.name }}
@@ -654,19 +654,17 @@ import { prepareOnvifAuthentication } from '@/utils/onvifAuthentication'
 import { onBeforeUnmount } from 'vue'
 import { createPtzHoldController } from '@/utils/onvifPtzHold'
 import { createPtzCapabilitiesController, canUsePtzMovement, canUsePtzPresets } from '@/utils/onvifPtzCapabilities'
+import { createOnvifDevicePresetApi } from '@/utils/onvifDevicePresets.mjs'
+import wvpRequest from '@/utils/wvpRequest'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import {
   addDevice, addOnvif,
-  addPreset,
   delDevice,
   getChannelToken,
   getDevice,
-  getGotoPreset,
-  getPresetList,
   getPtzCapabilities,
   listDevice,
-  removePreset,
   updateDevice, WSDiscovery
 } from "@/api/onvif/device";
 import Hikvision from "@/components/Hikvision/index.vue";
@@ -687,6 +685,7 @@ import {ptzControlUpEnd} from "../../../api/dahua/device.js";
 import { clacPXToVW } from "@/utils/wvpCompat";
 
 const {proxy} = getCurrentInstance();
+const presetApi = createOnvifDevicePresetApi(wvpRequest)
 
 const deviceList = ref([]);
 const open = ref(false);
@@ -697,6 +696,7 @@ const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
 const showPresets = ref(false);
+const presetBusy = ref(false);
 const showWS = ref(false);
 const total = ref(0);
 const title = ref("");
@@ -1023,34 +1023,31 @@ function presetContext() {
   const device = selectedOnvifDevice.value;
   return {
     session: ptzCapabilities.session(),
-    params: { ip: device.ip, username: device.userName, password: device.password, profileToken: token.value }
+    id: device.id
   };
 }
 
-const presetAdd = async () => {
+const performPreset = async (kind, value) => {
   const context = presetContext();
-  if (!context) return;
-  await addPreset({ ...context.params, presetToken: presetName.value });
-  if (!ptzCapabilities.isCurrent(context.session)) return;
-  await getAllPreset();
-  proxy.$modal.msgSuccess("操作成功");
+  if (!context || presetBusy.value || typeof value !== 'string' || !value.trim()) return;
+  presetBusy.value = true;
+  try {
+    await ptzHold.stop();
+    if (!ptzCapabilities.isCurrent(context.session)) return;
+    await presetApi[kind](context.id, value);
+    if (!ptzCapabilities.isCurrent(context.session)) return;
+    await getAllPreset();
+    proxy.$modal.msgSuccess("操作成功");
+  } catch (error) {
+    if (ptzCapabilities.isCurrent(context.session)) proxy.$modal.msgError('操作结果未确认，请刷新列表后检查');
+  } finally { presetBusy.value = false; }
 }
 
-const gotoPresets = async row => {
-  const context = presetContext();
-  if (!context) return;
-  await getGotoPreset({ ...context.params, presetToken: row.token });
-  if (ptzCapabilities.isCurrent(context.session)) proxy.$modal.msgSuccess("操作成功");
-}
+const presetAdd = () => performPreset('create', presetName.value);
 
-const closePresets = async row => {
-  const context = presetContext();
-  if (!context) return;
-  await removePreset({ ...context.params, presetToken: row.token });
-  if (!ptzCapabilities.isCurrent(context.session)) return;
-  await getAllPreset();
-  proxy.$modal.msgSuccess("操作成功");
-}
+const gotoPresets = row => performPreset('goTo', row.token);
+
+const closePresets = row => performPreset('remove', row.token);
 
 const handleplayTabsClick = tab => {
   if (tab.props.name === 'presets' && canPtzPreset.value) {
@@ -1065,9 +1062,14 @@ const getAllPreset = async () => {
   const revision = ++presetRequestRevision;
   showPresets.value = true;
   try {
-    const res = await getPresetList(context.params);
+    const res = await presetApi.list(context.id);
     if (ptzCapabilities.isCurrent(context.session) && revision === presetRequestRevision && canPtzPreset.value) {
       optionsPresetsToken.value = res.data;
+    }
+  } catch (error) {
+    if (ptzCapabilities.isCurrent(context.session) && revision === presetRequestRevision) {
+      optionsPresetsToken.value = [];
+      proxy.$modal.msgError('读取预置点失败，请重试');
     }
   } finally {
     if (ptzCapabilities.isCurrent(context.session) && revision === presetRequestRevision) showPresets.value = false;

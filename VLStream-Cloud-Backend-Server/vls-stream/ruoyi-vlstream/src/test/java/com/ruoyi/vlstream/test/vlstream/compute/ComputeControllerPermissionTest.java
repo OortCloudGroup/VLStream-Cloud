@@ -44,7 +44,8 @@ class ComputeControllerPermissionTest {
     private static final String BODY="{\"name\":\"fixture\",\"host\":\"fixture.invalid\"}";
     @BeforeEach void setup() {
         previousContext=SaManager.getSaTokenContext();previousDao=SaManager.getSaTokenDao();previousPermissions=SaManager.getStpInterface();
-        memory=new SaTokenDaoDefaultImpl();SaManager.setSaTokenDao(memory);SaManager.setSaTokenContext(new SaTokenContextForThreadLocal());permissions=new HashSet<>();
+        memory=new SaTokenDaoDefaultImpl();SaManager.setSaTokenDao(memory);SaManager.setSaTokenContext(new SaTokenContextForThreadLocal());permissions=new HashSet<>(Arrays.asList(
+            "vls:menu:compute-management", "vls:menu:compute-market", "vls:menu:algorithm-training", "vls:menu:container-instances"));
         SaManager.setStpInterface(new StpInterface(){
             public List<String> getPermissionList(Object id,String type){return new ArrayList<>(permissions);}
             public List<String> getRoleList(Object id,String type){return Collections.emptyList();}
@@ -69,7 +70,7 @@ class ComputeControllerPermissionTest {
     private MockHttpServletRequestBuilder logged(MockHttpServletRequestBuilder request){return request.header(SaManager.getConfig().getTokenName(),token);}
     @Test void ordinaryPublisherPowerAndObserverRolesCannotMutateOrProbeNodes()throws Exception {
         for(String permission:Arrays.asList("","vls:compute:publish","vls:compute:power","vls:compute:observe")) {
-            permissions.clear();if(!permission.isEmpty())permissions.add(permission);
+            permissions.clear();permissions.add("vls:menu:compute-management");if(!permission.isEmpty())permissions.add(permission);
             for(MockHttpServletRequestBuilder request:mutations())mvc.perform(logged(request)).andExpect(status().isForbidden());
         }
         verifyNoInteractions(nodes);
@@ -77,6 +78,15 @@ class ComputeControllerPermissionTest {
     @Test void existingConfigurePermissionAllowsAllFourOperations()throws Exception {
         permissions.add("vls:compute:configure");for(MockHttpServletRequestBuilder request:mutations())mvc.perform(logged(request)).andExpect(status().isOk());
         verify(nodes).save(isNull(),any());verify(nodes).save(eq(1L),any());verify(nodes).probe(1L);verify(nodes).delete(1L);
+    }
+    @Test void bothPageAndSensitivePermissionAreRequiredAndRevocationTakesEffect()throws Exception {
+        permissions.clear(); permissions.add("vls:compute:configure");
+        mvc.perform(logged(delete("/vlsCompute/nodes/1"))).andExpect(status().isForbidden());
+        permissions.add("vls:menu:compute-management");
+        mvc.perform(logged(delete("/vlsCompute/nodes/1"))).andExpect(status().isOk());
+        permissions.remove("vls:compute:configure");
+        mvc.perform(logged(delete("/vlsCompute/nodes/1"))).andExpect(status().isForbidden());
+        verify(nodes, times(1)).delete(1L);
     }
     private List<MockHttpServletRequestBuilder> ownMutations(){return Arrays.asList(post("/vlsCompute/my-nodes").contentType(MediaType.APPLICATION_JSON).content(BODY),put("/vlsCompute/my-nodes/1").contentType(MediaType.APPLICATION_JSON).content(BODY),post("/vlsCompute/my-nodes/1/probe"),delete("/vlsCompute/my-nodes/1"));}
     @Test void ordinaryLoginCanUseOnlyTheSelfServiceRoutesWithoutProviderPermission()throws Exception {

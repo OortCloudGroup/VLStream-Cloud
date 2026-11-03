@@ -14,10 +14,10 @@ import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class DeviceModelServiceTest {
-    final WvpVlStreamDeviceResolver resolver = mock(WvpVlStreamDeviceResolver.class);
+    final ModelDispatchAccess access = mock(ModelDispatchAccess.class);
     final VlsMqttBusService bus = mock(VlsMqttBusService.class);
     final DeviceModelReplyHandler replies = new DeviceModelReplyHandler();
-    final DeviceModelService service = new DeviceModelService(resolver, bus, replies);
+    final DeviceModelService service = new DeviceModelService(access, bus, replies);
 
     private void reply(JSONObject data, int code) {
         doAnswer(call -> {
@@ -38,7 +38,7 @@ class DeviceModelServiceTest {
         assertEquals("9007199254740993", service.query("CAM-1").getJSONObject(0).getStr("modelId"));
         reply(new JSONObject().set("models", new JSONArray()), 200);
         assertTrue(service.query("CAM-1").isEmpty());
-        verify(resolver, times(2)).resolveOnline("CAM-1");
+        verify(access, times(2)).requireOwnedOnlineDevice("CAM-1");
     }
 
     @Test void legacyModelCanBeViewedButHasNoInventedDeleteId() {
@@ -73,7 +73,7 @@ class DeviceModelServiceTest {
 
     @Test void offlineDeviceAndBlankModelNeverPublish() {
         assertThrows(ServiceException.class, () -> service.delete("CAM-1", " "));
-        when(resolver.resolveOnline("CAM-1")).thenThrow(new ServiceException("设备离线"));
+        when(access.requireOwnedOnlineDevice("CAM-1")).thenThrow(new ServiceException("设备离线"));
         assertThrows(ServiceException.class, () -> service.query("CAM-1"));
         verifyNoInteractions(bus);
     }
@@ -83,12 +83,19 @@ class DeviceModelServiceTest {
         CompletableFuture<JSONObject> future = mock(CompletableFuture.class);
         when(registry.register(anyString(), anyString(), anyString())).thenReturn(future);
         when(future.get(15, TimeUnit.SECONDS)).thenThrow(new TimeoutException());
-        DeviceModelService target = new DeviceModelService(resolver, bus, registry);
+        DeviceModelService target = new DeviceModelService(access, bus, registry);
         assertTrue(assertThrows(ServiceException.class, () -> target.query("CAM-1")).getMessage().contains("超时"));
         verify(registry).remove(anyString());
         doThrow(new IllegalStateException("disconnected")).when(bus).publish(anyString(), any());
         assertThrows(ServiceException.class, () -> target.delete("CAM-1", "m1"));
         verify(registry, times(2)).remove(anyString());
+    }
+
+    @Test void ownershipOrFederatedAuthorizationFailureNeverPublishesQueryOrDelete() {
+        when(access.requireOwnedOnlineDevice("CAM-1")).thenThrow(new ServiceException("设备不属于当前租户或无权访问"));
+        assertThrows(ServiceException.class, () -> service.query("CAM-1"));
+        assertThrows(ServiceException.class, () -> service.delete("CAM-1", "m1"));
+        verifyNoInteractions(bus);
     }
 
     @Test void ignoresWrongDeviceWrongOperationAndLateReplies() {

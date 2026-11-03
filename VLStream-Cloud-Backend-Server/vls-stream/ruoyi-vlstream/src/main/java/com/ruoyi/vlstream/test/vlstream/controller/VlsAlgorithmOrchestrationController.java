@@ -44,6 +44,7 @@ import java.util.Map;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/vlsAlgorithmOrchestration")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-arrangement")
 @Tag(name = "算法编排表", description = "算法编排表接口")
 public class VlsAlgorithmOrchestrationController extends BladeController {
 

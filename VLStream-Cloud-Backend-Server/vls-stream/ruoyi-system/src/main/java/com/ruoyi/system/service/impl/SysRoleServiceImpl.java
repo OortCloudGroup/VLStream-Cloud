@@ -152,8 +152,8 @@ public class SysRoleServiceImpl implements ISysRoleService {
      * @return roleobjectinfo
      */
     @Override
-    public SysUserRoleView selectRoleById(String roleId) {
-        return userRoleMapper.selectById(roleId);
+    public SysRole selectRoleById(String roleId) {
+        return baseMapper.selectById(roleId);
     }
 
     /**
@@ -210,6 +210,28 @@ public class SysRoleServiceImpl implements ISysRoleService {
     }
 
     /**
+     * Built-in roles must never be deleted; batch deletion checks every id.
+     */
+    private SysRole checkRoleDeletable(String roleId) {
+        if (StringUtils.isBlank(roleId)) {
+            throw new ServiceException("角色ID不能为空", 400);
+        }
+        SysRole role = baseMapper.selectById(roleId);
+        if (role == null) {
+            throw new ServiceException("角色不存在或已删除，不允许删除", 404);
+        }
+        String roleKey = role.getRoleKey();
+        if (role.isAdmin()
+            || "1900000000000004001".equals(roleId)
+            || "admin".equalsIgnoreCase(roleKey)
+            || "tenant_admin".equalsIgnoreCase(roleKey)
+            || "vls_member".equalsIgnoreCase(roleKey)) {
+            throw new ServiceException("初始化角色不允许删除", 403);
+        }
+        return role;
+    }
+
+    /**
      * Validate rolewhether data
      *
      * @param roleId roleid
@@ -246,9 +268,21 @@ public class SysRoleServiceImpl implements ISysRoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int insertRole(SysRole role) {
-        // Add roleinfo
-        baseMapper.insert(role);
-        return insertRoleMenu(role);
+        if (role.getRoleId() != null || isBuiltInKey(role.getRoleKey())) {
+            throw new ServiceException("不能通过业务角色接口创建系统内置角色");
+        }
+        if (role.getMenuIds() != null && role.getMenuIds().length > 0) {
+            throw new ServiceException("请创建角色后通过菜单授权接口分配权限");
+        }
+        LoginUser login = LoginHelper.getLoginUser();
+        if (login == null || StringUtils.isBlank(login.getTenantId())) {
+            throw new ServiceException("缺少可信租户上下文");
+        }
+        role.setTenantId(login.getTenantId());
+        role.setDelFlag("0");
+        role.setStatus("0");
+        role.setDataScope("5");
+        return baseMapper.insert(role);
     }
 
     /**
@@ -260,11 +294,34 @@ public class SysRoleServiceImpl implements ISysRoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int updateRole(SysRole role) {
-        // Update roleinfo
-        baseMapper.updateById(role);
-        // Delete role and menu
-        roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, role.getRoleId()));
-        return insertRoleMenu(role);
+        // Menu grants have their own scope and optimistic-concurrency checks.
+        // A metadata edit must never replace them with an absent/empty form field.
+        checkRoleAllowed(role);
+        checkRoleDataScope(role.getRoleId());
+        SysRole stored = baseMapper.selectById(role.getRoleId());
+        if (stored == null) {
+            throw new ServiceException("角色不存在或已删除");
+        }
+        boolean builtIn = isBuiltInKey(stored.getRoleKey());
+        if (!builtIn && isBuiltInKey(role.getRoleKey())) {
+            throw new ServiceException("不能将业务角色改为系统内置角色");
+        }
+        if (builtIn && (!Objects.equals(stored.getRoleKey(), role.getRoleKey())
+            || !Objects.equals(stored.getRoleName(), role.getRoleName())
+            || (role.getStatus() != null && !Objects.equals(stored.getStatus(), role.getStatus())))) {
+            throw new ServiceException("初始化角色的名称、标识和状态不允许修改");
+        }
+        role.setTenantId(stored.getTenantId());
+        role.setDataScope(stored.getDataScope());
+        role.setMenuCheckStrictly(stored.getMenuCheckStrictly());
+        role.setDeptCheckStrictly(stored.getDeptCheckStrictly());
+        role.setDelFlag(null);
+        return baseMapper.updateById(role);
+    }
+
+    private boolean isBuiltInKey(String key) {
+        return key != null && ("admin".equalsIgnoreCase(key.trim())
+            || "tenant_admin".equalsIgnoreCase(key.trim()) || "vls_member".equalsIgnoreCase(key.trim()));
     }
 
     /**
@@ -275,7 +332,18 @@ public class SysRoleServiceImpl implements ISysRoleService {
      */
     @Override
     public int updateRoleStatus(SysRole role) {
-        return baseMapper.updateById(role);
+        checkRoleAllowed(role);
+        checkRoleDataScope(role.getRoleId());
+        SysRole stored = baseMapper.selectById(role.getRoleId());
+        if (stored == null || isBuiltInKey(stored.getRoleKey())) {
+            throw new ServiceException("初始化角色的状态不允许修改");
+        }
+        if (!"0".equals(role.getStatus()) && !"1".equals(role.getStatus())) {
+            throw new ServiceException("角色状态无效");
+        }
+        SysRole update = new SysRole(role.getRoleId());
+        update.setStatus(role.getStatus());
+        return baseMapper.updateById(update);
     }
 
     /**
@@ -302,11 +370,15 @@ public class SysRoleServiceImpl implements ISysRoleService {
      */
     public int insertRoleMenu(SysRole role) {
         int rows = 1;
+        if (role.getMenuIds() == null) {
+            return rows;
+        }
         // Add user and role
         List<SysRoleMenu> list = new ArrayList<SysRoleMenu>();
         for (Long menuId : role.getMenuIds()) {
             SysRoleMenu rm = new SysRoleMenu();
             rm.setRoleId(role.getRoleId());
+            rm.setTenantId(role.getTenantId());
             rm.setMenuId(menuId);
             list.add(rm);
         }
@@ -346,6 +418,7 @@ public class SysRoleServiceImpl implements ISysRoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteRoleById(String  roleId) {
+        checkRoleDeletable(roleId);
         // Delete role and menu
         roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
         // Delete role and department
@@ -363,11 +436,11 @@ public class SysRoleServiceImpl implements ISysRoleService {
     @Transactional(rollbackFor = Exception.class)
     public int deleteRoleByIds(String [] roleIds) {
         for (String roleId : roleIds) {
-            checkRoleAllowed(new SysRole(roleId));
+            SysRole role = checkRoleDeletable(roleId);
             checkRoleDataScope(roleId);
-            SysUserRoleView role = selectRoleById(roleId);
             if (countUserRoleByRoleId(roleId) > 0) {
-                throw new ServiceException(String.format("%1$s已分配,不能删除", role.getRoleName()));
+                throw new ServiceException(String.format("%1$s已分配,不能删除",
+                    role == null ? roleId : role.getRoleName()), 409);
             }
         }
         List<String> ids = Arrays.asList(roleIds);

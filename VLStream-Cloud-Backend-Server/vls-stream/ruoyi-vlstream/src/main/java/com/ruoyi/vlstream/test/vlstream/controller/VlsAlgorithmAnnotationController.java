@@ -8,6 +8,9 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -56,6 +59,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmAnnotation")
@@ -67,6 +71,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmAnnotation")
@@ -79,6 +84,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata Custom
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmAnnotation")
@@ -90,6 +96,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata Add
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmAnnotation")
@@ -100,6 +107,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmAnnotation")
@@ -110,6 +118,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata Add Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmAnnotation")
@@ -120,6 +129,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotationdata Delete
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -130,6 +140,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/export-vlsAlgorithmAnnotation")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmAnnotation")
@@ -146,6 +157,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * annotation Query annotation list
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/type/{annotationType}")
 	@Operation(summary = "根据标注类型查询标注列表", description = "获取指定类型的所有标注")
 	public R<List<AlgorithmAnnotation>> getAnnotationsByType(
@@ -160,6 +172,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * annotation Query annotation list
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/status/{annotationStatus}")
 	@Operation(summary = "根据标注状态查询标注列表", description = "获取指定状态的所有标注")
 	public R<List<AlgorithmAnnotation>> getAnnotationsByStatus(
@@ -174,6 +187,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * IDQuery annotation
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/{id}")
 	@Operation(summary = "查询标注详情", description = "根据ID获取标注详细信息")
 	public R<AlgorithmAnnotation> getAnnotationById(
@@ -192,6 +206,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * algorithmannotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping
 	@Operation(summary = "创建算法标注", description = "新增算法标注")
 	public R<String> createAnnotation(@Valid @RequestBody AlgorithmAnnotation annotation) {
@@ -208,6 +223,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * new algorithmannotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PutMapping("/{id}")
 	@Operation(summary = "更新算法标注", description = "根据ID更新标注信息")
 	public R<String> updateAnnotation(
@@ -229,6 +245,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Delete algorithmannotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除算法标注", description = "根据ID删除标注（软删除）")
 	public R<String> deleteAnnotation(
@@ -247,6 +264,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Batch delete algorithmannotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除算法标注", description = "根据ID列表批量删除标注")
 	public R<String> batchDeleteAnnotations(@RequestBody List<Long> ids) {
@@ -267,6 +285,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * new annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PutMapping("/{id}/progress")
 	@Operation(summary = "更新标注进度", description = "更新标注的进度信息")
 	public R<String> updateAnnotationProgress(
@@ -286,6 +305,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * new annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PutMapping("/batch/status")
 	@Operation(summary = "批量更新标注状态", description = "批量更新标注的状态")
 	public R<String> batchUpdateAnnotationStatus(
@@ -309,6 +329,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * startannotationtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/{id}/start")
 	@Operation(summary = "开始标注任务", description = "开始指定的标注任务")
 	public R<String> startAnnotationTask(
@@ -327,6 +348,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * annotationtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/{id}/complete")
 	@Operation(summary = "完成标注任务", description = "完成指定的标注任务")
 	public R<String> completeAnnotationTask(
@@ -345,6 +367,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * annotationtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/{id}/reset")
 	@Operation(summary = "重置标注任务", description = "重置指定的标注任务")
 	public R<String> resetAnnotationTask(
@@ -363,6 +386,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Export annotationdata
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/{id}/export")
 	@Operation(summary = "导出标注数据", description = "导出指定标注的数据")
 	public void exportAnnotationData(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id, HttpServletResponse response) {
@@ -373,6 +397,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Import annotationdata
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/{id}/import")
 	@Operation(summary = "导入标注数据", description = "导入标注数据")
 	public R<Map<String, Object>> importAnnotationData(
@@ -395,6 +420,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Import annotation dataset zip.
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping(value = "/{id}/import-zip", consumes = "multipart/form-data")
 	@Operation(summary = "Import annotation dataset zip", description = "Import annotation dataset zip")
 	public R<Map<String, Object>> importAnnotationZip(
@@ -418,6 +444,8 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 		}
 	}
 
+	@SaCheckPermission("vls:menu:algorithm-standard")
+
 	@PostMapping("/{id}/validate")
 	@Operation(summary = "验证标注数据", description = "验证指定标注的数据质量")
 	public R<Map<String, Object>> validateAnnotationData(
@@ -436,6 +464,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Get annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/statistics/type")
 	@Operation(summary = "获取标注类型统计", description = "获取各类型的标注数量统计")
 	public R<List<Map<String, Object>>> getAnnotationTypeStatistics() {
@@ -448,6 +477,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Get annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/statistics/status")
 	@Operation(summary = "获取标注状态统计", description = "获取各状态的标注数量统计")
 	public R<List<Map<String, Object>>> getAnnotationStatusStatistics() {
@@ -460,6 +490,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Get annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/statistics/progress")
 	@Operation(summary = "获取标注进度统计", description = "获取各进度区间的标注数量统计")
 	public R<List<Map<String, Object>>> getProgressStatistics() {
@@ -472,6 +503,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * Get annotation
 	 */
+	@SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/statistics/workload")
 	@Operation(summary = "获取标注工作量统计", description = "获取标注工作量的总体统计")
 	public R<Map<String, Object>> getWorkloadStatistics() {
@@ -484,6 +516,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	/**
 	 * annotationdata dataset
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = SaMode.OR)
 	@PostMapping("/{id}/save-dataset")
 	@Operation(summary = "保存标注数据到数据集", description = "将标注数据保存到数据集文件并更新数据库路径")
 	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> saveAnnotationToDataset(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
@@ -504,15 +537,21 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	@javax.annotation.Resource
 	private com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationJobs datasetGenerationJobs;
 
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = SaMode.OR)
+
 	@PostMapping("/{id}/save-dataset-async")
 	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> generateAsync(@PathVariable Long id) {
 		return R.data(datasetGenerationJobs.submit(id));
 	}
 
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = SaMode.OR)
+
 	@GetMapping("/{id}/dataset-generation/{jobId}")
 	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> generationStatus(@PathVariable Long id, @PathVariable String jobId) {
 		return R.data(datasetGenerationJobs.get(id, jobId));
 	}
+
+	@SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = SaMode.OR)
 
 	@GetMapping("/{id}/dataset-generation-report")
 	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> reviewGeneration(@PathVariable Long id) {

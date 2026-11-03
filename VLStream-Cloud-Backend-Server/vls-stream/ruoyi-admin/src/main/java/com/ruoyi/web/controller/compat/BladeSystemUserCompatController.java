@@ -31,6 +31,9 @@ public class BladeSystemUserCompatController {
     private static final Set<String> WVP_SHARING_PERMISSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
         "vlstream:device:share:manage", "vlstream:device:share:approve"
     )));
+    private static final Set<String> WVP_FIRMWARE_PERMISSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        "vls:firmware:list", "vls:firmware:upload", "vls:firmware:download", "vls:firmware:remove", "vls:firmware:deploy"
+    )));
 
     private final BladeTokenUserStore tokenUserStore;
     private final SysPermissionService permissionService;
@@ -58,12 +61,22 @@ public class BladeSystemUserCompatController {
 
         Set<String> roles = permissionService.getRolePermission(user);
         Set<String> permissions = new HashSet<>(permissionService.getMenuPermission(user));
-        if (user.isAdmin()) {
+        if (permissions.contains("*:*:*")) {
             // The generic administrator wildcard does not grant sharing powers in WVP.
             // Export only separately assigned exact menu permissions from the trusted store.
             Set<String> explicitPermissions = permissionService.getExplicitMenuPermission(user);
             for (String permission : WVP_SHARING_PERMISSIONS) {
                 if (explicitPermissions.contains(permission)) permissions.add(permission);
+            }
+            for (String permission : WVP_FIRMWARE_PERMISSIONS) {
+                if (explicitPermissions.contains(permission)) permissions.add(permission);
+            }
+            // WVP independently enforces its own operation allowlist and device
+            // ownership. Never synthesize an operation grant from the wildcard.
+            for (String permission : explicitPermissions) {
+                if (permission != null && permission.matches("vls:wvp:[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)+")) {
+                    permissions.add(permission);
+                }
             }
         }
         return BladeResult.success(userInfoBuilder.build(token, user, roles, permissions));

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeoutException;
 @Service
 @RequiredArgsConstructor
 public class DeviceModelService {
-    private final WvpVlStreamDeviceResolver resolver;
+    private final ModelDispatchAccess access;
     private final VlsMqttBusService bus;
     private final DeviceModelReplyHandler replies;
 
@@ -56,7 +56,7 @@ public class DeviceModelService {
 
     private JSONObject execute(String deviceId, String operation, JSONObject payload) {
         String topic = VlsMqttProtocol.deviceBusTopic(deviceId);
-        resolver.resolveOnline(deviceId);
+        access.requireOwnedOnlineDevice(deviceId);
         String id = UUID.randomUUID().toString();
         CompletableFuture<JSONObject> future = replies.register(id, deviceId, operation);
         try {

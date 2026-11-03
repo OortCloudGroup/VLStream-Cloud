@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/vlsVideoRecord")
+@SaCheckPermission("vls:menu:video-playback")
 @Tag(name = "视频录制记录表（视频回放）", description = "视频录制记录表接口（视频回放）")
 public class VlsVideoRecordController extends BladeController {
 

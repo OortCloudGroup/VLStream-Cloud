@@ -1,6 +1,7 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeQueueSnapshot;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeQueueSnapshotService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class VlsComputeQueueController {
     private final ComputeQueueSnapshotService queues;
 
     @SaCheckLogin
+    @SaCheckPermission("vls:menu:algorithm-training")
     @GetMapping("/{id}/queue")
     public R<ComputeQueueSnapshot> queue(@PathVariable Long id) { return R.data(queues.snapshot(id)); }
 }

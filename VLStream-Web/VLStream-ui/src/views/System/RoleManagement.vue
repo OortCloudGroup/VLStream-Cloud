@@ -51,7 +51,13 @@
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
                     <span>{{ $tp('编辑') }}</span>
                   </div>
-                  <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
+                  <div
+                    class="new_table_svg_group"
+                    :class="{ 'is-disabled': isProtectedRole(scope.row) }"
+                    :aria-disabled="isProtectedRole(scope.row)"
+                    :title="isProtectedRole(scope.row) ? $tp('初始化角色不允许删除') : ''"
+                    @click="handleSingleRemove(scope.row)"
+                  >
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
                     <span>{{ $tp('删除') }}</span>
                   </div>
@@ -311,12 +317,30 @@ function executeRemove(ids, msg) {
   }).catch(() => {})
 }
 
+const PROTECTED_ROLE_IDS = new Set(['1', '1900000000000004001'])
+const PROTECTED_ROLE_KEYS = new Set(['admin', 'tenant_admin', 'vls_member'])
+
+function isProtectedRole(row) {
+  const roleId = String(row?.id ?? row?.roleId ?? '')
+  const roleKey = String(row?.roleAlias || row?.roleKey || '').toLowerCase()
+  return PROTECTED_ROLE_IDS.has(roleId) || PROTECTED_ROLE_KEYS.has(roleKey)
+}
+
 function handleSingleRemove(row) {
+  if (isProtectedRole(row)) {
+    ElMessage.warning(uiText('初始化角色不允许删除'))
+    return
+  }
   executeRemove(String(row.id), `确定删除角色 [${row.roleName}] 吗？`)
 }
 
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) return
+  const protectedRows = selectedRows.value.filter(isProtectedRole)
+  if (protectedRows.length) {
+    ElMessage.warning(uiText(`初始化角色不允许删除：${protectedRows.map(row => row.roleName).join('、')}`))
+    return
+  }
   const ids = joinIds(selectedRows.value)
   executeRemove(ids, `确定删除选中的 ${selectedRows.value.length} 个角色吗？`)
 }
@@ -375,6 +399,11 @@ onMounted(() => {
 .operateAppBox {
   justify-content: flex-end;
   gap: 2px;
+
+  .new_table_svg_group.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 .role-management {

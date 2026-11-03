@@ -84,15 +84,18 @@ export function removeRoles(ids) {
  * @param {Object} data , roleIds, menuIds, dataScopeIds, apiScopeIds etc.field
  * @return s {Promise} operation Promise object
  */
+export function getRoleMenuGrants(roleId) {
+  return request({ url: `/system/role/${encodeURIComponent(roleId)}/menu-grants`, method: 'get' })
+}
+
 export function grantRole(data) {
   const roleId = toStringIds(data?.roleIds)[0]
-  return request({ url: `/system/role/${encodeURIComponent(roleId)}`, method: 'get' })
-    .then((response) => {
-      const role = mapBladeRoleToRuoyi({
-        ...response?.data,
-        id: roleId,
-        menuIds: data?.menuIds
-      })
-      return request({ url: '/system/role', method: 'put', data: role })
-    })
+  return request({
+    url: `/system/role/${encodeURIComponent(roleId)}/menu-grants`,
+    method: 'put',
+    data: {
+      menuIds: toStringIds(data?.menuIds),
+      expectedMenuIds: toStringIds(data?.expectedMenuIds)
+    }
+  })
 }

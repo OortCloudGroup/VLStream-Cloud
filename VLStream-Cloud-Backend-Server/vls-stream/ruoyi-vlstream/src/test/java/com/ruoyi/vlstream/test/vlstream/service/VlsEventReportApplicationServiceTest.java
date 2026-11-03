@@ -75,6 +75,37 @@ class VlsEventReportApplicationServiceTest {
 		assertEquals("face detected", payload.getStr("describe"));
 	}
 
+	@Test
+	void blankEventTypeUsesNameForItem() throws Exception {
+		IVlsEventManagementService eventService = mock(IVlsEventManagementService.class);
+		VlsEventManagementMapper eventMapper = mock(VlsEventManagementMapper.class);
+		EventReportOutboxMapper outboxMapper = mock(EventReportOutboxMapper.class);
+		VlsEventReportApplicationService service = new VlsEventReportApplicationService(
+			eventService, eventMapper, outboxMapper, mock(IFileUploadService.class));
+		setField(service, "tenantType", "multi");
+		when(eventService.createEvent(any(EventManagement.class))).thenAnswer(invocation -> {
+			EventManagement event = invocation.getArgument(0);
+			event.setId(100L);
+			return true;
+		});
+		when(outboxMapper.insert(any(EventReportOutbox.class))).thenReturn(1);
+
+		DeviceInfo device = new DeviceInfo();
+		device.setTenantId("tenant-a");
+		device.setDeviceId("CAM-1");
+		EventManagement event = new EventManagement();
+		event.setReportDevice("CAM-1");
+		event.setEventDesc("description without type");
+
+		service.persistDeviceEvent(event, device);
+
+		ArgumentCaptor<EventReportOutbox> captor = ArgumentCaptor.forClass(EventReportOutbox.class);
+		verify(outboxMapper).insert(captor.capture());
+		JSONObject payload = JSONUtil.parseObj(captor.getValue().getPayloadJson());
+		assertEquals("description without type", payload.getStr("name"));
+		assertEquals(payload.getStr("name"), payload.getStr("item"));
+	}
+
 	private void setField(Object target, String name, Object value) throws Exception {
 		Field field = target.getClass().getDeclaredField(name);
 		field.setAccessible(true);

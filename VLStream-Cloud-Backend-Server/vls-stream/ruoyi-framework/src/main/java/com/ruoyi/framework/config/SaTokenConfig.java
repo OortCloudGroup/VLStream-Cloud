@@ -18,6 +18,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.ruoyi.framework.config.properties.SecurityProperties;
+import com.ruoyi.common.core.domain.model.LivePermissionProvider;
 import com.ruoyi.framework.satoken.dao.PlusSaTokenDao;
 import com.ruoyi.framework.satoken.service.SaPermissionImpl;
 import lombok.RequiredArgsConstructor;
@@ -88,8 +89,8 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * interface ( bean userReplace )
      */
     @Bean
-    public StpInterface stpInterface() {
-        return new SaPermissionImpl();
+    public StpInterface stpInterface(LivePermissionProvider permissionProvider) {
+        return new SaPermissionImpl(permissionProvider);
     }
 
     /**

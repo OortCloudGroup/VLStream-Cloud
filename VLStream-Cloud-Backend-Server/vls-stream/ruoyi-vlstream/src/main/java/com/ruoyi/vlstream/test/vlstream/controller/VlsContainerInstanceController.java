@@ -45,6 +45,7 @@ import java.util.Map;
 @RestController
 @lombok.RequiredArgsConstructor
 @RequestMapping("/vlsContainerInstance")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:container-instances")
 @Tag(name = "容器实例表", description = "容器实例表接口")
 public class VlsContainerInstanceController extends BladeController {
 

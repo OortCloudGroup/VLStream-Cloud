@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -143,6 +144,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	@GetMapping("/tree")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@Operation(description = "获取标签树形结构（用于左侧导航）")
 	public R<List<Map<String, Object>>> getTagTree() {
 		try {

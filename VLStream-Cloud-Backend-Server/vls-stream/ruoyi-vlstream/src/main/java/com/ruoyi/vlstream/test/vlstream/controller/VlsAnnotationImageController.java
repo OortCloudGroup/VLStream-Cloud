@@ -49,6 +49,7 @@ import java.util.Map;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/vlsAnnotationImage")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 @Tag(name = "标注图片信息表", description = "标注图片信息表接口")
 public class VlsAnnotationImageController extends BladeController {
 

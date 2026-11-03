@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/vlsAnnotationInstance")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 @Tag(name = "标注实例实体类", description = "标注实例实体类接口")
 public class VlsAnnotationInstanceController extends BladeController {
 

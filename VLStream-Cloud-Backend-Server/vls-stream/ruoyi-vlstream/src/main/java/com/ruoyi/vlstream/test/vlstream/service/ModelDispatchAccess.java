@@ -41,6 +41,11 @@ public class ModelDispatchAccess {
         return user;
     }
 
+    /** Reuse WVP's configured legacy tenant rule and its authenticated detail check. */
+    public DeviceInfo requireOwnedOnlineDevice(String deviceId) {
+        return requireDevice(deviceId, null, false);
+    }
+
     public DeviceInfo requireDevice(String deviceId, String modelType, boolean strictCapability) {
         actor();
         DeviceInfo device = resolver.resolveOnline(deviceId);

@@ -9,6 +9,7 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceMediaUploadRequest;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceMediaUploadResponse;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
@@ -50,6 +51,7 @@ public class VlsDeviceMediaController {
 	}
 
 	@GetMapping("/{mediaId}/view-url")
+	@SaCheckPermission("vls:menu:llm-review-tasks")
 	@Operation(summary = "获取事件图片短期私有访问地址")
 	public R<String> viewUrl(@PathVariable String mediaId,
 							 @RequestParam(defaultValue = "300") Integer seconds) {
@@ -58,6 +60,7 @@ public class VlsDeviceMediaController {
 	}
 
 	@GetMapping("/{mediaId}/download-url")
+	@SaCheckPermission("active-safety:events:list")
 	@Operation(summary = "获取已绑定事件媒体短期下载地址")
 	public R<String> downloadUrl(@PathVariable String mediaId) {
 		return R.data(uploadService.getPrivateViewUrl(mediaId, 300, true));

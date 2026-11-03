@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.ruoyi.common.exception.ServiceException;
@@ -38,12 +40,14 @@ public class VlsLlmReviewController {
 	private final LlmReviewManagementService managementService;
 	private final LlmReviewTaskService taskService;
 
+	@SaCheckPermission(value = {"vls:menu:llm-provider-management", "vls:menu:algorithm-management"}, mode = SaMode.OR)
 	@GetMapping("/providers")
 	@Operation(summary = "查询当前租户的大模型配置")
 	public R<List<LlmProvider>> providers() {
 		return R.data(managementService.listProviders());
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@GetMapping("/oortcloud-authorization")
 	@Operation(summary = "查询当前租户的 OortCloud 大模型授权状态")
 	public R<Map<String, Object>> oortCloudAuthorization() {
@@ -57,6 +61,7 @@ public class VlsLlmReviewController {
 			body.get("platformUserName"), body.get("apiKey")));
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@PostMapping("/providers")
 	@Operation(summary = "新增外部大模型配置")
 	public R<LlmProvider> createProvider(@RequestBody LlmProvider provider) {
@@ -64,6 +69,7 @@ public class VlsLlmReviewController {
 		return R.data(managementService.saveProvider(provider));
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@PutMapping("/providers/{id}")
 	@Operation(summary = "编辑外部大模型配置")
 	public R<LlmProvider> updateProvider(@PathVariable Long id, @RequestBody LlmProvider provider) {
@@ -71,6 +77,7 @@ public class VlsLlmReviewController {
 		return R.data(managementService.saveProvider(provider));
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@DeleteMapping("/providers/{id}")
 	@Operation(summary = "删除外部大模型配置")
 	public R<String> deleteProvider(@PathVariable Long id) {
@@ -78,6 +85,7 @@ public class VlsLlmReviewController {
 		return R.success("删除成功");
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@PostMapping("/providers/{id}/test")
 	@Operation(summary = "使用一张图片测试视觉模型")
 	public R<OpenAiVisionClient.VisionDecision> testProvider(@PathVariable Long id,
@@ -95,12 +103,14 @@ public class VlsLlmReviewController {
 		}
 	}
 
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/algorithms/{algorithmId}/config")
 	@Operation(summary = "查询算法的大模型复核配置")
 	public R<AlgorithmLlmReviewConfig> algorithmConfig(@PathVariable Long algorithmId) {
 		return R.data(managementService.getAlgorithmConfig(algorithmId));
 	}
 
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PutMapping("/algorithms/{algorithmId}/config")
 	@Operation(summary = "保存算法的大模型复核配置")
 	public R<AlgorithmLlmReviewConfig> saveAlgorithmConfig(@PathVariable Long algorithmId,
@@ -108,6 +118,7 @@ public class VlsLlmReviewController {
 		return R.data(managementService.saveAlgorithmConfig(algorithmId, config));
 	}
 
+	@SaCheckPermission("vls:menu:llm-review-tasks")
 	@GetMapping("/tasks")
 	@Operation(summary = "分页查询大模型复核任务")
 	public R<IPage<LlmReviewTask>> tasks(@RequestParam(defaultValue = "1") int current,
@@ -117,12 +128,14 @@ public class VlsLlmReviewController {
 		return R.data(taskService.page(current, size, status, algorithmId));
 	}
 
+	@SaCheckPermission("vls:menu:llm-review-tasks")
 	@GetMapping("/tasks/{id}")
 	@Operation(summary = "查询复核任务详情")
 	public R<LlmReviewTask> task(@PathVariable Long id) {
 		return R.data(taskService.detail(id));
 	}
 
+	@SaCheckPermission("vls:menu:llm-review-tasks")
 	@PostMapping("/tasks/{id}/manual-decision")
 	@Operation(summary = "人工确认事件或误报")
 	public R<LlmReviewTask> manualDecision(@PathVariable Long id, @RequestBody Map<String, String> body) {

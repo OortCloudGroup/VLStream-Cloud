@@ -59,4 +59,16 @@ class ModelDispatchAccessTest {
         assertSame(device, access.requireDevice("CAM-A", "pt", false));
         device.setTenantId("tenant-b"); assertThrows(ServiceException.class, () -> access.requireDevice("CAM-A", "pt", false));
     }
+    @Test void deviceModelOperationsRequireMatchingTenantAndFederatedAccess() {
+        assertSame(device, access.requireOwnedOnlineDevice("CAM-A"));
+        verify(resolver).resolveOnline("CAM-A");
+        device.setTenantId("tenant-b");
+        assertThrows(ServiceException.class, () -> access.requireOwnedOnlineDevice("CAM-A"));
+        device.setTenantId(null);
+        assertThrows(ServiceException.class, () -> access.requireOwnedOnlineDevice("CAM-A"));
+        device.setTenantId("tenant-a");
+        ModelDispatchAccess denied = spy(access);
+        doThrow(new ServiceException("forbidden")).when(denied).authorizedDetail(101L);
+        assertThrows(ServiceException.class, () -> denied.requireOwnedOnlineDevice("CAM-A"));
+    }
 }

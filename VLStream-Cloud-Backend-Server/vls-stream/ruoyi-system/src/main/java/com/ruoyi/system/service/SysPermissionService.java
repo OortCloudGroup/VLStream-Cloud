@@ -9,6 +9,7 @@
 package com.ruoyi.system.service;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LivePermissionProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +23,20 @@ import java.util.Set;
  */
 @RequiredArgsConstructor
 @Service
-public class SysPermissionService {
+public class SysPermissionService implements LivePermissionProvider {
 
     private final ISysRoleService roleService;
     private final ISysMenuService menuService;
+
+    @Override
+    public Set<String> getMenuPermissions(String userId) {
+        return getMenuPermission(new SysUser(userId));
+    }
+
+    @Override
+    public Set<String> getRolePermissions(String userId) {
+        return getRolePermission(new SysUser(userId));
+    }
 
     /**
      * Get roledata
@@ -53,7 +64,7 @@ public class SysPermissionService {
     public Set<String> getMenuPermission(SysUser user) {
         Set<String> perms = new HashSet<>();
         // administrator all
-        if (user.isAdmin()) {
+        if (user.isAdmin() || getRolePermission(user).contains("admin")) {
             perms.add("*:*:*");
         } else {
             perms.addAll(getExplicitMenuPermission(user));

@@ -351,10 +351,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Transactional(rollbackFor = Exception.class)
     public int updateUser(SysUser user) {
         String userId = user.getUserId();
-        // Delete user and role
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRoleView>().eq(SysUserRoleView::getUserId, userId));
-        // Add user and role
-        insertUserRole(user);
+        if (user.getRoleIds() != null) {
+            insertUserAuth(userId, user.getRoleIds());
+        }
         // Delete user and
         userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
         // Add user and
@@ -371,6 +370,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void insertUserAuth(String userId, String[] roleIds) {
+        checkUserAllowed(new SysUser(userId));
+        checkUserDataScope(userId);
+        SysUser target = baseMapper.selectById(userId);
+        com.ruoyi.common.core.domain.model.LoginUser actor = LoginHelper.getLoginUser();
+        if (target == null || actor == null || StringUtils.isBlank(actor.getTenantId())
+            || !actor.getTenantId().equals(target.getTenantId())) {
+            throw new ServiceException("不能修改其他租户用户的角色");
+        }
+        validateAssignedRoles(roleIds, actor);
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRoleView>()
             .eq(SysUserRoleView::getUserId, userId));
         insertUserRole(userId, roleIds);
@@ -480,9 +488,32 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 SysUserRoleView ur = new SysUserRoleView();
                 ur.setUserId(userId);
                 ur.setRoleId(roleId);
+                  ur.setTenantId(LoginHelper.getLoginUser().getTenantId());
                 return ur;
             });
             userRoleMapper.insertBatch(list);
+        }
+    }
+
+    private void validateAssignedRoles(String[] roleIds, com.ruoyi.common.core.domain.model.LoginUser actor) {
+        if (roleIds == null) throw new ServiceException("角色列表不能为空");
+        java.util.Set<String> own = new java.util.HashSet<>();
+        if (!LoginHelper.isAdmin(actor.getUserId())) {
+            for (SysRole role : roleMapper.selectRolePermissionByUserId(actor.getUserId())) {
+                own.add(role.getRoleId());
+            }
+        }
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (String id : roleIds) {
+            if (id == null || !id.matches("[1-9][0-9]*") || !seen.add(id)) {
+                throw new ServiceException("角色编号无效或重复");
+            }
+            SysRole role = roleMapper.selectById(id);
+            if (role == null || role.isAdmin() || !"0".equals(role.getStatus())
+                || !actor.getTenantId().equals(role.getTenantId())
+                || (!LoginHelper.isAdmin(actor.getUserId()) && !own.contains(id))) {
+                throw new ServiceException("不能分配超出本人范围、停用或其他租户的角色");
+            }
         }
     }
 

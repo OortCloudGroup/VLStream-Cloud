@@ -14,14 +14,14 @@
         <p>{{ $tp('管理AI算法的训练任务和模型发布') }}</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" @click="showCreateTrainingDialog = true">
+        <el-button v-if="canTraining" type="primary" @click="showCreateTrainingDialog = true">
           <el-icon><Plus /></el-icon> {{ $tp('新建训练任务') }} </el-button>
       </div>
     </div>
 
     <!--  -->
     <div class="stats-overview">
-      <div class="stat-card">
+      <div v-if="canTraining" class="stat-card">
         <div class="stat-icon training">
           <el-icon><Loading /></el-icon>
         </div>
@@ -30,7 +30,7 @@
           <div class="stat-label">{{ $tp('训练中') }}</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div v-if="canTraining" class="stat-card">
         <div class="stat-icon completed">
           <el-icon><Check /></el-icon>
         </div>
@@ -39,7 +39,7 @@
           <div class="stat-label">{{ $tp('已完成') }}</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div v-if="canTraining" class="stat-card">
         <div class="stat-icon pending">
           <el-icon><Clock /></el-icon>
         </div>
@@ -48,7 +48,7 @@
           <div class="stat-label">{{ $tp('等待中') }}</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div v-if="canModels" class="stat-card">
         <div class="stat-icon models">
           <el-icon><Box /></el-icon>
         </div>
@@ -62,7 +62,7 @@
     <!--  -->
     <el-tabs v-model="activeTab" class="tenanat-tabs" @tab-click="handleTabClick">
       <!-- trainingtask -->
-      <el-tab-pane :label="$tp('训练任务')" name="training">
+      <el-tab-pane v-if="canTraining" :label="$tp('训练任务')" name="training">
         <div class="training-section">
           <!--  -->
           <div class="filter-bar">
@@ -171,7 +171,7 @@
       </el-tab-pane>
 
       <!-- model -->
-      <el-tab-pane :label="$tp('模型仓库')" name="models">
+      <el-tab-pane v-if="canModels" :label="$tp('模型仓库')" name="models">
         <div class="models-section">
           <!--  -->
           <div class="filter-bar">
@@ -237,7 +237,7 @@
       </el-tab-pane>
 
       <!-- dataannotation -->
-      <el-tab-pane :label="$tp('数据标注')" name="annotation">
+      <el-tab-pane v-if="canAnnotation" :label="$tp('数据标注')" name="annotation">
         <div class="annotation-section">
           <div class="coming-soon">
             <el-icon size="64" color="#c0c4cc"><Tools /></el-icon>
@@ -250,7 +250,7 @@
 
     <!-- new trainingtask -->
     <el-dialog
-      v-model="showCreateTrainingDialog"
+      v-if="canTraining" v-model="showCreateTrainingDialog"
       :title="$tp('新建训练任务')"
       width="35%"
       @close="resetTrainingForm"
@@ -310,7 +310,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Search, MoreFilled, View, VideoPause, Upload, Delete,
@@ -318,9 +318,15 @@ import {
 } from '@element-plus/icons-vue'
 import { getTrainingPage, stopTraining as stopTrainingApi, delTrainingTask } from '@/api/algorithmTraining'
 import { getModelPage, deleteModel as deleteModelApi } from '@/api/algorithmModel'
+import { canAccessPage } from '@/utils/menuAccess.mjs'
+import { menuPermissions } from '@/utils/menuAccessState'
 
 // data
-const activeTab = ref('training')
+const canTraining = computed(() => canAccessPage('/algorithm-training', menuPermissions.value))
+const canModels = computed(() => canAccessPage('/algorithm-model', menuPermissions.value))
+const canAnnotation = computed(() => canAccessPage('/algorithm-standard', menuPermissions.value))
+const activeTab = ref('')
+let requestGeneration = 0
 const trainingSearch = ref('')
 const trainingStatusFilter = ref('')
 const algorithmTypeFilter = ref('')
@@ -460,8 +466,11 @@ const viewTaskDetails = (task) => {
 }
 
 const stopTraining = (task) => {
+  if (!canTraining.value) return
+  const generation = requestGeneration
   ElMessageBox.confirm(uiText('确定要停止此训练任务吗？'), uiText('确认操作'))
     .then(async () => {
+      if (!canTraining.value || generation !== requestGeneration) return
       await stopTrainingApi(task.id)
       await loadRealData()
       ElMessage.success(uiText('训练任务已停止'))
@@ -476,8 +485,11 @@ const publishModel = (task) => {
 }
 
 const deleteTask = (task) => {
+  if (!canTraining.value) return
+  const generation = requestGeneration
   ElMessageBox.confirm(uiText('确定要删除此训练任务吗？'), uiText('确认删除'))
     .then(async () => {
+      if (!canTraining.value || generation !== requestGeneration) return
       await delTrainingTask(task.id)
       await loadRealData()
       ElMessage.success(uiText('删除成功'))
@@ -500,8 +512,11 @@ const viewModelDetails = (model) => {
 }
 
 const deleteModel = (model) => {
+  if (!canModels.value) return
+  const generation = requestGeneration
   ElMessageBox.confirm(uiText('确定要删除此模型吗？'), uiText('确认删除'))
     .then(async () => {
+      if (!canModels.value || generation !== requestGeneration) return
       await deleteModelApi(model.id)
       await loadRealData()
       ElMessage.success(uiText('删除成功'))
@@ -528,13 +543,16 @@ const createTrainingTask = () => {
 }
 
 const loadRealData = async () => {
-  try {
-    const [trainingResponse, modelResponse] = await Promise.all([
-      getTrainingPage({ current: 1, size: 100 }),
-      getModelPage({ current: 1, size: 100 })
-    ])
+  const generation = ++requestGeneration
+  const loadTraining = canTraining.value, loadModels = canModels.value
+  const [trainingResult, modelResult] = await Promise.allSettled([
+    loadTraining ? getTrainingPage({ current: 1, size: 100 }) : Promise.resolve(null),
+    loadModels ? getModelPage({ current: 1, size: 100 }) : Promise.resolve(null)
+  ])
+  if (generation !== requestGeneration) return
+  if (loadTraining && canTraining.value && trainingResult.status === 'fulfilled') {
+    const trainingResponse = trainingResult.value
     const trainingRecords = trainingResponse?.data?.records || []
-    const modelRecords = modelResponse?.data?.records || []
     trainingTasks.value = trainingRecords.map(item => ({
       id: item.id,
       name: item.taskName,
@@ -550,23 +568,36 @@ const loadRealData = async () => {
       estimatedTime: item.estimatedTime || '-',
       gpuUsage: item.gpuUsage || '-'
     }))
-    models.value = modelRecords.map(item => ({ id: item.id, name: item.modelName, status: item.statusName || String(item.status) }))
-    trainingStats.value = {
-      running: trainingRecords.filter(item => item.trainStatus === 'training').length,
-      completed: trainingRecords.filter(item => item.trainStatus === 'completed').length,
-      pending: trainingRecords.filter(item => item.trainStatus === 'pending').length,
-      models: Number(modelResponse?.data?.total || modelRecords.length)
-    }
-  } catch (error) {
+    trainingStats.value.running = trainingRecords.filter(item => item.trainStatus === 'training').length
+    trainingStats.value.completed = trainingRecords.filter(item => item.trainStatus === 'completed').length
+    trainingStats.value.pending = trainingRecords.filter(item => item.trainStatus === 'pending').length
+  } else {
     trainingTasks.value = []
-    models.value = []
-    ElMessage.error(uiText('加载真实训练数据失败：{value0}', { value0: error.message || error }))
+    trainingStats.value.running = trainingStats.value.completed = trainingStats.value.pending = 0
   }
+  if (loadModels && canModels.value && modelResult.status === 'fulfilled') {
+    const modelResponse = modelResult.value
+    const modelRecords = modelResponse?.data?.records || []
+    models.value = modelRecords.map(item => ({ id: item.id, name: item.modelName, status: item.statusName || String(item.status) }))
+    trainingStats.value.models = Number(modelResponse?.data?.total || modelRecords.length)
+  } else {
+    models.value = []
+    trainingStats.value.models = 0
+  }
+  if ((loadTraining && trainingResult.status === 'rejected') || (loadModels && modelResult.status === 'rejected'))
+    ElMessage.error(uiText('部分数据加载失败，请稍后重试'))
 }
 
-onMounted(() => {
-  loadRealData()
-})
+watch([menuPermissions, canTraining, canModels, canAnnotation], () => {
+  const allowed = [canTraining.value && 'training', canModels.value && 'models', canAnnotation.value && 'annotation'].filter(Boolean)
+  if (!allowed.includes(activeTab.value)) activeTab.value = allowed[0] || ''
+  trainingTasks.value = []
+  models.value = []
+  trainingStats.value = { running: 0, completed: 0, pending: 0, models: 0 }
+  if (!canTraining.value) showCreateTrainingDialog.value = false
+  void loadRealData()
+}, { immediate: true, flush: 'sync' })
+onBeforeUnmount(() => { requestGeneration++ })
 </script>
 
 <style scoped>

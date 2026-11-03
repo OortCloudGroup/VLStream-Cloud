@@ -87,13 +87,33 @@ class DefaultMemberRoleServiceTest {
 
     @Test
     void wildcardSystemAndComputeGrantsAreNeverDefaultedEvenWhenDisabled() {
-        for (String permission : new String[] {"*:*:*", "system:user:list", "active-safety:settings:secure",
-            "active-safety:settings:workorder", "vls:compute:configure",
-            "vls:compute:publish", "vls:compute:manage-all", "vls:compute:company-publish"}) {
+        for (String permission : new String[] {"*:*:*", "system:user:list", "active-safety:settings:workorder", "vls:compute:configure",
+            "vls:compute:publish", "vls:compute:manage-all", "vls:compute:company-publish",
+            "vls:menu:*", "vls:menu:future-privileged-page",
+            "vls:wvp:onvif:service:continuousMove"}) {
             addGrant(999, permission); grants.get(grants.size() - 1).setStatus("1");
             assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
             grants.remove(grants.size() - 1); bindings.remove(bindings.size() - 1);
         }
+    }
+
+    @Test
+    void registeredBasicPagesAreCompatibleWithTheDefaultTemplate() {
+        long id = 1000;
+        for (String permission : DefaultMemberRoleService.BASIC_MENU_PERMISSIONS) addGrant(++id, permission);
+        assertDoesNotThrow(() -> service.requireOrdinaryRole(role));
+        SysUser user = new SysUser();
+        service.assignIfMissing(user);
+        assertArrayEquals(new String[] {"2001"}, user.getRoleIds());
+    }
+
+    @Test
+    void previouslyOpenSafetySettingsPageDoesNotPreventCreatingMemberUser() {
+        addGrant(998, "active-safety:settings:secure");
+        SysUser user = new SysUser();
+        service.assignIfMissing(user);
+        assertArrayEquals(new String[] {"2001"}, user.getRoleIds());
+        verify(roleMenus, never()).insert(any());
     }
 
     @Test
@@ -112,10 +132,24 @@ class DefaultMemberRoleServiceTest {
     }
 
     @Test
-    void missingBusinessMenuOrForeignBindingDoesNotSilentlyReduceCapabilities() {
+    void danglingMenuOrForeignBindingIsRejected() {
         SysMenu removed = grants.remove(0);
         assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
         grants.add(removed); bindings.get(0).setTenantId("other-tenant");
         assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
+    }
+
+    @Test
+    void administratorMayRevokeAnyOrAllDefaultBusinessGrantsWithoutBlockingNewUsers() {
+        grants.clear(); bindings.clear();
+        addGrant(777, "vls:menu:data-management");
+        SysUser subsetUser = new SysUser();
+        service.assignIfMissing(subsetUser);
+        assertArrayEquals(new String[] {"2001"}, subsetUser.getRoleIds());
+        grants.clear(); bindings.clear();
+        SysUser emptyUser = new SysUser();
+        service.assignIfMissing(emptyUser);
+        assertArrayEquals(new String[] {"2001"}, emptyUser.getRoleIds());
+        verify(roleMenus, never()).insert(any());
     }
 }

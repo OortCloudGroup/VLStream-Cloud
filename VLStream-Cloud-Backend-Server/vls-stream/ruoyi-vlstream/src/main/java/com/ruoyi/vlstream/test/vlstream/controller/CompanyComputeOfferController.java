@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/vlsCompute/company-offers")
 @SaCheckLogin
-@SaCheckPermission({"vls:compute:company-publish", "vls:compute:publish", "vls:compute:configure"})
+@SaCheckPermission({"vls:compute:company-publish", "vls:compute:publish", "vls:compute:configure", "vls:menu:compute-management"})
 @RequiredArgsConstructor
 public class CompanyComputeOfferController {
     private final CompanyComputeOfferService offers;

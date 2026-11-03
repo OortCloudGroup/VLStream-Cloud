@@ -20,10 +20,12 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.SysUserRoleView;
+import com.ruoyi.system.domain.RoleMenuGrantUpdate;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysPermissionService;
+import com.ruoyi.system.service.RoleMenuGrantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +50,7 @@ public class SysRoleController extends BaseController {
     private final ISysUserService userService;
     private final ISysDeptService deptService;
     private final SysPermissionService permissionService;
+    private final RoleMenuGrantService roleMenuGrantService;
 
     /**
      * Get roleinfo
@@ -76,9 +79,27 @@ public class SysRoleController extends BaseController {
      */
     @SaCheckPermission("system:role:query")
     @GetMapping(value = "/{roleId}")
-    public R<SysUserRoleView> getInfo(@PathVariable String  roleId) {
+    public R<SysRole> getInfo(@PathVariable String  roleId) {
         roleService.checkRoleDataScope(roleId);
         return R.ok(roleService.selectRoleById(roleId));
+    }
+
+    @SaCheckPermission("system:role:query")
+    @GetMapping("/{roleId}/menu-grants")
+    public R<Map<String, Object>> getMenuGrants(@PathVariable String roleId) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("menuIds", roleMenuGrantService.getMenuIds(roleId));
+        result.put("grantableMenuIds", roleMenuGrantService.getGrantableMenuIds(roleId));
+        return R.ok(result);
+    }
+
+    @SaCheckPermission("system:role:edit")
+    @Log(title = "角色菜单授权", businessType = BusinessType.GRANT)
+    @PutMapping("/{roleId}/menu-grants")
+    public R<Void> updateMenuGrants(@PathVariable String roleId,
+                                    @RequestBody RoleMenuGrantUpdate request) {
+        roleMenuGrantService.updateMenuIds(roleId, request);
+        return R.ok();
     }
 
     /**

@@ -8,6 +8,8 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -61,6 +63,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmModel")
@@ -74,6 +77,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmModel")
@@ -88,6 +92,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel Custom
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training", "vls:menu:legacy-device-management"}, mode = SaMode.OR)
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmModel")
@@ -99,6 +104,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel Add
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmModel")
@@ -110,6 +116,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmModel")
@@ -121,6 +128,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel Add Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmModel")
@@ -132,6 +140,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * algorithmmodel Delete
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -143,6 +152,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/export-vlsAlgorithmModel")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmModel")
@@ -158,6 +168,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据ID查询算法模型详情")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/{id}")
 	public R<AlgorithmModel> getModelById(@PathVariable Long id) {
 		try {
@@ -173,6 +184,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "创建算法模型")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@PostMapping("/create")
 	public R<AlgorithmModel> createModel(@Valid @RequestBody AlgorithmModelVO createDTO) {
 		try {
@@ -185,6 +197,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(summary = "导入分类、检测或分割 PT 模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping(value = "/import", consumes = "multipart/form-data")
 	public R<AlgorithmModel> importModel(@RequestParam Long algorithmId,
 		@RequestParam String annotationType, @RequestParam String modelName, @RequestParam Integer version,
@@ -201,6 +214,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(summary = "从 ZIP 导入分类、检测或分割 PT 模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping(value = "/import-zip", consumes = "multipart/form-data")
 	public R<AlgorithmModel> importModelZip(@RequestParam Long algorithmId,
 		@RequestParam String annotationType, @RequestParam String modelName, @RequestParam Integer version,
@@ -215,6 +229,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "删除算法模型")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@DeleteMapping("/{id}")
 	public R<Boolean> deleteModel(@PathVariable Long id) {
 		try {
@@ -227,6 +242,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "批量删除算法模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@DeleteMapping("/batch")
 	public R<Boolean> batchDeleteModel(@RequestBody List<Long> ids) {
 		try {
@@ -239,6 +255,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据算法ID查询模型列表")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/algorithm/{algorithmId}")
 	public R<List<AlgorithmModel>> getModelsByAlgorithmId(@PathVariable Long algorithmId) {
 		try {
@@ -251,6 +268,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据训练任务ID查询模型列表")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/training/{trainingId}")
 	public R<List<AlgorithmModel>> getModelsByTrainingId(@PathVariable Long trainingId) {
 		try {
@@ -263,6 +281,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据状态查询模型列表")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/status/{status}")
 	public R<List<AlgorithmModel>> getModelsByStatus(@PathVariable String status) {
 		try {
@@ -275,6 +294,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "发布模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/publish/{id}")
 	public R<Boolean> publishModel(@PathVariable Long id) {
 		try {
@@ -287,6 +307,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "撤销发布模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/unpublish/{id}")
 	public R<Boolean> unpublishModel(@PathVariable Long id) {
 		try {
@@ -299,6 +320,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "批量发布模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@PostMapping("/batch-publish")
 	public R<Boolean> batchPublishModel(@RequestBody List<Long> ids) {
 		try {
@@ -311,6 +333,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "下载模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/download/{id}")
 	public R<String> downloadModel(@PathVariable Long id) {
 		try {
@@ -326,6 +349,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	 * model ID already model .
 	 */
 	@Operation(description = "下载模型文件")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/{id}/download-file")
 	public void downloadModelFile(@PathVariable Long id,
 		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
@@ -357,6 +381,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "部署模型")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
 	@PostMapping("/deploy/{id}")
 	public R<Boolean> deployModel(@PathVariable Long id) {
 		try {
@@ -369,6 +394,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "检查模型名称和版本是否存在")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/check-name-version")
 	public R<Boolean> checkModelNameAndVersion(@RequestParam String modelName, @RequestParam Integer version, @RequestParam(required = false) Long excludeId) {
 		try {
@@ -381,6 +407,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据算法ID和版本查询模型")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/algorithm/{algorithmId}/version/{version}")
 	public R<AlgorithmModel> getModelByAlgorithmIdAndVersion(@PathVariable Long algorithmId, @PathVariable Integer version) {
 		try {
@@ -393,6 +420,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "获取算法下最新版本的模型")
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training"}, mode = SaMode.OR)
 	@GetMapping("/algorithm/{algorithmId}/latest")
 	public R<AlgorithmModel> getLatestModelByAlgorithmId(@PathVariable Long algorithmId) {
 		try {
@@ -405,6 +433,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "查询热门模型")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/popular")
 	public R<List<AlgorithmModel>> getPopularModels(@RequestParam(defaultValue = "10") Integer limit) {
 		try {
@@ -417,6 +446,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "根据创建人查询模型数量")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/count/creator/{createdBy}")
 	public R<Long> countModelsByCreatedBy(@PathVariable Long createdBy) {
 		try {
@@ -429,6 +459,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	@Operation(description = "获取算法模型的总大小")
+	@SaCheckPermission("vls:menu:algorithm-model")
 	@GetMapping("/total-size")
 	public R<Long> getTotalModelSize() {
 		try {

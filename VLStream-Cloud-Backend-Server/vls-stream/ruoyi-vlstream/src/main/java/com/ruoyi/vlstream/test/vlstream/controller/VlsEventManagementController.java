@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -61,6 +62,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsEventManagement")
@@ -72,6 +74,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsEventManagement")
@@ -84,6 +87,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event Custom
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsEventManagement")
@@ -95,6 +99,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event Add
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsEventManagement")
@@ -105,6 +110,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event Update
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsEventManagement")
@@ -115,6 +121,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event Add Update
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsEventManagement")
@@ -125,6 +132,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * event Delete
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -135,6 +143,7 @@ public class VlsEventManagementController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/export-vlsEventManagement")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsEventManagement")
@@ -148,6 +157,7 @@ public class VlsEventManagementController extends BladeController {
 		ExcelUtil.export(response, "事件管理表数据" + DateUtil.today(), "事件管理表数据表", list, VlsEventManagementExcel.class);
 	}
 
+	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/{id}")
 	public R<EventManagement> getEvent(@PathVariable Long id) {
 		EventManagement event = vlsEventManagementService.getEventById(id);
@@ -157,6 +167,7 @@ public class VlsEventManagementController extends BladeController {
 		return R.data(event);
 	}
 
+	@SaCheckPermission("active-safety:events:list")
 	@PostMapping
 	public R<Boolean> createEvent(@RequestBody EventManagement eventManagement) {
 		boolean created = vlsEventManagementService.createEvent(eventManagement);
@@ -166,6 +177,7 @@ public class VlsEventManagementController extends BladeController {
 		return R.fail("Create event failed");
 	}
 
+	@SaCheckPermission("active-safety:events:list")
 	@PatchMapping("/{id}/status")
 	@Operation(summary = "更新事件处置状态", description = "仅更新当前租户事件的状态和处理结果")
 	public R<Boolean> updateEventStatus(@PathVariable Long id,

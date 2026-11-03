@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -31,6 +32,7 @@ import com.ruoyi.vlstream.test.vlstream.excel.VlsTimeStrategyExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TimeStrategy;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.TimeStrategyVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsTimeStrategyService;
+import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsMqttPublishService;
 import com.ruoyi.vlstream.test.vlstream.service.impl.VlsRtspRecordingManager;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsTimeStrategyWrapper;
@@ -63,6 +65,7 @@ public class VlsTimeStrategyController extends BladeController {
 	);
 
 	private final IVlsTimeStrategyService vlsTimeStrategyService;
+	private final IVlsDeviceInfoService vlsDeviceInfoService;
 	private final VlsMqttPublishService vlsMqttPublishService;
 	private final VlsMqttProperties vlsMqttProperties;
 	private final ObjectProvider<VlsRtspRecordingManager> rtspRecordingManagerProvider;
@@ -71,6 +74,7 @@ public class VlsTimeStrategyController extends BladeController {
 	 *
 	 */
 	@GetMapping("/detail")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsTimeStrategy")
 	public R<TimeStrategyVO> detail(TimeStrategy vlsTimeStrategy) {
@@ -92,6 +96,7 @@ public class VlsTimeStrategyController extends BladeController {
 	 *
 	 */
 	@GetMapping("/list")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsTimeStrategy")
 	public R<IPage<TimeStrategyVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsTimeStrategy, Query query) {
@@ -104,6 +109,7 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Custom
 	 */
 	@GetMapping("/page")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsTimeStrategy")
 	public R<IPage<TimeStrategyVO>> page(TimeStrategyVO vlsTimeStrategy, Query query) {
@@ -115,9 +121,13 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Add
 	 */
 	@PostMapping("/save")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsTimeStrategy")
 	public R save(@Valid @RequestBody TimeStrategy vlsTimeStrategy) {
+		if (!ownsDevice(vlsTimeStrategy.getDeviceId())) {
+			return R.fail("设备不存在或无权访问");
+		}
 		boolean success = vlsTimeStrategyService.save(vlsTimeStrategy);
 		if (!success) {
 			return R.status(false);
@@ -134,9 +144,14 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Update
 	 */
 	@PostMapping("/update")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsTimeStrategy")
 	public R update(@Valid @RequestBody TimeStrategy vlsTimeStrategy) {
+		if (!ownsStrategy(vlsTimeStrategy.getId()) ||
+			(vlsTimeStrategy.getDeviceId() != null && !ownsDevice(vlsTimeStrategy.getDeviceId()))) {
+			return R.fail("设备不存在或无权访问");
+		}
 		boolean success = vlsTimeStrategyService.updateById(vlsTimeStrategy);
 		if (success) {
 			notifyRecordingRefresh();
@@ -148,9 +163,14 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Add Update
 	 */
 	@PostMapping("/submit")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsTimeStrategy")
 	public R submit(@Valid @RequestBody TimeStrategy vlsTimeStrategy) {
+		if (!ownsDevice(vlsTimeStrategy.getDeviceId()) ||
+			(vlsTimeStrategy.getId() != null && !ownsStrategy(vlsTimeStrategy.getId()))) {
+			return R.fail("设备不存在或无权访问");
+		}
 		boolean success = vlsTimeStrategyService.saveOrUpdate(vlsTimeStrategy);
 		if (!success) {
 			return R.status(false);
@@ -167,10 +187,15 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Delete
 	 */
 	@GetMapping("/remove")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
-		boolean success = vlsTimeStrategyService.deleteLogic(Func.toLongList(ids));
+		List<Long> strategyIds = Func.toLongList(ids);
+		if (strategyIds.isEmpty() || strategyIds.stream().anyMatch(id -> !ownsStrategy(id))) {
+			return R.fail("设备不存在或无权访问");
+		}
+		boolean success = vlsTimeStrategyService.deleteLogic(strategyIds);
 		if (success) {
 			notifyRecordingRefresh();
 		}
@@ -181,6 +206,7 @@ public class VlsTimeStrategyController extends BladeController {
 	 * Export data
 	 */
 	@GetMapping("/export-vlsTimeStrategy")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsTimeStrategy")
 	public void exportVlsTimeStrategy(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsTimeStrategy, BladeUser bladeUser, HttpServletResponse response) {
@@ -198,8 +224,12 @@ public class VlsTimeStrategyController extends BladeController {
 	 * update time
 	 */
 	@PostMapping
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@Operation(summary = "保存时间策略", description = "保存或更新时间策略")
 	public R<Boolean> saveOrUpdate(@RequestBody TimeStrategy timeStrategy) {
+		if (!ownsDevice(timeStrategy.getDeviceId())) {
+			return R.fail("设备不存在或无权访问");
+		}
 		boolean success = vlsTimeStrategyService.saveOrUpdateStrategy(timeStrategy);
 		if (!success) {
 			return R.fail("保存失败");
@@ -216,13 +246,32 @@ public class VlsTimeStrategyController extends BladeController {
 	 * deviceIDDelete
 	 */
 	@DeleteMapping("/{deviceId}")
+	@SaCheckPermission("vls:menu:legacy-device-management")
 	@Operation(summary = "删除时间策略", description = "根据设备ID删除时间策略")
 	public R<Boolean> deleteByDeviceId(@PathVariable String deviceId) {
+		if (!ownsDevice(deviceId)) {
+			return R.fail("设备不存在或无权访问");
+		}
 		boolean success = vlsTimeStrategyService.deleteByDeviceId(deviceId);
 		if (success) {
 			notifyRecordingRefresh();
 		}
 		return success ? R.data(true) : R.fail("删除失败");
+	}
+
+	private boolean ownsDevice(String deviceId) {
+		try {
+			long id = Long.parseLong(deviceId);
+			return id > 0 && vlsDeviceInfoService.getById(id) != null;
+		} catch (NumberFormatException | NullPointerException e) {
+			return false;
+		}
+	}
+
+	private boolean ownsStrategy(Long id) {
+		if (id == null) return false;
+		TimeStrategy existing = vlsTimeStrategyService.getById(id);
+		return existing != null && ownsDevice(existing.getDeviceId());
 	}
 
 	private void notifyRecordingRefresh() {

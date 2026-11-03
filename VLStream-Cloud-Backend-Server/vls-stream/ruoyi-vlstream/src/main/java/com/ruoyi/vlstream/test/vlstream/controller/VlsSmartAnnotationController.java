@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.ruoyi.vlstream.test.vlstream.data.*;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.Valid;
 import java.util.Map;
 
 @RestController
+@SaCheckPermission("vls:menu:smart-annotation")
 @RequestMapping("/vlsData/smart-annotation")
 @RequiredArgsConstructor
 public class VlsSmartAnnotationController {

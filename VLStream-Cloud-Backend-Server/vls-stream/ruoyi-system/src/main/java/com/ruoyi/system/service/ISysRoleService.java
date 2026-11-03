@@ -71,7 +71,7 @@ public interface ISysRoleService {
      * @param roleId role ID
      * @return roleobjectinfo
      */
-    SysUserRoleView selectRoleById(String roleId);
+    SysRole selectRoleById(String roleId);
 
     /**
      * user ID and role IDQuery role ( )

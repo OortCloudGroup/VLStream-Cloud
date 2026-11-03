@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.vlstream.test.vlstream.data.*;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
@@ -8,6 +9,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController @RequestMapping("/vlsData") @RequiredArgsConstructor
+@SaCheckPermission("vls:menu:data-management")
 public class VlsVideoFrameController {
     private final VideoFrameService service;
     private final VideoFrameRegistry registry;

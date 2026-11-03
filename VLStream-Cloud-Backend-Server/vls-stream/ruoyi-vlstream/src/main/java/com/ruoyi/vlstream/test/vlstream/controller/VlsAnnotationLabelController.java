@@ -54,6 +54,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAnnotationLabel")
@@ -65,6 +66,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAnnotationLabel")
@@ -77,6 +79,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation Custom
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAnnotationLabel")
@@ -88,6 +91,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation Add
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAnnotationLabel")
@@ -98,6 +102,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation Update
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAnnotationLabel")
@@ -108,6 +113,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation Add Update
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAnnotationLabel")
@@ -118,6 +124,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * annotation Delete
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -128,6 +135,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@GetMapping("/export-vlsAnnotationLabel")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsAnnotationLabel")
@@ -148,6 +156,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	 * @param keyword ( )
 	 * @return
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = cn.dev33.satoken.annotation.SaMode.OR)
 	@GetMapping("/{annotationId}/labels")
 	public R<List<AnnotationLabel>> getLabels(@PathVariable Long annotationId,
 											  @RequestParam(required = false) String keyword) {
@@ -172,6 +181,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	 * @param requestBody
 	 * @return
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission(value = {"vls:menu:algorithm-standard", "vls:menu:data-management"}, mode = cn.dev33.satoken.annotation.SaMode.OR)
 	@PostMapping("/{annotationId}/labels")
 	public R<AnnotationLabel> createLabel(@PathVariable Long annotationId,
 										  @RequestBody Map<String, Object> requestBody) {
@@ -202,6 +212,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	 * @param requestBody
 	 * @return new after
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@PutMapping("/labels/{labelId}")
 	public R<AnnotationLabel> updateLabel(@PathVariable Long labelId,
 										  @RequestBody Map<String, Object> requestBody) {
@@ -231,6 +242,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	 * @param labelId ID
 	 * @return Delete
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@DeleteMapping("/labels/{labelId}")
 	public R<Boolean> deleteLabel(@PathVariable Long labelId) {
 		try {
@@ -249,6 +261,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	 * @param requestBody ( labelIdsarray)
 	 * @return new
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 	@PutMapping("/{annotationId}/labels/sort")
 	public R<Boolean> updateLabelSort(@PathVariable Long annotationId,
 									  @RequestBody Map<String, Object> requestBody) {

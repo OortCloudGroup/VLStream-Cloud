@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsDeviceModels")
+@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:vlstream:device")
 public class VlsDeviceModelController {
     private final DeviceModelService service;
 

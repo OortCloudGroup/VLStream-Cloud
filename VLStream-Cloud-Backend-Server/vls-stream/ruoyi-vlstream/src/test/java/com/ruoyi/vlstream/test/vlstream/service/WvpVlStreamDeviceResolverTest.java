@@ -47,6 +47,19 @@ class WvpVlStreamDeviceResolverTest {
 	}
 
 	@Test
+	void onlineModelControlHonorsConfiguredLegacyTenantWhenOwnerIsMissing() {
+		RestTemplate rest = new RestTemplate();
+		MockRestServiceServer server = MockRestServiceServer.createServer(rest);
+		server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
+			.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\",\"online\":true}}", MediaType.APPLICATION_JSON));
+		VlsNativeDeviceProperties props = new VlsNativeDeviceProperties();
+		props.setDefaultTenantId("tenant-a");
+		assertEquals("tenant-a", new WvpVlStreamDeviceResolver(properties(), props,
+			mock(VlsEventReportApplicationService.class), rest).resolveOnline("CAM-1").getTenantId());
+		server.verify();
+	}
+
+	@Test
 	void springSelectsTheProductionConstructor() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.getBeanFactory().registerSingleton("wvpVlStreamDeviceProperties", properties());

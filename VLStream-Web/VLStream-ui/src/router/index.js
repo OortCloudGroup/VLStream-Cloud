@@ -14,6 +14,10 @@ import { AuthManager } from '@/utils/auth'
 import { consumeCapturedModelHubCallback } from '@/utils/modelHubAuth'
 import { stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
+import { canAccessPage } from '@/utils/menuAccess.mjs'
+import { clearMenuPermissions, setMenuPermissions } from '@/utils/menuAccessState'
+import { ElMessage } from 'element-plus'
+import { translatePhrase } from '@/i18n'
 
 const authManager = new AuthManager()
 
@@ -372,6 +376,11 @@ const routes = [
         meta: { title: '算力管理', icon: '容器实例' }
       },
       {
+        path: '/compute-safety', name: 'ComputeSafety',
+        component: () => import('@/views/AIComputingScheduling/ComputeSafety.vue'),
+        meta: { title: '我的算力安全停机', hideInMenu: true }
+      },
+      {
         path: '/user-profile',
         name: 'UserProfile',
         component: () => import('@/views/UserProfile.vue'),
@@ -508,6 +517,7 @@ router.beforeEach(async (to, from, next) => {
   })
   // need to token Validate .
   if (to.path === '/login') {
+    clearMenuPermissions()
     if (authManager.hasPlatformCallbackToken()) {
       const userInfo = await authManager.checkUrlToken() // consumes URL before lazy-loading/async authentication
       if (userInfo) next({ path: safeAuthReturnPath(cleanRoute.query.redirect, import.meta.env.BASE_URL), replace: true })
@@ -524,12 +534,10 @@ router.beforeEach(async (to, from, next) => {
     const consumedOortCloudCallback = consumeCapturedModelHubCallback()
     if (consumedOortCloudCallback) {
       authManager.cleanUrlToken()
-      finishRoute()
-      return
     }
     const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
     const checkingIdentity = authManager.getIdentitySnapshot()
-    const userInfo = await (isLocalEventRoute(to.meta)
+    let userInfo = await (isLocalEventRoute(to.meta)
       ? authManager.checkLocalEventLogin()
       : authManager.checkExternalPlatformLogin())
     if (!hasPlatformCallbackToken && !authManager.isIdentityCurrent(checkingIdentity)) {
@@ -538,11 +546,32 @@ router.beforeEach(async (to, from, next) => {
       return
     }
     if (userInfo) {
+      // Exchange responses need not contain permissions; obtain the trusted local
+      // user-info response after the new session has been established.
+      if (!Array.isArray(userInfo.permissions)) {
+        const identity = authManager.getIdentitySnapshot()
+        userInfo = await authManager.verifyToken(identity.token, { localSessionOnly: isLocalEventRoute(to.meta) })
+        if (!authManager.isIdentityCurrent(identity)) {
+          next(false)
+          return
+        }
+      }
+      if (!userInfo || !Array.isArray(userInfo.permissions)) {
+        throw new Error('权限信息暂不可用')
+      }
+      setMenuPermissions(userInfo)
+      const matched = to.matched[to.matched.length - 1]
+      if (!canAccessPage(matched?.path || to.path, userInfo.permissions)) {
+        ElMessage.warning(translatePhrase('没有访问该页面的权限'))
+        next({ path: '/workspace', replace: true })
+        return
+      }
       console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
       finishRoute()
       return
     }
 
+    clearMenuPermissions()
     // Other multi-tenant routes retain platform validation; local event reads use the VLS session.
     const tenantMode = await authManager.getTenantMode()
     if (tenantMode === 'multi' && !hasPlatformCallbackToken && !isLocalEventRoute(to.meta)) {

@@ -75,6 +75,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsDeviceInfo")
@@ -88,6 +89,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsDeviceInfo")
@@ -102,6 +104,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo Custom
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsDeviceInfo")
@@ -178,6 +181,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo Add
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsDeviceInfo")
@@ -188,6 +192,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo Update
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsDeviceInfo")
@@ -211,6 +216,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo Add Update
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsDeviceInfo")
@@ -293,6 +299,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * deviceinfo Delete
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -303,6 +310,7 @@ public class VlsDeviceInfoController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/export-vlsDeviceInfo")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsDeviceInfo")
@@ -320,6 +328,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * IDQuery deviceinfo
 	 */
 	@Operation(summary = "根据ID查询设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/{id}")
 	public R<Map<String, Object>> getDeviceById(@PathVariable Long id) {
 		DeviceInfo deviceInfo = vlsDeviceInfoService.getById(id);
@@ -332,6 +341,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	@Operation(summary = "获取设备训练模型")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/latest-training-model")
 	public R<AlgorithmModelVO> getLatestTrainingModel(@RequestParam String deviceId) {
 		DeviceInfo query = new DeviceInfo();
@@ -374,6 +384,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device Query deviceinfo
 	 */
 	@Operation(summary = "根据设备编号查询设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/deviceId/{deviceId}")
 	public R<Map<String, Object>> getDeviceByDeviceId(@PathVariable String deviceId) {
 		DeviceInfo deviceInfo = vlsDeviceInfoService.getByDeviceId(deviceId);
@@ -389,6 +400,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Add deviceinfo
 	 */
 	@Operation(summary = "新增设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping
 	@Transactional(rollbackFor = Exception.class)
 	public R<String> addDevice(@RequestBody Map<String, Object> requestData) {
@@ -415,6 +427,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new deviceinfo
 	 */
 	@Operation(summary = "更新设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PutMapping("/{id}")
 	@Transactional(rollbackFor = Exception.class)
 	public R<String> updateDevice(@PathVariable Long id, @RequestBody Map<String, Object> requestData) {
@@ -465,6 +478,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * old Query parameter algorithm .
 	 */
 	@Operation(summary = "摄像头算法下发（兼容）")
+	@cn.dev33.satoken.annotation.SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-arrangement", "vls:menu:vlstream:device", "vls:menu:legacy-device-management"}, mode = cn.dev33.satoken.annotation.SaMode.OR)
 	@GetMapping("/dispatchAlgorithms")
 	public R<String> dispatchAlgorithmsLegacy(@RequestParam Long algorithmId,
 		@RequestParam String deviceIds,
@@ -476,6 +490,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * WVPdevice , VLS-Protocol 2.2 modelDeploy notification model.
 	 */
 	@Operation(summary = "摄像头算法下发")
+	@cn.dev33.satoken.annotation.SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-arrangement", "vls:menu:vlstream:device", "vls:menu:legacy-device-management"}, mode = cn.dev33.satoken.annotation.SaMode.OR)
 	@PostMapping("/{algorithmId}/algorithms")
 	public R<String> dispatchAlgorithms(@PathVariable Long algorithmId,
 		@RequestParam String deviceIds,
@@ -634,6 +649,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Delete deviceinfo
 	 */
 	@Operation(description = "删除设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@DeleteMapping("/{id}")
 	public R<String> deleteDevice(@PathVariable Long id) {
 		boolean success = vlsDeviceInfoService.deleteDevice(id);
@@ -648,6 +664,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Batch delete deviceinfo
 	 */
 	@Operation(description = "批量删除设备信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@DeleteMapping("/batch")
 	public R<String> deleteDeviceBatch(@RequestBody List<Long> ids) {
 		if (ids == null || ids.isEmpty()) {
@@ -666,6 +683,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new device
 	 */
 	@Operation(description = "更新设备状态")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PutMapping("/{id}/status/{status}")
 	public R<String> updateDeviceStatus(@PathVariable Long id, @PathVariable Integer status) {
 
@@ -681,6 +699,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new device
 	 */
 	@Operation(description = "批量更新设备状态")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PutMapping("/status/{status}")
 	public R<String> updateDeviceStatusBatch(@PathVariable String status, @RequestBody List<Long> ids) {
 
@@ -700,6 +719,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Query device list
 	 */
 	@Operation(description = "根据状态查询设备列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/status/{status}")
 	public R<List<DeviceInfo>> getDevicesByStatus(@PathVariable String status) {
 		List<DeviceInfo> devices = vlsDeviceInfoService.getDevicesByStatus(status);
@@ -710,6 +730,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device Query device list
 	 */
 	@Operation(description = "根据设备类型查询设备列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/type/{deviceType}")
 	public R<List<DeviceInfo>> getDevicesByType(@PathVariable String deviceType) {
 		List<DeviceInfo> devices = vlsDeviceInfoService.getDevicesByType(deviceType);
@@ -720,6 +741,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device
 	 */
 	@Operation(description = "测试设备连接")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/test")
 	public R<Map<String, Object>> testDeviceConnection(@PathVariable Long id) {
 		Map<String, Object> result = vlsDeviceInfoService.testDeviceConnection(id);
@@ -734,6 +756,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device info
 	 */
 	@Operation(description = "获取设备统计信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/statistics")
 	public R<Map<String, Object>> getDeviceStatistics() {
 		Map<String, Object> statistics = vlsDeviceInfoService.getDeviceStatistics();
@@ -744,6 +767,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get devicegroup ( group)
 	 */
 	@Operation(description = "获取设备分组统计")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/group-statistics")
 	public R<List<Map<String, Object>>> getDeviceGroupStatistics() {
 		// Get all device
@@ -788,6 +812,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device
 	 */
 	@Operation(description = "获取设备类型统计")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/type-statistics")
 	public R<Map<String, Object>> getDeviceTypeStatistics() {
 		// Get all device
@@ -806,6 +831,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get all device ( )
 	 */
 	@Operation(description = "获取所有设备类型列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/tags")
 	public R<List<String>> getDeviceTags() {
 		List<String> tags = vlsDeviceInfoService.getAllTags();
@@ -816,6 +842,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get all device
 	 */
 	@Operation(description = "获取所有设备品牌列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/brands")
 	public R<List<String>> getDeviceBrands() {
 		List<String> brands = vlsDeviceInfoService.getAllBrands();
@@ -826,6 +853,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new device
 	 */
 	@Operation(description = "刷新设备状态")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/refresh")
 	public R<String> refreshDeviceStatus(@PathVariable Long id) {
 		Map<String, Object> result = vlsDeviceInfoService.refreshDeviceStatus(id);
@@ -840,6 +868,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new device
 	 */
 	@Operation(description = "批量刷新设备状态")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/batch/refresh")
 	public R<String> batchRefreshDevices(@RequestBody Map<String, List<Long>> request) {
 		List<Long> ids = request.get("ids");
@@ -862,6 +891,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 移动")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/ptz/move")
 	public R<String> ptzMove(@PathVariable Long id, @RequestBody Map<String, Object> params) {
 
@@ -886,6 +916,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 停止")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/ptz/stop")
 	public R<String> ptzStop(@PathVariable Long id) {
 		// devicewhether in
@@ -906,6 +937,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 缩放")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/ptz/zoom")
 	public R<String> ptzZoom(@PathVariable Long id,
 		@RequestBody Map<String, Object> params) {
@@ -931,6 +963,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device info
 	 */
 	@Operation(description = "获取设备视频流信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/{id}/stream")
 	public R<Map<String, Object>> getDeviceStreamInfo(@PathVariable Long id) {
 		Map<String, Object> streamInfo = vlsDeviceInfoService.getVideoStreamInfo(id);
@@ -944,6 +977,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Export device
 	 */
 	@Operation(description = "导出设备列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/export")
 	public R<List<DeviceInfo>> exportDevices(@RequestParam(required = false) List<Long> deviceIds) {
 		List<DeviceInfo> devices = vlsDeviceInfoService.exportDevices(deviceIds);
@@ -954,6 +988,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Import device
 	 */
 	@Operation(description = "导入设备列表")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/import")
 	public R<Map<String, Object>> importDevices(@RequestParam("file") MultipartFile file) {
 		// TODO: Parse and deviceImport can
@@ -966,6 +1001,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get deviceconfiguration
 	 */
 	@Operation(description = "获取设备配置")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/{id}/config")
 	public R<Map<String, Object>> getDeviceConfig(@PathVariable Long id) {
 		Map<String, Object> config = vlsDeviceInfoService.getDeviceConfig(id);
@@ -979,6 +1015,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * new deviceconfiguration
 	 */
 	@Operation(description = "更新设备配置")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PutMapping("/{id}/config")
 	public R<String> updateDeviceConfig( @PathVariable Long id,
 		@RequestBody Map<String, Object> config) {
@@ -997,6 +1034,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Set device
 	 */
 	@Operation(description = "设置设备标签")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PutMapping("/{id}/tags")
 	public R<String> setDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
@@ -1018,6 +1056,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device
 	 */
 	@Operation(description = "获取设备标签")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/{id}/tags")
 	public R<List<DeviceTagRelationDTO>> getDeviceTags(@PathVariable Long id) {
 
@@ -1035,6 +1074,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device
 	 */
 	@Operation(description = "添加设备标签")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{id}/tags")
 	public R<String> addDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
@@ -1056,6 +1096,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device
 	 */
 	@Operation(description = "移除设备标签")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@DeleteMapping("/{id}/tags")
 	public R<String> removeDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
@@ -1077,6 +1118,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device all
 	 */
 	@Operation(description = "清除设备的所有标签")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@DeleteMapping("/{id}/tags/all")
 	public R<String> clearDeviceTags(@PathVariable Long id) {
 
@@ -1098,6 +1140,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device info
 	 */
 	@Operation(description = "获取设备标签详细信息")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/{id}/tag-details")
 	public R<Map<String, Object>> getDeviceTagDetails(@PathVariable Long id) {
 
@@ -1115,6 +1158,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * device
 	 */
 	@Operation(description = "复制设备标签到其他设备")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@PostMapping("/{sourceId}/copy-tags")
 	public R<String> copyDeviceTags(@PathVariable Long sourceId, @RequestBody List<Long> targetDeviceIds) {
 
@@ -1144,6 +1188,7 @@ public class VlsDeviceInfoController extends BladeController {
 	 * Get device
 	 */
 	@Operation(description = "获取设备树形结构")
+	@cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:legacy-device-management")
 	@GetMapping("/tree")
 	public R<List<Map<String, Object>>> getDeviceTree() {
 		try {

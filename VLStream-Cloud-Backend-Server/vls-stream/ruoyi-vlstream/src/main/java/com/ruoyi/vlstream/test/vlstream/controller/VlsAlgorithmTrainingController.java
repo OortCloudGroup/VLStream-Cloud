@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -119,6 +120,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmTraining")
@@ -132,6 +134,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmTraining")
@@ -146,6 +149,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask Custom
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmTraining")
@@ -174,6 +178,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask Add
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmTraining")
@@ -184,6 +189,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmTraining")
@@ -195,6 +201,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask Add Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmTraining")
@@ -206,6 +213,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * algorithmtrainingtask Delete
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -217,6 +225,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/export-vlsAlgorithmTraining")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmTraining")
@@ -234,6 +243,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * IDQuery trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/{id}")
 	@Operation(summary = "查询训练任务详情", description = "根据ID获取训练任务详细信息")
 	public R<AlgorithmTraining> getTrainingById(
@@ -252,6 +262,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Add trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping
 	@Operation(summary = "创建训练任务", description = "新增训练任务")
 	public R<String> createTraining(@Valid @RequestBody AlgorithmTraining training) {
@@ -270,6 +281,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Update trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PutMapping("/{id}")
 	@Operation(summary = "更新训练任务", description = "根据ID更新训练任务信息")
 	public R<String> updateTraining(
@@ -291,6 +303,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * new training
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PutMapping("/{id}/status")
 	@Operation(summary = "更新训练状态", description = "更新指定训练任务的状态")
 	public R<String> updateTrainingStatus(
@@ -326,6 +339,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Delete trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除训练任务", description = "根据ID删除训练任务")
 	public R<String> deleteTraining(
@@ -345,6 +359,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Batch delete trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除训练任务", description = "根据ID列表批量删除训练任务")
 	public R<String> batchDeleteTraining(@RequestBody List<Long> ids) {
@@ -367,6 +382,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * starttrainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/{id}/start")
 	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	@Operation(summary = "开始训练任务", description = "开始指定的训练任务")
@@ -464,12 +480,14 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		}
 	}
 
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/{id}/publication")
 	public R<Map<String,Object>> publicationStatus(@PathVariable Long id) {
 		publicAccess.training(id);
 		return R.data(trainingPublicationService.status(id));
 	}
 
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/{id}/publication/retry")
 	public R<String> retryPublication(@PathVariable Long id) {
 		publicAccess.training(id);
@@ -480,6 +498,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Convert model
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/{id}/convert-model")
 	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	@ApiOperationSupport(order = 9)
@@ -692,6 +711,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * service conda
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/diagnose-conda")
 	@Operation(summary = "诊断conda环境", description = "检查远程服务器上的conda安装情况")
 	public R<String> diagnoseConda() {
@@ -740,6 +760,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * trainingtask
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@PostMapping("/{id}/stop")
 	@Operation(summary = "停止训练任务", description = "停止指定的训练任务")
 	public R<String> stopTraining(@Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id) {
@@ -769,6 +790,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Get traininglog
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/{id}/logs")
 	@Operation(summary = "获取训练状态", description = "获取指定训练任务的日志")
 	public R<RemoteTrainingService.LogResult> getTrainingLogs(
@@ -801,6 +823,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * Get training
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/{id}/status")
 	@Operation(summary = "获取训练状态", description = "获取指定训练任务的状态")
 	public R<RemoteTrainingService.TrainingProgress> getTrainingStatus(
@@ -1098,6 +1121,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	/**
 	 * trainingtask ID training , training ID model ID.
 	 */
+	@SaCheckPermission("vls:menu:algorithm-training")
 	@GetMapping("/{id}/download-model")
 	@Operation(summary = "下载训练产物", description = "根据训练任务ID下载该任务生成的模型文件")
 	public void downloadTrainingModel(@PathVariable Long id,
@@ -1109,6 +1133,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	 * old model , model ID history .
 	 */
 	@Deprecated
+	@SaCheckPermission(value = {"vls:menu:algorithm-model", "vls:menu:algorithm-training", "vls:menu:vlstream:device", "vls:menu:legacy-device-management"}, mode = cn.dev33.satoken.annotation.SaMode.OR)
 	@GetMapping("/download-model")
 	@Operation(summary = "下载模型文件（兼容）", description = "兼容旧接口，id参数仍表示模型表ID")
 	public void downloadModel(@RequestParam Long id,

@@ -221,9 +221,10 @@ public class VlsEventReportApplicationService {
 			: report.getDeviceName(), event.getReportDevice()));
 		payload.set("device_tag", StringUtils.defaultString(report == null ? device.getTag() : report.getDeviceTag()));
 		payload.set("device_tenant_id", event.getTenantId());
-		payload.set("name", StringUtils.defaultIfBlank(event.getEventType(), description));
-		// Without item the location service treats the entire description as its event type.
-		payload.set("item", event.getEventType());
+		String name = StringUtils.defaultIfBlank(event.getEventType(), description);
+		payload.set("name", name);
+		// item 为空时以 name 兜底，避免事件类型缺失被位置服务整段当作事件类型。
+		payload.set("item", name);
 		payload.set("pics", report == null ? (StringUtils.isBlank(event.getReportImg())
 			? Collections.emptyList() : Collections.singletonList(event.getReportImg()))
 			: mediaReferences(report.getImageMediaIds()));

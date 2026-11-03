@@ -135,6 +135,17 @@ class VlsDeviceEventReportServiceTest {
         assertEquals(0,payload.getJSONArray("pics").size());assertEquals(1,payload.getJSONArray("video").size());
     }
 
+    @Test void cameraWithoutItemOrDescribeUsesNameAsRequestItem() {
+        Map<String,Object> body=camera("CAM-1");
+        body.remove("item");body.remove("describe");
+        List<EventManagement> result=reports.reportCameras(Collections.singletonList(body));
+        assertEquals(1,result.size());
+        ArgumentCaptor<EventReportOutbox> task=ArgumentCaptor.forClass(EventReportOutbox.class);
+        verify(outbox).insert(task.capture());
+        JSONObject payload=JSONUtil.parseObj(task.getValue().getPayloadJson());
+        assertEquals("alarm",payload.getStr("name"));assertEquals("alarm",payload.getStr("item"));
+    }
+
     private DeviceInfo device(String id,String tenant){DeviceInfo d=new DeviceInfo();d.setDeviceId(id);d.setDeviceName("camera");d.setTenantId(tenant);return d;}
     private Map<String,Object> camera(String id){Map<String,Object> e=new LinkedHashMap<>();e.put("device_id",id);e.put("device_name","client camera");e.put("item","IEV1805");e.put("name","alarm");e.put("describe","a full description longer than ten characters");e.put("point",Collections.singletonMap("address","capture location"));e.put("pics",Collections.singletonList("https://media.invalid/image.jpg"));e.put("video",Collections.singletonList("https://media.invalid/clip.mp4"));return e;}
 }

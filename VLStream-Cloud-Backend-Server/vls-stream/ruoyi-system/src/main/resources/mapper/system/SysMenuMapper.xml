@@ -92,6 +92,7 @@
                  left join sys_role r on r.role_id = sur.role_id
         where m.status = '0'
           and r.status = '0'
+          and r.del_flag = '0'
           and sur.user_id = #{userId}
     </select>
 

@@ -208,8 +208,8 @@ export function mapBladeRoleToRuoyi(data = {}) {
     dataScope: data.dataScope || '1',
     status: toRuoyiStatus(data.status),
     remark: data.remark || '',
-    menuIds: toNumberIds(data.menuIds),
-    deptIds: toStringIds(data.deptIds)
+    // Grants are saved separately with a server-checked snapshot. Editing a
+    // role name must not turn missing authorization fields into empty grants.
   }
 }
 

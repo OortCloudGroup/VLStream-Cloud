@@ -9,6 +9,8 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ModelDispatchTask;
 import com.ruoyi.vlstream.test.vlstream.service.ModelDispatchTaskService;
 import com.ruoyi.vlstream.test.vlstream.service.ModelDownloadSignatureService;
@@ -49,6 +51,7 @@ public class VlsModelDispatchController extends BladeController {
     @Resource
     private com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService batches;
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @PostMapping("/batches")
     @com.ruoyi.common.annotation.Log(title = "模型批量部署", businessType = com.ruoyi.common.enums.BusinessType.INSERT)
     public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> submitBatch(
@@ -56,16 +59,19 @@ public class VlsModelDispatchController extends BladeController {
         return R.data(batches.submit(request));
     }
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @GetMapping("/batches")
     public R<List<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View>> recentBatches() {
         return R.data(batches.recent());
     }
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @GetMapping("/batches/{operationId}")
     public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> batch(@PathVariable String operationId) {
         return R.data(batches.get(operationId));
     }
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @PostMapping("/batches/{operationId}/retry")
     @com.ruoyi.common.annotation.Log(title = "模型批量部署失败重试", businessType = com.ruoyi.common.enums.BusinessType.UPDATE)
     public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> retryBatch(@PathVariable String operationId,
@@ -82,6 +88,7 @@ public class VlsModelDispatchController extends BladeController {
     @Resource
     private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @GetMapping("/models")
     @Operation(summary = "查询自主训练模型下发候选")
     public R<IPage<DeviceModelCandidate>> models(
@@ -93,6 +100,7 @@ public class VlsModelDispatchController extends BladeController {
             StringUtils.trimToEmpty(keyword), StringUtils.trimToEmpty(category), publicAccess == null ? "" : publicAccess.viewer()));
     }
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @PostMapping("/models/{modelId}/dispatch")
     @Operation(summary = "向当前设备下发选定自主训练模型版本")
     public R<String> dispatchModel(@PathVariable Long modelId, @RequestParam String deviceId) {
@@ -102,6 +110,7 @@ public class VlsModelDispatchController extends BladeController {
     @Resource
     private com.ruoyi.vlstream.test.vlstream.service.SavedModelDispatchService savedDispatch;
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @PostMapping("/models/{modelId}/attempt")
     @Operation(summary = "幂等提交保存模型到指定设备，逐组合返回结果")
     @com.ruoyi.common.annotation.Log(title = "保存模型下发", businessType = com.ruoyi.common.enums.BusinessType.INSERT)
@@ -110,6 +119,7 @@ public class VlsModelDispatchController extends BladeController {
         return R.data(savedDispatch.submit(modelId, deviceId, operationId));
     }
 
+    @SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
     @GetMapping("/models/{modelId}/attempt")
     @Operation(summary = "按原操作查询设备模型下发结果")
     public R<com.ruoyi.vlstream.test.vlstream.service.SavedModelDispatchService.Result> modelAttempt(
@@ -126,6 +136,7 @@ public class VlsModelDispatchController extends BladeController {
 	@Resource
 	private RemoteModelArtifactService artifactService;
 
+	@SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
 	@GetMapping("/task/{requestId}")
 	@Operation(summary = "查询模型下发任务")
 	public R<ModelDispatchTask> task(@PathVariable String requestId) {
@@ -133,6 +144,7 @@ public class VlsModelDispatchController extends BladeController {
 		return task == null ? R.fail("下发任务不存在") : R.data(task);
 	}
 
+	@SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
 	@GetMapping("/tasks")
 	@Operation(summary = "查询最近模型下发任务")
 	public R<List<ModelDispatchTask>> tasks(

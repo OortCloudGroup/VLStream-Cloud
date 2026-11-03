@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.vlstream.test.vlstream.data.DatasetAnnotationEditor;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
@@ -8,6 +9,7 @@ import javax.validation.Valid;
 import java.util.Map;
 
 @RestController
+@SaCheckPermission("vls:menu:data-management")
 @RequestMapping("/vlsData/projects/{datasetId}/samples/{sampleId}/annotation")
 @RequiredArgsConstructor
 public class VlsDatasetAnnotationController {

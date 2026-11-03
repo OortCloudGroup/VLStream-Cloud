@@ -10,6 +10,7 @@ package com.ruoyi.common.helper;
 
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.context.model.SaStorage;
+import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.convert.Convert;
@@ -145,7 +146,19 @@ public class LoginHelper {
      * @return
      */
     public static boolean isAdmin(String userId) {
-        return UserConstants.ADMIN_ID.equals(userId);
+        if (UserConstants.ADMIN_ID.equals(userId)) {
+            return true;
+        }
+        // Only the authenticated user's live server-side roles confer access.
+        // A target user ID or a cached SysUser role list is not an authority.
+        if (userId == null || !userId.equals(getUserId())) {
+            return false;
+        }
+        try {
+            return StpUtil.hasRole("admin");
+        } catch (NotLoginException ex) {
+            return false;
+        }
     }
 
     public static boolean isAdmin() {

@@ -1,6 +1,8 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import cn.hutool.json.JSONObject;
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.ruoyi.vlstream.test.vlstream.service.ModelHubCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
@@ -10,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsModelHub")
+@SaCheckPermission(value = {"vls:menu:algorithm-arrangement", "vls:menu:vlstream:device"}, mode = SaMode.OR)
 public class VlsModelHubController {
     private final ModelHubCatalogService service;
 

@@ -8,6 +8,8 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -55,6 +57,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithm")
@@ -66,6 +69,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithm")
@@ -78,6 +82,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm Custom
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAlgorithm")
@@ -92,6 +97,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm Add
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithm")
@@ -102,6 +108,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithm")
@@ -112,6 +119,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm Add Update
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithm")
@@ -122,6 +130,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm Delete
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
@@ -132,6 +141,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Export data
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/export-vlsAlgorithm")
 	@ApiOperationSupport(order = 8)
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithm")
@@ -148,6 +158,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * IDQuery algorithm list
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/repository/{repositoryId}")
 	@Operation(summary = "根据仓库ID查询算法列表", description = "获取指定仓库下的所有算法")
 	public R<List<Algorithm>> getAlgorithmsByRepositoryId(
@@ -162,6 +173,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Query algorithm list
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/category/{category}")
 	@Operation(summary = "根据分类查询算法列表", description = "获取指定分类的所有算法")
 	public R<List<Algorithm>> getAlgorithmsByCategory(
@@ -176,6 +188,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * IDQuery algorithm
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-training", "vls:menu:algorithm-model", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@GetMapping("/{id}")
 	@Operation(summary = "查询算法详情", description = "根据ID获取算法详细信息")
 	public R<Algorithm> getAlgorithmById(
@@ -194,6 +207,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PostMapping
 	@Operation(summary = "创建算法", description = "新增算法")
 	public R<String> createAlgorithm(@Valid @RequestBody Algorithm algorithm) {
@@ -210,6 +224,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * new algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PutMapping("/{id}")
 	@Operation(summary = "更新算法", description = "根据ID更新算法信息")
 	public R<String> updateAlgorithm(
@@ -231,6 +246,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Delete algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除算法", description = "根据ID删除算法（软删除）")
 	public R<String> deleteAlgorithm(
@@ -249,6 +265,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Batch delete algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除算法", description = "根据ID列表批量删除算法")
 	public R<String> batchDeleteAlgorithms(@RequestBody List<Long> ids) {
@@ -269,6 +286,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * new
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PutMapping("/{id}/deploy-status")
 	@Operation(summary = "更新部署状态", description = "更新算法的部署状态")
 	public R<String> updateDeployStatus(
@@ -288,6 +306,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * new
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PutMapping("/batch/deploy-status")
 	@Operation(summary = "批量更新部署状态", description = "批量更新算法的部署状态")
 	public R<String> batchUpdateDeployStatus(
@@ -311,6 +330,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm device
 	 */
+	@SaCheckPermission(value = {"vls:menu:algorithm-management", "vls:menu:algorithm-arrangement"}, mode = SaMode.OR)
 	@PostMapping("/{id}/deploy")
 	@Operation(summary = "部署算法到设备", description = "将算法部署到指定设备")
 	public R<String> deployAlgorithmToDevices(
@@ -334,6 +354,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@PostMapping("/{algorithmId}/evaluate")
 	@Operation(summary = "算法评估", description = "对算法进行性能评估")
 	public R<Map<String, Object>> evaluateAlgorithm(@Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long algorithmId) {
@@ -351,6 +372,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Get algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/statistics/category")
 	@Operation(summary = "获取算法分类统计", description = "获取各分类的算法数量统计")
 	public R<List<Map<String, Object>>> getCategoryStatistics() {
@@ -363,6 +385,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Get algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/statistics/type")
 	@Operation(summary = "获取算法类型统计", description = "获取各类型的算法数量统计")
 	public R<List<Map<String, Object>>> getTypeStatistics() {
@@ -375,6 +398,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * Get
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/statistics/deploy-status")
 	@Operation(summary = "获取部署状态统计", description = "获取各部署状态的算法数量统计")
 	public R<List<Map<String, Object>>> getDeployStatusStatistics() {
@@ -387,6 +411,7 @@ public class VlsAlgorithmController extends BladeController {
 	/**
 	 * algorithm
 	 */
+	@SaCheckPermission("vls:menu:algorithm-management")
 	@GetMapping("/count/repository/{repositoryId}")
 	@Operation(summary = "统计某仓库下的算法数量", description = "获取指定仓库的算法数量")
 	public R<Long> countByRepositoryId(
