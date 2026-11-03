@@ -267,6 +267,10 @@ function handleCreate() {
 
 function handleEdit(row) {
   if (!row) return
+    if (isProtectedRole(row)) {
+      ElMessage.warning(uiText('初始化角色由系统维护，请通过权限配置调整菜单授权'))
+      return
+    }
   form.value = { ...row }
   dialogTitle.value = '编辑角色'
   dialogVisible.value = true
