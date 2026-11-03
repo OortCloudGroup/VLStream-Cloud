@@ -51,7 +51,8 @@
           <!-- controlcomponent -->
           <div ref="floatingTools" class="square-floating-tools">
             <div class="square-view-tools">
-              <nav class="square-view-switch" :aria-label="$tp('视图')">
+              <nav class="square-view-switch" v-floating-drag :aria-label="$tp('视图')">
+                <button type="button" class="floating-drag-handle" data-drag-handle aria-label="拖动视图切换栏" title="拖动视图切换栏">⠿</button>
                 <button v-for="view in squareViews" :key="view.value" :class="{ active: viewMode === view.value }"
                   :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
                   <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
@@ -275,6 +276,7 @@
 import { translatePhrase as uiText } from '@/i18n'
 
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
+import vFloatingDrag from '@/utils/floatingDrag'
 import {ElMessage} from 'element-plus'
 import {Close} from '@element-plus/icons-vue'
 import videoViewIcon from '@/assets/mastergo/video-square/design-view-video.svg'
