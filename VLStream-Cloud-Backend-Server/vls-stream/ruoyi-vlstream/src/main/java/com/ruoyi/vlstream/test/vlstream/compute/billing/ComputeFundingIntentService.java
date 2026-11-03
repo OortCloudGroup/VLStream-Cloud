@@ -554,7 +554,7 @@ public class ComputeFundingIntentService {
         return intent;
     }
 
-    /** A quarantined parent is intentionally preserved. Imported proofs are never dispatchable.
+    /** An observed or quarantined parent is intentionally preserved. Imported proofs are never dispatchable.
      * Non-UUID keys are accepted only for this terminal, independently audited contract. */
     private Intent checkedAdopted(Map<String,Object> session, Intent intent) {
         if (!EXTERNAL_RELEASE_ADOPTED.equals(intent.state) || !"RELEASE".equals(intent.operation)
@@ -567,7 +567,8 @@ public class ComputeFundingIntentService {
         FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(audit.path("release_receipt"));
         FundingContracts.HoldDetail detail=FundingContracts.holdDetail(audit.path("authority").path("hold"));
         JsonNode operation=audit.path("authority").path("operation");
-        if (!"HOLD".equals(parent.operation) || !CONFLICT.equals(parent.state) || !parent.holdId.equals(intent.holdId)
+        if (!"HOLD".equals(parent.operation) || !(CONFLICT.equals(parent.state) || DETAIL_OBSERVED.equals(parent.state))
+            || !parent.holdId.equals(intent.holdId)
             || !intent.path.equals(BASE+"/"+parent.holdId+"/release") || !intent.reference.equals("vls-release:"+intent.usageId+":final")
             || !FundingContracts.release(intent.merchantId,intent.reference,intent.payerUserId,requiredText(original,"release_quota")).toString().equals(intent.body)
             || !com.ruoyi.common.helper.LoginHelper.isAdmin(audit.path("administrator").asText())

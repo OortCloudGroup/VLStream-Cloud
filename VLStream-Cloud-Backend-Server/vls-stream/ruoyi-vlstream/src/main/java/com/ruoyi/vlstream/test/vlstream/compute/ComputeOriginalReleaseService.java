@@ -81,7 +81,9 @@ public class ComputeOriginalReleaseService {
                 && number(locked,"worker_lease_until_ms")<System.currentTimeMillis(),"Order is not an idle failed start");
             require(usage.get("billing_start_at")==null && usage.get("billing_end_at")==null
                 && ("RESERVED".equals(text(usage,"state"))||"RECONCILE".equals(text(usage,"state"))||"START_FAILED".equals(text(usage,"state"))),"Running usage cannot be cancelled");
-            require("CONFLICT".equals(text(parent,"state")),"Only quarantined original holds can be adopted");
+            require(ComputeFundingIntentService.CONFLICT.equals(text(parent,"state"))
+                || ComputeFundingIntentService.DETAIL_OBSERVED.equals(text(parent,"state")),
+                "Original hold must be observed or quarantined");
             require(jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? FOR UPDATE",text(locked,"usage_id")).isEmpty(),"Billing slices require separate reconciliation");
             require(jdbc.queryForList("SELECT refund_intent_id FROM vls_compute_refund_intent WHERE usage_id=? FOR UPDATE",text(locked,"usage_id")).isEmpty(),"Refund history requires separate reconciliation");
             require(jdbc.queryForList("SELECT id FROM vls_compute_usage WHERE server_key=? AND id<>? AND active_server_key IS NOT NULL FOR UPDATE",text(usage,"server_key"),text(usage,"id")).isEmpty(),"Another usage owns this server");
