@@ -144,13 +144,43 @@ const handlePlatformLogin = () => {
   authManager.redirectToPlatformLogin(safeAuthReturnPath(route.query.redirect, import.meta.env.BASE_URL))
 }
 
+// 表单校验：Element Plus 的 validate() 校验失败时是 reject 而不是返回 false，
+// 必须单独捕获，否则会落进下面请求失败的 catch 里被误报成“网络错误”。
+const isLoginFormValid = async () => {
+  try {
+    await loginFormRef.value.validate()
+    return true
+  } catch {
+    return false
+  }
+}
+
+// 只有真正发出去并失败的请求才提示网络类错误，业务错误优先展示后端原文。
+const resolveLoginErrorMessage = (error) => {
+  const payload = error.response?.data || error.data
+  const businessMessage = payload?.msg || payload?.message || (typeof payload === 'string' ? payload : '')
+  if (businessMessage) return businessMessage
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return uiText('请求超时，请稍后重试')
+  if (!error.response) return uiText('服务暂时不可用，请检查网络或稍后重试')
+  const status = Number(error.response.status)
+  if (status === 400 || status === 401) return uiText('账号或密码错误')
+  if (status === 403) return uiText('账号无登录权限')
+  if (status === 503) return uiText('服务暂时不可用，请稍后重试')
+  if (status >= 500) return uiText('服务异常，请稍后重试')
+  return error.message || uiText('登录失败')
+}
+
 // Process
+// 同步占位：校验是异步的，仅靠 loginLoading 在 await 期间仍有空窗，
+// 连续两次回车或回车+点击会重复提交。
+let loginPending = false
+
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
+  if (!loginFormRef.value || loginPending) return
+  loginPending = true
 
   try {
-    const valid = await loginFormRef.value.validate()
-    if (!valid) return
+    if (!(await isLoginFormValid())) return
 
     loginLoading.value = true
 
@@ -189,12 +219,10 @@ const handleLogin = async () => {
   } catch (error) {
     if (isSessionExpiryError(error)) return
     logSafeRequestError('登录失败', error)
-    // will failed in error.data in ; , to .
-    const errorData = error.response?.data || error.data
-    const errorMsg = errorData?.msg || errorData?.message || (typeof errorData === 'string' && errorData) || error.message || '网络错误'
-    ElMessage.error(uiText('登录失败: ') + errorMsg)
+    ElMessage.error(uiText('登录失败: ') + resolveLoginErrorMessage(error))
   } finally {
     loginLoading.value = false
+    loginPending = false
   }
 }
 
