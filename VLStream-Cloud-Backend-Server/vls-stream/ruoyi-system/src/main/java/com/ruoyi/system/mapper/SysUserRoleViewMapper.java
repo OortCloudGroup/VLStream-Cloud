@@ -21,6 +21,10 @@ import java.util.List;
  */
 public interface SysUserRoleViewMapper extends BaseMapperPlus<SysUserRoleViewMapper, SysUserRoleView, SysUserRoleView> {
 
+    @org.apache.ibatis.annotations.Select("SELECT COUNT(*) FROM sys_user WHERE user_id=#{userId} "
+        + "AND tenant_id=#{tenantId} AND del_flag='0'")
+    int countTenantUser(@Param("userId") String userId, @Param("tenantId") String tenantId);
+
     List<String> selectUserIdsByRoleId(Long roleId);
 
     /**

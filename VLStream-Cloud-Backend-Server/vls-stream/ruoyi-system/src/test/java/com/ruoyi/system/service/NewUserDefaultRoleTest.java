@@ -58,10 +58,11 @@ class NewUserDefaultRoleTest {
 
     @Test
     void existingUserEditDoesNotApplyNewDefault() {
-        SysUser user = new SysUser(); user.setUserId("fixture-existing"); user.setRoleIds(new String[] {"existing-admin-role"});
+        SysUser user = new SysUser(); user.setUserId("fixture-existing");
         service.updateUser(user);
         verifyNoInteractions(defaults);
-        assertArrayEquals(new String[] {"existing-admin-role"}, user.getRoleIds());
+        verify(userRoles, never()).delete(any());
+        verify(userRoles, never()).insertBatch(any(Collection.class));
     }
 
     @Test

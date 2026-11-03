@@ -294,6 +294,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int insertUser(SysUser user) {
+        if (ArrayUtil.isNotEmpty(user.getRoleIds())) {
+            validateAssignedRoles(user.getRoleIds(), currentActor());
+        }
         defaultMemberRoles.assignIfMissing(user);
         // Add userinfo
         int rows = baseMapper.insert(user);
@@ -316,6 +319,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean registerUser(SysUser user) {
+        if (ArrayUtil.isNotEmpty(user.getRoleIds())) {
+            throw new ServiceException("注册用户不能自行指定角色");
+        }
         defaultMemberRoles.assignIfMissing(user);
         user.setCreateBy(user.getUserName());
         user.setUpdateBy(user.getUserName());
@@ -334,6 +340,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             SysUserRoleView binding = new SysUserRoleView();
             binding.setUserId(user.getUserId());
             binding.setRoleId(roleId);
+            binding.setTenantId(user.getTenantId());
             return binding;
         });
         if (!userRoleMapper.insertBatch(rows)) {
@@ -373,7 +380,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         checkUserAllowed(new SysUser(userId));
         checkUserDataScope(userId);
         SysUser target = baseMapper.selectById(userId);
-        com.ruoyi.common.core.domain.model.LoginUser actor = LoginHelper.getLoginUser();
+        com.ruoyi.common.core.domain.model.LoginUser actor = currentActor();
         if (target == null || actor == null || StringUtils.isBlank(actor.getTenantId())
             || !actor.getTenantId().equals(target.getTenantId())) {
             throw new ServiceException("不能修改其他租户用户的角色");
@@ -488,7 +495,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 SysUserRoleView ur = new SysUserRoleView();
                 ur.setUserId(userId);
                 ur.setRoleId(roleId);
-                  ur.setTenantId(LoginHelper.getLoginUser().getTenantId());
+                  ur.setTenantId(currentActor().getTenantId());
                 return ur;
             });
             userRoleMapper.insertBatch(list);
@@ -496,12 +503,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     private void validateAssignedRoles(String[] roleIds, com.ruoyi.common.core.domain.model.LoginUser actor) {
+        if (actor == null || StringUtils.isBlank(actor.getTenantId())) {
+            throw new ServiceException("缺少可信租户上下文");
+        }
         if (roleIds == null) throw new ServiceException("角色列表不能为空");
-        java.util.Set<String> own = new java.util.HashSet<>();
+        java.util.Set<Long> own = new java.util.HashSet<>();
         if (!LoginHelper.isAdmin(actor.getUserId())) {
-            for (SysRole role : roleMapper.selectRolePermissionByUserId(actor.getUserId())) {
-                own.add(role.getRoleId());
-            }
+            own.addAll(roleMapper.selectAssignedMenuIds(actor.getUserId()));
         }
         java.util.Set<String> seen = new java.util.HashSet<>();
         for (String id : roleIds) {
@@ -511,10 +519,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             SysRole role = roleMapper.selectById(id);
             if (role == null || role.isAdmin() || !"0".equals(role.getStatus())
                 || !actor.getTenantId().equals(role.getTenantId())
-                || (!LoginHelper.isAdmin(actor.getUserId()) && !own.contains(id))) {
+                || (!LoginHelper.isAdmin(actor.getUserId())
+                    && ("tenant_admin".equalsIgnoreCase(role.getRoleKey())
+                        || !own.containsAll(roleMapper.selectRoleMenuIds(id))))) {
                 throw new ServiceException("不能分配超出本人范围、停用或其他租户的角色");
             }
         }
+    }
+
+    protected com.ruoyi.common.core.domain.model.LoginUser currentActor() {
+        return LoginHelper.getLoginUser();
     }
 
     /**

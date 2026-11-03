@@ -222,11 +222,14 @@ public class SysMenuServiceImpl implements ISysMenuService {
         for (SysMenu menu : menus) {
             parents.put(String.valueOf(menu.getMenuId()), menu.getParentId());
         }
-        return cn.hutool.core.lang.tree.TreeUtil.build(menus, "0", TreeBuildUtils.DEFAULT_CONFIG, (menu, tree) ->
+        return cn.hutool.core.lang.tree.TreeUtil.build(menus, "0", TreeBuildUtils.DEFAULT_CONFIG, (menu, tree) -> {
             tree.setId(String.valueOf(menu.getMenuId()))
                 .setParentId(treeParent(String.valueOf(menu.getMenuId()), parents))
                 .setName(menu.getMenuName())
-                .setWeight(menu.getOrderNum()));
+                .setWeight(menu.getOrderNum());
+            tree.putExtra("perms", menu.getPerms());
+            tree.putExtra("menuType", menu.getMenuType());
+        });
     }
 
     private String treeParent(String id, Map<String, String> parents) {

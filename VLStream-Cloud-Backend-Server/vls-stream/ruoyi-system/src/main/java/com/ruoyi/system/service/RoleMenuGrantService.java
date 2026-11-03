@@ -46,7 +46,7 @@ public class RoleMenuGrantService {
     @Transactional(readOnly = true)
     public List<String> getGrantableMenuIds(String roleId) {
         SysRole role = checkedRole(roleId, false);
-        if ("1".equals(role.getRoleId()) && !LoginHelper.isAdmin()) {
+        if ("1".equals(role.getRoleId()) && !currentUserIsAdmin()) {
             return Collections.emptyList();
         }
         List<String> result = new ArrayList<>();
@@ -62,8 +62,8 @@ public class RoleMenuGrantService {
         if ("1".equals(role.getRoleId())) {
             // Only a current superuser may manage menu bindings of the
             // protected role. General role update APIs remain prohibited.
-            if (!LoginHelper.isAdmin()) {
-                throw new ServiceException("只有超级管理员本人可以调整超级管理员角色的菜单授权");
+            if (!currentUserIsAdmin()) {
+                throw new ServiceException("只有超级管理员可以调整超级管理员角色的菜单授权");
             }
         } else {
             roleService.checkRoleAllowed(role);
@@ -161,7 +161,7 @@ public class RoleMenuGrantService {
         // The presentation query includes bindings for disabled roles. It is not
         // sufficient as an authorization boundary, so intersect it with active
         // same-tenant role assignments for every non-superuser.
-        if (!LoginHelper.isAdmin()) {
+        if (!currentUserIsAdmin()) {
             grantable.retainAll(roleMenuMapper.selectGrantableMenuIds(userId, role.getTenantId()));
         }
         return grantable;
@@ -173,6 +173,10 @@ public class RoleMenuGrantService {
 
     String currentUserId() {
         return LoginHelper.getUserId();
+    }
+
+    boolean currentUserIsAdmin() {
+        return "1".equals(currentUserId()) || LoginHelper.isAdmin();
     }
 
     private Set<Long> parseIds(List<String> values) {

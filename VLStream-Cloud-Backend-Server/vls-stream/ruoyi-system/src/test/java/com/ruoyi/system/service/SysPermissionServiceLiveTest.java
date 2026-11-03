@@ -8,6 +8,7 @@ import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Tag("dev")
 class SysPermissionServiceLiveTest {
@@ -28,5 +29,21 @@ class SysPermissionServiceLiveTest {
     void retainsBuiltInAdministratorWildcard() {
         SysPermissionService service = new SysPermissionService(mock(ISysRoleService.class), mock(ISysMenuService.class));
         assertEquals(Collections.singleton("*:*:*"), service.getMenuPermissions("1"));
+    }
+
+    @Test
+    void administratorRoleGrantsWildcardAndRevocationTakesEffectWithoutRelogin() {
+        ISysRoleService roles = mock(ISysRoleService.class);
+        ISysMenuService menus = mock(ISysMenuService.class);
+        SysPermissionService service = new SysPermissionService(roles, menus);
+        when(roles.selectRolePermissionByUserId("42"))
+            .thenReturn(Collections.singleton("admin"))
+            .thenReturn(Collections.singleton("vls_member"));
+        when(menus.selectMenuPermsByUserId("42"))
+            .thenReturn(Collections.singleton("active-safety:workorder:my"));
+
+        assertEquals(Collections.singleton("*:*:*"), service.getMenuPermissions("42"));
+        verifyNoInteractions(menus);
+        assertEquals(Collections.singleton("active-safety:workorder:my"), service.getMenuPermissions("42"));
     }
 }

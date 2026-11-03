@@ -61,4 +61,14 @@ class BladeUserInfoBuilderTest {
         assertEquals(false, info.get("isAdmin"));
         assertEquals(false, info.get("is_admin"));
     }
+
+    @Test
+    void administratorRoleAndCurrentWildcardMarkNonBuiltInUserAsAdmin() {
+        SysUser user = new SysUser("42");
+        Set<String> roles = new LinkedHashSet<>(Arrays.asList("admin"));
+        Set<String> permissions = new LinkedHashSet<>(Arrays.asList("*:*:*"));
+        assertEquals(true, new BladeUserInfoBuilder().build("token", user, roles, permissions).get("isAdmin"));
+        permissions.clear();
+        assertEquals(false, new BladeUserInfoBuilder().build("token", user, roles, permissions).get("isAdmin"));
+    }
 }

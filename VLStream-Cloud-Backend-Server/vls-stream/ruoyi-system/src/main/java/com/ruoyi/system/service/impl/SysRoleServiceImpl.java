@@ -459,6 +459,7 @@ public class SysRoleServiceImpl implements ISysRoleService {
      */
     @Override
     public int deleteAuthUser(SysUserRoleView userRole) {
+        validateAssignment(userRole.getRoleId(), new String[] {userRole.getUserId()}, false);
         int rows = userRoleMapper.delete(new LambdaQueryWrapper<SysUserRoleView>()
             .eq(SysUserRoleView::getRoleId, userRole.getRoleId())
             .eq(SysUserRoleView::getUserId, userRole.getUserId()));
@@ -477,6 +478,7 @@ public class SysRoleServiceImpl implements ISysRoleService {
      */
     @Override
     public int deleteAuthUsers(String roleId, String[] userIds) {
+        validateAssignment(roleId, userIds, false);
         int rows = userRoleMapper.delete(new LambdaQueryWrapper<SysUserRoleView>()
             .eq(SysUserRoleView::getRoleId, roleId)
             .in(SysUserRoleView::getUserId, Arrays.asList(userIds)));
@@ -495,12 +497,14 @@ public class SysRoleServiceImpl implements ISysRoleService {
      */
     @Override
     public int insertAuthUsers(String roleId, String[] userIds) {
+        String tenant = validateAssignment(roleId, userIds, true);
         // Add user and role
         int rows = 1;
         List<SysUserRoleView> list = StreamUtils.toList(Arrays.asList(userIds), userId -> {
             SysUserRoleView ur = new SysUserRoleView();
             ur.setUserId(userId);
             ur.setRoleId(roleId);
+            ur.setTenantId(tenant);
             return ur;
         });
         if (CollUtil.isNotEmpty(list)) {
@@ -510,6 +514,34 @@ public class SysRoleServiceImpl implements ISysRoleService {
             cleanOnlineUserByRole(roleId);
         }
         return rows;
+    }
+
+    private String validateAssignment(String roleId, String[] userIds, boolean granting) {
+        checkRoleDataScope(roleId);
+        LoginUser actor = LoginHelper.getLoginUser();
+        SysRole role = baseMapper.selectById(roleId);
+        if (actor == null || StringUtils.isBlank(actor.getTenantId()) || role == null
+            || role.isAdmin() || !actor.getTenantId().equals(role.getTenantId())
+            || (granting && !"0".equals(role.getStatus()))) {
+            throw new ServiceException("角色不存在、停用或不在当前租户范围");
+        }
+        if (!LoginHelper.isAdmin(actor.getUserId())
+            && ("tenant_admin".equalsIgnoreCase(role.getRoleKey())
+                || !new HashSet<>(baseMapper.selectAssignedMenuIds(actor.getUserId()))
+                    .containsAll(baseMapper.selectRoleMenuIds(roleId)))) {
+            throw new ServiceException("不能管理超出本人授权范围的角色成员");
+        }
+        if (userIds == null || userIds.length == 0) {
+            throw new ServiceException("请选择用户");
+        }
+        Set<String> seen = new HashSet<>();
+        for (String userId : userIds) {
+            if (StringUtils.isBlank(userId) || "1".equals(userId) || !seen.add(userId)
+                || userRoleMapper.countTenantUser(userId, actor.getTenantId()) != 1) {
+                throw new ServiceException("不能修改超级管理员、其他租户或不存在的用户");
+            }
+        }
+        return actor.getTenantId();
     }
 
     @Override
@@ -526,7 +558,8 @@ public class SysRoleServiceImpl implements ISysRoleService {
                 return;
             }
             LoginUser loginUser = LoginHelper.getLoginUser(token);
-            if (loginUser.getRoles().stream().anyMatch(r -> r.getRoleId().equals(roleId))) {
+            if (loginUser != null && loginUser.getRoles() != null
+                && loginUser.getRoles().stream().anyMatch(r -> r.getRoleId().equals(roleId))) {
                 try {
                     StpUtil.logoutByTokenValue(token);
                 } catch (NotLoginException ignored) {

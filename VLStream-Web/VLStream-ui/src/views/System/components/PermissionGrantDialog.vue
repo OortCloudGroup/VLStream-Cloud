@@ -24,7 +24,12 @@
         <el-tab-pane :label="$tp('菜单权限')" name="menu">
           <el-alert v-if="String(role?.id) === '1' && !menuIsSystemAdmin" :title="$tp('只有超级管理员可以修改该角色的菜单授权')" type="info" :closable="false" />
           <el-alert v-if="hiddenGrantedMenuIds.length" :title="$tp('部分权限不在当前账号可配置范围内，保存时将保留')" type="info" :closable="false" />
-          <el-tree ref="menuTreeRef" :data="grantTrees.menu" node-key="id" show-checkbox default-expand-all :props="treeProps" @check="handleMenuCheck" />
+          <div class="grant-tools">
+            <el-input v-model="menuSearch" :placeholder="$tp('搜索菜单或权限标识')" clearable @input="filterMenus" />
+            <el-button :disabled="loading || !loadSucceeded" @click="selectAllMenus">{{ $tp('全选') }}</el-button>
+            <el-button :disabled="loading || !loadSucceeded" @click="clearMenus">{{ $tp('清空') }}</el-button>
+          </div>
+          <el-tree ref="menuTreeRef" :data="grantTrees.menu" node-key="id" show-checkbox default-expand-all :props="treeProps" :filter-node-method="filterMenuNode" @check="handleMenuCheck" />
         </el-tab-pane>
         <!-- data item -->
         <el-tab-pane :label="$tp('数据权限')" name="data">
@@ -76,7 +81,20 @@ const originalVisibleIds = ref([])
 const initialSelection = ref([])
 const grantableMenuIds = ref(new Set())
 const loadSucceeded = ref(false)
+const menuSearch = ref('')
+let loadVersion = 0
 const touchedMenuIds = new Set()
+
+const filterMenuNode = (value, data) => !value || `${data.label || ''} ${data.perms || ''}`.toLowerCase().includes(value.toLowerCase())
+const filterMenus = () => menuTreeRef.value?.filter(menuSearch.value)
+const selectAllMenus = () => {
+  grantableMenuIds.value.forEach(id => touchedMenuIds.add(id))
+  menuTreeRef.value?.setCheckedKeys([...grantableMenuIds.value])
+}
+const clearMenus = () => {
+  grantableMenuIds.value.forEach(id => touchedMenuIds.add(id))
+  menuTreeRef.value?.setCheckedKeys([])
+}
 
 const treeProps = { label: 'label', children: 'children' }
 const grantTrees = reactive({ menu: [], dataScope: [], apiScope: [] })
@@ -109,14 +127,19 @@ const handleMenuCheck = (data) => {
 const loadGrantData = async () => {
   if (!props.role?.id) return
   const roleId = String(props.role.id)
+  const version = ++loadVersion
   loadSucceeded.value = false
+  menuSearch.value = ''
+  grantTrees.menu = []
+  hiddenGrantedMenuIds.value = []
   loading.value = true
   try {
     const [treeResponse, keyResponse] = await Promise.all([
       getGrantTree(),
       getRoleMenuGrants(roleId)
     ])
-    if (String(props.role?.id) !== roleId) return
+    if (version !== loadVersion || !props.modelValue || String(props.role?.id) !== roleId) return
+    if (!isSuccess(treeResponse) || !isSuccess(keyResponse)) throw new Error('权限目录加载失败')
     const checkedPayload = getPayload(keyResponse) || {}
     const validIds = ids => Array.isArray(ids) && ids.every(id => typeof id === 'string' || Number.isSafeInteger(id))
     if (!validIds(checkedPayload.menuIds) || !validIds(checkedPayload.grantableMenuIds)) {
@@ -138,10 +161,11 @@ const loadGrantData = async () => {
     await setCheckedKeys(originalMenuIds.value)
     loadSucceeded.value = true
   } catch (error) {
+    if (version !== loadVersion) return
     console.error('加载权限数据失败:', error)
     ElMessage.error(uiText('加载权限数据失败'))
   } finally {
-    loading.value = false
+    if (version === loadVersion) loading.value = false
   }
 }
 
@@ -179,6 +203,9 @@ const handleSubmit = async () => {
  * dialog, notification component new v-model
  */
 const handleClose = () => {
+  ++loadVersion
+  loadSucceeded.value = false
+  loading.value = false
   emit('update:modelValue', false)
 }
 </script>
@@ -186,6 +213,13 @@ const handleClose = () => {
 <style scoped>
 .grant-dialog {
   min-height: 360px;
+}
+
+.grant-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
 }
 
 .grant-title {
