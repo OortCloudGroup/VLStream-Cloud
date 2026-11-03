@@ -26,6 +26,15 @@ import java.util.List;
  */
 public interface SysRoleMapper extends BaseMapperPlus<SysRoleMapper, SysRole, SysRole> {
 
+    @org.apache.ibatis.annotations.Select("SELECT DISTINCT rm.menu_id FROM sys_role_menu rm "
+        + "JOIN sys_role r ON r.role_id=rm.role_id AND r.tenant_id=rm.tenant_id "
+        + "JOIN sys_user_role ur ON ur.role_id=r.role_id AND ur.tenant_id=r.tenant_id "
+        + "WHERE ur.user_id=#{userId} AND r.status='0' AND r.del_flag='0'")
+    List<Long> selectAssignedMenuIds(String userId);
+
+    @org.apache.ibatis.annotations.Select("SELECT menu_id FROM sys_role_menu WHERE role_id=#{roleId}")
+    List<Long> selectRoleMenuIds(String roleId);
+
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id")
     })
