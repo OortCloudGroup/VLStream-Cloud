@@ -1087,7 +1087,9 @@ const handleUserTokenUpdated = async (event) => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background:
+    radial-gradient(1200px 360px at 12% -120px, rgba(26, 83, 255, 0.07), transparent 70%),
+    var(--vls-page-bg, #f3f5f9);
 }
 
 .layout-header {
@@ -1117,8 +1119,13 @@ const handleUserTokenUpdated = async (event) => {
 
 .logo h2 {
   color: #1A53FF;
+  background: linear-gradient(90deg, #1A53FF 0%, #4C6FFF 60%, #6A5CFF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   min-width: 141px;
   height: 27px;
   margin: 0;
@@ -1188,22 +1195,22 @@ const handleUserTokenUpdated = async (event) => {
   overflow-wrap: normal;
   word-break: normal;
   hyphens: auto;
-  font-weight: 400;
-  color: #33333360;
+  font-weight: 500;
+  color: #6B7489;
   position: relative;
-  transition: color 0.3s;
+  transition: color 0.2s ease;
   background-color: transparent;
   border-bottom: none;
 }
 
 .menu-item:hover {
-  color: var(--el-color-primary);
+  color: #1F2533;
   background-color: transparent;
 }
 
 .menu-item.active {
   color: var(--el-color-primary);
-  font-weight: 700;
+  font-weight: 600;
   background-color: transparent;
 }
 
@@ -1213,8 +1220,10 @@ const handleUserTokenUpdated = async (event) => {
   bottom: 0;
   left: 50%;
   height: 3px;
-  width: 24px;
-  background: var(--el-color-primary);
+  width: 20px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, #1A53FF, #6A5CFF);
+  box-shadow: 0 -2px 8px rgba(26, 83, 255, 0.35);
   transform: translateX(-50%);
 }
 
@@ -1224,16 +1233,18 @@ const handleUserTokenUpdated = async (event) => {
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-  color: #606266;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: #475066;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .user-info:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
+  background-color: #ffffff;
+  color: var(--el-color-primary);
+  box-shadow: 0 1px 3px rgba(23, 34, 64, 0.08);
 }
 
 .header-right {
@@ -1297,12 +1308,12 @@ const handleUserTokenUpdated = async (event) => {
 
 /* menu item */
 :deep(.el-dropdown-menu__item.is-active) {
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--el-color-primary-hb);
+  color: var(--el-color-primary);
 }
 
 :deep(.el-dropdown-menu__item.is-active .el-icon) {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .layout-main {
@@ -1313,7 +1324,7 @@ const handleUserTokenUpdated = async (event) => {
   gap: 12px;
   transition: all 0.3s ease;
   position: relative;
-  background: #f5f7fa;
+  background: transparent;
 }
 
 /* main */
@@ -1335,8 +1346,8 @@ const handleUserTokenUpdated = async (event) => {
   border-right: none;
   box-shadow: none;
   transition: width 0.3s ease;
-  height: calc(100% - 20px);
-  margin-top: 20px;
+  height: calc(100% - 12px);
+  margin-top: 12px;
   flex-shrink: 0;
   resize: none;
   overflow: hidden;
@@ -1348,15 +1359,15 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 /* 设备统计条：固定在侧栏底部，菜单滚动时不动 */
-.app-sidebar-stats { flex: 0 0 auto; padding: 12px 16px; border-top: 1px solid #e8e8e8; box-sizing: border-box; }
+.app-sidebar-stats { flex: 0 0 auto; margin: 8px 12px 16px; padding: 12px 14px; border: 1px solid #e8ebf2; border-radius: 12px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 1px 2px rgba(23, 34, 64, 0.04); box-sizing: border-box; }
 .app-sidebar-stats:empty { display: none; }
-.app-sidebar-stats .device-stats { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.app-sidebar-stats .device-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
 .app-sidebar-stats .stat-item { display: flex; align-items: center; gap: 6px; }
 .app-sidebar-stats .stat-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
 .app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }
-.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: #666; white-space: nowrap; }
-.app-sidebar-stats .stat-value { font-size: 12px; line-height: 18px; font-weight: 600; color: #333; white-space: nowrap; }
+.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: #7a8399; white-space: nowrap; }
+.app-sidebar-stats .stat-value { font-size: 13px; line-height: 18px; font-weight: 600; color: #1f2533; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* 折叠成 64px 图标条时隐藏统计，避免压住菜单图标 */
 .layout-sidebar.is-collapsed .app-sidebar-stats { display: none; }
 
@@ -1383,7 +1394,7 @@ const handleUserTokenUpdated = async (event) => {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding-top: 16px;
+  padding-top: 4px;
   padding-left: 12px;
   padding-right: 12px;
   background: transparent !important;
@@ -1403,11 +1414,12 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-sidebar :deep(.el-menu-item),
 .layout-sidebar :deep(.el-sub-menu__title) {
-  height: 32px !important;
-  line-height: 32px !important;
-  border-radius: 16px;
+  height: 36px !important;
+  line-height: 36px !important;
+  border-radius: 10px;
   margin-bottom: 2px;
-  color: rgba(0, 0, 0, 0.65);
+  color: #475066;
+  font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease;
   background: transparent !important;
   background-color: transparent !important;
@@ -1420,13 +1432,27 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-sidebar :deep(.el-menu-item:hover),
 .layout-sidebar :deep(.el-sub-menu > .el-sub-menu__title:hover) {
-  background-color: #ffffff !important;
-  color: rgba(0, 0, 0, 0.65) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #1f2533 !important;
+  box-shadow: 0 1px 2px rgba(23, 34, 64, 0.06);
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active) {
-  background-color: var(--el-color-primary-hb) !important;
+  background-color: #ffffff !important;
   color: var(--el-color-primary) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(23, 34, 64, 0.06), 0 4px 12px -4px rgba(26, 83, 255, 0.22);
+}
+
+.layout-sidebar :deep(.el-menu-item.is-active)::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--el-color-primary);
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active .el-icon),
@@ -1439,7 +1465,7 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active:hover) {
-  background-color: var(--el-color-primary-hb) !important;
+  background-color: #ffffff !important;
   color: var(--el-color-primary) !important;
 }
 
@@ -1447,12 +1473,12 @@ const handleUserTokenUpdated = async (event) => {
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-icon-box) {
   background-color: transparent !important;
-  color: rgba(0, 0, 0, 0.65) !important;
+  color: #1f2533 !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title:hover) {
-  background-color: #ffffff !important;
-  color: rgba(0, 0, 0, 0.65) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #1f2533 !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-svg-icon) {
@@ -1493,6 +1519,10 @@ const handleUserTokenUpdated = async (event) => {
   justify-content: center;
 }
 
+.layout-sidebar :deep(.el-menu--collapse .el-menu-item.is-active)::before {
+  display: none;
+}
+
 .layout-sidebar :deep(.el-menu--collapse .submenu-caret) {
   display: none !important;
 }
@@ -1507,17 +1537,25 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-content {
   background: #ffffff;
-  border-radius: var(--common-border-radius, 6px) var(--common-border-radius, 6px) 0 0;
+  border-radius: 16px 16px 0 0;
+  border: 1px solid rgba(227, 231, 239, 0.9);
+  border-bottom: none;
+  box-shadow: 0 1px 2px rgba(23, 34, 64, 0.04), 0 12px 32px -20px rgba(23, 34, 64, 0.16);
   overflow-y: auto;
   flex: 1;
-  transition: all 0.3s ease;
+  transition: margin 0.3s ease;
   min-width: 0;
-  margin-top: 20px;
-  height: calc(100% - 20px);
+  margin-top: 12px;
+  margin-inline-end: 16px;
+  height: calc(100% - 12px);
   padding: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+.layout-content:first-child {
+  margin-inline-start: 16px;
 }
 
 .layout-content > * {
@@ -1550,8 +1588,8 @@ const handleUserTokenUpdated = async (event) => {
 /* full : menu , 20px */
 .layout-sidebar {
   border-right: none !important;
-  margin-top: 20px !important;
-  height: calc(100% - 20px) !important;
+  margin-top: 12px !important;
+  height: calc(100% - 12px) !important;
 }
 
 /* menu item / and Manage */

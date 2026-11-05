@@ -29,6 +29,7 @@ import '@/assets/style/index.scss'
 import 'virtual:svg-icons-register'
 import '@/assets/wvp/iconfont.css'
 import '@/assets/wvp/compat.scss'
+import '@/assets/style/polish.scss'
 import { installWvpCompat } from '@/utils/wvpCompat'
 import { capturePendingModelHubCallback } from '@/utils/modelHubAuth'
 
