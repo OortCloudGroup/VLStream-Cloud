@@ -11,11 +11,10 @@
     "preview": "vite preview",
     "lint:i18n": "node ../../codex/i18n-normalize-table-labels.mjs && node ../../codex/i18n-catalog-check.mjs && node ../../codex/i18n-shell-coverage-check.mjs",
     "audit:i18n": "node ../../tools/i18n/audit-ui.mjs",
-    "audit:i18n:strict": "node ../../tools/i18n/audit-ui.mjs --strict",
+    "audit:i18n:strict": "node ../../tools/i18n/audit-ui.mjs --scripts --assignments --strict",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@amap/amap-jsapi-loader": "^1.0.1",
     "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/commands": "^6.10.4",
     "@codemirror/lang-cpp": "^6.0.3",

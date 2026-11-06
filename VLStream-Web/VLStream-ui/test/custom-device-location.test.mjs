@@ -16,7 +16,7 @@ function harness() {
     nextTick, reactive, ref, onMounted() {}, onBeforeUnmount: callback => unmounts.push(callback),
     uiText: text => text, ElMessage: { success() {}, warning() {} }, ElMessageBox: {},
     window: { clearInterval() {}, removeEventListener() {} }, document: { removeEventListener() {} },
-    DeviceClassificationLayout: {}, SquareProtocolDevicePlayer: {}, CustomAvailabilityBadge: {}, MapGaoDe: {},
+    DeviceClassificationLayout: {}, SquareProtocolDevicePlayer: {}, CustomAvailabilityBadge: {}, MapLocation: {},
     stampCustomStatus: row => row, useCustomAvailabilityClock: () => ref(0),
     useWvpMediaStatus: () => ({ mediaAvailable: ref(true), loadMediaStatus() {} }),
   }
@@ -28,7 +28,7 @@ function harness() {
   const component = new Function(...Object.keys(deps), executable)(...Object.values(deps))
   const instance = component.setup({}, { expose() {} })
   instance.formRef.value = { clearValidate() {}, async validate() {} }
-  instance.locationMap.value = { Destruction() { destroyed++ }, inGaDeMap() { initialized++ } }
+  instance.locationMap.value = { Destruction() { destroyed++ }, initialize() { initialized++ } }
   return { instance, calls, unmounts, initialized: () => initialized, destroyed: () => destroyed }
 }
 
@@ -74,11 +74,11 @@ test('parent close, reset and unmount reject stale confirmation; a new form has 
   assert.equal(c.locationVisible.value, false)
 })
 
-test('empty geocode never clears an existing address; zero coordinates remain valid', () => {
+test('confirming a new point with an empty address clears stale text; zero coordinates remain valid', () => {
   const { instance: c } = harness()
   c.openAdd(); c.form.address = '保留已有地址'; c.openLocationPicker()
   c.confirmLocation({ lng: 0, lat: 0, address: '', detailedStreet: '' })
-  assert.equal(c.form.address, '保留已有地址')
+  assert.equal(c.form.address, '')
   assert.equal(c.form.longitude, 0)
   assert.equal(c.form.latitude, 0)
 })
@@ -103,47 +103,17 @@ test('save uses the existing add API with the selected location and all other fi
   assert.deepEqual(writes, [{ name: 'addCustomDevice', value: expected }])
 })
 
-test('editing keeps the existing update path and cannot open or confirm the new picker', async () => {
+test('editing can select a location but only save writes through the existing update path', async () => {
   const { instance: c, calls } = harness()
   await c.openEdit({ id: 'fixture-existing' })
-  const before = { ...c.form }
-  c.openLocationPicker(); c.confirmLocation({ lng: 1, lat: 2, address: '拒绝' })
+  c.openLocationPicker()
+  assert.deepEqual(c.locationPosition.value, [10, 20])
+  c.confirmLocation({ lng: 1, lat: 2, address: '新地址' })
   assert.equal(c.locationVisible.value, false)
-  assert.deepEqual({ ...c.form }, before)
+  assert.equal(c.form.longitude, 1)
+  assert.equal(c.form.latitude, 2)
+  assert.equal(calls.some(call => call.name === 'updateCustomDevice'), false)
   await c.saveDevice()
-  assert.equal(calls.find(call => call.name === 'updateCustomDevice').value.address, '原设备地址')
+  assert.equal(calls.find(call => call.name === 'updateCustomDevice').value.address, '新地址')
   assert.equal(calls.some(call => call.name === 'addCustomDevice'), false)
-})
-
-test('actual shared map rejects failed reverse geocoding without clearing the add form', async () => {
-  const { instance: c, calls } = harness()
-  c.openAdd(); Object.assign(c.form, { longitude: 10, latitude: 20, address: '已有地址' }); c.openLocationPicker()
-  const before = { ...c.form }, geocodes = []
-  let click, exposed, warnings = 0
-  const SDK = {
-    Map: class { addControl() {} add() {} clearMap() {} setCenter() {} setZoom() {} destroy() {}
-      on(name, callback) { if (name === 'click') click = callback } },
-    Scale: class {}, HawkEye: class {}, Marker: class {}, AutoComplete: class { on() {} },
-    Geocoder: class { getAddress(position, callback) { geocodes.push(callback) } },
-  }
-  const deps = { ref, nextTick, onMounted() {}, onBeforeUnmount() {}, loadAMap: async () => SDK,
-    getConfigKey: async () => ({ msg: '' }), AMapUI: { loadUI() {} },
-    getCurrentInstance: () => ({ proxy: { $modal: { msgWarning() { warnings++ } } } }),
-  }
-  const mapSource = readFileSync(new URL('../src/components/MapGaoDe/index.vue', import.meta.url), 'utf8')
-  const mapCompiled = compileScript(parse(mapSource).descriptor, { id: 'custom-map-geocode-test' }).content
-  const mapExecutable = mapCompiled.replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '').replace('export default', 'return')
-  const component = new Function(...Object.keys(deps), mapExecutable)(...Object.values(deps))
-  const picker = component.setup({ position: [10, 20], toponym: '已有地址', autoInitialize: false }, {
-    expose(value) { exposed = value }, emit(name, value) { c.confirmLocation(value) },
-  })
-  picker.mapContainer.value = { isConnected: true }; picker.addressInput.value = { input: {} }
-  await exposed.inGaDeMap()
-  click({ lnglat: { lng: 30, lat: 40 } })
-  geocodes.at(-1)('error', { info: 'fixture geocode failure' })
-  picker.onConfirm()
-  assert.equal(warnings, 1)
-  assert.deepEqual({ ...c.form }, before)
-  assert.equal(calls.length, 0)
-  exposed.Destruction(); c.closeLocationPicker()
 })

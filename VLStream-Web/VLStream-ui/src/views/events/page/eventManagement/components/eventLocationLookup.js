@@ -1,5 +1,5 @@
-import { reverseGeocode } from '@/utils/amap'
+import { reverseGeocode } from '@/utils/osmGeocoding'
 import { createEventLocationResolver } from './eventLocationResolver.mjs'
 
-// Reuse the established JS API key/security configuration; never introduce a Web-service secret.
+// Share the configured OSM address service with the location picker.
 export const lookupEventLocation = createEventLocationResolver(reverseGeocode)

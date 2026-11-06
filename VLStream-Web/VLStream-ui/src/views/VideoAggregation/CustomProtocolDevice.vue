@@ -77,7 +77,7 @@
             <el-col :span="24"><el-form-item :label="$tp('视频流路径')" prop="streamUrl"><el-input v-model="form.streamUrl" :placeholder="$tp('rtsp://、rtmp:// 或 http(s)://')" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('经度')" prop="longitude"><el-input-number v-model="form.longitude" :precision="7" :min="-180" :max="180" style="width:100%" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('纬度')" prop="latitude"><el-input-number v-model="form.latitude" :precision="7" :min="-90" :max="90" style="width:100%" /></el-form-item></el-col>
-            <el-col :span="24"><el-form-item :label="$tp('地址')" prop="address"><el-input v-model="form.address"><template v-if="!form.id" #append><el-button @click="openLocationPicker">{{ $tp('地图选点') }}</el-button></template></el-input></el-form-item></el-col>
+            <el-col :span="24"><el-form-item :label="$tp('地址')" prop="address"><el-input v-model="form.address"><template #append><el-button @click="openLocationPicker">{{ $tp('地图选点') }}</el-button></template></el-input></el-form-item></el-col>
             <el-col :span="24"><el-form-item :label="$tp('备注')" prop="remark"><el-input v-model="form.remark" type="textarea" :rows="3" /></el-form-item></el-col>
           </el-row>
         </el-form>
@@ -86,7 +86,7 @@
 
       <el-dialog v-model="locationVisible" :title="$tp('地图选点')" width="45%" append-to-body
         destroy-on-close @opened="initializeLocationPicker" @close="closeLocationPicker">
-        <MapGaoDe ref="locationMap" :auto-initialize="false" :position="locationPosition"
+        <MapLocation ref="locationMap" :auto-initialize="false" :position="locationPosition"
           :toponym="form.address || ''" @update-value="confirmLocation" />
       </el-dialog>
 
@@ -126,7 +126,7 @@ import { stampCustomStatus } from '@/utils/customDeviceState'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import { useWvpMediaStatus } from '@/utils/useWvpMediaStatus'
 import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
-import MapGaoDe from '@/components/MapGaoDe/index.vue'
+import MapLocation from '@/components/MapLocation/index.vue'
 import {
   addCustomDevice, deleteCustomDevices, exportCustomDevices, getCustomDevice, getCustomMediaStatus,
   getCustomRecordPlan, getCustomRecordStatus, listCustomDevices,
@@ -179,23 +179,23 @@ function resetQuery() { Object.assign(query, { pageNum: 1, pageSize: 10, deviceN
 function handleClassificationFilter(filter) { Object.assign(query, filter, { pageNum: 1 }); loadDevices() }
 function handleSelectionChange(rows) { selectedIds.value = rows.map(row => String(row.id)); classificationDeviceKeys.value = [...selectedIds.value] }
 function closeLocationPicker() { locationVisible.value = false; locationMap.value?.Destruction(); locationPosition.value = null }
-function initializeLocationPicker() { if (locationVisible.value && formVisible.value && !form.id) locationMap.value?.inGaDeMap() }
+function initializeLocationPicker() { if (locationVisible.value && formVisible.value) locationMap.value?.initialize() }
 function validCoordinate(value, limit) {
   return ['number', 'string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit
 }
 function openLocationPicker() {
-  if (!formVisible.value || form.id) return
-  // As in ONVIF, MapGaoDe coordinates are passed through without another conversion.
+  if (!formVisible.value) return
+  // Leaflet/OSM selections use WGS84 longitude and latitude.
   locationPosition.value = validCoordinate(form.longitude, 180) && validCoordinate(form.latitude, 90)
     ? [Number(form.longitude), Number(form.latitude)] : null
   locationVisible.value = true
 }
 function confirmLocation(value) {
-  if (!locationVisible.value || !formVisible.value || form.id ||
+  if (!locationVisible.value || !formVisible.value ||
     !validCoordinate(value?.lng, 180) || !validCoordinate(value?.lat, 90)) return
   form.longitude = Number(value.lng); form.latitude = Number(value.lat)
   const address = [value.address, value.detailedStreet].filter(part => typeof part === 'string').join('').trim()
-  if (address) form.address = address
+  form.address = address
   closeLocationPicker()
 }
 function resetForm() { closeLocationPicker(); Object.assign(form, emptyForm()); nextTick(() => formRef.value?.clearValidate()) }
