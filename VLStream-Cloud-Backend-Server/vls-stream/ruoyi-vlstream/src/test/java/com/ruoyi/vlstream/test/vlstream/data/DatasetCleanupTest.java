@@ -50,7 +50,7 @@ class DatasetCleanupTest {
         jdbc.execute("CREATE TABLE vls_training_dataset_remote_usage(tenant_id VARCHAR(64),dataset_id BIGINT,remote_identity VARCHAR(1000))");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (!Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root=root.getParent();
-        String migration=new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_017__dataset_cleanup_and_model_classes.sql")),StandardCharsets.UTF_8).replaceAll("(?m)^--.*$","");
+        String migration=new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_017__dataset_cleanup_and_model_classes.sql")),StandardCharsets.UTF_8).replaceAll("(?m)^--.*$","");
         for (String sql:migration.split(";")) if (!sql.trim().isEmpty()) jdbc.execute(sql);
     }
 

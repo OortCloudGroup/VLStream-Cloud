@@ -50,7 +50,7 @@ class ComputeRefundIntentTest {
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Actual migration root required");
         for (String migration : new String[]{"V1_2_0_048__compute_billing_slices.sql", "V1_2_0_054__compute_corrective_refund_intents.sql"}) {
-            Path path = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/" + migration);
+            Path path = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/" + migration);
             try (java.sql.Connection c = ds.getConnection()) { ScriptUtils.executeSqlScript(c, new FileSystemResource(path.toFile())); }
         }
         jdbc.update("INSERT INTO vls_compute_billing_session(usage_id,tenant_id,opening_user_id,merchant_id,payer_user_id,instance_ref,quota_unit,accepted_snapshot,metered_until_ms,last_running_ms) VALUES(?,'tenant-test','actor-test','vls-test','123','node-test','quota','{}',1,1)", usage);
@@ -270,7 +270,7 @@ class ComputeRefundIntentTest {
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Actual migration root required");
         for (String migration : new String[]{"V1_2_0_052__compute_funding_intents.sql", "V1_2_0_053__compute_funding_hold_recovery.sql"}) {
-            Path source = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/" + migration);
+            Path source = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/" + migration);
             try (java.sql.Connection c = jdbc.getDataSource().getConnection()) { ScriptUtils.executeSqlScript(c, new FileSystemResource(source.toFile())); }
         }
         ComputeFundingIntentService funding = new ComputeFundingIntentService(jdbc, manager, json,
@@ -512,7 +512,7 @@ class ComputeRefundIntentTest {
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Actual migration root required");
         for (String migration : new String[]{"V1_2_0_052__compute_funding_intents.sql", "V1_2_0_053__compute_funding_hold_recovery.sql"}) {
-            Path source = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/" + migration);
+            Path source = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/" + migration);
             try (java.sql.Connection c = jdbc.getDataSource().getConnection()) { ScriptUtils.executeSqlScript(c, new FileSystemResource(source.toFile())); }
         }
         ComputeFundingIntentService funding = new ComputeFundingIntentService(jdbc, manager, json,

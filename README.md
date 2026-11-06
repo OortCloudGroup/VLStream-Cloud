@@ -523,7 +523,7 @@ deployment. Configure at least the following services before startup:
 | --- | --- | --- |
 | MySQL | Business data, training jobs, and delivery jobs | `application-dev.yml` / `application-prod.yml` |
 | Redis | Sessions, cache, and distributed state | `application-dev.yml` / `application-prod.yml` |
-| WVP Server | Required unified video-device center and VLStream device validation | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
+| WVP Server | Required unified video-device center and VLStream device validation | `VLSTREAM_WVP_DEVICE_BASE_URL` |
 | MinIO | Annotation images, datasets, and file uploads | Database table `sys_oss_config` |
 | Default GPU node | Existing default-node training/conversion compatibility; configure your own host if using this path | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
 | AutoDL tenant instance | User-owned instance for cloud training; managed per tenant instead of using global SSH settings | AI Compute Scheduling → Cloud Compute; [initialization guide](./docs/NEW_GPU_ONBOARDING.md) |
@@ -546,7 +546,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=replace-me
 
 # WVP is required; this address must be reachable from the VLS backend
-VLSTREAM_WVP_INTERNAL_BASE_URL=http://wvp-server:9080
+VLSTREAM_WVP_DEVICE_BASE_URL=http://wvp-server:9080
 VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false
 
 VLSTREAM_SSH_HOST=gpu.example.internal

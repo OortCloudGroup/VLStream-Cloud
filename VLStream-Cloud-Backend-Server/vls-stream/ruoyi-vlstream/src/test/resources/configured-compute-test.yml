@@ -1,0 +1,36 @@
+vlstream:
+  compute:
+    company-resources:
+      resources:
+        - code: test-self-173
+          node-id: -173
+          legacy-node-ids: [173]
+          asset-host: 192.0.2.173
+          name: Test self GPU 173
+          gpu-model: Test GPU
+          python-path: /usr/bin/python3
+          work-dir: /srv/vls/localhost
+          gpu-index: 0
+        - code: test-self-99
+          node-id: -99
+          legacy-node-ids: [99]
+          asset-host: 192.0.2.99
+          name: Test self GPU 99
+          gpu-model: Test GPU
+          python-path: /usr/bin/python3
+          work-dir: /srv/vls/localhost
+          gpu-index: 0
+        - code: test-official-6000
+          provider: autodl
+          node-id: -6000
+          legacy-node-ids: [6000]
+          instance-id: pro-000000000000
+          account-scope: test-account
+          tenant-id: test-tenant
+          name: Test official GPU
+          gpu-model: Test GPU
+          python-path: /usr/bin/python3
+          work-dir: /srv/vls/localhost
+          gpu-index: 0
+          fixed-price:
+            per-instance-hour: 13.00

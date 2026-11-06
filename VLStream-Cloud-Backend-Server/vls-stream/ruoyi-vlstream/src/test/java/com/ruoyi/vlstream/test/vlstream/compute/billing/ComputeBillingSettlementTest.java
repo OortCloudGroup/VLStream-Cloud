@@ -51,7 +51,7 @@ class ComputeBillingSettlementTest {
             java.nio.file.Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
             while (root != null && !java.nio.file.Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
             if (root == null) throw new IllegalStateException("Set billing.migration to the actual Flyway source");
-            migration = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_048__compute_billing_slices.sql").toString();
+            migration = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_048__compute_billing_slices.sql").toString();
         }
         try (java.sql.Connection connection = ds.getConnection()) { ScriptUtils.executeSqlScript(connection, new FileSystemResource(migration)); }
         properties = new ExternalBillingProperties(); properties.setMerchantId("vls-test"); properties.setEnabled(true);

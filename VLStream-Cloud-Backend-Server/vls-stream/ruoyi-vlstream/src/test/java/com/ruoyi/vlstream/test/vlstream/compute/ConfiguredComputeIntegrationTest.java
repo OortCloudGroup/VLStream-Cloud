@@ -118,17 +118,14 @@ public class ConfiguredComputeIntegrationTest {
         assertTrue(health.refresh(173L).contains("五分钟"));verify(ssh,times(1)).open(any());
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
     }
-    @Test void yamlBindsStableIdsLegacyAliasesRuntimeAndApprovedAssetReferences() throws Exception {
-        java.nio.file.Path build=java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-        while(build!=null && !java.nio.file.Files.exists(build.resolve("ruoyi-admin/src/main/resources/application.yml")))build=build.getParent();
-        assertNotNull(build);
+    @Test void yamlBindsConfiguredCompanyResources() throws Exception {
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
-        for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
+        for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.ClassPathResource("configured-compute-test.yml")))environment.getPropertySources().addLast(source);
         ConfiguredComputeProperties bound=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.company-resources",org.springframework.boot.context.properties.bind.Bindable.of(ConfiguredComputeProperties.class)).get();
         assertEquals(3,bound.getResources().size());assertEquals(-173L,bound.getResources().get(0).getNodeId());assertEquals(-99L,bound.getResources().get(1).getNodeId());
         assertEquals(-6000L,bound.getResources().get(2).getNodeId());assertEquals(0,new java.math.BigDecimal("13.00").compareTo(bound.getResources().get(2).getFixedPrice().getPerInstanceHour()));
         assertDoesNotThrow(()->new ConfiguredComputeRegistry(bound,new ComputeTrustedSelfAssetsProperties(),json,mock(JdbcTemplate.class)).initialize());
-        assertEquals("192.168.88.173",bound.getResources().get(0).getAssetHost());assertFalse(bound.getResources().get(0).getLegacyNodeIds().isEmpty());
+        assertEquals("192.0.2.173",bound.getResources().get(0).getAssetHost());assertFalse(bound.getResources().get(0).getLegacyNodeIds().isEmpty());
         assertTrue(bound.getResources().get(0).getWorkDir().endsWith("/localhost"));
     }
     @Test void approvedHostReferenceReusesExistingAssetAndMissingAssetCannotAdvertiseSupply() {

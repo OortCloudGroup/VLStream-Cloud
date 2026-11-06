@@ -12,19 +12,19 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @Tag("dev")
 class VlsMqttClientIdConfigTest {
-    @Test void repositoryDevDefaultIsPreservedForBothPorts() throws Exception {
+    @Test void repositoryDefaultIsPreservedForBothPorts() throws Exception {
         String single = environment("8080").getProperty("vlstream.model-dispatch.mqtt-client-id");
         String multi = environment("8094").getProperty("vlstream.model-dispatch.mqtt-client-id");
-        assertEquals("vls-model-dispatch-local-testhost", single);
+        assertEquals("vls-model-dispatch-backend", single);
         assertEquals(single, multi);
     }
 
     @Test void explicitLocalLaunchOverrideChangesOnlyTheMultiInstance() throws Exception {
         MockEnvironment single = environment("8080");
         MockEnvironment multi = environment("8094");
-        multi.setProperty("vlstream.model-dispatch.mqtt-client-id", "vls-model-dispatch-local-testhost-8094");
-        assertEquals("vls-model-dispatch-local-testhost-8094", multi.getProperty("vlstream.model-dispatch.mqtt-client-id"));
-        assertEquals("vls-model-dispatch-local-testhost", single.getProperty("vlstream.model-dispatch.mqtt-client-id"));
+        multi.setProperty("vlstream.model-dispatch.mqtt-client-id", "vls-model-dispatch-backend-8094");
+        assertEquals("vls-model-dispatch-backend-8094", multi.getProperty("vlstream.model-dispatch.mqtt-client-id"));
+        assertEquals("vls-model-dispatch-backend", single.getProperty("vlstream.model-dispatch.mqtt-client-id"));
         assertNotEquals(single.getProperty("vlstream.model-dispatch.mqtt-client-id"), multi.getProperty("vlstream.model-dispatch.mqtt-client-id"));
     }
 
@@ -39,7 +39,7 @@ class VlsMqttClientIdConfigTest {
         ((ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger("org.springframework.boot.env.OriginTrackedYamlLoader"))
             .setLevel(ch.qos.logback.classic.Level.WARN);
         MockEnvironment environment = new MockEnvironment().withProperty("COMPUTERNAME", "testhost").withProperty("server.port", port);
-        for (PropertySource<?> source : new YamlPropertySourceLoader().load("dev", new ClassPathResource("application-dev.yml"))) {
+        for (PropertySource<?> source : new YamlPropertySourceLoader().load("default", new ClassPathResource("application.yml"))) {
             environment.getPropertySources().addLast(source);
         }
         return environment;

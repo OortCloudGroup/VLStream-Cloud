@@ -17,10 +17,16 @@ docker compose up -d
 
 启动前请修改 `.env` 中的所有密码，首次登录后请立即修改系统默认密码。
 
-WVP 是 VLStream 的必选依赖和唯一视频设备中心。本部署包当前不重复打包 WVP；请先部署
-`apaas-wvp-server`。`VLSTREAM_WVP_INTERNAL_BASE_URL` 必须是 backend 容器可访问的 WVP
-地址，例如同机独立部署时使用 `http://host.docker.internal:9080`。VLS 调用的设备查询接口
-不使用额外共享密钥，应仅通过后端服务网络访问，不要单独暴露该内部路径。
+WVP 是 VLStream 的必选依赖和唯一视频设备中心。请先部署
+[VLStream WVP Lite v1.0.11](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.11)，
+其公开镜像为 `ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.11`。本部署包不重复启动 WVP。
+同机部署时，请将 WVP 的 HTTP 主机端口配置为 9080。后端通过
+`VLSTREAM_WVP_DEVICE_BASE_URL` 访问 WVP 设备和租户 API。前端代理地址分别由
+`WVP_UPSTREAM` 和 `ZLM_UPSTREAM` 配置，默认指向宿主机的 9080 和 8081 端口。
+跨主机部署时，后端和前端地址都必须能从各自容器访问。ZLMediaKit 仍由 WVP 管理。
+WVP v1.0.11 支持 Cloud AI 所需的跨协议视频源授权，并增加租户范围的事件和 ONVIF 控制。
+视频设备共享权限仍需显式配置：请将 `vlstream:device:share:manage` 和
+`vlstream:device:share:approve` 分配给目标角色，迁移不会自动授予已有角色。
 
 默认 Compose 会启动 MySQL、Redis、MinIO、WebRTC-streamer、后端和前端。如果使用
 已有的 MySQL 与 Redis，请填写外部服务连接变量后执行：

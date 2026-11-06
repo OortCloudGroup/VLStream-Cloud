@@ -505,7 +505,7 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 | --- | --- | --- |
 | MySQL | 业务数据、训练任务、下发任务 | `application-dev.yml` / `application-prod.yml` |
 | Redis | 登录状态、缓存和分布式状态 | `application-dev.yml` / `application-prod.yml` |
-| WVP Server | 必选的统一视频设备中心和 VLStream 设备校验 | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
+| WVP Server | 必选的统一视频设备中心和 VLStream 设备校验 | `VLSTREAM_WVP_DEVICE_BASE_URL` |
 | MinIO | 算法标注图片、数据集和普通文件上传 | 数据库表 `sys_oss_config` |
 | 默认 GPU 节点 | 既有默认节点训练/转换兼容链路，使用时应配置自己的主机 | `VLSTREAM_SSH_*`、`VLSTREAM_TRAINING_*` |
 | AutoDL 租户实例 | 用户自购的云训练实例，按租户管理，不使用全局 SSH 设置 | AI 算力调度 → 线上算力；[初始化指南](./docs/NEW_GPU_ONBOARDING.md) |
@@ -529,7 +529,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=replace-me
 
 # WVP 是必选依赖；该地址必须能从 VLS 后端访问
-VLSTREAM_WVP_INTERNAL_BASE_URL=http://wvp-server:9080
+VLSTREAM_WVP_DEVICE_BASE_URL=http://wvp-server:9080
 VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false
 
 # 默认 GPU 兼容链路示例；AutoDL 租户实例在页面配置，不使用以下全局 SSH 设置
