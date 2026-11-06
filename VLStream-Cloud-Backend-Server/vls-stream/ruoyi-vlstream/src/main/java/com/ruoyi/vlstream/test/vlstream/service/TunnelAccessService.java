@@ -128,7 +128,7 @@ public class TunnelAccessService {
 
     @Transactional(rollbackFor = Exception.class)
     public TunnelDtos.SessionRouteView renewSession(String sessionId) {
-        CheckedSession checked = requireOpenedSession(sessionId);
+        CheckedSession checked = requireOpenedSession(sessionId, true);
         TunnelAccessSession session = checked.session;
         Date now = Date.from(clock.instant());
         session.setExpiresAt(new Date(now.getTime() + normalizedSessionTtl() * 1000L));
@@ -140,15 +140,16 @@ public class TunnelAccessService {
     /** Recheck an upgraded connection without turning WS frames/polls into activity. */
     @Transactional(readOnly = true)
     public TunnelDtos.SessionRouteView validateSession(String sessionId) {
-        CheckedSession checked = requireOpenedSession(sessionId);
+        CheckedSession checked = requireOpenedSession(sessionId, false);
         return toRoute(checked.session, checked.endpoint);
     }
 
-    private CheckedSession requireOpenedSession(String sessionId) {
+    private CheckedSession requireOpenedSession(String sessionId, boolean forUpdate) {
         if (StringUtils.isBlank(sessionId) || sessionId.length() > 64) {
             throw new TunnelApiException(401, "缺少或无效的远程访问会话标识");
         }
-        TunnelAccessSession session = sessionMapper.selectBySessionId(sessionId);
+        TunnelAccessSession session = forUpdate ? sessionMapper.selectBySessionId(sessionId)
+            : sessionMapper.selectBySessionIdReadOnly(sessionId);
         Date now = Date.from(clock.instant());
         if (session == null || session.getOpenedAt() == null || session.getRevokedAt() != null
             || session.getExpiresAt() == null || !session.getExpiresAt().after(now)) {

@@ -156,7 +156,11 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 	gateway.mu.RLock()
 	cached, found := gateway.sessions[cookie.Value]
 	gateway.mu.RUnlock()
-	if !found || cached.route.SessionID != sessionID {
+	if !found {
+		http.Error(response, "remote-management browser session is unavailable; reopen from the device page", http.StatusUnauthorized)
+		return
+	}
+	if cached.route.SessionID != sessionID {
 		// A request on another host is unauthorized, but must not invalidate
 		// the owner's independent session merely by presenting its Cookie.
 		http.Error(response, "remote-management browser session does not match host", http.StatusUnauthorized)
@@ -179,6 +183,13 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 	route, err := gateway.backend.renewSession(ctx, sessionID)
 	cancel()
 	if err != nil {
+		// Aborting one browser request (for example during login navigation)
+		// is not a revocation of its independent requests or upgraded sockets.
+		// Do not proxy or renew this request; the next live request must still
+		// pass backend validation. Our own timeout and real denials fail closed.
+		if requestError := request.Context().Err(); requestError != nil && errors.Is(err, requestError) {
+			return
+		}
 		gateway.removeSession(cookie.Value)
 		http.Error(response, "remote-management session cannot be renewed", http.StatusUnauthorized)
 		return
@@ -380,6 +391,11 @@ func rewriteCookies(response *http.Response, secure bool) {
 	}
 	response.Header.Del("Set-Cookie")
 	for _, cookie := range cookies {
+		// An IPC application cannot replace or clear the gateway's credential.
+		// ReverseProxy would otherwise append it after the renewed gateway Cookie.
+		if cookie.Name == gatewayCookieName {
+			continue
+		}
 		cookie.Domain = ""
 		if cookie.Path == "" {
 			cookie.Path = "/"

@@ -68,7 +68,7 @@ func newUpgradeFixture(t *testing.T, ttl time.Duration) *upgradeFixture {
 			for i := range body {
 				body[i] ^= mask[i%4]
 			}
-			if _, err = conn.Write(append([]byte{0x81, byte(length)}, body...)); err != nil {
+			if _, err = conn.Write(append([]byte{header[0], byte(length)}, body...)); err != nil {
 				return
 			}
 		}
@@ -143,11 +143,15 @@ type upgradePeer struct {
 }
 
 func (f *upgradeFixture) open(id string, cookie bool) (*upgradePeer, int) {
+	return f.openWithHost(id, cookie, id+".ipc.vls.test")
+}
+
+func (f *upgradeFixture) openWithHost(id string, cookie bool, authority string) (*upgradePeer, int) {
 	conn, err := net.DialTimeout("tcp", strings.TrimPrefix(f.server.URL, "http://"), time.Second)
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	head := "GET /ws HTTP/1.1\r\nHost: " + id + ".ipc.vls.test\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+	head := "GET /ws HTTP/1.1\r\nHost: " + authority + "\r\nOrigin: https://" + authority + "\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
 	if cookie {
 		head += "Cookie: " + gatewayCookieName + "=cookie-" + id + "\r\n"
 	}

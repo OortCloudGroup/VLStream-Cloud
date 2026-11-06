@@ -5,6 +5,8 @@
 
 package com.ruoyi.vlstream.test.vlstream.service;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTunnelProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelAccessSessionMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelEndpointMapper;
@@ -13,8 +15,23 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelAccessSession;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEndpoint;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.ArgumentCaptor;
+import org.apache.ibatis.mapping.Environment;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
+import org.springframework.transaction.interceptor.TransactionInterceptor;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.time.Clock;
 import java.time.Instant;
@@ -31,6 +48,73 @@ import static org.mockito.Mockito.when;
 
 @Tag("dev")
 class TunnelAccessServiceTest {
+    /** Optional real-MySQL regression, restricted to a disposable loopback test database. */
+    @Test
+    @EnabledIfEnvironmentVariable(named = "VLS_TUNNEL_TEST_JDBC_URL",
+        matches = "jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/ipc_tunnel_readonly_test(\\?.*)?")
+    void upgradedValidationWorksInEnforcedMySqlReadOnlyTransaction() throws Exception {
+        Instant now = Instant.parse("2026-11-04T08:00:00Z");
+        DriverManagerDataSource datasource = new DriverManagerDataSource(
+            System.getenv("VLS_TUNNEL_TEST_JDBC_URL"), System.getenv("VLS_TUNNEL_TEST_JDBC_USER"),
+            System.getenv("VLS_TUNNEL_TEST_JDBC_PASSWORD"));
+        try (Connection connection = datasource.getConnection(); Statement ddl = connection.createStatement()) {
+            ddl.execute("CREATE TABLE vls_tunnel_access_session (id BIGINT PRIMARY KEY, tenant_id VARCHAR(64), "
+                + "session_id VARCHAR(64), endpoint_id BIGINT, device_id VARCHAR(64), opened_at DATETIME(3), "
+                + "expires_at DATETIME(3), revoked_at DATETIME(3), update_time DATETIME(3))");
+            try (PreparedStatement insert = connection.prepareStatement(
+                "INSERT INTO vls_tunnel_access_session VALUES (2, '000000', 'session-1', 1, 'IPC-1', ?, ?, NULL, NULL)")) {
+                insert.setTimestamp(1, Timestamp.from(now.minusSeconds(60)));
+                insert.setTimestamp(2, Timestamp.from(now.plusSeconds(3600)));
+                insert.executeUpdate();
+            }
+        }
+        try {
+            MybatisConfiguration configuration = new MybatisConfiguration();
+            configuration.setMapUnderscoreToCamelCase(true);
+            configuration.setEnvironment(new Environment("isolated-readonly-regression",
+                new SpringManagedTransactionFactory(), datasource));
+            configuration.addMapper(TunnelAccessSessionMapper.class);
+            SqlSessionTemplate sql = new SqlSessionTemplate(new MybatisSqlSessionFactoryBuilder().build(configuration));
+            TunnelAccessSessionMapper sessions = sql.getMapper(TunnelAccessSessionMapper.class);
+            DataSourceTransactionManager transactions = new DataSourceTransactionManager(datasource);
+            TransactionTemplate readOnly = new TransactionTemplate(transactions);
+            readOnly.setReadOnly(true);
+            RuntimeException lockingReadFailure = assertThrows(RuntimeException.class,
+                () -> readOnly.execute(status -> sessions.selectBySessionId("session-1")));
+            Throwable cause = lockingReadFailure;
+            while (!(cause instanceof SQLException) && cause.getCause() != null) cause = cause.getCause();
+            assertTrue(cause instanceof SQLException, "the control must fail in MySQL, not in test wiring");
+            assertEquals(1792, ((SQLException) cause).getErrorCode(), "locking SELECT is forbidden in READ ONLY");
+
+            VlsTunnelProperties properties = new VlsTunnelProperties();
+            properties.setEnabled(true);
+            TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+            TunnelEndpoint endpoint = readyEndpoint();
+            endpoint.setLastHeartbeatAt(Date.from(now));
+            when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
+            TunnelAccessService target = new TunnelAccessService(endpoints, sessions,
+                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            ProxyFactory proxy = new ProxyFactory(target);
+            proxy.setProxyTargetClass(true);
+            proxy.addAdvice(new TransactionInterceptor(transactions, new AnnotationTransactionAttributeSource()));
+            TunnelAccessService service = (TunnelAccessService) proxy.getProxy();
+            for (int i = 0; i < 3; i++) {
+                assertEquals(Date.from(now.plusSeconds(3600)), service.validateSession("session-1").getExpiresAt());
+            }
+            TunnelAccessSession unchanged = sessions.selectBySessionIdReadOnly("session-1");
+            assertEquals(Date.from(now.plusSeconds(3600)), unchanged.getExpiresAt());
+            assertEquals(Date.from(now.minusSeconds(60)), unchanged.getOpenedAt());
+            assertEquals(null, unchanged.getUpdateTime());
+            TransactionTemplate write = new TransactionTemplate(transactions);
+            assertEquals("session-1", write.execute(status -> sessions.selectBySessionId("session-1")).getSessionId(),
+                "renewal's existing locking read must remain valid in a writable transaction");
+        } finally {
+            try (Connection connection = datasource.getConnection(); Statement ddl = connection.createStatement()) {
+                ddl.execute("DROP TABLE vls_tunnel_access_session");
+            }
+        }
+    }
+
     @Test
     void upgradedValidationDoesNotRenewSessionOrWriteAnything() {
         Instant now = Instant.parse("2026-10-28T14:00:00Z");
@@ -45,7 +129,7 @@ class TunnelAccessServiceTest {
         Date opened = session.getOpenedAt();
         TunnelEndpoint endpoint = readyEndpoint();
         endpoint.setLastHeartbeatAt(Date.from(now));
-        when(sessions.selectBySessionId("session-1")).thenReturn(session);
+        when(sessions.selectBySessionIdReadOnly("session-1")).thenReturn(session);
         when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
         for (int i = 0; i < 3; i++) {
             TunnelDtos.SessionRouteView route = service.validateSession("session-1");
@@ -55,6 +139,7 @@ class TunnelAccessServiceTest {
         }
         verify(sessions, never()).updateById(any(TunnelAccessSession.class));
         verify(sessions, never()).selectByTokenHash(any());
+        verify(sessions, never()).selectBySessionId(any());
     }
 
     @Test
@@ -71,7 +156,7 @@ class TunnelAccessServiceTest {
             if ("expired".equals(state)) session.setExpiresAt(Date.from(now));
             if ("revoked".equals(state)) session.setRevokedAt(Date.from(now));
             if ("unopened".equals(state)) session.setOpenedAt(null);
-            when(sessions.selectBySessionId("session-1")).thenReturn("missing".equals(state) ? null : session);
+            when(sessions.selectBySessionIdReadOnly("session-1")).thenReturn("missing".equals(state) ? null : session);
             assertEquals(401, assertThrows(TunnelApiException.class,
                 () -> service.validateSession("session-1")).getStatus(), state);
             verify(sessions, never()).updateById(any(TunnelAccessSession.class));
@@ -99,7 +184,7 @@ class TunnelAccessServiceTest {
             if ("tunnel-offline".equals(state)) endpoint.setTunnelStatus("OFFLINE");
             if ("web-unavailable".equals(state)) endpoint.setLocalWebStatus("UNAVAILABLE");
             if ("route-generation".equals(state)) endpoint.setRouteAppliedGeneration(99L);
-            when(sessions.selectBySessionId("session-1")).thenReturn(openedSession(now));
+            when(sessions.selectBySessionIdReadOnly("session-1")).thenReturn(openedSession(now));
             when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
             int expected = state.startsWith("other-") ? 401 : 503;
             assertEquals(expected, assertThrows(TunnelApiException.class,
@@ -124,11 +209,11 @@ class TunnelAccessServiceTest {
                 mock(TunnelControlService.class), access);
         assertEquals(401, controller.validateSession(null, "session-1").getStatusCodeValue());
         assertEquals(401, controller.validateSession(properties.getControlApiToken(), "session-1").getStatusCodeValue());
-        verify(sessions, never()).selectBySessionId(any());
+        verify(sessions, never()).selectBySessionIdReadOnly(any());
         TunnelAccessSession session = openedSession(now);
         TunnelEndpoint endpoint = readyEndpoint();
         endpoint.setLastHeartbeatAt(Date.from(now));
-        when(sessions.selectBySessionId("session-1")).thenReturn(session);
+        when(sessions.selectBySessionIdReadOnly("session-1")).thenReturn(session);
         when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
         assertEquals(200, controller.validateSession(properties.getGatewayApiToken(), "session-1").getStatusCodeValue());
         verify(sessions, never()).updateById(any(TunnelAccessSession.class));
@@ -166,6 +251,8 @@ class TunnelAccessServiceTest {
         assertEquals(openedAt, session.getOpenedAt());
         assertEquals(Date.from(now), session.getUpdateTime());
         verify(sessions).updateById(session);
+        verify(sessions).selectBySessionId("session-1");
+        verify(sessions, never()).selectBySessionIdReadOnly(any());
         verify(sessions, never()).selectByTokenHash(any());
     }
 
