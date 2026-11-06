@@ -28,12 +28,13 @@ CameraRTC 播放器使用自有信令和 WebRTC。服务端先完成信令、ICE
 
 1. 按两项目 POM 使用匹配 JDK 构建。当前 VLS 是 Java 8。VLS、WVP 都必须部署包含云端智能接口的版本；只更新前端不能启用检测。
 2. 由 Flyway 执行 VLS `V1_2_0_058__cloud_ai_scenes_tasks_runs.sql`、`V1_2_0_059__cloud_ai_active_safety_event_owner.sql`，以及 WVP `V1_2_16__cloud_ai_source_grants.sql`。已执行的迁移不得修改或重跑增量 SQL；059 用于将 single 的早期云端事件统一到本地主动安全权威。
-3. 配置 VLS 的 `vlstream.wvp-device.base-url` 指向正确 WVP。保留现有受信服务通信、租户、身份、加密材料和存储配置，禁止用客户端传入的任意目标地址替代。
-4. 对 CameraRTC，在 WVP 配置 `video.custom-availability.camera-rtc-signal-url` 为设备实际使用的信令服务地址。此值属于部署环境，不在仓库写入某台设备的地址。GPU 必须能完成该服务的信令和 ICE／媒体连接；仅 HTTP 页面可达不代表 WebRTC 可用。
-5. GPU 需有有效的 SSH 身份、公钥校验、GPU UUID／索引、工作目录、CUDA 驱动及既有共享队列配置；界面健康检查通过后才能提交。当前入口只接受免费自有／公司资源。
-6. GPU Python 需有 CUDA 可用的 PyTorch、OpenCV、Ultralytics **8.3.240**，以及 `cloudai/requirements-media.txt` 固定的 aiortc **1.14.0**、aiohttp **3.13.3**、av **16.1.0**。媒体依赖安装在检测专用环境，避免改变已有训练环境。执行器优先使用节点工作目录下 `.cloud-ai-runtime-v1/bin/python`，不存在则使用节点配置的 Python；启动前校验依赖，缺失即报告准备失败。
-7. 模型需要归档、类别、版本、大小与 SHA-256，执行时再次检查。历史外部 PT 仅由运维逐个确认可信来源后登记 `vlstream.cloud-ai.trusted-models`，以 `tenant-id`、`model-id`、`source-node-id`、`sha256` 固定身份；不能因扩展名为 PT 就自动信任。普通页面用户不应获得修改该登记的能力。
-8. 证据存储应可写、可读并通过大小／摘要校验；浏览器获取媒体沿用事件权限。远端工作目录和源授权材料应仅供运行账号使用，日志不得输出取流凭据或签名地址。
+3. 共用数据库的每个后台环境都必须设置 `vlstream.compute.shared-pool.environment-id`：同一环境的节点使用相同标识，不同部署环境使用不同标识。任务模式取自可信的 `token.tenant-type`（`single`／`multi`），不接受客户端指定。缺少合法环境标识时，任务无法保存，调度和执行器也不会领取任务。
+4. 配置 VLS 的 `vlstream.wvp-device.base-url` 指向正确 WVP。保留现有受信服务通信、租户、身份、加密材料和存储配置，禁止用客户端传入的任意目标地址替代。
+5. 对 CameraRTC，在 WVP 配置 `video.custom-availability.camera-rtc-signal-url` 为设备实际使用的信令服务地址。此值属于部署环境，不在仓库写入某台设备的地址。GPU 必须能完成该服务的信令和 ICE／媒体连接；仅 HTTP 页面可达不代表 WebRTC 可用。
+6. GPU 需有有效的 SSH 身份、公钥校验、GPU UUID／索引、工作目录、CUDA 驱动及既有共享队列配置；界面健康检查通过后才能提交。当前入口只接受免费自有／公司资源。
+7. GPU Python 需有 CUDA 可用的 PyTorch、OpenCV、Ultralytics **8.3.240**，以及 `cloudai/requirements-media.txt` 固定的 aiortc **1.14.0**、aiohttp **3.13.3**、av **16.1.0**。媒体依赖安装在检测专用环境，避免改变已有训练环境。执行器优先使用节点工作目录下 `.cloud-ai-runtime-v1/bin/python`，不存在则使用节点配置的 Python；启动前校验依赖，缺失即报告准备失败。
+8. 模型需要归档、类别、版本、大小与 SHA-256，执行时再次检查。历史外部 PT 仅由运维逐个确认可信来源后登记 `vlstream.cloud-ai.trusted-models`，以 `tenant-id`、`model-id`、`source-node-id`、`sha256` 固定身份；不能因扩展名为 PT 就自动信任。普通页面用户不应获得修改该登记的能力。
+9. 证据存储应可写、可读并通过大小／摘要校验；浏览器获取媒体沿用事件权限。远端工作目录和源授权材料应仅供运行账号使用，日志不得输出取流凭据或签名地址。
 
 执行器脚本随应用资源发布到本次运行目录；不依赖手工长期运行一个浏览器或另开播放页。节点容量需按实际分辨率、模型和路数测试，界面允许的摄像机数量不等于该 GPU 的实时吞吐保证。
 
