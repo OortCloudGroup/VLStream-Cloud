@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @RequiredArgsConstructor
 @lombok.extern.slf4j.Slf4j
 public class ConfiguredPaidPowerService {
+    static final String REJECTED_NO_STOCK="REJECTED_NO_STOCK";
     @org.springframework.beans.factory.annotation.Autowired
     private ComputeBillingTrialGuard trialGuard;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
@@ -42,11 +43,10 @@ public class ConfiguredPaidPowerService {
         ComputePowerProvider supplier=provider(verified);
         if("PREPARED".equals(phase)) {
             if(!stop) {
-                try {requireTrialStart(run,verified);}
+                try { requireTrialStart(run,verified); }
                 catch(RuntimeException denied) {
                     // No power submission has happened. Preserve the original hold for safe cancellation.
-                    jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);
-                    jdbc.update("UPDATE vls_compute_paid_run SET error_code='TRIAL_GUARD_BLOCKED' WHERE run_id=?",id);
+                    blockUnsentStart(id,usage,"TRIAL_GUARD_BLOCKED");
                     return;
                 }
                 ComputeNode preflight=refresh(verified);
@@ -64,15 +64,24 @@ public class ConfiguredPaidPowerService {
                 log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={} providerRequestId={}",
                     id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic(),rejected.getProviderRequestId());
                 if(!stop&&rejected.getKind()!=ComputeProviderException.Kind.UNKNOWN) {
-                    jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='REJECTED',error_code='START_REJECTED' WHERE run_id=?",id);
-                    ledger.startFailed(usage);configured.cancelled(verified);return;
+                    boolean noStock=rejected.getKind()==ComputeProviderException.Kind.NO_STOCK;
+                    // The original outbox retains the trusted start cause independently
+                    // of temporary funding/release errors on the public order status.
+                    jdbc.update("UPDATE vls_compute_paid_run SET power_start_state=?,error_code=? WHERE run_id=?",
+                        noStock?REJECTED_NO_STOCK:"REJECTED",noStock?"NO_STOCK":"START_REJECTED",id);
+                    rejectedStart(usage,verified);return;
                 }
                 jdbc.update("UPDATE vls_compute_paid_run SET "+column+"='UNKNOWN',error_code=? WHERE run_id=?",stop?"STOP_OUTCOME_UNKNOWN":"START_OUTCOME_UNKNOWN",id);
             } catch(RuntimeException unknown) {
                 jdbc.update("UPDATE vls_compute_paid_run SET "+column+"='UNKNOWN',error_code=? WHERE run_id=?",stop?"STOP_OUTCOME_UNKNOWN":"START_OUTCOME_UNKNOWN",id);
             }
             run=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id);
-        } else if("CANCELLED".equals(phase)||"REJECTED".equals(phase))return;
+        } else if("CANCELLED".equals(phase)||"REJECTED".equals(phase)||REJECTED_NO_STOCK.equals(phase)) {
+            // Also complete a rejection journaled before a process restart. This
+            // does not resend power or free the original unresolved funding claim.
+            if(!stop&&!"CANCELLED".equals(phase))rejectedStart(usage,verified);
+            return;
+        }
         else if(stop||"STARTING".equals(text(run,"state")))configured.pending(verified,operation,stop?"stop":"start",true);
 
         ComputePowerProvider.Snapshot observed=supplier.status(verified);configured.recordPower(verified,observed);
@@ -140,6 +149,10 @@ public class ConfiguredPaidPowerService {
         Object attempt=run.get("power_start_attempt_ms");Instant event=observed.providerStartedAt;
         return attempt instanceof Number&&event!=null&&!event.isBefore(Instant.ofEpochMilli(((Number)attempt).longValue()))&&!event.isAfter(now)?event:null;
     }
+    private void rejectedStart(String usage,ComputeNode verified) {
+        jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED' WHERE id=? AND billing_start_at IS NULL AND state IN ('RESERVED','RECONCILE')",usage);
+        configured.cancelled(verified);
+    }
     boolean cancelUnsubmitted(Map<String,Object> run,ComputeNode verified) {
         configured.verifyOfficial(verified);
         if(jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='CANCELLED' WHERE run_id=? AND power_start_state='PREPARED'",text(run,"run_id"))!=1)return false;
@@ -147,6 +160,12 @@ public class ConfiguredPaidPowerService {
     }
     void queueStop(String usage,String operation) {
         jdbc.update("UPDATE vls_compute_paid_run SET state='STOPPING',error_code=NULL WHERE usage_id=? AND active_instance_key IS NOT NULL AND power_stop_state='PREPARED'",usage);
+    }
+    private void blockUnsentStart(String id,String usage,String code) {
+        // A competing sender may already have claimed this original. A stale worker must
+        // neither resubmit it nor turn its obsolete preflight failure into a new stop.
+        jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=? AND EXISTS (SELECT 1 FROM vls_compute_paid_run WHERE run_id=? AND power_start_state='PREPARED')",usage,id);
+        jdbc.update("UPDATE vls_compute_paid_run SET error_code=? WHERE run_id=? AND power_start_state='PREPARED'",code,id);
     }
     private static String text(Map<String,Object> row,String key){Object value=row.get(key);return value==null?null:String.valueOf(value);}
 }

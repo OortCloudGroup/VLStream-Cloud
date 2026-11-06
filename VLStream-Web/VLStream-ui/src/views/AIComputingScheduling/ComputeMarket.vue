@@ -3,13 +3,13 @@
     <h2 class="market-title">{{ marketText('算力市场') }}</h2>
     <ComputeBillingPanel ref="billingPanel" :resources="resources" @changed="load" />
     <div v-if="route.query.returnTo === 'training'" class="return-action"><el-button type="primary" @click="router.push('/algorithm-training')">{{ marketText('返回训练配置') }}</el-button></div>
-    <el-alert v-if="marketError" class="market-error" show-icon type="warning" :closable="false" :title="marketError" />
+    <el-alert v-if="marketError" class="market-error" show-icon type="warning" :closable="false" :title="marketText(marketError)" />
     <el-empty v-if="!loading && !resources.length && !marketError" :description="marketText('暂无已发布算力')" />
     <div class="cards">
-      <article v-for="item in pagedResources" :key="item.id" class="compute-card" :class="{ selected: item.id === route.query.nodeId }" :aria-label="marketResourceName(item)" :data-resource-id="item.id">
+      <article v-for="item in pagedResources" :key="item.id" class="compute-card" :class="{ selected: item.id === route.query.nodeId }" :aria-label="marketResourceName(item)" data-i18n-ignore-attributes :data-resource-id="item.id">
         <div class="card-heading">
           <div class="resource-title">
-            <div class="machine-meta"><span>{{ marketResourceName(item) || marketText('名称未提供') }}</span></div>
+            <div class="machine-meta"><span data-i18n-ignore>{{ marketResourceName(item) || marketText('名称未提供') }}</span></div>
             <h3>{{ getMarketSpecifications(item)?.gpuLabel || item.gpuModel || marketText('规格未登记') }}</h3>
           </div>
           <span class="billing-tag" :class="{ free: item.billingType === 'FREE' }">{{ marketText(item.billingType === 'FREE' ? '免费' : item.paidAdmissionEnabled ? '收费' : '收费 · 暂未开放') }}</span>
@@ -26,7 +26,7 @@
             <p v-if="!(item.billingType === 'FREE' && item.schedulingMode === 'SHARED_GPU_QUEUE')" class="price-note">{{ marketText(item.billingType === 'FREE' ? '整实例独享' : item.paidAdmissionEnabled ? '确认报价后按用量结算' : marketPricePresentation(item)?.reference ? '参考价 · 磁盘另费' : '收费暂未开放') }}</p>
             <el-button v-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
             <el-button v-else-if="item.billingType === 'POINTS'" type="primary" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || (item.powerState !== 'STOPPED' && !(item.configurationManaged && item.provider === 'autodl' && item.powerState === 'UNKNOWN'))" @click="billingPanel?.start(item)">{{ marketText(item.paidAdmissionEnabled ? '付费开机' : '租赁暂未开放') }}</el-button>
-            <p v-if="item.billingType === 'POINTS' && item.paidUnavailableReason" class="price-note">{{ item.paidUnavailableReason }}</p>
+            <p v-if="item.billingType === 'POINTS' && item.paidUnavailableReason" class="price-note">{{ marketText(item.paidUnavailableReason) }}</p>
             <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE'" type="primary" @click="router.push('/algorithm-training')">{{ marketText('前往训练') }}</el-button>
           </div>
         </div>
@@ -53,15 +53,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { listComputeMarket, requestPublicComputePower, claimComputeInstance, releaseComputeClaim, refreshPublicComputeProviderState, refreshComputeHealth } from '@/api/compute'
-import { translatePhrase as uiText, currentLocale } from '@/i18n'
+import { translateUiMessage as uiText } from '@/i18n'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent, bindComputeDraftToActor } from '@/utils/computePlatformAuth'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { marketResourceName, marketPricePresentation, marketDisplayResources } from '@/utils/computeMarketPresentation'
 import { getMarketSpecifications, formatMarketCpu } from '@/utils/computeMarketSpecifications'
 import ComputeBillingPanel from './components/ComputeBillingPanel.vue'
 const billingPanel = ref(null)
-const marketCopy = {"核": "cores", "共享主机配置": "Shared host", "硬盘（文件系统）": "Storage (filesystem)", "与系统盘共用": "Shared with system disk", "驱动报告的CUDA上限，不代表训练环境内置运行时版本": "Maximum CUDA version reported by the driver, not the training runtime version", "硬件规格待核验。": "Hardware specifications await verification.", "SSH只读核验": "Read-only SSH verification", "用户确认市场规格": "User-confirmed market specifications", "CPU和内存为共享主机可见总量；硬盘为已挂载文件系统总容量，不是剩余容量；未挂载磁盘不计入数据盘。": "CPU and memory are shared host totals. Disk sizes are mounted filesystem capacities, not free space. Unmounted disks are excluded.", "CPU和内存为共享主机可见总量；硬盘为已挂载文件系统总容量，不是剩余容量。": "CPU and memory are shared host totals. Disk sizes are mounted filesystem capacities, not free space.", "此处为确认的市场规格，不代表实例自定义扩容后的文件系统容量。": "Confirmed market specifications, not the instance filesystem after custom expansion.", "全部":"All", "内存":"Memory", "按任务排队":"Task queue", "详情":"Details", "整实例独享":"Exclusive instance", "规格未登记":"Specifications unavailable", "暂无匹配资源":"No matching resources", "GPU数量": "GPU count", "每GPU分配": "Per GPU", "未提供": "Not provided", "名称未提供": "Name unavailable", "可租用至": "Rentable until", "空闲/总量": "Idle / total", "硬盘": "Storage", "系统盘": "System disk", "数据盘": "Data disk", "其它": "Other", "GPU驱动": "GPU driver", "CUDA版本": "CUDA version", "租赁暂未开放": "Renting unavailable", "前往训练": "Go to training", "参考价 · 磁盘另费": "Reference · disk billed separately", "收费 · 暂未开放": "Paid · unavailable"}
-const marketText = key => currentLocale.value !== 'zh-CN' && marketCopy[key] ? marketCopy[key] : uiText(key)
+const marketText = uiText
 const route = useRoute(), router = useRouter()
 const resources = ref([]), loading = ref(false), operating = ref('')
 const marketError = ref('')
@@ -98,7 +97,7 @@ const load = async () => {
     const response = await listComputeMarket()
     if (currentMarketRequest(request, loadEpoch)) resources.value = marketDisplayResources(response.data || [])
   } catch {
-    if (currentMarketRequest(request, loadEpoch)) marketError.value = uiText('加载失败，请刷新重试')
+    if (currentMarketRequest(request, loadEpoch)) marketError.value = '加载失败，请刷新重试'
   } finally { if (currentMarketRequest(request, loadEpoch)) loading.value = false }
 }
 const runOperation = async (request, execute, title, failure, reloadOnFailure = false) => {
@@ -107,7 +106,7 @@ const runOperation = async (request, execute, title, failure, reloadOnFailure = 
   try {
     const response = await execute()
     if (!currentOperation(request)) return
-    await ElMessageBox.alert(response.data, uiText(title))
+    await ElMessageBox.alert(uiText(response.data), uiText(title))
     if (currentOperation(request)) await load()
   } catch (error) {
     if (!currentOperation(request)) return

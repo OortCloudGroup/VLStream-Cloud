@@ -14,7 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -126,6 +130,196 @@ class ConfiguredOfficialRunIntegrationTest {
         registry.initialize();installPower();f.runs.tick(id);f.runs.tick(id);
         assertEquals("STARTING",f.runs.get(id,f.payer).getState());assertTrue(f.wallet.remaining()>0);assertEquals(0,f.wallet.releasePosts);
         verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+    }
+    void rejectStart(String id,ComputeProviderException rejected) {
+        doThrow(rejected).when(f.supplier).submit(any(),eq("start"),anyString());
+        power.advance(jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id),node());
+    }
+    void assertOriginalClaimsHeld(String id) {
+        assertNotNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
+        assertNotNull(jdbc.queryForObject("SELECT active_server_key FROM vls_compute_usage WHERE id=?",String.class,f.runs.get(id,f.payer).getUsageId()));
+        assertNull(jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage",java.sql.Timestamp.class));
+        assertEquals(0,f.wallet.capturePosts);
+    }
+    @Test void trustedNoStockCancellationReleasesOnlyTheOriginalHoldAndRetainsTheFailureAfterRestart() {
+        String id=accepted();queued(id);
+        String snapshot=jdbc.queryForObject("SELECT quote_snapshot FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        String usageSnapshot=jdbc.queryForObject("SELECT rate_snapshot FROM vls_compute_usage",String.class);
+        String operation=jdbc.queryForObject("SELECT start_operation_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        rejectStart(id,new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getErrorCode());
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());
+        assertEquals("REJECTED_NO_STOCK",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);
+        registry.initialize();installPower();
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        ComputePaidRunService.View cancelled=f.runs.get(id,f.payer);
+        assertEquals("CANCELLED",cancelled.getState());assertEquals("NO_STOCK",cancelled.getStartFailureCode());assertNull(cancelled.getErrorCode());
+        assertEquals("START_FAILED",jdbc.queryForObject("SELECT state FROM vls_compute_usage",String.class));
+        assertNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run",String.class));
+        assertNull(jdbc.queryForObject("SELECT active_server_key FROM vls_compute_usage",String.class));
+        assertEquals(1,f.wallet.holdPosts);assertEquals(1,f.wallet.releasePosts);assertEquals(1,f.wallet.releaseEffects);assertEquals(0,f.wallet.remaining());
+        assertEquals(0,f.wallet.capturePosts);assertEquals(snapshot,jdbc.queryForObject("SELECT quote_snapshot FROM vls_compute_paid_run",String.class));
+        assertEquals(usageSnapshot,jdbc.queryForObject("SELECT rate_snapshot FROM vls_compute_usage",String.class));
+        f.runs.accept(id,f.payer);f.runs.stop(id,f.payer);registry.initialize();installPower();
+        for(int i=0;i<3;i++)f.runs.tick(id);
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());assertEquals(1,f.wallet.releasePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @Test void concurrentStaleStartWorkersKeepOneOriginalNoStockSubmission() throws Exception {
+        String id=accepted();queued(id);
+        Map<String,Object> original=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id);
+        String operation=String.valueOf(original.get("start_operation_id"));
+        CountDownLatch submitted=new CountDownLatch(1),reply=new CountDownLatch(1);
+        doAnswer(call->{submitted.countDown();assertTrue(reply.await(5,TimeUnit.SECONDS));throw new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK);})
+            .when(f.supplier).submit(any(),eq("start"),eq(operation));
+        ExecutorService worker=Executors.newSingleThreadExecutor();
+        try {
+            Future<?> sending=worker.submit(()->power.advance(original,node()));
+            assertTrue(submitted.await(5,TimeUnit.SECONDS));
+            power.advance(original,node());
+            reply.countDown();sending.get(5,TimeUnit.SECONDS);
+        } finally {reply.countDown();worker.shutdownNow();}
+        assertEquals("REJECTED_NO_STOCK",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @Test void stopDuringFirstStartPreflightCancelsTheOriginalBeforeAnyPowerSubmission() throws Exception {
+        String id=accepted();queued(id);
+        Map<String,Object> original=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id);
+        ComputePowerProvider.Snapshot stoppedObservation=f.supplier.status(node());
+        CountDownLatch preflight=new CountDownLatch(1),resume=new CountDownLatch(1);
+        when(f.supplier.status(any())).thenAnswer(call->{preflight.countDown();assertTrue(resume.await(5,TimeUnit.SECONDS));return stoppedObservation;});
+        ExecutorService worker=Executors.newSingleThreadExecutor();
+        try {
+            Future<?> sending=worker.submit(()->power.advance(original,node()));
+            assertTrue(preflight.await(5,TimeUnit.SECONDS));
+            assertEquals("CANCELLING",f.runs.stop(id,f.payer).getState());
+            assertEquals("CANCELLED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+            assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+            assertOriginalClaimsHeld(id);assertTrue(f.wallet.remaining()>0);assertEquals(0,f.wallet.releasePosts);
+            resume.countDown();sending.get(5,TimeUnit.SECONDS);
+        } finally {resume.countDown();worker.shutdownNow();}
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        f.wallet.loseReleaseAfterCommit=true;f.wallet.lookupReleaseAvailable=false;
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("RELEASING",f.runs.get(id,f.payer).getState());assertOriginalClaimsHeld(id);
+        assertEquals(0,f.wallet.remaining());assertEquals(1,f.wallet.releasePosts);assertEquals(1,f.wallet.releaseEffects);
+        f.wallet.lookupReleaseAvailable=true;
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals(1,f.wallet.releaseEffects);
+        assertNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run",String.class));
+        assertNull(jdbc.queryForObject("SELECT active_server_key FROM vls_compute_usage",String.class));
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void firstStartClaimBeforeStopKeepsTheOriginalUnknownAndQueuesOneSafeStop() throws Exception {
+        String id=accepted();queued(id);
+        Map<String,Object> original=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id);
+        String operation=String.valueOf(original.get("start_operation_id"));
+        CountDownLatch submitted=new CountDownLatch(1),reply=new CountDownLatch(1);
+        doAnswer(call->{submitted.countDown();assertTrue(reply.await(5,TimeUnit.SECONDS));throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN);})
+            .when(f.supplier).submit(any(),eq("start"),eq(operation));
+        ExecutorService worker=Executors.newSingleThreadExecutor();
+        try {
+            Future<?> sending=worker.submit(()->power.advance(original,node()));
+            assertTrue(submitted.await(5,TimeUnit.SECONDS));
+            assertEquals("STARTING",f.runs.stop(id,f.payer).getState());
+            assertEquals("SUBMITTED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+            assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);
+            reply.countDown();sending.get(5,TimeUnit.SECONDS);
+        } finally {reply.countDown();worker.shutdownNow();}
+        for(int i=0;i<8;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals(operation,jdbc.queryForObject("SELECT start_operation_id FROM vls_compute_paid_run",String.class));
+        assertEquals("ACCEPTED",jdbc.queryForObject("SELECT power_stop_state FROM vls_compute_paid_run",String.class));
+        assertEquals(1,f.wallet.releaseEffects);assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.remaining());
+        verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @Test void unverifiedControlKeepsTheStopRequestAndOriginalClaimsWithoutClaimingCancellation() {
+        String id=accepted();queued(id);String usage=f.runs.get(id,f.payer).getUsageId();
+        ComputeBillingLifecycleService unavailable=spy(f.lifecycle);
+        doThrow(new IllegalStateException("Fixture control identity unavailable")).when(unavailable).controlledNode(usage);
+        ReflectionTestUtils.setField(f.runs,"lifecycle",unavailable);
+        assertEquals("STARTING",f.runs.stop(id,f.payer).getState());
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        assertEquals("PREPARED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void databaseFailureDuringFirstStartCancellationFailsTheStopWithoutPretendingSuccess() {
+        String id=accepted();queued(id);String usage=f.runs.get(id,f.payer).getUsageId();
+        ComputeBillingLifecycleService unavailable=spy(f.lifecycle);
+        doThrow(new org.springframework.dao.DataAccessResourceFailureException("Fixture database unavailable")).when(unavailable).controlledNode(usage);
+        ReflectionTestUtils.setField(f.runs,"lifecycle",unavailable);
+        assertThrows(org.springframework.dao.DataAccessResourceFailureException.class,()->f.runs.stop(id,f.payer));
+        assertEquals(0,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        assertEquals("PREPARED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void noStockRetainsItsCauseAndClaimsWhileReleaseOrRecoveryIsUncertain() {
+        String id=accepted();queued(id);rejectStart(id,new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
+        f.wallet.loseReleaseWithoutCommit=true;
+        when(f.supplier.supports(any())).thenThrow(new IllegalStateException("Fixture provider unavailable")).thenReturn(true);
+        f.runs.tick(id);
+        assertEquals("RECOVERY_PENDING",f.runs.get(id,f.payer).getErrorCode());assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());
+        assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);
+        registry.initialize();installPower();
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("RELEASING",f.runs.get(id,f.payer).getState());assertEquals("RELEASE_RECEIPT_PENDING",f.runs.get(id,f.payer).getErrorCode());
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());assertOriginalClaimsHeld(id);
+        assertTrue(f.wallet.remaining()>0);assertEquals(1,f.wallet.releasePosts);assertEquals(0,f.wallet.releaseEffects);
+        assertEquals("UNKNOWN",jdbc.queryForObject("SELECT state FROM vls_compute_funding_intent WHERE operation_kind='RELEASE'",String.class));
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @Test void noStockCannotCancelAtZeroRemainingWithoutTheOriginalReleaseReceipt() {
+        String id=accepted();queued(id);rejectStart(id,new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK));
+        f.wallet.loseReleaseAfterCommit=true;f.wallet.lookupReleaseAvailable=false;f.runs.tick(id);
+        String release=jdbc.queryForObject("SELECT release_intent_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        Map<String,Object> original=jdbc.queryForMap("SELECT idempotency_key,request_json,request_hash FROM vls_compute_funding_intent WHERE intent_id=?",release);
+        assertEquals(0,f.wallet.remaining());assertEquals(1,f.wallet.releaseEffects);
+        registry.initialize();installPower();
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("RELEASING",f.runs.get(id,f.payer).getState());assertEquals("RELEASE_RECEIPT_PENDING",f.runs.get(id,f.payer).getErrorCode());
+        assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());assertOriginalClaimsHeld(id);assertEquals(1,f.wallet.releasePosts);
+        f.wallet.lookupReleaseAvailable=true;
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());
+        assertEquals(release,jdbc.queryForObject("SELECT release_intent_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
+        assertEquals(original,jdbc.queryForMap("SELECT idempotency_key,request_json,request_hash FROM vls_compute_funding_intent WHERE intent_id=?",release));
+        assertEquals("OPERATION_CONFIRMED",jdbc.queryForObject("SELECT state FROM vls_compute_funding_intent WHERE intent_id=?",String.class,release));
+        assertEquals(2,f.wallet.releasePosts);assertEquals(1,f.wallet.releaseEffects);assertEquals(0,f.wallet.capturePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @Test void journaledNoStockRejectionRecoversBeforeTheUsageFailureWasRecorded() {
+        String id=accepted();queued(id);
+        jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='REJECTED_NO_STOCK',error_code='NO_STOCK' WHERE run_id=?",id);
+        f.wallet.loseReleaseWithoutCommit=true;registry.initialize();installPower();f.runs.tick(id);
+        assertEquals("START_FAILED",jdbc.queryForObject("SELECT state FROM vls_compute_usage",String.class));
+        assertEquals("RELEASING",f.runs.get(id,f.payer).getState());assertEquals("NO_STOCK",f.runs.get(id,f.payer).getStartFailureCode());
+        assertOriginalClaimsHeld(id);verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @ParameterizedTest
+    @EnumSource(value=ComputeProviderException.Kind.class,names={"AUTHORIZATION","BALANCE","QUOTA","LOCKED","WRONG_STATE"})
+    void otherKnownStartRejectionsDoNotBecomeNoStock(ComputeProviderException.Kind kind) {
+        String id=accepted();queued(id);rejectStart(id,new ComputeProviderException(kind));
+        assertEquals("REJECTED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals("START_REJECTED",f.runs.get(id,f.payer).getErrorCode());assertEquals("START_REJECTED",f.runs.get(id,f.payer).getStartFailureCode());
+        assertOriginalClaimsHeld(id);assertEquals(0,f.wallet.releasePosts);
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals("START_REJECTED",f.runs.get(id,f.payer).getStartFailureCode());
+        assertEquals(1,f.wallet.releaseEffects);assertEquals(0,f.wallet.capturePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+    }
+    @ParameterizedTest
+    @ValueSource(strings={"BUSINESS_BAD_REQUEST","TIMEOUT","TRANSPORT"})
+    void unknownStartDiagnosticsRemainUnknownWithoutCapacityOrRelease(String diagnostic) {
+        String id=accepted();queued(id);rejectStart(id,new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,400,diagnostic));
+        String operation=jdbc.queryForObject("SELECT start_operation_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        registry.initialize();installPower();
+        for(int i=0;i<4;i++)f.runs.tick(id);
+        assertEquals("STARTING",f.runs.get(id,f.payer).getState());assertEquals("START_OUTCOME_UNKNOWN",f.runs.get(id,f.payer).getErrorCode());
+        assertNull(f.runs.get(id,f.payer).getStartFailureCode());assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertOriginalClaimsHeld(id);assertTrue(f.wallet.remaining()>0);assertEquals(0,f.wallet.releasePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
     }
     @Test void crashAfterSubmissionMarkerBeforeHttpIsStillAmbiguousAndCannotSendAgain() {
         String id=accepted();queued(id);jdbc.update("UPDATE vls_compute_paid_run SET power_start_state='SUBMITTED',power_start_attempt_ms=?",System.currentTimeMillis());

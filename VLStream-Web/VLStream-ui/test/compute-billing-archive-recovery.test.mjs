@@ -1,20 +1,37 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from 'vue/compiler-sfc'
-import { billingCurrency, paidRunState, paidRunActive, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
+import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
+import * as Vue from 'vue'
+import { renderToString } from '@vue/server-renderer'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
 
 const source = readFileSync(new URL('../src/views/AIComputingScheduling/components/ComputeBillingPanel.vue', import.meta.url), 'utf8')
 const compiled = compileScript(parse(source).descriptor, { id: 'archive-recovery-test' }).content
 const executable = compiled.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '').replace('export default', 'return')
 const create = new Function('__deps', `
+  const uiText = value => value;
+  const phrase = (value, params) => value.replace(/\\{(\\w+)\\}/g, (_, key) => String(params[key]));
   const {computed,onMounted,onUnmounted,ref,useRouter,ElMessageBox,getComputeBillingCapabilities,
     checkComputeBillingAccount,quoteComputePaidRun,quoteComputeArchiveRecovery,listComputePaidRuns,
     acceptComputePaidRun,stopComputePaidRun,refreshComputeHealth,captureComputeIdentity,
     requireComputePlatformAuthorization,isComputeAuthorizationCurrent,billingCurrency,paidRunState,
-    paidRunActive,paidRunQuoteText,window,setInterval,clearInterval}=__deps;
+    paidRunActive,paidRunErrorPresentation,paidRunQuoteText,window,setInterval,clearInterval}=__deps;
   ${executable}
 `)
+const template = compileTemplate({ source: parse(source).descriptor.template.content, id: 'billing-presentation-test' })
+assert.deepEqual(template.errors, [])
+const render = new Function('Vue', template.code
+  .replace(/^import \{(.*?)\} from "vue"$/gm, (_, names) => `const {${names.replace(/ as /g, ': ')}} = Vue`)
+  .replace('export function render', 'function render') + '\nreturn render')(Vue)
+const renderPanel = async instance => {
+  const bindings = Object.fromEntries(Object.entries(instance).map(([key, value]) => [key,
+    value && Object.prototype.hasOwnProperty.call(value, 'value') ? value.value : value]))
+  const app = Vue.createSSRApp({ setup: () => bindings, render })
+  app.component('el-alert', { props: ['title', 'type'], render() { return Vue.h('aside', { 'data-alert-type': this.type }, this.title) } })
+  app.component('el-button', { render() { return Vue.h('button', this.$slots.default?.()) } })
+  return renderToString(app)
+}
 const defer = () => {
   let resolve, reject
   const promise = new Promise((yes, no) => { resolve = yes; reject = no })
@@ -44,7 +61,7 @@ function harness(options = {}) {
     captureComputeIdentity: () => { const current = identity; return { assertCurrent() { if (current !== identity) throw Error('fixture identity changed') } } },
     requireComputePlatformAuthorization: async () => { calls.proof++; return options.proof ? options.proof() : { identity, platformToken: 'fixture-proof' } },
     isComputeAuthorizationCurrent: proof => proof.identity === identity,
-    billingCurrency, paidRunState, paidRunActive, paidRunQuoteText,
+    billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText,
     window: { addEventListener: (name, fn) => events.set(name, fn), removeEventListener: name => events.delete(name) },
     setInterval: fn => { timers.push(fn); return timers.length }, clearInterval() {}
   }
@@ -67,6 +84,41 @@ test('mount and polling read capabilities/runs only; pending archive never autom
   assert.equal(h.calls.normalQuote, 0)
   assert.deepEqual(h.calls.recoveryQuote, [])
   assert.deepEqual(h.calls.accept, [])
+})
+
+test('the actual panel template renders the retained start cause and current reconciliation warning', async () => {
+  const h = harness()
+  h.setRows([{ ...original(), state: 'RELEASING', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: 'RELEASE_RECEIPT_PENDING' }])
+  await h.mount()
+  const pending = await renderPanel(h.instance)
+  assert.match(pending, /data-alert-type="warning"[^>]*>状态确认暂未完成.*当前资源被占用/)
+  assert.match(pending, /停止并结算/)
+  assert.doesNotMatch(pending, /已完成释放/)
+  h.setRows([{ ...original(), state: 'CANCELLED', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: null }])
+  await h.instance.refreshRuns()
+  const cancelled = await renderPanel(h.instance)
+  assert.match(cancelled, /data-alert-type="warning"[^>]*>当前资源被占用.*已完成释放/)
+  assert.doesNotMatch(cancelled, /停止并结算|状态确认暂未完成/)
+  assert.deepEqual(h.calls.accept, [])
+  assert.deepEqual(h.calls.stop, [])
+})
+
+test('the panel template distinguishes an explicit rejected start from an unknown result without message inference', async () => {
+  const h = harness()
+  h.setRows([{ ...original(), state: 'CANCELLING', archiveRecoveryAvailable: false, startFailureCode: 'START_REJECTED', errorCode: null }])
+  await h.mount()
+  const rejected = await renderPanel(h.instance)
+  assert.match(rejected, /data-alert-type="warning"[^>]*>本次开机被供应商拒绝/)
+  assert.doesNotMatch(rejected, /当前资源被占用/)
+  h.setRows([{ ...original(), state: 'STARTING', archiveRecoveryAvailable: false, errorCode: 'UNKNOWN', msg: 'NO_STOCK 当前资源被占用' }])
+  await h.instance.refreshRuns()
+  const unknown = await renderPanel(h.instance)
+  assert.match(unknown, /data-alert-type="warning"[^>]*>状态确认暂未完成.*请勿重复提交启停操作/)
+  assert.match(unknown, /停止并结算/)
+  assert.doesNotMatch(unknown, /当前资源被占用|被供应商拒绝/)
+  h.setRows([{ ...original(), state: 'STARTING', archiveRecoveryAvailable: false, errorCode: null }])
+  await h.instance.refreshRuns()
+  assert.doesNotMatch(await renderPanel(h.instance), /<aside/)
 })
 
 test('older pending artifacts and an active recovery stay visible beyond the recent five runs', async () => {

@@ -19,6 +19,27 @@ const labels = {
 export const paidRunState = state => labels[state] || '状态待确认'
 export const paidRunActive = run => !['QUOTED', 'COMPLETED', 'CANCELLED'].includes(run.state)
 
+export function paidRunErrorPresentation(run) {
+  if (!run?.errorCode && !run?.startFailureCode) return null
+  const pending = '状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。'
+  // The original order's start cause is separate from current funding/recovery errors.
+  // Older responses may carry only errorCode; never infer capacity from provider text.
+  const startCode = Object.prototype.hasOwnProperty.call(run, 'startFailureCode') ? run.startFailureCode : run.errorCode
+  const knownStartCodes = ['NO_STOCK', 'START_REJECTED']
+  const conflictingCodes = knownStartCodes.includes(run.errorCode) && run.errorCode !== startCode
+  const failureState = ['STARTING', 'CANCELLING', 'STOPPING', 'RELEASING', 'CANCELLED'].includes(run.state)
+  const rejected = !conflictingCodes && failureState
+    ? startCode === 'NO_STOCK' ? '当前资源被占用，本次开机未成功。'
+      : startCode === 'START_REJECTED' ? '本次开机被供应商拒绝。' : null
+    : null
+  // Keep unresolved funding/release diagnostics first, including a contradictory terminal state.
+  if (rejected && run.errorCode && run.errorCode !== startCode) return { message: pending + rejected, type: 'warning' }
+  const message = rejected
+    ? rejected + (run.state === 'CANCELLED' ? '原单已取消，未消费冻结余额已完成释放。' : '原单取消及未消费冻结余额释放仍待确认，请勿重复开机。')
+    : pending
+  return { message, type: 'warning' }
+}
+
 export function paidRunQuoteText(quote) {
   const amount = integer(quote.reserveQuota).toString()
   if (!Number.isSafeInteger(quote.maximumRunSeconds) || quote.maximumRunSeconds < 1 || quote.maximumRunSeconds > 86400) throw new Error('运行时限尚未确认')

@@ -131,6 +131,10 @@ class TrialFundsIsolationTest {
         ComputeFundingIntentService.Intent after = funding.recover(hold.id);
         assertEquals("PREPARED", after.state); assertEquals(hold.key, after.key); assertEquals(hold.body, after.body);
         assertEquals(0, gateway.holds); assertEquals(1, gateway.configs);
+        IllegalStateException denied=assertThrows(IllegalStateException.class,()->funding.claimInitialSend(
+            hold.id,System.currentTimeMillis(),config));
+        assertEquals("TRIAL_CONVERSION_CHANGED",denied.getMessage());
+        assertEquals("PREPARED",funding.recover(hold.id).state);
     }
 
     @Test void unknownHoldRestartOnlyQueriesEvenAfterPermitDisabled() {

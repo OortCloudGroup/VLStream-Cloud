@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { billingCurrency, paidRunState, paidRunActive, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
 const marketSource = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
 const { marketPricePresentation } = await import('data:text/javascript;base64,' + Buffer.from(marketSource).toString('base64'))
 
@@ -35,4 +35,77 @@ test('unknown states never masquerade as reconciled or running', () => {
   assert.equal(paidRunState('UNEXPECTED'), '状态待确认')
   assert.equal(paidRunActive({ state: 'STARTING' }), true)
   assert.equal(paidRunActive({ state: 'COMPLETED' }), false)
+})
+
+for (const codeField of ['errorCode', 'startFailureCode']) {
+  for (const errorCode of ['NO_STOCK', 'START_REJECTED']) {
+    for (const state of ['CANCELLING', 'RELEASING', 'CANCELLED']) {
+      test(`${codeField}=${errorCode} explains the rejected start in ${state} without changing safe stop eligibility`, () => {
+        const run = { [codeField]: errorCode, state }
+        const presentation = paidRunErrorPresentation(run)
+        assert.equal(presentation.type, 'warning')
+        assert.match(presentation.message, errorCode === 'NO_STOCK' ? /当前资源被占用/ : /本次开机被供应商拒绝/)
+        if (errorCode === 'START_REJECTED') assert.doesNotMatch(presentation.message, /当前资源被占用|容量不足/)
+        if (state === 'CANCELLED') {
+          assert.match(presentation.message, /已完成释放/)
+          assert.doesNotMatch(presentation.message, /仍待确认/)
+          assert.equal(paidRunActive(run), false)
+        } else {
+          assert.match(presentation.message, /释放仍待确认.*请勿重复开机/)
+          assert.doesNotMatch(presentation.message, /已完成释放/)
+          assert.equal(paidRunActive(run), true)
+        }
+      })
+    }
+  }
+}
+
+for (const codeField of ['errorCode', 'startFailureCode']) {
+  for (const errorCode of ['UNKNOWN', 'START_OUTCOME_UNKNOWN', 'BadRequest', 'UNAVAILABLE', 'FUNDING_REJECTED', 'FUNDING_REQUIRES_REVIEW', 'RECOVERY_PENDING', 'RELEASE_RECEIPT_PENDING', 'no_stock', ' NO_STOCK', 'NO_STOCK ', 'PROVIDER_NO_STOCK', 'NO_STOCK_UNKNOWN']) {
+    test(`${codeField}=${errorCode} stays pending even when provider messages claim no stock`, () => {
+      const run = { state: 'STARTING', [codeField]: errorCode, msg: 'NO_STOCK 无库存 当前资源被占用', message: 'NO_STOCK' }
+      const presentation = paidRunErrorPresentation(run)
+      assert.equal(presentation.type, 'warning')
+      assert.match(presentation.message, /状态确认暂未完成.*查询原单.*请勿重复提交启停操作/)
+      assert.doesNotMatch(presentation.message, /当前资源被占用|容量不足|已完成释放|被供应商拒绝/)
+      assert.equal(paidRunActive(run), true)
+    })
+  }
+}
+
+test('messages alone cannot create a no-stock order notice', () => {
+  for (const run of [undefined, null, {}, { errorCode: null }, { errorCode: '' }, { msg: 'NO_STOCK 无库存', message: '当前资源被占用' }]) {
+    assert.equal(paidRunErrorPresentation(run), null)
+  }
+})
+
+for (const errorCode of ['FUNDING_REJECTED', 'FUNDING_REQUIRES_REVIEW', 'RECOVERY_PENDING', 'RELEASE_RECEIPT_PENDING', 'REMAINING_AFTER_CONFIRMED_RELEASE']) {
+  test(`current ${errorCode} remains first while the independent original start failure stays visible`, () => {
+    for (const startFailureCode of ['NO_STOCK', 'START_REJECTED']) {
+      for (const state of ['CANCELLING', 'RELEASING', 'CANCELLED']) {
+        const presentation = paidRunErrorPresentation({ state, errorCode, startFailureCode })
+        assert.equal(presentation.type, 'warning')
+        assert.match(presentation.message, /^状态确认暂未完成.*请勿重复提交启停操作/)
+        assert.match(presentation.message, startFailureCode === 'NO_STOCK' ? /当前资源被占用/ : /本次开机被供应商拒绝/)
+        assert.doesNotMatch(presentation.message, /已完成释放/)
+      }
+    }
+  })
+}
+
+test('conflicting cause fields or a running, completed, unfunded, or unknown state cannot claim a rejected start', () => {
+  const conflicts = [
+    { state: 'CANCELLING', startFailureCode: 'START_REJECTED', errorCode: 'NO_STOCK' },
+    { state: 'CANCELLING', startFailureCode: 'NO_STOCK', errorCode: 'START_REJECTED' },
+    { state: 'CANCELLING', startFailureCode: 'UNKNOWN', errorCode: 'NO_STOCK' },
+    { state: 'CANCELLING', startFailureCode: null, errorCode: 'NO_STOCK' },
+    { state: 'CANCELLING', startFailureCode: undefined, errorCode: 'NO_STOCK' },
+    { state: 'CANCELLING', startFailureCode: '', errorCode: 'NO_STOCK' },
+    { state: 'CANCELLING', startFailureCode: false, errorCode: 'NO_STOCK' },
+    ...['RUNNING', 'COMPLETED', 'QUOTED', 'FUNDING', 'UNEXPECTED'].map(state => ({ state, startFailureCode: 'NO_STOCK' }))
+  ]
+  for (const run of conflicts) {
+    assert.match(paidRunErrorPresentation(run).message, /状态确认暂未完成/)
+    assert.doesNotMatch(paidRunErrorPresentation(run).message, /当前资源被占用|被供应商拒绝|已完成释放/)
+  }
 })

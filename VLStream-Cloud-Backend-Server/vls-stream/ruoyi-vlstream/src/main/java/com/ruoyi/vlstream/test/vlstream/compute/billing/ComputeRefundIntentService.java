@@ -275,6 +275,13 @@ public class ComputeRefundIntentService {
 
     /** First submission only. No scheduled executor consumes this journal and paid admission stays closed. */
     public void dispatch(String intentId) {
+        dispatch(intentId, null);
+    }
+
+    /** Optional application eligibility guard for a first submission. It must perform only local
+     * checks and acquire its application locks before this journal takes its session/intent locks.
+     * The same transaction retains those locks until the UNKNOWN submission claim is committed. */
+    public void dispatch(String intentId, Runnable lockedGuard) {
         if (!properties.isEnabled() || !properties.isAllowWrites()) return;
         ExternalBillingGateway gateway = gateways.get();
         if (gateway == null) return;
@@ -282,6 +289,14 @@ public class ComputeRefundIntentService {
             throw new IllegalStateException("Refund I/O requires a committed intent");
         String usageId = owner(intentId);
         Intent original = transactions.execute(tx -> {
+            if (lockedGuard != null) {
+                // This preliminary read takes no lock: acquiring the refund/session lock before
+                // the application's run lock would reverse the paid-run lock order. The locked
+                // state is checked again below, so a concurrent sender still cannot POST twice.
+                String state = jdbc.queryForObject("SELECT state FROM vls_compute_refund_intent WHERE refund_intent_id=?", String.class, intentId);
+                if (!"PREPARED".equals(state)) return null;
+                lockedGuard.run();
+            }
             Map<String, Object> session = session(usageId);
             Map<String, Object> stored = row(intentId);
             Intent intent = checked(session, charge(text(stored, "merchant_charge_id")), stored);

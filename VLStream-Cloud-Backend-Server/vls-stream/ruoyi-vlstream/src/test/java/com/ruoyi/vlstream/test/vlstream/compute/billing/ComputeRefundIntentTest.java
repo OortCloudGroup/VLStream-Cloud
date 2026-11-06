@@ -202,6 +202,32 @@ class ComputeRefundIntentTest {
         assertEquals(intent.body, unknown.body); assertFalse(unknown.safeToRetry);
     }
 
+    @Test void applicationGuardRunsInsideClaimTransactionBeforeSubmissionAndCanRejectRestartedPreparedIntent() {
+        ComputeRefundIntentService.Intent intent=prepare("guarded-correction","400");properties.setAllowWrites(true);
+        AtomicInteger checks=new AtomicInteger();
+        assertThrows(IllegalStateException.class,()->restarted().dispatch(intent.id,()->{
+            assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            assertEquals("PREPARED",jdbc.queryForObject("SELECT state FROM vls_compute_refund_intent WHERE refund_intent_id=?",String.class,intent.id));
+            checks.incrementAndGet();throw new IllegalStateException("Application eligibility changed");
+        }));
+        assertEquals(1,checks.get());assertEquals(0,gateway.writes);assertEquals("PREPARED",service.recover(intent.id).state);
+        restarted().dispatch(intent.id,()->{assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());checks.incrementAndGet();});
+        assertEquals(1,gateway.writes);assertEquals("UNKNOWN",service.recover(intent.id).state);assertEquals(2,checks.get());
+        restarted().dispatch(intent.id,()->{throw new AssertionError("UNKNOWN must not invoke an eligibility guard or resend");});
+        assertEquals(1,gateway.writes);
+    }
+
+    @Test void applicationGuardRollbackPreservesImmutableRequestAndPreventsAnyGatewayWrite() {
+        ComputeRefundIntentService.Intent intent=prepare("guarded-rollback","400");properties.setAllowWrites(true);
+        assertThrows(IllegalStateException.class,()->service.dispatch(intent.id,()->{
+            jdbc.update("UPDATE vls_compute_billing_slice SET state='UNKNOWN' WHERE merchant_charge_id=?",chargeReference);
+            throw new IllegalStateException("Refuse before submission claim");
+        }));
+        assertEquals("SETTLED",jdbc.queryForObject("SELECT state FROM vls_compute_billing_slice WHERE merchant_charge_id=?",String.class,chargeReference));
+        ComputeRefundIntentService.Intent recovered=service.recover(intent.id);
+        assertEquals(intent.key,recovered.key);assertEquals(intent.body,recovered.body);assertEquals("PREPARED",recovered.state);assertEquals(0,gateway.writes);
+    }
+
     @Test void receiptRequiresHoldRequeryWithoutClaimingRefundIsAvailable() throws Exception {
         ComputeRefundIntentService.Intent intent = prepare("correction-1", "400");
         gateway.next = new ExternalBillingGateway.Result(ExternalBillingGateway.Status.SUCCEEDED, "", receipt("400", "501"));

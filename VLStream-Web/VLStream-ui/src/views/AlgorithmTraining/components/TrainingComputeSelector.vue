@@ -57,6 +57,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { getComputeQueueSnapshot } from '@/api/compute'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { computeAvailabilityLabel, computeFixedPriceLabel, isFreeSharedCompute, queuePresentation, trainingComputeGroups } from '@/utils/trainingComputeQueue.mjs'
+import { translateUiMessage } from '@/i18n'
 
 const props = defineProps({
   modelValue: { type: String, default: '' }, nodes: { type: Array, default: () => [] },
@@ -73,7 +74,7 @@ let generation = 0
 let open = false
 let refreshTimer
 const clockTimer = setInterval(() => { now.value = Date.now() }, 1000)
-const presentation = node => queuePresentation(snapshots.value[String(node.id)], { now: now.value, loading: !!pending.value[String(node.id)] })
+const presentation = node => queuePresentation(snapshots.value[String(node.id)], { now: now.value, loading: !!pending.value[String(node.id)], translate: translateUiMessage })
 
 const refresh = async () => {
   const current = generation

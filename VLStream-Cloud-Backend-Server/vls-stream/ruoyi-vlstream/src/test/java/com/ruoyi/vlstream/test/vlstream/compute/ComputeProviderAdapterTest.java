@@ -5,6 +5,8 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -69,6 +71,31 @@ class ComputeProviderAdapterTest {
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on")).andRespond(withSuccess("{\"code\":\"undocumented\",\"msg\":\"test-only-token GPU stock?\"}",MediaType.APPLICATION_JSON));
         ComputeProviderException e = assertThrows(ComputeProviderException.class,()->new AutoDlProPowerProvider(cipher,true,http).submit(node("autodl"),"start","op"));
         assertEquals(ComputeProviderException.Kind.UNKNOWN,e.getKind()); assertFalse(e.getMessage().contains("test-only-token")); assertNull(e.getCause()); mock.verify();
+    }
+    @ParameterizedTest
+    @ValueSource(strings={"BadRequest","NoStock","NO_STOCK","OperationDenied.NoStock","Invalid.PrivatePoolOptions.NoStock"})
+    void unverifiedProCodeMessageAndDataCannotBorrowAnotherProvidersNoStockContract(String code) throws Exception {
+        RestTemplate http=AutoDlProPowerProvider.transport();
+        MockRestServiceServer server=MockRestServiceServer.bindTo(http).build();
+        com.fasterxml.jackson.databind.node.ObjectNode response=json.createObjectNode().put("code",code)
+            .put("msg","当前资源被占用，无空闲GPU NO_STOCK test-only-token");
+        response.putObject("data").put("error_code","NO_STOCK").put("available_gpu_count",0);
+        server.expect(requestTo(AutoDlProPowerProvider.BASE+"power_on")).andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(json.writeValueAsString(response),MediaType.APPLICATION_JSON));
+        ComputeProviderException error=assertThrows(ComputeProviderException.class,
+            ()->new AutoDlProPowerProvider(cipher,true,http).submit(node("autodl"),"start","original-operation"));
+        assertEquals(ComputeProviderException.Kind.UNKNOWN,error.getKind());
+        assertFalse(error.getMessage().contains("当前资源被占用"));
+        assertFalse(error.toString().contains("test-only-token"));
+        assertNull(error.getCause());server.verify();
+    }
+    @ParameterizedTest
+    @ValueSource(strings={"OperationDenied.NoStock","Invalid.PrivatePoolOptions.NoStock"})
+    void onlyExistingDocumentedAliyunCapacityCodesProduceTrustedNoStock(String code) {
+        assertEquals(ComputeProviderException.Kind.NO_STOCK,ComputeProviderException.aliyunKind(code));
+        assertEquals(ComputeProviderException.Kind.UNKNOWN,ComputeProviderException.aliyunKind(code+".Unverified"));
+        assertNotEquals(ComputeProviderException.Kind.NO_STOCK,ComputeProviderException.aliyunKind("InsufficientBalance"));
+        assertNotEquals(ComputeProviderException.Kind.NO_STOCK,ComputeProviderException.aliyunKind("QuotaExceed.ElasticQuota"));
     }
     @Test void ecsSdkRequestsUseExactPurchasedInstanceRegionSafeStopModeAndAsyncAcceptance() throws Exception {
         IAcsClient client = mock(IAcsClient.class); when(client.getCommonResponse(any())).thenReturn(response("{\"RequestId\":\"test-request\"}"));

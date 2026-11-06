@@ -68,7 +68,7 @@ public class ComputePaidRunService {
 
     @Getter
     public static final class View {
-        private final String runId,nodeId,state,errorCode,usageId,reserveQuota,chargedQuota,remainingQuota;
+        private final String runId,nodeId,state,errorCode,startFailureCode,usageId,reserveQuota,chargedQuota,remainingQuota;
         private final String hourlyPrice,currency,quotaUnit;
         private final long quoteUntilMs,holdUntilMs;
         private final int maximumRunSeconds;
@@ -77,6 +77,10 @@ public class ComputePaidRunService {
         private final List<String> archiveRecoveryJobIds;
         private View(Map<String,Object> row,BillingSnapshot price,String charged,String remaining,boolean recoveryAvailable,List<String> recoveryJobs,String recoverySource) {
             runId=text(row,"run_id");nodeId=text(row,"node_id");state=text(row,"state");errorCode=text(row,"error_code");
+            // Retain the original trusted rejection without hiding a later funds
+            // reconciliation error or changing the accepted immutable snapshots.
+            String startState=text(row,"power_start_state");
+            startFailureCode=ConfiguredPaidPowerService.REJECTED_NO_STOCK.equals(startState)?"NO_STOCK":"REJECTED".equals(startState)?"START_REJECTED":null;
             usageId=text(row,"usage_id");reserveQuota=text(row,"reserve_quota");chargedQuota=charged;remainingQuota=remaining;
             hourlyPrice=price.approvedHourlyPrice.toPlainString();currency=priceCurrency(price);quotaUnit=price.quotaUnit;
             quoteUntilMs=number(row,"quote_until_ms");holdUntilMs=number(row,"hold_until_ms");maximumRunSeconds=(int)number(row,"maximum_run_seconds");
@@ -235,22 +239,6 @@ public class ComputePaidRunService {
     }
 
     public View get(String id,BillingPayer payer){return view(owned(id,payer,false));}
-    /** Minimal owner-scoped stop inventory, independent of the market page and quote history. */
-    @Getter
-    public static final class SafetyRun {
-        private final String runId, nodeId, state;
-        private SafetyRun(Map<String,Object> row) {
-            runId=text(row,"run_id"); nodeId=text(row,"node_id"); state=text(row,"state");
-        }
-    }
-
-    public List<SafetyRun> activeRunsForSafety(BillingPayer payer) {
-        actor(payer);
-        return jdbc.queryForList("SELECT run_id,node_id,state FROM vls_compute_paid_run WHERE tenant_id=? AND opening_user_id=? AND platform_subject=? AND payer_user_id=? AND active_instance_key IS NOT NULL ORDER BY create_time DESC",
-            payer.tenantId,payer.actorId,payer.platformSubject,payer.userId).stream()
-            .map(SafetyRun::new).collect(java.util.stream.Collectors.toList());
-    }
-
     public List<View> list(BillingPayer payer) {
         actor(payer);
         java.util.LinkedHashMap<String,Map<String,Object>> visible=new java.util.LinkedHashMap<>();
@@ -270,16 +258,27 @@ public class ComputePaidRunService {
         return visible.values().stream().map(this::view).collect(java.util.stream.Collectors.toList());
     }
     public View stop(String id,BillingPayer payer) {
-        tx.execute(status->{
+        // Match lifecycle/first-start ordering. Acceptance can attach a usage while an
+        // unaccepted quote is being cancelled, so re-read without holding the run lock.
+        for(int attempt=0;attempt<2;attempt++) {
+        final String expectedUsage=text(owned(id,payer,false),"usage_id");
+        Boolean completed=tx.execute(status->{
+            if(expectedUsage!=null)jdbc.queryForMap("SELECT usage_id FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",expectedUsage);
             Map<String,Object> row=owned(id,payer,true);String state=text(row,"state");
-            if("QUOTED".equals(state)){jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLED' WHERE run_id=?",id);return null;}
-            if(terminal(state))return null;
+            if(!java.util.Objects.equals(expectedUsage,text(row,"usage_id")))return false;
+            if("QUOTED".equals(state)){jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLED' WHERE run_id=?",id);return true;}
+            if(terminal(state))return true;
             jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",text(row,"usage_id"));
             if("FUNDING".equals(state)) {
                 if(!cancelUnsubmittedHold(row))jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING' WHERE run_id=?",id);
             }
-            return null;
-        });return get(id,payer);
+            if("STARTING".equals(state)&&"PREPARED".equals(text(row,"power_start_state"))
+                &&nodes.configured(Long.valueOf(text(row,"node_id"))))cancelUnsubmittedStart(row,true);
+            return true;
+        });
+        if(Boolean.TRUE.equals(completed))return get(id,payer);
+        }
+        throw new ServiceException("原订单正在变更，请查询原订单后继续停止");
     }
 
     public boolean trainingAvailable(ComputeNode node) {
@@ -470,7 +469,10 @@ public class ComputePaidRunService {
     }
     private boolean cancelUnsubmittedHold(Map<String,Object> run) {
         return Boolean.TRUE.equals(tx.execute(status->{
+            String expectedUsage=text(run,"usage_id");
+            jdbc.queryForMap("SELECT usage_id FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",expectedUsage);
             Map<String,Object> current=row(text(run,"run_id"),true);
+            if(!java.util.Objects.equals(expectedUsage,text(current,"usage_id")))return false;
             if(!("FUNDING".equals(text(current,"state"))||"CANCELLING".equals(text(current,"state"))))return false;
             String usage=text(current,"usage_id");
             Map<String,Object> observed=jdbc.queryForMap("SELECT billing_start_at FROM vls_compute_usage WHERE id=? FOR UPDATE",usage);
@@ -485,11 +487,28 @@ public class ComputePaidRunService {
         }));
     }
     private boolean cancelUnsubmittedStart(Map<String,Object> run) {
+        return cancelUnsubmittedStart(run,false);
+    }
+    private boolean cancelUnsubmittedStart(Map<String,Object> run,boolean retainStopOnUnverifiedControl) {
         return Boolean.TRUE.equals(tx.execute(status->{
-            String usage=text(run,"usage_id");ComputeNode node=lifecycle.controlledNode(usage);
-            if(nodes.officialConfigured(node)) {
-                if(configuredPower==null||!configuredPower.cancelUnsubmitted(run,node))return false;
-                ledger.startFailed(usage);jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING',error_code='START_CANCELLED_BEFORE_SEND' WHERE run_id=?",text(run,"run_id"));return true;
+            String usage=text(run,"usage_id");
+            jdbc.queryForMap("SELECT usage_id FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usage);
+            Map<String,Object> current=row(text(run,"run_id"),true);
+            if(!java.util.Objects.equals(usage,text(current,"usage_id"))||!"STARTING".equals(text(current,"state")))return false;
+            final ComputeNode node;
+            final boolean official;
+            try {
+                node=lifecycle.controlledNode(usage);official=nodes.officialConfigured(node);
+            } catch(ServiceException|IllegalArgumentException|IllegalStateException unverified) {
+                // A stop request stays accepted when original control cannot yet be
+                // verified. Database failures are not validation failures and propagate.
+                if(retainStopOnUnverifiedControl)return false;
+                throw unverified;
+            }
+            if(official) {
+                if(configuredPower==null||!configuredPower.cancelUnsubmitted(current,node))return false;
+                jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED' WHERE id=? AND billing_start_at IS NULL AND state IN ('RESERVED','RECONCILE')",usage);
+                jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLING',error_code='START_CANCELLED_BEFORE_SEND' WHERE run_id=?",text(run,"run_id"));return true;
             }
             if(!text(run,"start_operation_id").equals(node.getPowerOperationId())||!"start".equals(node.getPowerOperationAction())||node.isPowerOperationSubmitted())return false;
             int changed=jdbc.update("UPDATE vls_compute_node SET power_operation_id=NULL,power_operation_action=NULL,power_operation_started_at=NULL,power_operation_submitted=0 WHERE id=? AND power_operation_id=? AND power_operation_submitted=0",node.getId(),text(run,"start_operation_id"));

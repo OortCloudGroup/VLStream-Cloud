@@ -1,23 +1,24 @@
 <template>
-  <section class="billing-panel" aria-label="平台余额与付费实例">
+  <section class="billing-panel" :aria-label="uiText('平台余额与付费实例')">
     <div class="account-line">
-      <div><strong>平台账户余额</strong><span v-if="account">可用 {{ currency(account.availableQuota) }} {{ account.currency }} · 冻结 {{ currency(account.heldQuota) }} {{ account.currency }}（上次查询 {{ accountCheckedAt }}）</span><span v-else>{{ capabilities.accountAvailable ? '使用当前统一平台账户' : '账户服务暂未开放' }}</span></div>
-      <el-button :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">查询余额</el-button>
+      <div><strong>{{ uiText('平台账户余额') }}</strong><span v-if="account">{{ phrase('可用 {available} {currency} · 冻结 {held} {currency}（上次查询 {time}）', { available: currency(account.availableQuota), held: currency(account.heldQuota), currency: account.currency, time: accountCheckedAt }) }}</span><span v-else>{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '账户服务暂未开放') }}</span></div>
+      <el-button :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
     </div>
-    <el-alert v-if="capabilities.unavailableReason" type="info" :title="capabilities.unavailableReason" :closable="false" show-icon />
-    <el-alert v-if="error" type="warning" :title="error" :closable="false" show-icon />
+    <el-alert v-if="capabilities.unavailableReason" type="info" :title="uiText(capabilities.unavailableReason)" :closable="false" show-icon />
+    <el-alert v-if="error" type="warning" :title="uiText(error)" :closable="false" show-icon />
     <div v-for="run in visibleRuns" :key="run.runId" class="paid-run" :data-run-id="run.runId">
-      <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ paidRunState(run.state) }}</span><small>已结算 {{ run.chargedQuota }} {{ run.quotaUnit }}<template v-if="run.remainingQuota !== null"> · 待释放/可抵扣 {{ run.remainingQuota }} {{ run.quotaUnit }}</template></small><small v-if="run.archiveRecovery">本次为付费归档恢复，仅取回原任务产物，不重新训练。</small><small v-if="run.archiveRecoveryAvailable">原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。</small><small v-if="run.errorCode">状态确认暂未完成，系统会查询原单；请勿重复开机。</small></div>
+      <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ uiText(paidRunState(run.state)) }}</span><small>{{ phrase('已结算 {amount} {unit}', { amount: run.chargedQuota, unit: run.quotaUnit }) }}<template v-if="run.remainingQuota !== null"> · {{ phrase('待释放/可抵扣 {amount} {unit}', { amount: run.remainingQuota, unit: run.quotaUnit }) }}</template></small><small v-if="run.archiveRecovery">{{ uiText('本次为付费归档恢复，仅取回原任务产物，不重新训练。') }}</small><small v-if="run.archiveRecoveryAvailable">{{ uiText('原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。') }}</small><el-alert v-if="run.errorCode || run.startFailureCode" :type="paidRunErrorPresentation(run).type" :title="uiText(paidRunErrorPresentation(run).message)" :closable="false" show-icon /></div>
       <div class="run-actions">
-        <el-button v-if="showArchiveRecovery(run)" :disabled="!capabilities.paidAdmissionEnabled" :loading="busy === `archive:${recoverySourceId(run)}`" @click="recoverArchive(run)">{{ recoveryActionLabel(run) }}</el-button>
-        <el-button v-if="run.state === 'RUNNING' && !run.archiveRecovery" @click="prepareTraining(run)">检查环境并前往训练</el-button>
-        <el-button v-if="paidRunActive(run)" type="danger" plain :loading="busy === run.runId" @click="stop(run)">停止并结算</el-button>
+        <el-button v-if="showArchiveRecovery(run)" :disabled="!capabilities.paidAdmissionEnabled" :loading="busy === `archive:${recoverySourceId(run)}`" @click="recoverArchive(run)">{{ uiText(recoveryActionLabel(run)) }}</el-button>
+        <el-button v-if="run.state === 'RUNNING' && !run.archiveRecovery" @click="prepareTraining(run)">{{ uiText('检查环境并前往训练') }}</el-button>
+        <el-button v-if="paidRunActive(run)" type="danger" plain :loading="busy === run.runId" @click="stop(run)">{{ uiText('停止并结算') }}</el-button>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { translateUiMessage as uiText, translatePhrase as phrase } from '@/i18n'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
@@ -25,7 +26,7 @@ import { getComputeBillingCapabilities, checkComputeBillingAccount, quoteCompute
 import { refreshComputeHealth } from '@/api/compute'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent } from '@/utils/computePlatformAuth'
-import { billingCurrency, paidRunState, paidRunActive, paidRunQuoteText } from '@/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '@/utils/computeBillingPresentation.mjs'
 
 const props = defineProps({ resources: { type: Array, default: () => [] } })
 const emit = defineEmits(['changed'])
@@ -36,7 +37,7 @@ const recoveryAttempts = ref({})
 const accountCheckedAt = ref('')
 const visibleRuns = computed(() => runs.value.filter(run => run.state !== 'QUOTED')
   .filter((run, index) => index < 5 || showArchiveRecovery(run) || (run.archiveRecovery && paidRunActive(run))))
-const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || '付费实例'
+const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || uiText('付费实例')
 const currency = quota => billingCurrency(quota, account.value.numerator, account.value.denominator)
 let active = true, polling = false, timer, revision = 0
 let identity = captureComputeIdentity()
@@ -88,7 +89,7 @@ const execute = async (id, action) => {
   finally { if (current(snapshot, epoch)) busy.value = '' }
 }
 const checkAccount = () => execute('account', async (proof, valid) => {
-  const accepted = await ElMessageBox.confirm('允许 VLS 查询平台余额并按您确认的 GPU 用量扣费。统一平台可能保存此计费授权，可在平台撤销。本次仅查询余额，不开机或扣费。', '平台余额', { confirmButtonText: '同意并查询', cancelButtonText: '取消' }).then(() => true).catch(() => false)
+  const accepted = await ElMessageBox.confirm(uiText('允许 VLS 查询平台余额并按您确认的 GPU 用量扣费。统一平台可能保存此计费授权，可在平台撤销。本次仅查询余额，不开机或扣费。'), uiText('平台余额'), { confirmButtonText: uiText('同意并查询'), cancelButtonText: uiText('取消') }).then(() => true).catch(() => false)
   if (!accepted || !valid()) return
   const response = await checkComputeBillingAccount()
   if (valid()) { account.value = response.data; accountCheckedAt.value = new Date().toLocaleTimeString() }
@@ -97,7 +98,7 @@ const start = item => execute(String(item.id), async (proof, valid) => {
   if (!capabilities.value.paidAdmissionEnabled || !item.paidAdmissionEnabled) throw new Error('当前实例尚未开放付费开机')
   const quote = (await quoteComputePaidRun(item.id)).data
   if (!valid()) return
-  const accepted = await ElMessageBox.confirm(paidRunQuoteText(quote), '确认本次付费开机', { confirmButtonText: '确认报价并开机', cancelButtonText: '取消', type: 'warning' }).then(() => true).catch(() => false)
+  const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认本次付费开机'), { confirmButtonText: uiText('确认报价并开机'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
   if (!accepted || !valid()) return
   await acceptComputePaidRun(quote.runId)
 })
@@ -137,7 +138,7 @@ const recoverArchive = run => execute(`archive:${recoverySourceId(run)}`, async 
   }
   const quote = attempt.quote
   const message = archiveQuoteText(quote, run)
-  const accepted = await ElMessageBox.confirm(message, '确认付费归档恢复', { confirmButtonText: '确认报价并开机恢复', cancelButtonText: '取消', type: 'warning' }).then(() => true).catch(() => false)
+  const accepted = await ElMessageBox.confirm(uiText(message), uiText('确认付费归档恢复'), { confirmButtonText: uiText('确认报价并开机恢复'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
   if (!accepted || !valid()) return
   archiveQuoteText(quote, run)
   recoveryAttempts.value[sourceId] = { phase: 'ACCEPT_UNKNOWN', quote }
@@ -150,14 +151,14 @@ const stop = run => execute(run.runId, async (proof, valid) => {
   const message = official || run.archiveRecovery
     ? '将请求停止本次实例。系统确认本轮训练进程退出后限时等待归档；到期保留原磁盘和产物并请求关机，未归档产物仍待明确恢复。按实际确认关机前的运行用量结算，未消费冻结余额在停止和对账后释放；请等待状态完成。'
     : '将结束本实例中您自己的训练任务，等待产物回存后请求停止。按已确认的运行用量结算，未消费冻结余额在停止和对账后释放；请等待状态完成。'
-  const accepted = await ElMessageBox.confirm(message, '停止并结算', { confirmButtonText: '停止并结算', cancelButtonText: '继续运行', type: 'warning' }).then(() => true).catch(() => false)
+  const accepted = await ElMessageBox.confirm(uiText(message), uiText('停止并结算'), { confirmButtonText: uiText('停止并结算'), cancelButtonText: uiText('继续运行'), type: 'warning' }).then(() => true).catch(() => false)
   if (accepted && valid()) await stopComputePaidRun(run.runId)
 })
 const prepareTraining = run => execute(run.runId, async (proof, valid) => {
   if (run.archiveRecovery) throw new Error('归档恢复订单仅取回原产物，不能启动新训练')
   const response = await refreshComputeHealth(run.nodeId, proof.platformToken)
   if (!valid()) return
-  await ElMessageBox.alert(typeof response.data === 'string' ? response.data : '环境检查已提交。请在训练配置中等待实例就绪后开始训练。', '训练环境')
+  await ElMessageBox.alert(uiText(typeof response.data === 'string' ? response.data : '环境检查已提交。请在训练配置中等待实例就绪后开始训练。'), uiText('训练环境'))
   if (valid()) await router.push({ path: '/algorithm-training', query: { nodeId: run.nodeId } })
 })
 defineExpose({ start })

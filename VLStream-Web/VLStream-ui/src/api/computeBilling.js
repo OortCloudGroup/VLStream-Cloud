@@ -19,7 +19,5 @@ export const checkComputeBillingAccount = () => call('/account/check', 'post', {
 export const quoteComputePaidRun = nodeId => call(`/nodes/${computePathPart(nodeId)}/quote`, 'post')
 export const quoteComputeArchiveRecovery = sourceRunId => call(`/runs/${computePathPart(sourceRunId)}/archive-recovery-quote`, 'post')
 export const listComputePaidRuns = () => call('/runs')
-export const listComputeSafetyRuns = () => call('/safety/active-runs')
-export const stopComputeSafetyRun = runId => call(`/safety/runs/${computePathPart(runId)}/stop`, 'post')
 export const acceptComputePaidRun = runId => call(`/runs/${computePathPart(runId)}/accept`, 'post', { acceptBillingPermissions: true })
 export const stopComputePaidRun = runId => call(`/runs/${computePathPart(runId)}/stop`, 'post')

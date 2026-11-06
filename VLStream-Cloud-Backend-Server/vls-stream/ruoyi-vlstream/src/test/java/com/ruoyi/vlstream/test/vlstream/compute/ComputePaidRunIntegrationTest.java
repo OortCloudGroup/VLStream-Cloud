@@ -68,23 +68,19 @@ class ComputePaidRunIntegrationTest {
         power=new ComputePowerWorker(jdbc);ReflectionTestUtils.setField(power,"transactions",manager);ReflectionTestUtils.setField(power,"billing",ledger);
     }
     @AfterEach void clear(){TenantContextHolder.clear();}
-    @Test void safetyInventoryOnlyShowsActiveWorkForVerifiedActorTenantAndPayer() throws Exception {
+    @Test void normalRunListOnlyShowsWorkForVerifiedActorTenantAndPayer() throws Exception {
         String id=accepted();
-        List<ComputePaidRunService.SafetyRun> active=runs.activeRunsForSafety(payer);
+        List<ComputePaidRunService.View> active=runs.list(payer);
         assertEquals(1,active.size()); assertEquals(id,active.get(0).getRunId());
         assertEquals("FUNDING",active.get(0).getState());
-        assertEquals(new HashSet<>(Arrays.asList("runId","nodeId","state")),
-            json.convertValue(active.get(0),Map.class).keySet());
         BillingPayer other=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":14}"));
-        assertTrue(runs.activeRunsForSafety(other).isEmpty());
+        assertTrue(runs.list(other).isEmpty());
         jdbc.update("UPDATE vls_compute_paid_run SET tenant_id='other-tenant' WHERE run_id=?",id);
-        assertTrue(runs.activeRunsForSafety(payer).isEmpty());
+        assertTrue(runs.list(payer).isEmpty());
         jdbc.update("UPDATE vls_compute_paid_run SET tenant_id='tenant-test',opening_user_id='other-actor' WHERE run_id=?",id);
-        assertTrue(runs.activeRunsForSafety(payer).isEmpty());
-        jdbc.update("UPDATE vls_compute_paid_run SET opening_user_id='actor-test',active_instance_key=NULL WHERE run_id=?",id);
-        assertTrue(runs.activeRunsForSafety(payer).isEmpty());
+        assertTrue(runs.list(payer).isEmpty());
         actor.setVlsUserId("changed-actor");
-        assertThrows(RuntimeException.class,()->runs.activeRunsForSafety(payer));
+        assertThrows(RuntimeException.class,()->runs.list(payer));
     }
     ComputeNode node(){return jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=1",new BeanPropertyRowMapper<>(ComputeNode.class));}
     String accepted(){ComputePaidRunService.View quoted=runs.quote(1L,payer,config);assertEquals("QUOTED",quoted.getState());assertEquals(0,wallet.holdPosts);runs.accept(quoted.getRunId(),payer);return quoted.getRunId();}

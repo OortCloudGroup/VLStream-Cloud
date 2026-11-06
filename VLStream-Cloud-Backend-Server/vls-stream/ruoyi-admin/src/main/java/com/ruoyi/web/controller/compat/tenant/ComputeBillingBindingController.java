@@ -73,11 +73,6 @@ public class ComputeBillingBindingController {
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs")
     public R<java.util.List<ComputePaidRunService.View>> runs(){return R.data(paidRuns.list(authorization.billingPayer(client())));}
-    /** A revoked market grant must not hide the caller's still-active paid work. */
-    @GetMapping("/safety/active-runs")
-    public R<java.util.List<ComputePaidRunService.SafetyRun>> safetyRuns(){
-        return R.data(paidRuns.activeRunsForSafety(authorization.billingPayer(client())));
-    }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs/{runId}")
     public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.get(runId,authorization.billingPayer(client())));}
@@ -106,15 +101,6 @@ public class ComputeBillingBindingController {
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/stop")
     public R<ComputePaidRunService.View> stop(@PathVariable String runId){return R.data(paidRuns.stop(runId,authorization.billingPayer(client())));}
-    /** Separate minimal emergency operation: no historical order detail or quote cancellation. */
-    @PostMapping("/safety/runs/{runId}/stop")
-    public R<Boolean> safetyStop(@PathVariable String runId){
-        BillingPayer payer=authorization.billingPayer(client());
-        boolean active=paidRuns.activeRunsForSafety(payer).stream().anyMatch(run->runId.equals(run.getRunId()));
-        if(!active)throw new ServiceException("当前付费占用不存在、已结束或无权访问，请刷新状态");
-        paidRuns.stop(runId,payer);
-        return R.data(Boolean.TRUE);
-    }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/sessions/{usageId}/bind")
     public R<String> bind(@PathVariable String usageId){

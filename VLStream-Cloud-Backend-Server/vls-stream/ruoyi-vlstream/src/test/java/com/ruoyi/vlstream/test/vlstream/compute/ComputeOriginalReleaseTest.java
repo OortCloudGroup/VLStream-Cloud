@@ -2,11 +2,21 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.*;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +28,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionTemplate;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -64,7 +77,10 @@ class ComputeOriginalReleaseTest {
             .put("expires_at",f.json.readTree(hold.body).path("expires_at").asText()).put("created_at",1790000000L).put("updated_at",1790000001L).put("balance_version",2));
         evidence.set("wallet",f.json.createObjectNode().put("user_id",hold.payerUserId).put("balance_quota","9000").put("available_quota","9000").put("held_quota","0").put("balance_version",23));
         evidence.put("instance_key",String.valueOf(row.get("instance_key"))).put("provider_instance_id",fixture.resource.getInstanceId()).put("power","STOPPED").put("stopped_mode","AUTODL_PRO_PHYSICAL_STOPPED");
-        service=new ComputeOriginalReleaseService(f.jdbc,manager,f.json,journal,fixture.registry,beans.getBeanProvider(NewApiBillingClient.class),beans.getBeanProvider(ComputePowerProvider.class)) {
+        service=service(f.jdbc);
+    }
+    ComputeOriginalReleaseService service(JdbcTemplate jdbc) {
+        return new ComputeOriginalReleaseService(jdbc,manager,f.json,journal,fixture.registry,beans.getBeanProvider(NewApiBillingClient.class),beans.getBeanProvider(ComputePowerProvider.class)) {
             @Override protected String requireAdministrator(){return "1";}
             @Override protected String currentTenant(){return trustedTenant;}
             @Override protected ObjectNode readEvidence(Map<String,Object> r,Map<String,Object> h){reads++;assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());return evidence.deepCopy();}
@@ -108,6 +124,85 @@ class ComputeOriginalReleaseTest {
         String first=service.reconcile(run,request);assertEquals(first,service.reconcile(run,request));assertEquals(1,reads);
         request.idempotencyKey="changed-key";assertThrows(IllegalStateException.class,()->service.reconcile(run,request));
         assertEquals(1,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_funding_intent WHERE operation_kind='RELEASE'",Integer.class));
+    }
+    @ParameterizedTest @ValueSource(booleans={false,true})
+    void firstAdoptionAndTerminalReplayShareSessionFirstLockOrderWithActualStop(boolean replay) throws Exception {
+        String prior=replay?service.reconcile(run,request):null;
+        CountDownLatch sessionHeld=new CountDownLatch(1),adoptionFirstLock=new CountDownLatch(1);
+        AtomicBoolean first=new AtomicBoolean(true);
+        AtomicReference<String> firstSql=new AtomicReference<>();
+        JdbcTemplate monitored=new JdbcTemplate(f.jdbc.getDataSource()) {
+            @Override public Map<String,Object> queryForMap(String sql,Object... args) {
+                boolean initial=sql.endsWith(" FOR UPDATE") && first.compareAndSet(true,false);
+                if(initial) {
+                    firstSql.set(sql);
+                    // A session-first contender must announce before blocking on STOP's lock.
+                    if(sql.contains("vls_compute_billing_session"))adoptionFirstLock.countDown();
+                }
+                Map<String,Object> result=super.queryForMap(sql,args);
+                // A regressed run-first contender announces only after owning the conflicting row.
+                if(initial)adoptionFirstLock.countDown();
+                return result;
+            }
+        };
+        ComputeOriginalReleaseService contender=service(monitored);
+        ExecutorService executor=Executors.newFixedThreadPool(2);
+        try {
+            Future<?> stopping=executor.submit(()->{
+                TenantContextHolder.setTenantId("tenant-test");
+                try {return new TransactionTemplate(manager).execute(tx->{
+                    f.jdbc.queryForMap("SELECT usage_id FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usage);
+                    sessionHeld.countDown();await(adoptionFirstLock);
+                    return f.runs.stop(run,f.payer);
+                });} finally {TenantContextHolder.clear();}
+            });
+            await(sessionHeld);
+            Future<String> adoption=executor.submit(()->{
+                TenantContextHolder.setTenantId("tenant-test");
+                try {return contender.reconcile(run,request);} finally {TenantContextHolder.clear();}
+            });
+            String adopted=adoption.get(10,TimeUnit.SECONDS);
+            stopping.get(10,TimeUnit.SECONDS);
+            if(replay)assertEquals(prior,adopted);else assertNotNull(adopted);
+            assertTrue(firstSql.get().contains("vls_compute_billing_session"));
+            assertEquals("CANCELLED",value("vls_compute_paid_run","state","run_id",run));
+            assertEquals(1,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_funding_intent WHERE operation_kind='RELEASE'",Integer.class));
+            assertEquals(1,reads);
+            assertEquals(0,f.wallet.releasePosts);assertEquals(0,f.wallet.capturePosts);
+            verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        } finally {executor.shutdownNow();}
+    }
+    @Test void evidenceExpiresWhileWaitingForTheLastOwnershipLock() {
+        AtomicLong now=new AtomicLong(System.currentTimeMillis());
+        AtomicBoolean ownershipChecked=new AtomicBoolean();
+        JdbcTemplate delayed=new JdbcTemplate(f.jdbc.getDataSource()) {
+            @Override public List<Map<String,Object>> queryForList(String sql,Object... args) {
+                List<Map<String,Object>> result=super.queryForList(sql,args);
+                if(sql.contains("FROM vls_cloud_training_job")&&sql.endsWith(" FOR UPDATE")) {
+                    ownershipChecked.set(true);now.addAndGet(30001L);
+                }
+                return result;
+            }
+        };
+        ComputeOriginalReleaseService contender=service(delayed);
+        ReflectionTestUtils.setField(contender,"clock",(java.util.function.LongSupplier)now::get);
+        assertEquals("Evidence expired",assertThrows(IllegalStateException.class,()->contender.reconcile(run,request)).getMessage());
+        assertTrue(ownershipChecked.get());assertUnchanged();
+    }
+    @ParameterizedTest @ValueSource(strings={"usage_id","tenant_id"})
+    void lockedOrderMappingIsRecheckedAfterAuthorityReads(String field) {
+        ComputeOriginalReleaseService changing=spy(service);
+        doAnswer(invocation->{
+            f.jdbc.update("UPDATE vls_compute_paid_run SET "+field+"='changed' WHERE run_id=?",run);
+            return evidence.deepCopy();
+        }).when(changing).readEvidence(anyMap(),anyMap());
+        String message="usage_id".equals(field)?"Order usage changed":"Order tenant mismatch";
+        assertEquals(message,assertThrows(IllegalStateException.class,()->changing.reconcile(run,request)).getMessage());
+        assertUnchanged();
+    }
+    private static void await(CountDownLatch latch) {
+        try {assertTrue(latch.await(5,TimeUnit.SECONDS),"Concurrent transaction did not reach its lock gate");}
+        catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw new AssertionError(interrupted);}
     }
     @Test void ordinaryFundingStillRejectsNonUuidKeys() {
         f.jdbc.update("UPDATE vls_compute_funding_intent SET idempotency_key='non-uuid' WHERE intent_id=?",parent);

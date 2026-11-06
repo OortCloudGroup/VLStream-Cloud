@@ -8,27 +8,27 @@ export function trainingComputeGroups(nodes) {
   ].filter(group => group.key !== 'private' || group.nodes.length)
 }
 
-export function queuePresentation(snapshot, { now = Date.now(), loading = false } = {}) {
-  if (loading) return { phase: '正在读取队列', queue: '排队数读取中', eta: '预计等待：待估算', known: false }
+export function queuePresentation(snapshot, { now = Date.now(), loading = false, translate = value => value } = {}) {
+  if (loading) return { phase: translate('正在读取队列'), queue: translate('排队数读取中'), eta: translate('预计等待：待估算'), known: false }
   const count = snapshot?.waitingCount
   const checked = snapshot?.checkedAt
   const valid = snapshot?.state === 'KNOWN' && Number.isInteger(count) && count >= 0 && count <= 50000 &&
     Number.isSafeInteger(checked) && checked <= now + 5000 && now - checked <= 30000 &&
     [null, 'RUNNING', 'ARCHIVING'].includes(snapshot.activePhase)
-  if (!valid) return { phase: '任务状态未知', queue: '排队数未知', eta: '预计等待：待估算', known: false }
+  if (!valid) return { phase: translate('任务状态未知'), queue: translate('排队数未知'), eta: translate('预计等待：待估算'), known: false }
   const active = snapshot.activePhase !== null
   const name = typeof snapshot.activeTaskName === 'string' ? snapshot.activeTaskName.trim() : ''
   const phase = snapshot.activePhase === 'ARCHIVING' ? '模型归档中' : active ? '正在训练' : '暂无共享执行任务'
-  const prefix = active ? `${name || '共享任务'} · ` : ''
+  const prefix = active ? `${name || translate('共享任务')} · ` : ''
   const seconds = snapshot.estimatedWaitSeconds
   const supported = snapshot.estimationBasis === 'MATCHED_OBSERVED_LEASE_P75' && Number.isInteger(snapshot.estimationSampleCount) && snapshot.estimationSampleCount >= 3
   const estimate = supported && Number.isSafeInteger(seconds) && seconds > 0 ?
     (seconds < 3600 ? `约 ${Math.ceil(seconds / 60)} 分钟` : `约 ${Math.ceil(seconds / 360) / 10} 小时`) : '待估算'
   return {
-    phase: prefix + phase,
-    queue: count ? `${count} 个任务排队中` : '暂无排队任务',
-    eta: `预计等待：${!active && !count ? '当前无共享任务' : estimate}`,
-    estimateNote: estimate !== '待估算' ? `参考至少 ${snapshot.estimationSampleCount} 个同配置成功任务` : '',
+    phase: prefix + translate(phase),
+    queue: translate(count ? `${count} 个任务排队中` : '暂无排队任务'),
+    eta: translate(`预计等待：${translate(!active && !count ? '当前无共享任务' : estimate)}`),
+    estimateNote: estimate !== '待估算' ? translate(`参考至少 ${snapshot.estimationSampleCount} 个同配置成功任务`) : '',
     known: true
   }
 }

@@ -32,6 +32,7 @@ public class ComputeOriginalReleaseService {
     private final ConfiguredComputeRegistry configured;
     private final ObjectProvider<NewApiBillingClient> clients;
     private final ObjectProvider<ComputePowerProvider> providers;
+    private java.util.function.LongSupplier clock=System::currentTimeMillis;
 
     public ComputeOriginalReleaseService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
             ComputeFundingIntentService journal, ConfiguredComputeRegistry configured,
@@ -60,15 +61,13 @@ public class ComputeOriginalReleaseService {
         require(tenant.equals(text(run,"tenant_id")), "Order tenant mismatch");
         Map<String,Object> hold=jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?",text(run,"hold_intent_id"));
         validateRequest(run,hold,original);
-        if (text(run,"release_intent_id")!=null) return transactions.execute(tx->replay(run(runId,true),original,tenant));
+        if (text(run,"release_intent_id")!=null) return transactions.execute(tx->replay(lockRun(run,tenant),original,tenant));
         require(TransactionSynchronizationManager.isActualTransactionActive()==false,"Evidence reads require no transaction");
-        long observedAt=System.currentTimeMillis();
+        long observedAt=clock.getAsLong();
         ObjectNode evidence=readEvidence(run,hold);
         return transactions.execute(tx->{
-            Map<String,Object> locked=run(runId,true);
-            require(tenant.equals(text(locked,"tenant_id")), "Order tenant mismatch");
+            Map<String,Object> locked=lockRun(run,tenant);
             if(text(locked,"release_intent_id")!=null)return replay(locked,original,tenant);
-            require(observedAt<=System.currentTimeMillis() && System.currentTimeMillis()-observedAt<=30000L,"Evidence expired");
             Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",text(locked,"usage_id"));
             Map<String,Object> usage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=? FOR UPDATE",text(locked,"usage_id"));
             Map<String,Object> parent=jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=? FOR UPDATE",text(locked,"hold_intent_id"));
@@ -88,6 +87,8 @@ public class ComputeOriginalReleaseService {
             require(jdbc.queryForList("SELECT refund_intent_id FROM vls_compute_refund_intent WHERE usage_id=? FOR UPDATE",text(locked,"usage_id")).isEmpty(),"Refund history requires separate reconciliation");
             require(jdbc.queryForList("SELECT id FROM vls_compute_usage WHERE server_key=? AND id<>? AND active_server_key IS NOT NULL FOR UPDATE",text(usage,"server_key"),text(usage,"id")).isEmpty(),"Another usage owns this server");
             require(jdbc.queryForList("SELECT id FROM vls_cloud_training_job WHERE (node_id=? OR public_instance_key=?) AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",locked.get("node_id"),text(locked,"instance_key")).isEmpty(),"Training or archive ownership is active");
+            long now=clock.getAsLong();
+            require(observedAt<=now && now-observedAt<=30000L,"Evidence expired");
             validateEvidence(locked,parent,original,evidence);
             ObjectNode audit=json.createObjectNode();
             audit.put("administrator",administrator); audit.put("tenant_id",tenant); audit.put("run_id",runId);
@@ -162,6 +163,16 @@ public class ComputeOriginalReleaseService {
         require(tenant.equals(text(run,"tenant_id")) && "CANCELLED".equals(text(run,"state")) && ComputeFundingIntentService.EXTERNAL_RELEASE_ADOPTED.equals(prior.state)
             && request.idempotencyKey.equals(prior.key) && request.requestHash.equals(prior.requestHash) && request.requestBody.equals(prior.body)
             && request.releaseReceipt.equals(parse(prior.receipt).path("release_receipt")),"Adoption replay conflict");return prior.id;
+    }
+    /** Match paid STOP and first-start claims: resolve the immutable mapping before taking locks. */
+    private Map<String,Object> lockRun(Map<String,Object> expected,String tenant) {
+        String usage=text(expected,"usage_id");
+        require(usage!=null,"Original usage required");
+        Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usage);
+        Map<String,Object> current=run(text(expected,"run_id"),true);
+        require(usage.equals(text(current,"usage_id")),"Order usage changed");
+        require(tenant.equals(text(current,"tenant_id")) && tenant.equals(text(session,"tenant_id")),"Order tenant mismatch");
+        return current;
     }
     private Map<String,Object> run(String id,boolean lock){return jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?"+(lock?" FOR UPDATE":""),id);}
     private JsonNode parse(String value){try{return json.readTree(value);}catch(Exception invalid){throw new IllegalArgumentException("Invalid original evidence JSON");}}
