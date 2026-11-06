@@ -11,10 +11,10 @@
     <div class="layout-button-group" v-floating-drag>
       <button type="button" class="floating-drag-handle" data-drag-handle aria-label="拖动工具栏" title="拖动工具栏">⠿</button>
       <!-- MasterGo 309:32968 / 309:32903 — 视频徽标 + 分隔线 -->
-      <span class="video-badge" aria-hidden="true">
+      <button type="button" class="video-badge" aria-label="选择视频" @click="$emit('open-devices')">
         <img :src="videoBadgeIcon" width="24" height="24" alt="" />
         <span class="video-badge-text">{{ $tp('视频') }}</span>
-      </span>
+      </button>
       <span class="toolbar-divider" aria-hidden="true"></span>
       <template v-if="showPresentation">
         <el-button class="layout-btn presentation-btn" :type="presentationMode === 'default' ? 'primary' : 'default'"
@@ -137,10 +137,12 @@ import panelBottomIcon from '@/assets/mastergo/video-square/panel-bottom.svg'
 import panelRightIcon from '@/assets/mastergo/video-square/panel-right.svg'
 
 // Import PNG
+// 六画面按钮应有“大块 + 左下角小格”图案（见 VIDEO_LAYOUT_SPECS['6']），九画面按钮应为均匀 3×3；
+// 现有两个资源文件的图案与此相反，这里按实际图案对调引用。
 import mode1Icon from '@/assets/mastergo/video-square/layout-one.svg'
-import mode3Icon from '@/assets/mastergo/video-square/layout-six.svg'
+import mode3Icon from '@/assets/mastergo/video-square/layout-nine.svg'
 import mode4Icon from '@/assets/mastergo/video-square/layout-eight.svg'
-import mode5Icon from '@/assets/mastergo/video-square/layout-nine.svg'
+import mode5Icon from '@/assets/mastergo/video-square/layout-six.svg'
 import mode6Icon from '@/assets/mastergo/video-square/layout-sixteen.svg'
 
 // props
@@ -169,6 +171,7 @@ const props = defineProps({
 
 // emits
 const emit = defineEmits([
+  'open-devices',
   'collapse-panel',
   'layout-select',
   'extended-layout',

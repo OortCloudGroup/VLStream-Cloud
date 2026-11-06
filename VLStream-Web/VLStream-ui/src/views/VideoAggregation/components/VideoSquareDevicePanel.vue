@@ -1,8 +1,8 @@
 <template>
   <aside v-floating-drag v-loading="loading" class="device-list-panel square-device-panel">
+    <div class="device-card-drag-bar" data-drag-handle title="拖动设备面板" />
     <slot name="views" />
-    <div class="device-list-header">
-      <button type="button" class="floating-drag-handle" data-drag-handle aria-label="拖动设备卡片" title="拖动设备卡片">⠿</button>
+    <div class="device-list-header" data-drag-handle title="拖动设备面板">
       <strong class="device-list-title">{{ $tp('数据展示') }}</strong>
       <span class="header-rule" aria-hidden="true"></span>
       <div class="device-list-actions">
@@ -47,7 +47,7 @@
           <span class="device-group-label"><span class="tree-caret">{{ collapsed.has(group.id) ? '▸' : '▾' }}</span><img :src="folderIcon" width="18" height="18" alt="" />{{ $tp(group.label) }}</span><span>{{ group.children.length }}</span>
         </button>
         <template v-if="!treeView || !collapsed.has(group.id)">
-          <button v-for="device in group.children" :key="device.id" class="square-device-item" :class="{ 'is-selected': device.id === selectedId }" :title="device.deviceName + ' · ' + $tp(statusLabel(device.status))" @click="$emit('device-click', device)">
+          <button v-for="device in group.children" :key="device.id" class="square-device-item" draggable="true" @dragstart="dragCatalogDevice($event, device)" :class="{ 'is-selected': device.id === selectedId }" :title="device.deviceName + ' · ' + $tp(statusLabel(device.status))" @click="$emit('device-click', device)">
             <img :src="cameraIcon" width="18" height="18" alt="" />
             <span class="device-name" data-i18n-ignore>{{ device.deviceName }}</span>
             <span class="device-state" :class="device.status.toLowerCase()">{{ $tp(statusLabel(device.status)) }}</span>
@@ -58,8 +58,9 @@
   </aside>
 </template>
 <script setup>
-import vFloatingDrag from '@/utils/floatingDrag'
 import { computed, ref } from 'vue'
+import vFloatingDrag from '@/utils/floatingDrag'
+import { dragCatalogDevice } from '@/utils/videoSquareDeviceDrag.mjs'
 import settingsIcon from '@/assets/mastergo/video-square/panel-settings.svg'
 import collapseIcon from '@/assets/mastergo/video-square/chevron-up.svg'
 import protocolArrowIcon from '@/assets/mastergo/video-square/protocol-arrow.svg'

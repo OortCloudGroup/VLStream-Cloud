@@ -10,6 +10,7 @@
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content" :style="{ '--toolbar-inset': toolbarInset + 'px' }">
+      <div class="fullscreen-toolbar-trigger" aria-hidden="true"></div>
       <div ref="bottomWorkspace" class="square-bottom-workspace" :class="{ 'is-bottom': presentationMode === 'bottom' }"
         :style="{ '--toolbar-inset': toolbarInset + 'px' }"></div>
       <!-- info -->
@@ -66,7 +67,7 @@
             :show-extended-layout="showExtendedLayout"
             :is-fullscreen="isFullscreen"
             :open-window-count="openWindowCount"
-            :panel-side="viewMode === 'map' ? 'right' : 'left'"
+            panel-side="right"
             :panel-collapsed="devicePanelCollapsed"
             @layout-select="handleLayoutSelect"
             @extended-layout="showExtendedLayoutDialog"
@@ -75,6 +76,7 @@
             @toggle-fullscreen="toggleFullscreen"
             @presentation-select="selectPresentation"
             @collapse-panel="collapseDevicePanel"
+            @open-devices="devicePanelCollapsed = !devicePanelCollapsed"
             />
           </div>
           <!-- main -->
@@ -89,7 +91,7 @@
               :dialog="dialog"
               active
               :presentation-mode="presentationMode"
-              :thumbnail-devices="visibleDevices"
+              :thumbnail-devices="previewDevices" :show-thumbnails="!layoutClosed"
               :auto-preview="defaultAutoPreview"
               embedded
               @close="closeLayoutDialog"
@@ -109,6 +111,7 @@
               @open-in-vlc="openInVlc"
               @add-device="addDeviceToWindow"
               @remove-device="removeDeviceFromWindow"
+              @device-drop="dropCatalogDevice"
               @restore-windows="restoreLayoutWindows"
               @video-window-click="handleVideoWindowClick"
               @video-window-double-click="handleVideoWindowDoubleClick"
@@ -312,7 +315,7 @@ import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from './deviceUtils.js'
 import { setSidebarDeviceStats, clearSidebarDeviceStats } from '@/utils/sidebarDeviceStats.mjs'
-import { reverseGeocode } from '@/utils/amap'
+import { reverseGeocode } from '@/utils/osmGeocoding'
 import { createVideoAddressResolver, createVideoDeviceLocationPopup } from '@/utils/videoDeviceAddress.mjs'
 
 const resolveDeviceAddress = createVideoAddressResolver(reverseGeocode)
@@ -352,8 +355,8 @@ const setSquareView = async value => {
     return
   }
   viewMode.value = value
-  devicePanelCollapsed.value = false
-  devicePanelFront.value = true
+  devicePanelCollapsed.value = true
+  devicePanelFront.value = false
   await nextTick()
   if (value === 'map') mapInstance?.invalidateSize()
 }
@@ -363,7 +366,7 @@ const toolbarInset = ref(82)
 const devicePanelCollapsed = ref(true)
 const devicePanelFront = ref(false)
 const collapseDevicePanel = side => {
-  if (side !== (viewMode.value === 'map' ? 'right' : 'left')) return
+  if (side !== 'right') return
   devicePanelCollapsed.value = !devicePanelCollapsed.value
   devicePanelFront.value = !devicePanelCollapsed.value
 }
@@ -376,6 +379,7 @@ onMounted(() => {
 })
 onUnmounted(() => toolbarObserver?.disconnect())
 const handleDeviceSelect = device => {
+  closedPreviewIds.value.delete(device.id)
   const active = layoutDialogs.value[0]?.layoutCount ? layoutDialogs.value[0] : restoreLayoutWindows(undefined, 1)
   const existing = active?.cameras.findIndex(camera => camera?.id === device.id) ?? -1
   if (existing >= 0) { active.activeWindowIndex = existing; return }
@@ -404,6 +408,8 @@ const handleDeviceSelect = device => {
 const showDevicePicker = ref(false)
 const presentationMode = ref('default')
 const defaultAutoPreview = ref(false)
+const closedPreviewIds = ref(new Set())
+const previewDevices = computed(() => visibleDevices.value.filter(device => !closedPreviewIds.value.has(device.id)))
 const layoutClosed = ref(false)
 watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presentation, layout, closed]) => {
   saveVideoSquarePreferences({view, presentation, layout, closed})
@@ -411,10 +417,11 @@ watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presenta
 const BOTTOM_DEFAULT_WINDOW_COUNT = 4
 const selectPresentation = mode => {
   if (!['default', 'bottom'].includes(mode)) return
+  if (mode === 'default') closedPreviewIds.value = new Set()
   presentationMode.value = mode
   if (!layoutDialogs.value[0]?.layoutCount) restoreLayoutWindows()
   const dialog = layoutDialogs.value[0] || ensureLayoutDialog()
-  if (dialog.presentationMode !== mode) applyVideoPresentation(dialog, mode)
+  applyVideoPresentation(dialog, mode)
   defaultAutoPreview.value = mode === 'default'
   if (mode === 'default' && visibleDevices.value.length && !visibleDevices.value.some(device => device.id === dialog.cameras[0]?.id)) {
     dialog.cameras[0] = catalogVideoCamera(visibleDevices.value[0])
@@ -430,6 +437,12 @@ const selectThumbnail = (dialogId, deviceId) => {
   if (device) assignVideoWindow(layoutDialogs.value, {dialogId, windowIndex:0}, device, currentDevices.value)
 }
 const devicePickerTarget = ref(null)
+const dropCatalogDevice = (dialogId, windowIndex, deviceId) => {
+  const device = visibleDevices.value.find(item => String(item.id) === String(deviceId))
+  if (!device) return
+  closedPreviewIds.value.delete(device.id)
+  assignVideoWindow(layoutDialogs.value, { dialogId, windowIndex }, device, currentDevices.value)
+}
 const showCustomLayout = ref(false)
 const customWindowCount = ref(4)
 const extendedLayouts = VIDEO_LAYOUT_OPTIONS
@@ -667,9 +680,10 @@ watch(() => displaySettings.value.deviceTypes, () => {
     dialog.cameras = dialog.cameras.map(camera => camera && allowed.has(camera.id) ? catalogVideoCamera(allowed.get(camera.id)) : null)
   }
 }, { deep: true })
-watch(visibleDevices, devices => {
+watch(previewDevices, devices => {
   const dialog = layoutDialogs.value[0]
   if (!defaultAutoPreview.value || presentationMode.value !== 'default' || !dialog?.layoutCount) return
+  if (!dialog.cameras[0]) return
   if (!devices.some(device => device.id === dialog.cameras[0]?.id)) {
     dialog.cameras[0] = devices.length ? catalogVideoCamera(devices[0]) : null
     dialog.activeWindowIndex = 0
@@ -1309,10 +1323,8 @@ const enterVideoPlayerFullscreen = async () => {
   // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
 
-  // 地图/列表视图下播放窗口被 v-show 隐藏，全屏隐藏节点会黑屏，改为全屏当前可见的内容区
-  const target = viewMode.value === 'video'
-    ? videoDialogs[0]
-    : document.querySelector('.video-square .map-area') || videoDialogs[0]
+  // 视频工作区通过 Teleport 放在地图容器旁边，全屏必须包含二者和设备目录。
+  const target = bottomWorkspace.value?.parentElement || videoDialogs[0]
 
   if (!target) {
     ElMessage.error(uiText('未找到视频播放器'))
@@ -1359,7 +1371,14 @@ const handleFullscreenChange = () => {
   )
 
   const current = document.fullscreenElement
-  isFullscreen.value = !!current?.closest('.video-dialog, .layout-dialog')
+  if (current === bottomWorkspace.value?.parentElement && !isFullscreen.value) {
+    devicePanelCollapsed.value = true
+    document.activeElement?.blur?.()
+  }
+  isFullscreen.value = !!current && (
+    current === bottomWorkspace.value?.parentElement ||
+    !!current.closest('.video-dialog, .layout-dialog')
+  )
   if (!isCurrentlyFullscreen) {
     // user ESC exit full
     const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
@@ -2158,7 +2177,7 @@ const addDeviceToWindow = (dialogId, windowIndex) => {
 const removeDeviceFromWindow = (dialogId, windowIndex, windowId) => {
   const dialog = layoutDialogs.value.find(item => item.id === dialogId)
   if (!closeVideoWindow(dialog, windowIndex, windowId)) return
-  layoutClosed.value = dialog.layoutCount === 0
+  layoutClosed.value = presentationMode.value !== 'default' && dialog.layoutCount === 0
   if (!dialog.layoutCount) dialog.activeWindowIndex = 0
   else if (presentationMode.value !== 'default') {
     layoutChoice.value = {count:dialog.layoutCount, variant:'grid'}

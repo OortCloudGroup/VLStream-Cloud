@@ -10,9 +10,11 @@
 
 <script setup>
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { usePreviewReconnect } from '@/composables/usePreviewReconnect'
 import request from '@/utils/wvpRequest'
 import { ZLMRTCClient } from '@/components/rtcPlayer/js/ZLMRTCClient'
 import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl'
+import { registerPreviewSession, schedulePreviewStart } from '@/utils/previewSessions'
 
 const props = defineProps({ deviceId: { type: [Number, String], required: true }, protocol: { type: String, default: 'RTSP' }, compactStatus: { type: Boolean, default: false } })
 const video = ref(null)
@@ -21,12 +23,13 @@ const error = ref('')
 let generation = 0
 let player = null
 let activeSession = null
+let unregisterSession = null
 let heartbeat = null
 let connectionTimeout = null
 
 function release(session) {
   if (!session) return
-  return request({ url: `${session.base}/${session.deviceId}/preview/${session.id}`, method: 'delete' })
+  return request({ url: `${session.base}/${session.deviceId}/preview/${session.id}`, method: 'delete', silentError: true })
     .catch(() => { /* The backend lease retries cleanup if the browser loses connectivity. */ })
 }
 
@@ -39,6 +42,8 @@ function disconnect() {
   if (video.value) video.value.srcObject = null
   const previous = activeSession
   activeSession = null
+  unregisterSession?.()
+  unregisterSession = null
   return release(previous)
 }
 
@@ -55,10 +60,15 @@ async function connect(deviceId) {
   loading.value = true
   error.value = ''
   try {
-    const result = (await request({ url: `${base}/${deviceId}/preview`, method: 'post', timeout: 35000 })).data
+    const start = () => request({ url: `${base}/${deviceId}/preview`, method: 'post', timeout: 35000, silentError: props.compactStatus })
+    // Thumbnails queue their starts so one page load cannot exhaust the camera's RTSP sessions.
+    const started = props.compactStatus ? await schedulePreviewStart(start, () => current !== generation) : await start()
+    if (!started) return
+    const result = started.data
     const session = { deviceId, base, id: result.sessionId }
     if (current !== generation) { await release(session); return }
     activeSession = session
+    unregisterSession = registerPreviewSession(session)
     const info = result.streamInfo || {}
     const url = location.protocol === 'https:' ? info.rtcs : info.rtc
     if (!url) throw new Error('WVP 未返回可用播放地址')
@@ -77,7 +87,7 @@ async function connect(deviceId) {
     connectionTimeout = setTimeout(fail, 15000)
     heartbeat = setInterval(async () => {
       try {
-        await request({ url: `${base}/${deviceId}/preview/${session.id}`, method: 'put' })
+        await request({ url: `${base}/${deviceId}/preview/${session.id}`, method: 'put', silentError: props.compactStatus })
       } catch (cause) {
         if (current === generation) fail()
       }
@@ -91,6 +101,8 @@ async function connect(deviceId) {
 }
 
 watch(() => [props.deviceId, props.protocol], ([id]) => connect(id), { immediate: true, flush: 'post' })
+usePreviewReconnect({ enabled: () => props.compactStatus, failed: () => !!error.value,
+  busy: () => loading.value, reconnect: () => connect(props.deviceId), media: () => video.value })
 onBeforeUnmount(() => { generation += 1; disconnect() })
 </script>
 

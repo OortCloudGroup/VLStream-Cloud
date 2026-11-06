@@ -117,6 +117,23 @@ test('twenty-three follows the design glyph: two big left blocks, a 3x5 right bl
         assert.ok(x < 1e-6 || y < 1e-6, `windows ${i}/${j} overlap`)
     }
 })
+test('multi-window grids tile the canvas with no gutter on interior or outer edges', () => {
+    for (const count of [4, 9, 16, 23, 25]) {
+        const result = packVideoWindows({width:1600, height:900, ...resolveLayoutSpec(count)})
+        const covered = result.boxes.reduce((sum, box) => sum + box.width * box.height, 0)
+        near(covered, result.width * result.height)
+        near(Math.min(...result.boxes.map(box => box.x)), 0)
+        near(Math.min(...result.boxes.map(box => box.y)), 0)
+        near(Math.max(...result.boxes.map(box => box.x + box.width)), result.width)
+        near(Math.max(...result.boxes.map(box => box.y + box.height)), result.height)
+        for (let i = 0; i < result.boxes.length; i++) for (let j = i + 1; j < result.boxes.length; j++) {
+            const a = result.boxes[i], b = result.boxes[j]
+            const x = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)
+            const y = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+            assert.ok(x < 1e-6 || y < 1e-6, `windows ${i}/${j} overlap`)
+        }
+    }
+})
 test('every count from one to twenty-five has a defined layout spec', () => {
     for (let count = 1; count <= 25; count++) {
         assert.equal(resolveLayoutSpec(count).cells.length, count)

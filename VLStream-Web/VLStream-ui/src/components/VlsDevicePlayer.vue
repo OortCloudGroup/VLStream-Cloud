@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="vls-device-player" :class="{ 'is-compact-status': compactStatus }">
+  <div ref="playerRoot" v-loading="loading" class="vls-device-player" :class="{ 'is-compact-status': compactStatus }">
     <CameraRtcPlayer v-if="cameraConfig" :device-id="cameraConfig.cameraId" :socket-url="cameraConfig.socketUrl" :compact-status="compactStatus" />
     <RtcPlayer v-else-if="rtcUrl" :video-url="rtcUrl" :compact-status="compactStatus" @status-change="handleRtcStatus" />
     <el-empty v-else-if="!loading" :description="compactStatus ? $tp('无信号') : error || $tp('设备没有上报可用视频流')" />
@@ -9,6 +9,7 @@
 
 <script setup>
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { usePreviewReconnect } from '@/composables/usePreviewReconnect'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { getMqttDeviceStreams, getMqttDeviceDetail, createMqttDevicePreview,
@@ -19,6 +20,7 @@ import { squareCameraRtcConfig } from '@/utils/squareCameraRtc.mjs'
 
 const props = defineProps({ device: { type: Object, required: true }, compactStatus: { type: Boolean, default: false }, square: { type: Boolean, default: false } })
 const loading = ref(false)
+const playerRoot = ref(null)
 const error = ref('')
 const cameraConfig = ref(null)
 const rtcUrl = ref('')
@@ -26,7 +28,10 @@ const rtcStatus = ref('')
 const handleRtcStatus = status => { if (['playing', 'failed'].includes(status?.state)) rtcStatus.value = status.state }
 let generation = 0
 let stopMonitor = () => {}
-watch(() => [props.device.id, props.device.online], async ([id, online]) => {
+const retryVersion = ref(0)
+usePreviewReconnect({ enabled: () => props.compactStatus && !cameraConfig.value, failed: () => !!error.value || rtcStatus.value === 'failed',
+  busy: () => loading.value, reconnect: () => { retryVersion.value++ }, media: () => playerRoot.value?.querySelector('video') })
+watch(() => [props.device.id, props.device.online, retryVersion.value], async ([id, online]) => {
   stopMonitor()
   const current = ++generation
   cameraConfig.value = null
@@ -35,7 +40,7 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
   error.value = ''
   loading.value = true
   try {
-    if (online !== true) {
+    if (online !== true && !props.square) {
       error.value = '设备离线，不允许播放'
       return
     }
@@ -57,7 +62,7 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
     const streams = (await (props.square ? getMqttSquareStreams(id) : getMqttDeviceStreams(id)))?.data || []
     if (current !== generation) return
     const preferred = streams.find(stream => stream.defaultStream) || streams[0]
-    if (!preferred) return
+    if (!preferred) { error.value = '设备没有上报可用视频流'; return }
     const preview = (await (props.square ? createMqttSquarePreview(id, preferred.id) : createMqttDevicePreview(id, preferred.id)))?.data || {}
     if (current !== generation) return
     if (preview.playMode === 'cameraRTC' && (preview.cameraId || preview.url)) {

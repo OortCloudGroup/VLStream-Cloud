@@ -13,11 +13,13 @@
 
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { usePreviewReconnect } from '@/composables/usePreviewReconnect'
 import request from '@/utils/wvpRequest'
 import { getCustomDevice } from '@/api/customDevice'
 import { startPlay } from '@/api/wvp/push'
 import { ZLMRTCClient } from '@/components/rtcPlayer/js/ZLMRTCClient'
 import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl'
+import { registerPreviewSession, schedulePreviewStart } from '@/utils/previewSessions'
 import { ensureOPlayer, createOPlayerOptions, getCustomStreamType } from '@/utils/customPlayer'
 import Hikvision from '@/components/Hikvision/index.vue'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
@@ -27,8 +29,8 @@ const props = defineProps({ source: { type: Object, required: true }, deviceName
 const video = ref(null), directContainer = ref(null), directUrl = ref(''), directRtsp = ref('')
 const directCamera = ref(null)
 const loading = ref(false), error = ref('')
-let generation = 0, player = null, lease = null, heartbeat = null, connectionTimeout = null
-const release = session => session ? request({ url: `/custom/device/${session.deviceId}/preview/${session.id}`, method: 'delete' })
+let generation = 0, player = null, lease = null, heartbeat = null, connectionTimeout = null, unregisterLease = null
+const release = session => session ? request({ url: `/custom/device/${session.deviceId}/preview/${session.id}`, method: 'delete', silentError: true })
   .catch(() => { /* Expiry retries cleanup without stopping another viewer or recording. */ }) : Promise.resolve()
 
 function disconnect() {
@@ -41,6 +43,7 @@ function disconnect() {
   if (directContainer.value) directContainer.value.innerHTML = ''
   directUrl.value = ''; directRtsp.value = ''; directCamera.value = null
   const previous = lease; lease = null
+  unregisterLease?.(); unregisterLease = null
   return release(previous)
 }
 
@@ -55,8 +58,12 @@ async function connect() {
     let response
     if (source.protocol === 'CUSTOM') {
       try {
-        response = (await request({ url: `/custom/device/${source.rowId}/preview`, method: 'post',
-          params: { lease: true }, timeout: 35000 })).data || {}
+        const start = () => request({ url: `/custom/device/${source.rowId}/preview`, method: 'post',
+          params: { lease: true }, timeout: 35000, silentError: props.compactStatus })
+        // Thumbnails queue their starts so one page load cannot exhaust the camera's RTSP sessions.
+        const started = props.compactStatus ? await schedulePreviewStart(start, () => current !== generation) : await start()
+        if (!started) return
+        response = started.data || {}
       } catch (cause) {
         // Older WVP returns only ZLM StreamContent. Direct HTTP sources used the
         // original query-authorized details in device management; keep that guard.
@@ -70,6 +77,7 @@ async function connect() {
       const session = response.sessionId ? { deviceId: source.rowId, id: response.sessionId } : null
       if (current !== generation) { await release(session); return }
       lease = session
+      if (session) unregisterLease = registerPreviewSession({ base: '/custom/device', deviceId: session.deviceId, id: session.id })
     } else {
       response = (await request({ url: `/onvif/device/${source.rowId}/square-playback`, method: 'post' })).data || {}
       if (current !== generation) return
@@ -112,7 +120,7 @@ async function connect() {
     if (lease) {
       const session = lease
       heartbeat = setInterval(async () => {
-        try { await request({ url: `/custom/device/${session.deviceId}/preview/${session.id}`, method: 'put' }) }
+        try { await request({ url: `/custom/device/${session.deviceId}/preview/${session.id}`, method: 'put', silentError: props.compactStatus }) }
         catch { if (current === generation) { error.value = '预览会话已结束，请重新播放'; loading.value = false; disconnect() } }
       }, 30000)
     }
@@ -126,6 +134,9 @@ async function connect() {
 watch(() => [props.source?.protocol, props.source?.rowId, props.source?.playType,
   props.source?.availability?.sourceRevision].join(':'), connect, { immediate: true, flush: 'post' })
 onBeforeUnmount(() => { generation += 1; disconnect() })
+usePreviewReconnect({ enabled: () => props.compactStatus && !directCamera.value, failed: () => !!error.value,
+  busy: () => loading.value, reconnect: connect,
+  media: () => directUrl.value ? directContainer.value?.querySelector('video') : video.value })
 </script>
 
 <style scoped>

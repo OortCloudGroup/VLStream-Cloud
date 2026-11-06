@@ -21,11 +21,13 @@ function harness(path, values, dependencies = {}) {
     .replace(/^import\s+[\s\S]*?\s+from\s+['"][^'"]+['"];?\s*$/gm, '').replace(/import\.meta\.env/g, '__testEnv').replace('export default', 'return')
   const unmounts = [], mounts = [], events = [], routes = []
   const deps = { computed, reactive, ref, watch, nextTick, __testEnv: {}, location: { protocol: 'http:' }, ...components,
+    usePreviewReconnect: () => {}, // Timer lifecycle is covered by reconnect.test.mjs.
     getMqttSquareStatus() {}, getMqttSquareStreams() {}, createMqttSquarePreview() {},
     CAMERA_RTC_SOCKET_URL: 'wss://fixture.invalid', squareCameraRtcConfig: value => value,
     onBeforeUnmount: action => unmounts.push(action), onMounted: action => mounts.push(action),
     useRouter: () => ({ push: route => routes.push(route) }),
     translatePhrase: value => value, translateUiMessage: value => value,
+    registerPreviewSession: () => () => {}, schedulePreviewStart: task => task(),
     document: { addEventListener() {}, removeEventListener() {} },
     ...dependencies,
   }
@@ -143,6 +145,33 @@ test('CUSTOM square DIRECT uses scoped preview without querying device managemen
   player.close()
 })
 
+test('invalid CUSTOM sources show no signal without a global error toast in the square', async () => {
+  for (const compactStatus of [true, false]) {
+    const calls = []
+    const message = '视频源地址安全校验未通过'
+    const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+      { source: { protocol: 'CUSTOM', rowId: '4' }, compactStatus }, {
+        request: async config => {
+          calls.push(config)
+          const error = new Error(message)
+          error.response = { data: { code: 500, msg: message } }
+          throw error
+        },
+        getCustomDevice() {}, startPlay() {}, ZLMRTCClient: { Events: {} },
+        resolveZlmPlaybackUrl: value => value, ensureOPlayer() {}, createOPlayerOptions() {},
+        getCustomStreamType() {}, parseCameraRtcConfig() {},
+      })
+    await flush()
+    const html = await player.html()
+    assert.equal(calls.length, 1)
+    assert.equal(calls[0].silentError, compactStatus)
+    assert.equal(player.instance.error.value, message)
+    assert.match(html, compactStatus ? /无信号/ : /视频源地址安全校验未通过/)
+    assert.equal(html.includes(message), !compactStatus)
+    player.close()
+  }
+})
+
 test('legacy CUSTOM fallback never converts a denied management detail into square access', async () => {
   let details = 0
   const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
@@ -249,7 +278,7 @@ test('video square alone opts each real protocol branch into compact display and
   assert.match(await missing.html(), /无信号/)
   missing.close()
   const offline = harness('views/VideoAggregation/components/VideoSquareDevicePlayer.vue', { device: { sources: [{ protocol: 'VLSTREAM', rowId: '1', status: 'OFFLINE' }] } }, deps)
-  assert.match(await offline.html(), /无信号/)
+  assert.match(await offline.html(), /data-player="VlsDevicePlayer"/)
   assert.equal((await offline.html()).includes('来源离线'), false)
   offline.close()
 })
@@ -347,7 +376,7 @@ test('compact failed canvases contain only no signal, with no management or reco
     defaultVideoSource: sources => sources?.[0], canPreviewVideoSource: () => false, videoSourceOnline: () => false, videoSourceState: () => 'OFFLINE', customStatusDetail: () => 'UNKNOWN' }
   const fallback = harness('views/VideoAggregation/components/VideoSquareDevicePlayer.vue', { device: { sources: [{ protocol: 'VLSTREAM', rowId: '1' }] } }, protocolDeps)
   const fallbackHtml = await fallback.html()
-  assert.match(fallbackHtml, /无信号/)
+  assert.match(fallbackHtml, /data-player="VlsDevicePlayer"/, 'offline VLStream keeps its status/reconnect owner mounted')
   assert.equal(fallbackHtml.includes('前往设备页'), false)
   assert.equal(fallbackHtml.includes('<button'), false)
   fallback.close()

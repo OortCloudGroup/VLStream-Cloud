@@ -55,7 +55,7 @@
             <div ref="videoAreaElement" class="video-area" :class="[`presentation-${presentationMode}`, { 'is-multi-screen': presentationMode !== 'bottom' && dialog.layoutCount > 1 }]" @playing.capture="rememberFrame" @loadeddata.capture="rememberFrame"
               @loadedmetadata.capture="rememberAspect" @resize.capture="rememberAspect" @emptied.capture="refreshMediaState" @volumechange.capture="refreshMediaState">
               <!-- 缩略图横条随窗口数量联动：收起所有视频后一并隐藏，重新打开视频时自动恢复 -->
-              <VideoSquareThumbnailStrip v-if="presentationMode === 'default' && dialog.layoutCount > 0" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
+              <VideoSquareThumbnailStrip v-if="presentationMode === 'default' && showThumbnails" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
                 :frames="thumbnailFrames" :auto-preview="autoPreview" @select="$emit('select-thumbnail', $event)" />
               <!--  -->
               <div ref="workspaceElement" class="video-grid" :class="[`layout-${getLayoutClass(dialog.layoutCount)}`, `variant-${dialog.layoutVariant || 'grid'}`]"
@@ -209,6 +209,7 @@ import { resolveLayoutSpec } from '@/utils/videoSquareLayout.mjs'
 const props = defineProps({
   presentationMode: { type: String, default: 'grid' },
   thumbnailDevices: { type: Array, default: () => [] },
+  showThumbnails: { type: Boolean, default: true },
   autoPreview: Boolean,
   embedded: Boolean,
   active: { type: Boolean, default: true },
@@ -314,9 +315,8 @@ const carouselWidth = computed(() => dockedWindowOffset(props.dialog.layoutCount
 const layoutEdge = value => Math.round(value * 64) / 64
 const layoutSpec = computed(() => resolveLayoutSpec(props.dialog.layoutCount, props.dialog.layoutVariant || 'grid'))
 const packedGrid = computed(() => props.dialog.layoutCount ? packVideoWindows({...availableGridSize.value, ...layoutSpec.value}) : {width:0,height:0,boxes:[]})
-// Unified window chrome: every presentation fills the packed slot, keeps a 4px gap,
+// Unified window chrome: every presentation fills its packed slot with no gutter,
 // and switches the in-picture toolbar to its narrow tier on small cells.
-const WINDOW_GAP = 4
 const NARROW_TOOLBAR_WIDTH = 300
 const NARROW_TOOLBAR_HEIGHT = 170
 const compactGridStyle = computed(() => {
@@ -334,10 +334,11 @@ const compactToolbar = index => {
 const windowPlacement = index => {
   if (props.presentationMode === 'default' && props.dialog.layoutCount === 1) return { position: 'relative', inset: 'auto', width: '100%', height: '100%', flex: '1 1 0', margin: '0', padding: '0' }
   if (props.presentationMode !== 'bottom') {
+    // 相邻窗口共用同一条取整后的边，中间不预留 gutter，保证多画面严丝合缝
     const box = packedGrid.value.boxes[index]
-    return {position:'absolute', left:`${layoutEdge(box.x) + WINDOW_GAP / 2}px`, top:`${layoutEdge(box.y) + WINDOW_GAP / 2}px`,
-      width:`${Math.max(0, layoutEdge(box.x + box.width) - layoutEdge(box.x) - WINDOW_GAP)}px`,
-      height:`${Math.max(0, layoutEdge(box.y + box.height) - layoutEdge(box.y) - WINDOW_GAP)}px`,
+    return {position:'absolute', left:`${layoutEdge(box.x)}px`, top:`${layoutEdge(box.y)}px`,
+      width:`${Math.max(0, layoutEdge(box.x + box.width) - layoutEdge(box.x))}px`,
+      height:`${Math.max(0, layoutEdge(box.y + box.height) - layoutEdge(box.y))}px`,
       right:'auto', bottom:'auto', gridArea:'auto', margin:'0', padding:'0'}
   }
   const size = windowSize()
@@ -489,6 +490,7 @@ onBeforeUnmount(() => {
 
 // Emits
 const emit = defineEmits([
+  'device-drop',
   'select-thumbnail',
   'close',
   'minimize',
@@ -823,7 +825,7 @@ const handleDragEnd = (event) => {
 //
 const handleDragOver = (event, windowIndex) => {
   event.preventDefault()
-  event.dataTransfer.dropEffect = 'move'
+  event.dataTransfer.dropEffect = Array.from(event.dataTransfer.types).includes('application/x-vls-device') ? 'copy' : 'move'
 }
 
 //
@@ -848,6 +850,12 @@ const handleDragLeave = (event, windowIndex) => {
 const handleDrop = (event, targetWindowIndex) => {
   event.preventDefault()
   event.stopPropagation()
+  const deviceId = event.dataTransfer.getData('application/x-vls-device')
+  if (deviceId) {
+    emit('device-drop', props.dialog.id, targetWindowIndex, deviceId)
+    dragOverWindowIndex.value = null
+    return
+  }
 
   try {
     const data = event.dataTransfer.getData('text/plain')
@@ -1218,9 +1226,6 @@ const handleDrop = (event, targetWindowIndex) => {
   width: 100%;
 }
 
-.video-window.active {
-  border: 2px solid #409eff;
-}
 
 /*  */
 .video-window {
@@ -1904,7 +1909,6 @@ const handleDrop = (event, targetWindowIndex) => {
 
 /* MasterGo 309:29344: transparent playback controls at the top of each picture. */
 .video-area:not(.presentation-bottom) .window-titlebar { display:flex; inset:8px 16px auto; padding:0; background:transparent; cursor:default; pointer-events:none; }
-.video-area:not(.presentation-bottom) .window-titlebar :deep(.square-playback-controls) { pointer-events:auto; }
 .video-area:not(.presentation-bottom) .video-window:has(.window-titlebar) { padding-top:0; }
 .video-area:not(.presentation-bottom) .video-window:has(.window-titlebar) > .no-signal-placeholder { padding-top:56px; box-sizing:border-box; }
 .video-area:not(.presentation-bottom) .video-window:has(.window-titlebar) :deep(.protocol-preview-entry),
@@ -1915,7 +1919,6 @@ const handleDrop = (event, targetWindowIndex) => {
 /* Bottom mode uses the same mounted players for docking and free placement. */
 .video-area.presentation-bottom > .video-grid { display:block; overflow:hidden; }
 .video-area.presentation-bottom .video-window { display:flex; flex-direction:column; padding:0; border:1px solid #2278ff; transition:none; }
-.video-area.presentation-bottom .video-window.active { border:1px solid #2278ff; box-shadow:0 0 0 1px #2278ff; }
 .video-area.presentation-bottom .video-window.is-floating { box-shadow:0 5px 18px rgb(0 0 0 / 24%); }
 .video-area.presentation-bottom .window-titlebar { position:relative; inset:auto; display:flex; flex:0 0 auto; flex-wrap:wrap; min-height:32px; box-sizing:border-box; padding:2px 4px 2px 8px; gap:4px; cursor:grab; touch-action:none; }
 .video-area.presentation-bottom .window-titlebar > span { flex:1 1 48px; }
@@ -1999,14 +2002,15 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-area.presentation-bottom .window-titlebar :deep(svg),
 .video-area.presentation-bottom .window-titlebar :deep(.playback-control::before) { width:24px; height:24px; }
 .video-area.presentation-bottom .window-carousel-scroll { bottom:0; height:12px; z-index:30; }
-.video-window:focus-visible::after {
+.video-window:focus-visible::after,
+.video-area .video-grid .video-window:hover::after {
   content:'';
   position:absolute;
   inset:0;
   box-sizing:border-box;
-  border:2px solid #409eff;
+  border:3px solid #026fff;
   border-radius:inherit;
-  z-index:30;
+  z-index:40;
   pointer-events:none;
 }
 /* Empty-slot actions stay reachable even in the small cells of 8/16/25-window layouts. */
@@ -2039,12 +2043,15 @@ const handleDrop = (event, targetWindowIndex) => {
   container-type: size;
   container-name: video-slot;
 }
-.video-area .video-grid .video-window.active {
-  border-color: #409eff;
-  box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.55);
-}
 .video-area .video-grid .video-window:has(.window-titlebar) { padding: 0; }
 .video-area .video-grid .video-window video { object-fit: contain; background: #0f1216; }
+/* 多画面无缝拼接：非底部排列的多窗口不描边、不圆角、不留外投影，相邻窗口共用一条边，
+   格位之间不会露出幕布底色；选中态改用内描边，不改变窗口的实际占位。 */
+.video-area.is-multi-screen .video-grid .video-window {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 /* 加载遮罩跟随幕布色系，避免窗口里出现刺眼白块 */
 .video-area .video-grid .video-window :deep(.el-loading-mask) { background-color: rgba(10, 14, 19, 0.72); }
 
@@ -2059,6 +2066,8 @@ const handleDrop = (event, targetWindowIndex) => {
   justify-content: flex-start;
   gap: 4px;
   height: 34px;
+  min-height: 34px;
+  flex-basis: auto;
   max-width: calc(100% - 16px);
   padding: 0 6px;
   box-sizing: border-box;
@@ -2085,6 +2094,14 @@ const handleDrop = (event, targetWindowIndex) => {
   opacity: 1;
   pointer-events: auto;
 }
+/* 隐藏态下控件子树不接管鼠标（opacity:0 的透明层不吞点击），键盘聚焦仍可触发上面的 focus-within */
+.video-area .video-grid .video-window > .window-titlebar :deep(*) {
+  pointer-events: none;
+}
+.video-area .video-grid .video-window:hover > .window-titlebar :deep(*),
+.video-area .video-grid .video-window:focus-within > .window-titlebar :deep(*) {
+  pointer-events: auto;
+}
 .video-area .video-grid .video-window > .window-titlebar > span {
   flex: 0 1 auto;
   min-width: 0;
@@ -2102,7 +2119,7 @@ const handleDrop = (event, targetWindowIndex) => {
   max-width: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .video-area .video-grid .video-window > .window-titlebar :deep(.playback-control) {
   flex: 0 0 28px;
@@ -2110,10 +2127,12 @@ const handleDrop = (event, targetWindowIndex) => {
   min-width: 28px;
   max-width: 28px;
   height: 28px;
-  border-radius: 4px;
-  background: transparent;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  transition: background 150ms ease, box-shadow 150ms ease;
 }
-.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control svg) {
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control svg),
+.video-area .video-grid .video-window > .window-titlebar :deep(.playback-control::before) {
   width: 16px;
   height: 16px;
 }
@@ -2135,6 +2154,8 @@ const handleDrop = (event, targetWindowIndex) => {
   top: 4px;
   left: 4px;
   height: 28px;
+  min-height: 28px;
+  flex-basis: auto;
   max-width: calc(100% - 8px);
   padding: 0 4px;
   gap: 2px;
@@ -2149,7 +2170,8 @@ const handleDrop = (event, targetWindowIndex) => {
   max-width: 22px;
   height: 22px;
 }
-.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control svg) {
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control svg),
+.video-area .video-grid .video-window > .window-titlebar.is-narrow :deep(.playback-control::before) {
   width: 13px;
   height: 13px;
 }
@@ -2181,10 +2203,16 @@ const handleDrop = (event, targetWindowIndex) => {
   border-radius: 0;
   background: linear-gradient(180deg, transparent, rgb(0 0 0 / 50%));
   backdrop-filter: none;
-  opacity: 1;
+  opacity: 0;
   pointer-events: none;
 }
-.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.square-playback-controls) { gap: 12px; justify-content: center; overflow: visible; pointer-events: auto; }
+/* 默认展示同样默认隐藏，鼠标进入画面或键盘聚焦时渐显 */
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window:hover > .window-titlebar,
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window:focus-within > .window-titlebar {
+  opacity: 1;
+  pointer-events: auto;
+}
+.video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.square-playback-controls) { gap: 12px; justify-content: center; overflow: visible; }
 .video-area.presentation-default:not(.is-multi-screen) .video-grid .video-window > .window-titlebar :deep(.playback-control) {
   display: inline-flex;
   flex: 0 1 56px;

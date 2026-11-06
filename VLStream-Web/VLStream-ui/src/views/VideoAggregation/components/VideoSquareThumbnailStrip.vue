@@ -5,8 +5,8 @@
         <div ref="scrollElement" class="square-thumbnail-track" @scroll="updateEdges">
         <button v-for="device in devices" :key="device.id" type="button" class="square-thumbnail"
             :class="{ active: device.id === selectedId }" :aria-pressed="device.id === selectedId"
-            :aria-label="device.deviceName || device.name" @click="$emit('select', device.id)">
-            <VideoSquareDevicePlayer v-if="autoPreview && device.id !== selectedId && device.status !== 'OFFLINE'" class="thumbnail-live-player" :device="device" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
+            :aria-label="device.deviceName || device.name" data-i18n-ignore-attributes @click="$emit('select', device.id)">
+            <VideoSquareDevicePlayer v-if="livePreviewIds.has(device.id)" class="thumbnail-live-player" :device="device" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
             <img v-else-if="frames[device.id]" :src="frames[device.id]" alt="" />
             <span v-else class="thumbnail-unavailable">{{ $tp(device.status === 'OFFLINE' ? '无信号' : '未预览') }}</span>
             <span class="thumbnail-name" data-i18n-ignore>{{ device.deviceName || device.name }}</span>
@@ -19,11 +19,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useHoverScroll } from '@/composables/useHoverScroll'
 import VideoSquareDevicePlayer from './VideoSquareDevicePlayer.vue'
 const props = defineProps({ devices: { type: Array, default: () => [] }, selectedId: { type: [String, Number], default: '' }, frames: { type: Object, default: () => ({}) }, autoPreview: Boolean })
 const scrollElement = ref(null)
+// Which thumbnails open a live preview. Device status flips while the catalogue loads, and every flip used to
+// mount/unmount a player (one camera session each), so changes settle briefly first. A hidden tab holds none.
+const PREVIEW_SETTLE_MS = 400
+const pageVisible = ref(typeof document === 'undefined' || !document.hidden)
+const eligiblePreviewIds = computed(() => props.autoPreview && pageVisible.value
+    ? props.devices.filter(device => device.id !== props.selectedId).map(device => device.id) : [])
+const livePreviewIds = ref(new Set())
+let settleTimer
+watch(eligiblePreviewIds, ids => {
+    clearTimeout(settleTimer)
+    settleTimer = setTimeout(() => {
+        const current = livePreviewIds.value
+        if (current.size !== ids.length || ids.some(id => !current.has(id))) livePreviewIds.value = new Set(ids)
+    }, PREVIEW_SETTLE_MS)
+}, { immediate: true })
+const syncVisibility = () => { pageVisible.value = !document.hidden }
 const canLeft = ref(false)
 const canRight = ref(false)
 const hoverScroll = useHoverScroll(scrollElement)
@@ -38,9 +54,14 @@ onMounted(() => {
     observer = new ResizeObserver(updateEdges)
     observer.observe(scrollElement.value)
     updateEdges()
+    document.addEventListener('visibilitychange', syncVisibility)
 })
 watch(() => props.devices.length, () => nextTick(updateEdges))
-onBeforeUnmount(() => observer?.disconnect())
+onBeforeUnmount(() => {
+    observer?.disconnect()
+    clearTimeout(settleTimer)
+    document.removeEventListener('visibilitychange', syncVisibility)
+})
 defineEmits(['select'])
 function mutePreview(event) {
     if (event.target instanceof HTMLMediaElement) event.target.muted = true

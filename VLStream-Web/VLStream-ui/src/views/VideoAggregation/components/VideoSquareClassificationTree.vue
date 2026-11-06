@@ -10,7 +10,7 @@
       <el-tree :data="displayTree" :props="{ label: 'categoryName', children: 'children' }" node-key="id"
         default-expand-all highlight-current :expand-on-click-node="false" @node-click="selectNode">
         <template #default="{ data }">
-          <span class="classification-node" :class="{ 'is-device': data.device, 'is-selected': data.device?.id === selectedDeviceId }"><span class="classification-label"><img :src="data.device ? cameraIcon : folderIcon" width="18" height="18" alt="" /><span data-i18n-ignore>{{ data.categoryName }}</span></span><span v-if="data.device" class="classification-device-status" :class="data.device.status.toLowerCase()">{{ $tp(data.device.status === 'ONLINE' ? '在线' : data.device.status === 'OFFLINE' ? '离线' : '未知状态') }}</span><small v-else>{{ data.deviceCount }}</small></span>
+          <span :draggable="!!data.device" @dragstart="dragCatalogDevice($event, data.device)" class="classification-node" :class="{ 'is-device': data.device, 'is-selected': data.device?.id === selectedDeviceId }"><span class="classification-label"><img :src="data.device ? cameraIcon : folderIcon" width="18" height="18" alt="" /><span data-i18n-ignore>{{ data.categoryName }}</span></span><span v-if="data.device" class="classification-device-status" :class="data.device.status.toLowerCase()">{{ $tp(data.device.status === 'ONLINE' ? '在线' : data.device.status === 'OFFLINE' ? '离线' : '未知状态') }}</span><small v-else>{{ data.deviceCount }}</small></span>
         </template>
       </el-tree>
     </div>
@@ -19,6 +19,7 @@
 </template>
 
 <script setup>
+import { dragCatalogDevice } from "@/utils/videoSquareDeviceDrag.mjs"
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import folderIcon from '@/assets/mastergo/video-square/folder.svg'
 import cameraIcon from '@/assets/mastergo/video-square/device-camera.svg'
