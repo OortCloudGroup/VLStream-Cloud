@@ -189,6 +189,51 @@
 .video-square :deep(.square-device-panel.is-dragging-card), .video-square :deep(.is-dragging-card [data-drag-handle]) { cursor:grabbing; }
 .video-square :deep(.square-device-panel.is-dragging-card) { box-shadow:0 16px 40px #0005; }
 
+/* A translucent catalog surface; opacity stays high enough for video behind text. */
+.video-square :deep(aside.square-device-panel) {
+  background: linear-gradient(145deg, rgb(255 255 255 / 90%), rgb(239 245 255 / 82%));
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 #fff, 0 16px 48px rgb(0 0 0 / 22%), 0 2px 8px rgb(0 0 0 / 8%);
+  color: #263248;
+}
+.video-square :deep(aside.square-device-panel .device-list-header),
+.video-square :deep(aside.square-device-panel .el-tree) { background: transparent; color: #263248; }
+.video-square :deep(aside.square-device-panel .el-tabs__nav-wrap::after),
+.video-square :deep(aside.square-device-panel .el-tabs__active-bar) { display: none; }
+.video-square :deep(aside.square-device-panel .el-tabs__nav-scroll) {
+  padding: 4px; border-radius: 13px; background: rgb(100 120 150 / 9%);
+  box-shadow: inset 0 1px 3px rgb(40 60 90 / 5%);
+}
+.video-square :deep(aside.square-device-panel .el-tabs__item) {
+  height: 34px; border-radius: 10px; transition: background .18s, box-shadow .18s; color: #596579;
+}
+.video-square :deep(aside.square-device-panel .el-tabs__item.is-active) {
+  background: rgb(255 255 255 / 88%); color: #1670eb; font-weight: 600;
+  box-shadow: 0 2px 6px rgb(33 57 93 / 10%);
+}
+.video-square :deep(aside.square-device-panel .el-input__wrapper) {
+  border-radius: 11px; background: rgb(255 255 255 / 55%);
+  box-shadow: inset 0 0 0 1px rgb(117 139 169 / 22%); transition: background .18s, box-shadow .18s;
+}
+.video-square :deep(aside.square-device-panel .el-input__wrapper.is-focus) {
+  background: rgb(255 255 255 / 85%); box-shadow: 0 0 0 3px rgb(34 120 255 / 13%), inset 0 0 0 1px #2278ff;
+}
+.video-square :deep(aside.square-device-panel .el-tree-node__content) {
+  border-radius: 9px; min-height: 32px; transition: background .16s;
+}
+.video-square :deep(aside.square-device-panel .el-tree-node__content:hover) { background: rgb(255 255 255 / 65%); }
+.video-square :deep(aside.square-device-panel .el-tree-node.is-current > .el-tree-node__content) { background: rgb(34 120 255 / 14%); }
+.video-square :deep(aside.square-device-panel .device-state) { border-radius: 6px; }
+@supports not (backdrop-filter: blur(1px)) {
+  .video-square :deep(aside.square-device-panel) { background: #f3f6fc; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-square :deep(aside.square-device-panel *) { transition: none !important; }
+}
+
 /* Reserve each toolbar intrinsic width; wrap the whole group before it can overlap. */
 .video-square .main-content .square-floating-tools { right:20px; flex-wrap:wrap; align-items:flex-start; gap:12px 20px; }
 .video-square .square-floating-tools .square-view-tools { flex:0 0 auto; min-width:0; max-width:100%; }

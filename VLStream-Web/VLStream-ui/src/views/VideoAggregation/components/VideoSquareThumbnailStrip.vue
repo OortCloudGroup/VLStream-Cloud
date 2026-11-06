@@ -6,7 +6,7 @@
         <button v-for="device in devices" :key="device.id" type="button" class="square-thumbnail"
             :class="{ active: device.id === selectedId }" :aria-pressed="device.id === selectedId"
             :aria-label="device.deviceName || device.name" data-i18n-ignore-attributes @click="$emit('select', device.id)">
-            <VideoSquareDevicePlayer v-if="livePreviewIds.has(device.id)" class="thumbnail-live-player" :device="device" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
+            <VideoSquareDevicePlayer v-if="livePreviewIds.has(device.id)" class="thumbnail-live-player" :device="device" :recording-controls="false" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
             <img v-else-if="frames[device.id]" :src="frames[device.id]" alt="" />
             <span v-else class="thumbnail-unavailable">{{ $tp(device.status === 'OFFLINE' ? '无信号' : '未预览') }}</span>
             <span class="thumbnail-name" data-i18n-ignore>{{ device.deviceName || device.name }}</span>

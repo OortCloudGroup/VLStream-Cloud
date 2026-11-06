@@ -70,9 +70,10 @@
       </el-table-column>
       <el-table-column key="streamId" :label="$tp('流id')" prop="streamId" min-width="150" show-overflow-tooltip />
       <el-table-column key="remark" :label="$tp('备注')" prop="remark" min-width="150" show-overflow-tooltip />
-      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(260)">
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(390)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
+            <PlatformRecordingActions protocol="RTSP" :row-id="scope.row.id" />
             <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['rtsp:RtspDevice:view']">
               <span>{{ $tp('播放') }}</span>
             </div>
@@ -309,6 +310,7 @@ import ProtocolAvailabilityBadge from '@/components/ProtocolAvailabilityBadge.vu
 import { translatePhrase as uiText } from '@/i18n'
 
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
+import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import {
   addDetection,
   addRtspDevice,

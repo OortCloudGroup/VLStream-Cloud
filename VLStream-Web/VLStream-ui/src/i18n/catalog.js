@@ -3,6 +3,7 @@ import { siteEnglish } from './siteEnglish.js'
 import { runtimeEnglish } from './runtimeEnglish.js'
 import { uiEnglish } from './uiEnglish.js'
 import { gbHelpEnglish } from './gbHelpPhrases.js'
+import { recordingEnglish } from './recordingEnglish.js'
 
 const localeColumns = ['zh-CN', 'en-US', 'es-MX', 'ar', 'de-DE', 'fr-FR', 'ja-JP', 'pt-BR', 'ru-RU', 'ko-KR', 'id-ID', 'tr-TR']
 
@@ -58,7 +59,6 @@ AI事件配置\tAI event configuration\tConfiguración de eventos de IA\tتكو�
 大模型复核\tLLM review\tRevisión con modelos de lenguaje\tالمراجعة بالنماذج اللغوية\tLLM-Prüfung\tRévision par grand modèle\tLLM レビュー\tRevisão por LLM\tПроверка языковой моделью\tLLM 검토\tTinjauan LLM\tLLM incelemesi
 场景治理\tScene governance\tGobernanza de escenarios\tحوكمة السيناريوهات\tSzenarioverwaltung\tGouvernance des scénarios\tシーンガバナンス\tGovernança de cenários\tУправление сценариями\t시나리오 거버넌스\tTata kelola skenario\tSenaryo yönetişimi
 智能分析申请\tIntelligent analysis requests\tSolicitudes de análisis inteligente\tطلبات التحليل الذكي\tAnträge auf intelligente Analyse\tDemandes d’analyse intelligente\tインテリジェント分析申請\tSolicitações de análise inteligente\tЗапросы интеллектуального анализа\t지능형 분석 요청\tPermintaan analisis cerdas\tAkıllı analiz istekleri
-智能分析结果\tIntelligent analysis results\tResultados del análisis inteligente\tنتائج التحليل الذكي\tErgebnisse der intelligenten Analyse\tRésultats de l’analyse intelligente\tインテリジェント分析結果\tResultados da análise inteligente\tРезультаты интеллектуального анализа\t지능형 분석 결과\tHasil analisis cerdas\tAkıllı analiz sonuçları
 算法训练平台\tAlgorithm training platform\tPlataforma de entrenamiento de algoritmos\tمنصة تدريب الخوارزميات\tPlattform für Algorithmustraining\tPlateforme d’entraînement des algorithmes\tアルゴリズム学習プラットフォーム\tPlataforma de treinamento de algoritmos\tПлатформа обучения алгоритмов\t알고리즘 학습 플랫폼\tPlatform pelatihan algoritme\tAlgoritma eğitim platformu
 数据集管理\tDataset management\tAdministración de conjuntos de datos\tإدارة مجموعات البيانات\tDatensatzverwaltung\tGestion des jeux de données\tデータセット管理\tGerenciamento de conjuntos de dados\tУправление наборами данных\t데이터 세트 관리\tManajemen set data\tVeri kümesi yönetimi
 算法标注\tAlgorithm annotation\tAnotación de algoritmos\tوسم الخوارزميات\tAlgorithmenannotation\tAnnotation d’algorithmes\tアルゴリズムアノテーション\tAnotação de algoritmos\tРазметка алгоритмов\t알고리즘 주석\tAnotasi algoritme\tAlgoritma etiketleme
@@ -447,7 +447,7 @@ catalogTsv.trim().split('\n').forEach((line, lineIndex) => {
 })
 
 // Preserve reviewed locale entries; untranslated UI phrases fall back to English.
-Object.entries({ ...uiEnglish, ...gbHelpEnglish, ...computeEnglish, ...siteEnglish, ...runtimeEnglish }).forEach(([source, english]) => {
+Object.entries({ ...uiEnglish, ...gbHelpEnglish, ...computeEnglish, ...siteEnglish, ...runtimeEnglish, ...recordingEnglish }).forEach(([source, english]) => {
   localeColumns.forEach(code => {
     phraseCatalog[code][source] ||= code === 'zh-CN' ? source : english
   })

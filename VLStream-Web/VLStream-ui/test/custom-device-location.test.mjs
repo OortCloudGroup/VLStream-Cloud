@@ -16,7 +16,7 @@ function harness() {
     nextTick, reactive, ref, onMounted() {}, onBeforeUnmount: callback => unmounts.push(callback),
     uiText: text => text, ElMessage: { success() {}, warning() {} }, ElMessageBox: {},
     window: { clearInterval() {}, removeEventListener() {} }, document: { removeEventListener() {} },
-    DeviceClassificationLayout: {}, SquareProtocolDevicePlayer: {}, CustomAvailabilityBadge: {}, MapLocation: {},
+    DeviceClassificationLayout: {}, SquareProtocolDevicePlayer: {}, CustomAvailabilityBadge: {}, MapLocation: {}, PlatformRecordingActions: {},
     stampCustomStatus: row => row, useCustomAvailabilityClock: () => ref(0),
     useWvpMediaStatus: () => ({ mediaAvailable: ref(true), loadMediaStatus() {} }),
   }

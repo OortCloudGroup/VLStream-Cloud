@@ -81,6 +81,7 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         return "/blade-auth/token".equals(uri)
             || "/cloud-ai/sources".equals(uri)
+            || "/platform-recordings/sources".equals(uri)
             || uri.startsWith("/vlsCompute/")
             || "/vlsTunnel/agent/register".equals(uri)
             || "/vlsTunnel/internal/access-sessions/resolve".equals(uri);

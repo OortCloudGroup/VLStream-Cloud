@@ -51,10 +51,11 @@
           </el-table-column>
           <el-table-column prop="streamUrl" :label="$tp('视频流路径')" min-width="220" show-overflow-tooltip />
           <el-table-column prop="createTime" :label="$tp('创建时间')" width="165" />
-          <el-table-column :label="$tp('操作')" width="180" fixed="right">
+          <el-table-column :label="$tp('操作')" width="320" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="preview(row)">{{ $tp('预览') }}</el-button>
-              <el-button link type="primary" @click="openRecord(row)">{{ $tp('录像') }}</el-button>
+              <PlatformRecordingActions protocol="CUSTOM" :row-id="row.id" />
+              <el-button link type="primary" @click="openRecord(row)">{{ $tp('旧版录像') }}</el-button>
               <el-button link type="primary" @click="openEdit(row)">{{ $tp('编辑') }}</el-button>
               <el-button link type="danger" @click="removeDevices(row)">{{ $tp('删除') }}</el-button>
             </template>
@@ -121,6 +122,7 @@ import { translatePhrase as uiText } from '@/i18n'
 import { nextTick, onMounted, onBeforeUnmount, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
+import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import SquareProtocolDevicePlayer from './components/SquareProtocolDevicePlayer.vue'
 import { stampCustomStatus } from '@/utils/customDeviceState'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'

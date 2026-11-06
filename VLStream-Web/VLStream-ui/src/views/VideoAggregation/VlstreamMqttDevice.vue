@@ -62,10 +62,11 @@
           <el-table-column :label="$tp('最后心跳')" min-width="180">
             <template #default="{ row }">{{ formatDeviceTime(row.lastHeartbeatTime) }}</template>
           </el-table-column>
-          <el-table-column :label="$tp('操作')" width="150" fixed="right">
+          <el-table-column :label="$tp('操作')" width="260" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">{{ $tp('详情') }}</el-button>
               <el-button link type="primary" :disabled="row.online !== true" @click="openPreview(row)">{{ $tp('播放') }}</el-button>
+              <PlatformRecordingActions protocol="VLSTREAM" :row-id="row.id" :online="row.online === true" />
             </template>
           </el-table-column>
         </el-table>
@@ -91,6 +92,7 @@
             :socket-url="cameraRtcConfig.socketUrl" />
           <el-empty v-else :description="$tp('请选择可用视频流')" />
         </div>
+        <PlatformRecordingActions v-if="currentDevice" protocol="VLSTREAM" :row-id="currentDevice.id" :online="currentDevice.online === true" />
       </el-dialog>
 
       <el-dialog v-model="detailVisible" class="locale-dialog locale-dialog--wide" :title="$tp('设备详情')" destroy-on-close>
@@ -248,6 +250,7 @@ import { monitorDevicePreview } from '@/utils/devicePreviewGuard'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
+import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'

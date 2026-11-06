@@ -1,5 +1,6 @@
 <template>
   <div class="square-device-player">
+    <PlatformRecordingActions v-if="recordingControls && selected" class="square-recording" :protocol="selected.protocol" :row-id="selected.rowId" :online="videoSourceOnline(selected)" />
     <el-select v-if="device.sources?.length > 1" v-model="selectedKey" size="small" class="source-selector"
       :aria-label="$tp('播放通道')" :teleported="false">
       <el-option v-for="source in device.sources" :key="sourceKey(source)" :value="sourceKey(source)"
@@ -21,12 +22,13 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
+import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import RtspDevicePlayer from '@/components/RtspDevicePlayer.vue'
 import SquareProtocolDevicePlayer from './SquareProtocolDevicePlayer.vue'
 import { translatePhrase } from '@/i18n'
 import { customStatusDetail } from '@/utils/customDeviceState'
 import { VIDEO_PROTOCOLS, videoSourceKey, defaultVideoSource, canPreviewVideoSource, videoSourceOnline, videoSourceState } from '@/utils/videoSquareCatalog'
-const props = defineProps({ device: { type: Object, required: true } })
+const props = defineProps({ device: { type: Object, required: true }, recordingControls: { type: Boolean, default: true } })
 const emit = defineEmits(['source-change'])
 const selectedKey = ref('')
 const sourceKey = videoSourceKey
@@ -46,7 +48,9 @@ watch(() => props.device, () => {
 </script>
 
 <style scoped>
-.square-device-player { height: 100%; width: 100%; display: flex; flex-direction: column; background: #151515; color: #eee; }
+.square-device-player { position: relative; height: 100%; width: 100%; display: flex; flex-direction: column; background: #151515; color: #eee; }
+.square-recording { position: absolute; inset-inline-end: 10px; top: 36px; z-index: 4; opacity: 0; transition: opacity .15s; }
+.square-device-player:hover .square-recording, .square-device-player:focus-within .square-recording { opacity: 1; }
 .source-selector { width: 100%; z-index: 2; }
 .square-device-player :deep(.vls-device-player), .square-device-player :deep(.rtsp-device-player),
 .square-device-player :deep(.square-protocol-player) { flex: 1; min-height: 0; }

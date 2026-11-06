@@ -14,6 +14,7 @@ const fakeComponent = name => defineComponent({
 })
 const components = Object.fromEntries(['VlsDevicePlayer', 'RtspDevicePlayer', 'SquareProtocolDevicePlayer', 'CameraRtcPlayer', 'RtcPlayer', 'Hikvision', 'ElSelect', 'ElOption', 'ElEmpty'].map(name => [name, fakeComponent(name)]))
 components.ElButton = defineComponent({ setup: (_, { slots }) => () => h('button', slots.default?.()) })
+components.PlatformRecordingActions = fakeComponent('PlatformRecordingActions')
 
 function harness(path, values, dependencies = {}) {
   const descriptor = parse(readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')).descriptor
