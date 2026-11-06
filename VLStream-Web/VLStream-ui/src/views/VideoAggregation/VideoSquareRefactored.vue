@@ -379,6 +379,15 @@ onMounted(() => {
 })
 onUnmounted(() => toolbarObserver?.disconnect())
 const handleDeviceSelect = device => {
+  if (devicePickerTarget.value) {
+    const target = devicePickerTarget.value
+    devicePickerTarget.value = null
+    if (assignVideoWindow(layoutDialogs.value, target, device, visibleDevices.value)) {
+      closedPreviewIds.value.delete(device.id)
+      layoutDialogs.value.find(item => item.id === target.dialogId).activeWindowIndex = target.windowIndex
+    } else ElMessage.warning(uiText('窗口已变化，请重新点击添加设备'))
+    return
+  }
   closedPreviewIds.value.delete(device.id)
   const active = layoutDialogs.value[0]?.layoutCount ? layoutDialogs.value[0] : restoreLayoutWindows(undefined, 1)
   const existing = active?.cameras.findIndex(camera => camera?.id === device.id) ?? -1
@@ -437,11 +446,13 @@ const selectThumbnail = (dialogId, deviceId) => {
   if (device) assignVideoWindow(layoutDialogs.value, {dialogId, windowIndex:0}, device, currentDevices.value)
 }
 const devicePickerTarget = ref(null)
+watch(devicePanelCollapsed, collapsed => { if (collapsed) devicePickerTarget.value = null })
 const dropCatalogDevice = (dialogId, windowIndex, deviceId) => {
   const device = visibleDevices.value.find(item => String(item.id) === String(deviceId))
   if (!device) return
   closedPreviewIds.value.delete(device.id)
   assignVideoWindow(layoutDialogs.value, { dialogId, windowIndex }, device, currentDevices.value)
+  devicePickerTarget.value = null
 }
 const showCustomLayout = ref(false)
 const customWindowCount = ref(4)
@@ -2171,7 +2182,8 @@ const openInVlc = (url) => {
 
 const addDeviceToWindow = (dialogId, windowIndex) => {
   devicePickerTarget.value = { dialogId, windowIndex, windowId:layoutDialogs.value.find(item => item.id === dialogId)?.windowIds[windowIndex] }
-  showDevicePicker.value = true
+  devicePanelCollapsed.value = false
+  devicePanelFront.value = true
 }
 
 const removeDeviceFromWindow = (dialogId, windowIndex, windowId) => {
