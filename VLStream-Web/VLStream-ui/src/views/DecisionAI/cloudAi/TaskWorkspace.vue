@@ -1,7 +1,6 @@
 <template>
     <main class="cloud-ai-page">
         <header class="cloud-ai-heading"><div><span class="cloud-ai-eyebrow">{{ $tp("云端智能 / 运行调度") }}</span><h1>{{ runsOnly ? '任务状态' : '任务配置' }}</h1><p>{{ runsOnly ? '查看任务是否正常运行、结束或异常，追踪每路摄像机与模型的执行情况。' : '立即运行一次场景，或安排固定时间巡检。执行记录独立保留。' }}</p></div><el-button v-if="runsOnly" @click="router.push('/algorithm-task')">{{ $tp("前往任务配置") }}</el-button><el-button v-else type="primary" :icon="Plus" @click="edit()">{{ $tp("创建任务") }}</el-button></header>
-        <el-tabs v-if="!runsOnly" v-model="tab" @tab-change="changeTab"><el-tab-pane :label="$tp(&quot;任务配置&quot;)" name="tasks" /><el-tab-pane :label="$tp(&quot;运行记录&quot;)" name="runs" /></el-tabs>
         <div class="cloud-ai-toolbar"><el-input v-model="search" :placeholder="tab === 'tasks' ? '搜索任务名称' : '搜索任务、场景或运行编号'" :prefix-icon="Search" clearable @keyup.enter="load(true)" @clear="load(true)" /><el-select v-model="sceneId" :placeholder="$tp(&quot;全部场景&quot;)" clearable filterable @change="load(true)"><el-option v-for="scene in scenes" :key="scene.id" :label="scene.name" :value="scene.id" /></el-select><el-select v-if="tab === 'runs'" v-model="state" :placeholder="$tp(&quot;全部运行状态&quot;)" clearable @change="load(true)"><el-option v-for="(item, key) in states" :key="key" :label="item[0]" :value="key" /></el-select><el-button :icon="Refresh" :loading="loading" @click="load()">{{ $tp("刷新") }}</el-button><span class="cloud-ai-count">{{ tab === 'runs' ? '每 10 秒刷新 · ' : '' }}{{ $tp("共") }} {{ total }} {{ $tp("条") }}</span></div>
         <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
         <el-table v-if="tab === 'tasks'" key="tasks" v-loading="loading" :data="loadedTab === tab ? rows : []" row-key="id">
@@ -25,7 +24,7 @@
             <el-alert v-if="formError" :title="formError" type="error" :closable="false" show-icon><el-button v-if="form.sceneId && /GPU|算力/.test(formError)" link type="primary" :loading="checkingGpu" @click="checkSceneGpu">{{ $tp("检查场景 GPU") }}</el-button></el-alert>
             <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
                 <section class="cloud-ai-section"><div class="cloud-ai-form-grid"><el-form-item :label="$tp(&quot;任务名称&quot;)" prop="name"><el-input v-model="form.name" maxlength="100" :placeholder="$tp(&quot;例如：作业区早班巡检&quot;)" /></el-form-item><el-form-item :label="$tp(&quot;运行场景&quot;)" prop="sceneId"><el-select v-model="form.sceneId" filterable remote :remote-method="loadScenes" :placeholder="$tp(&quot;选择已启用的场景&quot;)"><el-option v-for="scene in scenes" :key="scene.id" :label="scene.name" :value="scene.id" :disabled="!scene.enabled" /></el-select></el-form-item></div><el-form-item :label="$tp(&quot;运行方式&quot;)"><el-radio-group v-model="form.schedule.kind" :disabled="!!editingId"><el-radio-button value="MANUAL">{{ $tp("手工立即运行") }}</el-radio-button><el-radio-button value="ONCE">{{ $tp("指定日期一次") }}</el-radio-button><el-radio-button value="DAILY">{{ $tp("每天") }}</el-radio-button><el-radio-button value="WEEKLY">{{ $tp("每周") }}</el-radio-button></el-radio-group></el-form-item></section>
-                <section v-if="form.schedule.kind === 'MANUAL'" class="cloud-ai-section"><el-form-item :label="$tp(&quot;运行时长（分钟）&quot;)"><el-input-number v-model="minutes" :min="1" :max="525600" :step="5" /></el-form-item><p class="cloud-ai-note">{{ $tp("保存后立即提交。GPU 忙时排队，收到画面并开始检测后计算运行时长；可在运行记录中提前停止。") }}</p></section>
+                <section v-if="form.schedule.kind === 'MANUAL'" class="cloud-ai-section"><el-form-item :label="$tp(&quot;运行时长（分钟）&quot;)"><el-input-number v-model="minutes" :min="1" :max="525600" :step="5" /></el-form-item><p class="cloud-ai-note">{{ $tp("保存后立即提交。GPU 忙时排队，收到画面并开始检测后计算运行时长；可在任务状态中提前停止。") }}</p></section>
                 <section v-else class="cloud-ai-section"><h3>{{ $tp("执行时间 · Asia/Shanghai") }}</h3><div v-if="form.schedule.kind === 'ONCE'" class="cloud-ai-form-grid"><el-form-item :label="$tp(&quot;开始日期与时间&quot;)"><el-date-picker v-model="form.schedule.onceStart" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" :placeholder="$tp(&quot;开始时间&quot;)" /></el-form-item><el-form-item :label="$tp(&quot;结束日期与时间&quot;)"><el-date-picker v-model="form.schedule.onceEnd" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" :placeholder="$tp(&quot;结束时间&quot;)" /></el-form-item></div><template v-else><el-form-item v-if="form.schedule.kind === 'WEEKLY'" :label="$tp(&quot;执行星期&quot;)"><el-checkbox-group v-model="form.schedule.weekdays"><el-checkbox v-for="(day, index) in weekdays" :key="day" :value="index + 1">{{ $tp("周") }}{{ day }}</el-checkbox></el-checkbox-group></el-form-item><div class="cloud-ai-form-grid"><el-form-item :label="$tp(&quot;每天开始时刻&quot;)"><el-time-picker v-model="form.schedule.startTime" value-format="HH:mm:ss" :placeholder="$tp(&quot;开始时刻&quot;)" /></el-form-item><el-form-item :label="$tp(&quot;每天结束时刻&quot;)"><el-time-picker v-model="form.schedule.endTime" value-format="HH:mm:ss" :placeholder="$tp(&quot;结束时刻&quot;)" /></el-form-item><el-form-item :label="$tp(&quot;有效期开始日期&quot;)"><el-date-picker v-model="form.schedule.firstDate" value-format="YYYY-MM-DD" :placeholder="$tp(&quot;开始日期&quot;)" /></el-form-item><el-form-item :label="$tp(&quot;有效期结束日期（可选）&quot;)"><el-date-picker v-model="form.schedule.lastDate" value-format="YYYY-MM-DD" :placeholder="$tp(&quot;不填写则长期有效&quot;)" /></el-form-item></div></template><p class="cloud-ai-note">{{ $tp("GPU 忙时按顺序等待。超过本次结束时间则跳过并记录原因，不抢占现有任务，不延长时间窗口。") }}</p><el-form-item :label="$tp(&quot;启用定时配置&quot;)" style="margin-top:18px"><el-switch v-model="form.enabled" /></el-form-item></section>
             </el-form><template #footer><el-button :disabled="saving" @click="opened = false">{{ $tp("取消") }}</el-button><el-button type="primary" :loading="saving" @click="save">{{ form.schedule.kind === 'MANUAL' ? '创建并立即运行' : '保存定时任务' }}</el-button></template>
         </el-dialog>
@@ -37,7 +36,7 @@
     </main>
 </template>
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
@@ -48,7 +47,7 @@ const formatTime = value => formatRunTime(value, currentLocale.value)
 const scheduleText = rule => formatSchedule(rule, translateUiMessage, currentLocale.value)
 import './cloud-ai.css'
 const props = defineProps({ runsOnly: Boolean })
-const route = useRoute(), router = useRouter(), tab = ref(props.runsOnly || route.query.tab === 'runs' ? 'runs' : 'tasks')
+const route = useRoute(), router = useRouter(), tab = computed(() => props.runsOnly ? 'runs' : 'tasks')
 const loadedTab = ref(tab.value)
 const rows = ref([]), total = ref(0), current = ref(1), search = ref(''), sceneId = ref(route.query.sceneId || ''), state = ref(''), loading = ref(false), error = ref(''), scenes = ref([])
 const opened = ref(false), editingId = ref(null), saving = ref(false), formError = ref(''), formRef = ref(), minutes = ref(30)
@@ -66,7 +65,11 @@ async function load(reset = false) {
     try { const result = await cloudAi.list(requestedTab, { page: current.value, size: 20, search: search.value, sceneId: sceneId.value || undefined, state: state.value || undefined }); if (request === generation && tab.value === requestedTab) { rows.value = result.records; loadedTab.value = requestedTab; total.value = Number(result.total) } }
     catch (failure) { if (request === generation) error.value = cloudError(failure) } finally { if (request === generation) loading.value = false }
 }
-function changeTab() { rows.value = []; current.value = 1; load() }
+function redirectLegacyRuns() {
+    if (props.runsOnly || route.query.tab !== 'runs') return false
+    const query = { ...route.query }; delete query.tab; delete query.create
+    router.replace({ path: '/task-status', query }); return true
+}
 async function edit(row, repeat = false) {
     editingId.value = repeat ? null : row?.id || null; formError.value = ''; form.value = fresh(); minutes.value = 30
     if (row) { form.value = { ...form.value, sceneId: row.scene_id, name: row.name, revision: row.revision, enabled: !!row.enabled, schedule: { ...form.value.schedule, ...row.schedule } }; minutes.value = Math.max(1, Math.round((row.schedule.durationSeconds || 1800) / 60)) }
@@ -75,7 +78,7 @@ async function edit(row, repeat = false) {
 async function save() {
     if (saving.value || !await formRef.value.validate().catch(() => false)) return
     saving.value = true; formError.value = ''; form.value.schedule.durationSeconds = Math.round(minutes.value * 60)
-    try { await cloudAi.save('tasks', editingId.value, form.value); ElMessage.success(form.value.schedule.kind === 'MANUAL' ? '已提交，正在等待执行' : '定时任务已保存'); opened.value = false; if (form.value.schedule.kind === 'MANUAL') tab.value = 'runs'; await load(true) }
+    try { await cloudAi.save('tasks', editingId.value, form.value); ElMessage.success(form.value.schedule.kind === 'MANUAL' ? '已提交，正在等待执行' : '定时任务已保存'); opened.value = false; if (form.value.schedule.kind === 'MANUAL') await router.push({ path: '/task-status', query: { sceneId: form.value.sceneId } }); else await load(true) }
     catch (failure) { formError.value = cloudError(failure) } finally { saving.value = false }
 }
 async function checkSceneGpu() {
@@ -95,7 +98,7 @@ async function remove(row) { try { await ElMessageBox.confirm(`删除“${row.na
 async function showRun(id) { const request = ++detailGeneration; runOpened.value = true; runError.value = ''; if (run.value?.id !== id) run.value = null; try { const detail = await cloudAi.get('runs', id); if (request === detailGeneration && runOpened.value) run.value = detail } catch (failure) { if (request === detailGeneration) runError.value = cloudError(failure) } }
 async function stop(row) { try { await ElMessageBox.confirm('停止本次检测？已生成的告警将完成录像收尾，确认资源释放后显示“已停止”。', '停止运行', { confirmButtonText: '停止运行', cancelButtonText: '继续运行', type: 'warning' }); await cloudAi.stop(row.id); ElMessage.success('停止请求已提交'); if (runOpened.value) await showRun(row.id); await load() } catch (failure) { if (!['cancel', 'close'].includes(failure)) error.value = cloudError(failure) } }
 const analysis = id => router.push({ path: '/intelligent-analysis-request', query: { runId: id } })
-watch(() => route.query, value => { sceneId.value = value.sceneId || ''; if (!props.runsOnly && value.tab) tab.value = value.tab === 'runs' ? 'runs' : 'tasks'; load(true) })
-onMounted(async () => { await Promise.all([load(), loadScenes()]); if (!props.runsOnly && route.query.create) { edit(); const query = { ...route.query }; delete query.create; await router.replace({ path: route.path, query }) } timer = setInterval(async () => { if (document.hidden || polling || opened.value) return; polling = true; try { if (tab.value === 'runs') await load(); if (runOpened.value && run.value && !terminal(run.value.state)) await showRun(run.value.id) } finally { polling = false } }, 10000) })
+watch(() => route.query, value => { if (redirectLegacyRuns()) return; sceneId.value = value.sceneId || ''; load(true) })
+onMounted(async () => { if (redirectLegacyRuns()) return; await Promise.all([load(), loadScenes()]); if (!props.runsOnly && route.query.create) { edit(); const query = { ...route.query }; delete query.create; await router.replace({ path: route.path, query }) } timer = setInterval(async () => { if (document.hidden || polling || opened.value) return; polling = true; try { if (tab.value === 'runs') await load(); if (runOpened.value && run.value && !terminal(run.value.state)) await showRun(run.value.id) } finally { polling = false } }, 10000) })
 onUnmounted(() => { clearInterval(timer); generation++; detailGeneration++ })
 </script>

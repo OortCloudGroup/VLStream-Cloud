@@ -527,7 +527,6 @@ const menuRoutesMap = {
     { path: '/video-square', meta: { title: '视频广场', icon: '视频广场' } },
     { path: '/video-playback', meta: { title: '视频回放', icon: '视频回放' } },
     // { path: '/monitoring-alarm', meta: { title: ' alarm / alert', icon: ' alarm / alert' } },
-    { path: '/intelligent-analysis-result', meta: { title: '智能分析结果', icon: '智能分析结果' } },
     {
       path: 'device-management-menu',
       meta: { title: '设备管理', icon: '设备管理' },
@@ -1359,10 +1358,10 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 /* 设备统计条：固定在侧栏底部，菜单滚动时不动 */
-.app-sidebar-stats { flex: 0 0 auto; margin: 8px 12px 16px; padding: 12px 14px; border: 1px solid #e8ebf2; border-radius: 12px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 1px 2px rgba(23, 34, 64, 0.04); box-sizing: border-box; }
+.app-sidebar-stats { flex: 0 0 auto; margin: 8px 12px 16px; padding: 0 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; box-sizing: border-box; }
 .app-sidebar-stats:empty { display: none; }
-.app-sidebar-stats .device-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
-.app-sidebar-stats .stat-item { display: flex; align-items: center; gap: 6px; }
+.app-sidebar-stats .device-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 36px; gap: 10px; text-align: left; }
 .app-sidebar-stats .stat-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
 .app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }

@@ -21,7 +21,7 @@ public class CloudAiScheduler {
     @Scheduled(fixedDelayString = "${vlstream.cloud-ai.schedule-delay-ms:5000}")
     public void tick() {
         try {
-            List<String> due = jdbc.queryForList("SELECT id FROM vls_cloud_ai_task WHERE enabled=1 AND deleted=0 AND next_start<=? ORDER BY next_start LIMIT 100", String.class, System.currentTimeMillis());
+            List<String> due = jdbc.queryForList("SELECT id FROM vls_cloud_ai_task WHERE JSON_UNQUOTE(JSON_EXTRACT(schedule_json,'$.executionScope'))=? AND enabled=1 AND deleted=0 AND next_start<=? ORDER BY next_start LIMIT 100", String.class, service.executionScope(), System.currentTimeMillis());
             for (String id : due) {
                 try { transactions.execute(status -> { occurrence(id, System.currentTimeMillis()); return null; }); }
                 catch (RuntimeException error) { log.warn("Cloud AI schedule {} could not advance ({})", id, error.getClass().getSimpleName()); }
@@ -30,7 +30,7 @@ public class CloudAiScheduler {
     }
 
     void occurrence(String id, long now) {
-        List<Map<String,Object>> tasks = jdbc.queryForList("SELECT * FROM vls_cloud_ai_task WHERE id=? AND enabled=1 AND deleted=0 AND next_start<=? FOR UPDATE", id, now);
+        List<Map<String,Object>> tasks = jdbc.queryForList("SELECT * FROM vls_cloud_ai_task WHERE id=? AND JSON_UNQUOTE(JSON_EXTRACT(schedule_json,'$.executionScope'))=? AND enabled=1 AND deleted=0 AND next_start<=? FOR UPDATE", id, service.executionScope(), now);
         if (tasks.isEmpty()) return;
         Map<String,Object> task = tasks.get(0);
         List<Map<String,Object>> scenes = jdbc.queryForList("SELECT * FROM vls_cloud_ai_scene WHERE id=? AND tenant_id=? AND actor_id=? FOR UPDATE", task.get("scene_id"), task.get("tenant_id"), task.get("actor_id"));

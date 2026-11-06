@@ -19,6 +19,8 @@ public final class CloudAiSchedule {
 
     public static final class Definition {
         public String kind;
+        /** Server-owned execution boundary; overwritten on task save. */
+        public String executionScope;
         public Integer durationSeconds;
         public String onceStart;
         public String onceEnd;

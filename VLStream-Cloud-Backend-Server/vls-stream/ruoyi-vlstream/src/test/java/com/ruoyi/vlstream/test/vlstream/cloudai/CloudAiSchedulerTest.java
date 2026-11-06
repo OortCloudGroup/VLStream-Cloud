@@ -18,10 +18,11 @@ class CloudAiSchedulerTest {
     private final long end = start + 60000;
 
     @BeforeEach void setup() {
+        when(service.executionScope()).thenReturn("localhost:single");
         task = new HashMap<>(); task.put("scene_id", "scene"); task.put("tenant_id", "tenant");
         task.put("actor_id", "owner"); task.put("next_start", start); task.put("next_end", end); task.put("schedule_json", "rule");
         scene = new HashMap<>(); scene.put("enabled", 1); scene.put("deleted", 0);
-        when(jdbc.queryForList(contains("FROM vls_cloud_ai_task"), eq("task"), anyLong())).thenReturn(Collections.singletonList(task));
+        when(jdbc.queryForList(contains("FROM vls_cloud_ai_task"), eq("task"), eq("localhost:single"), anyLong())).thenReturn(Collections.singletonList(task));
         when(jdbc.queryForList(contains("FROM vls_cloud_ai_scene"), eq("scene"), eq("tenant"), eq("owner"))).thenReturn(Collections.singletonList(scene));
         CloudAiSchedule.Definition rule = new CloudAiSchedule.Definition(); rule.kind = "ONCE";
         rule.onceStart = "2026-10-30T18:00:00"; rule.onceEnd = "2026-10-30T18:01:00";
@@ -45,8 +46,8 @@ class CloudAiSchedulerTest {
     }
 
     @Test void secondScannerAfterLockedAdvanceDoesNothing() {
-        when(jdbc.queryForList(contains("FROM vls_cloud_ai_task"), eq("task"), anyLong())).thenReturn(Collections.emptyList());
-        scheduler.occurrence("task", start); verifyNoInteractions(service);
+        when(jdbc.queryForList(contains("FROM vls_cloud_ai_task"), eq("task"), eq("localhost:single"), anyLong())).thenReturn(Collections.emptyList());
+        scheduler.occurrence("task", start); verify(service, never()).schedule(anyString());
         verify(jdbc, never()).update(anyString(), any(Object[].class));
     }
 
@@ -54,6 +55,6 @@ class CloudAiSchedulerTest {
         when(jdbc.queryForList(contains("FROM vls_cloud_ai_scene"), eq("scene"), eq("tenant"), eq("owner"))).thenReturn(Collections.emptyList());
         scheduler.occurrence("task", start);
         verify(jdbc).update("UPDATE vls_cloud_ai_task SET enabled=0 WHERE id=?", "task");
-        verifyNoInteractions(service);
+        verify(service, never()).schedule(anyString());
     }
 }

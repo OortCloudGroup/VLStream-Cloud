@@ -18,7 +18,7 @@ const existingPermissions = {
 }
 
 export const pagePaths = [
-  '/video-square', '/video-playback', '/intelligent-analysis-result', '/device-management', '/vlstream/device',
+  '/video-square', '/video-playback', '/device-management', '/vlstream/device',
   '/isup/isupDevice', '/ehome/device', '/rtsp/rtspDevice', '/onvif/cameraManage',
   '/gbmanger/device', '/gbmanger/cloudRecord', '/gbmanger/streamPush', '/gbmanger/streamProxy',
   '/gbmanger/platform', '/gbmanger/recordPlan', '/gbmanger/administrativeGrouping',

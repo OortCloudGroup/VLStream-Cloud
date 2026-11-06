@@ -264,12 +264,6 @@ const routes = [
         meta: { title: '智能分析', icon: '智能分析申请' }
       },
       {
-        path: '/intelligent-analysis-result',
-        name: 'IntelligentAnalysisResult',
-        component: () => import('@/views/VideoAggregation/IntelligentAnalysisResult.vue'),
-        meta: { title: '智能分析结果', icon: '智能分析结果' }
-      },
-      {
         path: '/algorithm-training-platform',
         name: 'AlgorithmTrainingPlatform',
         component: () => import('@/views/AlgorithmWarehouse/AlgorithmTrainingPlatform.vue'),

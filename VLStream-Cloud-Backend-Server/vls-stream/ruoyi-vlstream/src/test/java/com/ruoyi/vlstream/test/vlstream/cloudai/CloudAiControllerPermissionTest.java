@@ -15,6 +15,8 @@ import cn.dev33.satoken.servlet.model.SaStorageForServlet;
 import cn.dev33.satoken.stp.StpInterface;
 import cn.dev33.satoken.stp.StpUtil;
 import com.ruoyi.vlstream.test.vlstream.controller.AlgorithmCatalogController;
+import com.ruoyi.vlstream.test.vlstream.recording.PlatformRecordingController;
+import com.ruoyi.vlstream.test.vlstream.recording.PlatformRecordingService;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsLlmReviewController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsDataManagementController;
@@ -129,6 +131,7 @@ class CloudAiControllerPermissionTest {
     private IVlsDeviceInfoService legacyDevices;
     private MockMvc mvc;
     private String token;
+    private PlatformRecordingService recordings;
 
     @BeforeEach @SuppressWarnings("unchecked") void setup() {
         previousContext = SaManager.getSaTokenContext();
@@ -147,6 +150,7 @@ class CloudAiControllerPermissionTest {
         token = StpUtil.getTokenValue();
         SaTokenContextForThreadLocalStorage.clearBox();
         service = mock(CloudAiService.class);
+        recordings = mock(PlatformRecordingService.class);
         sources = mock(CloudAiSources.class);
         events = mock(CloudAiEvents.class);
         models = mock(CloudAiModels.class);
@@ -181,7 +185,7 @@ class CloudAiControllerPermissionTest {
         ReflectionTestUtils.setField(dispatchController, "savedDispatch", savedDispatch);
         ReflectionTestUtils.setField(dispatchController, "taskService", dispatchTasks);
         SaInterceptor guard = new SaInterceptor();
-        mvc = MockMvcBuilders.standaloneSetup(new CloudAiController(service, sources, events, models),
+        mvc = MockMvcBuilders.standaloneSetup(new CloudAiController(service, sources, events, models), new PlatformRecordingController(recordings),
                 new VlsAlgorithmController(algorithms), new AlgorithmCatalogController(catalog),
                 new VlsLlmReviewController(llmManagement, llmTasks),
                 new VlsDataManagementController(data, mock(DataTransferService.class)),
@@ -269,6 +273,21 @@ class CloudAiControllerPermissionTest {
     @Test void anonymousRequestsRemainDenied() throws Exception {
         mvc.perform(get("/cloud-ai/scenes")).andExpect(status().isUnauthorized());
         verifyNoInteractions(service, sources, events, models);
+    }
+
+    @Test void recordingReadsAndWritesRequirePlaybackPermission() throws Exception {
+        mvc.perform(get("/platform-recordings/runtime")).andExpect(status().isUnauthorized());
+        permissions.add("vls:menu:video-square");
+        mvc.perform(logged(get("/platform-recordings/sources").param("protocol", "VLSTREAM").param("rowId", "1"))).andExpect(status().isForbidden());
+        mvc.perform(logged(put("/platform-recordings/sources/1/manual").contentType(MediaType.APPLICATION_JSON).content("{\"enabled\":true}"))).andExpect(status().isForbidden());
+        verifyNoInteractions(recordings);
+        permissions.add("vls:menu:video-playback");
+        mvc.perform(logged(get("/platform-recordings/sources").param("protocol", "VLSTREAM").param("rowId", "1"))).andExpect(status().isOk());
+        mvc.perform(logged(put("/platform-recordings/sources/1/manual").contentType(MediaType.APPLICATION_JSON).content("{\"enabled\":false}"))).andExpect(status().isOk());
+        verify(recordings).list("VLSTREAM", "1"); verify(recordings).manual("1", false);
+        permissions.clear();
+        mvc.perform(logged(get("/platform-recordings/segments/1/file"))).andExpect(status().isForbidden());
+        verify(recordings, never()).file(anyString());
     }
 
     @Test void algorithmCatalogueAndBothCurrentAndLegacyDeletesRequireAlgorithmPage() throws Exception {

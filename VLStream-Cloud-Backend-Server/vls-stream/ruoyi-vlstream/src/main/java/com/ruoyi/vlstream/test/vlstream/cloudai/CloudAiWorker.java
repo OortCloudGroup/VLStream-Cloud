@@ -49,10 +49,10 @@ public class CloudAiWorker {
         long now = System.currentTimeMillis();
         for (String id : active) jdbc.update("UPDATE vls_cloud_ai_run SET lease_until=? WHERE id=? AND lease_owner=?", now + 120000, id, worker);
         if (active.size() >= 4) return;
-        List<String> pending = jdbc.queryForList("SELECT id FROM vls_cloud_ai_run WHERE state NOT IN ('COMPLETED','CANCELLED','FAILED','SKIPPED') AND (lease_until IS NULL OR lease_until<?) ORDER BY create_time,id LIMIT 20", String.class, now);
+        List<String> pending = jdbc.queryForList("SELECT id FROM vls_cloud_ai_run WHERE JSON_UNQUOTE(JSON_EXTRACT(snapshot_json,'$.executionScope'))=? AND state NOT IN ('COMPLETED','CANCELLED','FAILED','SKIPPED') AND (lease_until IS NULL OR lease_until<?) ORDER BY create_time,id LIMIT 20", String.class, service.executionScope(), now);
         for (String id : pending) {
             if (active.size() >= 4) break;
-            if (active.contains(id) || jdbc.update("UPDATE vls_cloud_ai_run SET lease_owner=?,lease_until=? WHERE id=? AND (lease_until IS NULL OR lease_until<?) AND state NOT IN ('COMPLETED','CANCELLED','FAILED','SKIPPED')", worker, now + 120000, id, now) != 1) continue;
+            if (active.contains(id) || jdbc.update("UPDATE vls_cloud_ai_run SET lease_owner=?,lease_until=? WHERE id=? AND JSON_UNQUOTE(JSON_EXTRACT(snapshot_json,'$.executionScope'))=? AND (lease_until IS NULL OR lease_until<?) AND state NOT IN ('COMPLETED','CANCELLED','FAILED','SKIPPED')", worker, now + 120000, id, service.executionScope(), now) != 1) continue;
             active.add(id); executor.submit(() -> reconcile(id));
         }
     }
@@ -60,6 +60,7 @@ public class CloudAiWorker {
     private void reconcile(String id) {
         String previous = TenantContextHolder.getTenantId();
         Map<String,Object> run = null;
+        String phase = "RESOURCE";
         try {
             run = jdbc.queryForMap("SELECT * FROM vls_cloud_ai_run WHERE id=? AND lease_owner=?", id, worker);
             TenantContextHolder.setTenantId(String.valueOf(run.get("tenant_id")));
@@ -70,16 +71,19 @@ public class CloudAiWorker {
                 terminal(id, cancel ? "CANCELLED" : "SKIPPED", cancel ? "在执行前停止" : "排队期间执行窗口已结束", System.currentTimeMillis()); return;
             }
             ObjectNode snapshot = (ObjectNode) service.read(String.valueOf(run.get("snapshot_json")));
+            if (!service.executionScope().equals(snapshot.path("executionScope").asText())) return;
             ComputeNode node = nodes.get(((Number) run.get("node_id")).longValue());
             if (!Objects.equals(snapshot.path("resource").path("targetFingerprint").asText(), configured.snapshot(node).get("targetFingerprint"))
                     || !Objects.equals(snapshot.path("managementOwner").asText(""), Objects.toString(node.getManagementOwnerSubject(), "")))
                 throw new IOException("RESOURCE_IDENTITY_CHANGED");
             String root = node.getWorkDir() + "/" + ModelArtifactObjectStore.hash(String.valueOf(run.get("tenant_id"))).substring(0,16) + "/" + id;
             if (run.get("run_dir") != null && !root.equals(run.get("run_dir"))) throw new IOException("RUN_DIRECTORY_CHANGED");
+            phase = "GPU_CONNECT";
             try (ComputeSsh.Connection connection = ssh.open(node)) {
                 String python = python(connection, node);
                 if (dispatched < 2) {
                     jdbc.update("UPDATE vls_cloud_ai_run SET dispatched=1,run_dir=?,state='PREPARING',message='准备固定模型与视频源' WHERE id=? AND lease_owner=?", root, id, worker);
+                    phase = "PREPARING";
                     prepare(connection, node, python, root, run, snapshot);
                     // Admission is durable BEFORE the command: a lost reply must be reconciled, never duplicated.
                     if (jdbc.update("UPDATE vls_cloud_ai_run SET dispatched=2 WHERE id=? AND lease_owner=?", id, worker) != 1) return;
@@ -119,8 +123,10 @@ public class CloudAiWorker {
             // No third-party message/stack trace here: SSH / FFmpeg errors can contain credentials.
             Integer admitted = jdbc.queryForObject("SELECT dispatched FROM vls_cloud_ai_run WHERE id=?", Integer.class, id);
             if (admitted != null && admitted >= 2) jdbc.update("UPDATE vls_cloud_ai_run SET state='UNKNOWN',message='执行或证据归档状态待确认，后台将重试；不会重复启动或提前释放GPU' WHERE id=? AND lease_owner=?", id, worker);
-            else terminal(id, "FAILED", "准备失败，请核对GPU连接、检测运行环境、模型归档和摄像机授权", System.currentTimeMillis());
-            log.warn("Cloud AI reconciliation {}: {}", id, error.getClass().getSimpleName());
+            else terminal(id, "FAILED", "RESOURCE".equals(phase) ? "执行资源校验失败，请核对当前后台的YAML资源绑定与运行快照"
+                : "GPU_CONNECT".equals(phase) ? "GPU连接失败，请核对后台SSH身份与网络"
+                : "准备失败，请核对检测运行环境、模型归档和摄像机授权", System.currentTimeMillis());
+            log.warn("Cloud AI reconciliation {} at {}: {}", id, phase, error.getClass().getSimpleName());
         } finally {
             if (previous == null) TenantContextHolder.clear(); else TenantContextHolder.setTenantId(previous);
             jdbc.update("UPDATE vls_cloud_ai_run SET lease_owner=NULL,lease_until=? WHERE id=? AND lease_owner=?", System.currentTimeMillis()+5000, id, worker);

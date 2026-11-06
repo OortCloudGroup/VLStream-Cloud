@@ -27,6 +27,18 @@ public class CloudAiService {
     private final CloudAiSources sources;
     private final CloudAiModels models;
 
+    @org.springframework.beans.factory.annotation.Value("${token.tenant-type:single}")
+    private String executionMode;
+    @org.springframework.beans.factory.annotation.Value("${vlstream.compute.shared-pool.environment-id:}")
+    private String executionEnvironment;
+
+    String executionScope() {
+        if (executionEnvironment == null || !executionEnvironment.matches("[A-Za-z0-9_-]{1,64}")
+                || !("single".equals(executionMode) || "multi".equals(executionMode)))
+            throw new ServiceException("云端检测执行环境标识未配置");
+        return executionEnvironment + ":" + executionMode;
+    }
+
     public static String tenant() {
         String tenant = TenantContextHolder.getTenantId();
         if (tenant == null || tenant.trim().isEmpty()) throw new ServiceException("缺少可信租户上下文", 403);
@@ -126,7 +138,9 @@ public class CloudAiService {
 
     @Transactional(rollbackFor = Exception.class)
     public Map<String,Object> saveTask(String id, CloudAiConfiguration.Task input) {
-        requireName(input.name); CloudAiSchedule schedule;
+        requireName(input.name);
+        if (input.schedule == null) throw new ServiceException("请选择任务类型");
+        input.schedule.executionScope = executionScope(); CloudAiSchedule schedule;
         try { schedule = new CloudAiSchedule(input.schedule); } catch (IllegalArgumentException error) { throw new ServiceException(error.getMessage()); }
         Map<String,Object> scene = owned("scene", input.sceneId, true);
         if (!flag(scene.get("enabled"))) throw new ServiceException("场景尚未启用，请先完善并启用场景");
@@ -158,6 +172,8 @@ public class CloudAiService {
     @Transactional
     public void taskEnabled(String id, boolean enabled) {
         Map<String,Object> task = owned("task", id, true);
+        if (enabled && !executionScope().equals(read(String.valueOf(task.get("schedule_json"))).path("executionScope").asText()))
+            throw new ServiceException("该任务尚未绑定当前执行环境，请编辑并保存任务配置后启用");
         CloudAiSchedule schedule = schedule(String.valueOf(task.get("schedule_json")));
         if (schedule.kind() == CloudAiSchedule.Kind.MANUAL) throw new ServiceException("手工任务不能作为定时配置启停");
         CloudAiSchedule.Window next = schedule.currentOrNext(Instant.now());
@@ -215,6 +231,7 @@ public class CloudAiService {
         String id = UUID.randomUUID().toString(); ObjectNode snapshot = (ObjectNode) read(String.valueOf(scene.get("config_json")));
         snapshot.put("sceneName", String.valueOf(scene.get("name"))); snapshot.put("sceneRevision", ((Number) scene.get("revision")).intValue());
         snapshot.put("taskName", String.valueOf(task.get("name")));
+        snapshot.put("executionScope", executionScope());
         jdbc.update("INSERT IGNORE INTO vls_cloud_ai_run(id,tenant_id,actor_id,task_id,scene_id,window_key,planned_start,planned_end,duration_seconds,snapshot_json,node_id,state,message,ended_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             id, task.get("tenant_id"), task.get("actor_id"), task.get("id"), scene.get("id"), key, start, end, duration, snapshot.toString(), snapshot.path("nodeId").asLong(), state, message, TERMINAL.contains(state) ? System.currentTimeMillis() : null);
         return id;
