@@ -77,13 +77,17 @@ export const translatePhrase = (source, locale = currentLocale.value) => {
 
 // Match complete, catalogued UI messages. Never translate fragments of device
 // names or other business data, and retain unknown diagnostic messages verbatim.
-const messageTemplates = Object.keys(phraseCatalog['en-US']).filter(source => /\{\w+\}/.test(source)).map(source => {
+const numericMessageTemplate = source => /^\{\w+\}\s*(?:台设备|画面|米|公里|秒前|分钟前|小时前)$/.test(source)
+const messageTemplates = Object.keys(phraseCatalog['en-US']).filter(source => /\{\w+\}/.test(source)
+  // Very short open-ended prefixes such as “设备{name}” also match arbitrary
+  // resource names and raw diagnostics. Require a meaningful fixed UI phrase.
+  && (source.replace(/\{\w+\}/g, '').trim().length >= 4 || numericMessageTemplate(source))).map(source => {
   const keys = []
   let pattern = ''
   let offset = 0
   const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   for (const match of source.matchAll(/\{(\w+)\}/g)) {
-    pattern += escape(source.slice(offset, match.index)) + '([\\s\\S]*?)'
+    pattern += escape(source.slice(offset, match.index)) + (numericMessageTemplate(source) ? '(\\d+(?:\\.\\d+)?)' : '([\\s\\S]*?)')
     keys.push(match[1])
     offset = match.index + match[0].length
   }
@@ -91,14 +95,16 @@ const messageTemplates = Object.keys(phraseCatalog['en-US']).filter(source => /\
   return { source, keys, pattern: new RegExp(`^${pattern}$`) }
 }).sort((left, right) => right.source.replace(/\{\w+\}/g, '').length - left.source.replace(/\{\w+\}/g, '').length)
 
-export const translateUiMessage = (source, depth = 0) => {
+export const translateUiMessage = source => {
   if (typeof source !== 'string' || currentLocale.value === DEFAULT_LOCALE) return source
   const exact = translatePhrase(source)
-  if (exact !== source || depth >= 3) return exact
+  if (exact !== source) return exact
   for (const template of messageTemplates) {
     const match = source.match(template.pattern)
     if (match) {
-      const params = Object.fromEntries(template.keys.map((key, index) => [key, translateUiMessage(match[index + 1], depth + 1)]))
+      // Captures can contain user names, filenames, model IDs or raw diagnostics.
+      // Translate the message shell only; never reinterpret captured business data.
+      const params = Object.fromEntries(template.keys.map((key, index) => [key, match[index + 1]]))
       return translatePhrase(template.source, params)
     }
   }

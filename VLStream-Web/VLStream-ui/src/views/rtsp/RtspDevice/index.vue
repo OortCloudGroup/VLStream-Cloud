@@ -297,7 +297,7 @@
     </el-dialog>
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
   </div>
@@ -323,7 +323,7 @@ import Hikvision from "@/components/Hikvision/index.vue";
 import RtspDevicePlayer from '@/components/RtspDevicePlayer.vue';
 import CusPlayer from "@/components/flv/CusPlayer.vue";
 import {ElLoading, ElMessage} from "element-plus";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 import {checkPermi} from "@/utils/wvpPermission";
 import {startPlay} from "../../../api/wvp/push.js";
 import {DocumentCopy} from '@element-plus/icons-vue'

@@ -368,6 +368,23 @@ onMounted(async () => {
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
+.login-container .login-card .el-button.login-button {
+  background: linear-gradient(135deg, #5267d5 0%, #70439b 100%) !important;
+  color: #fff !important;
+  border: 1px solid transparent;
+}
+
+.login-container .login-card .el-button.login-button:hover,
+.login-container .login-card .el-button.login-button:focus-visible {
+  background: linear-gradient(135deg, #4257c5 0%, #60338b 100%) !important;
+  color: #fff !important;
+}
+
+.login-container .login-card .el-button.login-button:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
 .bg-decoration {
   position: absolute;
   top: 0;

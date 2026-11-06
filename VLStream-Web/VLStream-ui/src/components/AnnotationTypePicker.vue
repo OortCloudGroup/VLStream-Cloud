@@ -6,7 +6,7 @@
         @click="$emit('update:modelValue', item.value)">
         <span v-if="modelValue === item.value" class="selected-mark" aria-hidden="true">✓</span>
         <strong>{{ item.label }}</strong>
-        <img :src="item.image" :alt="item.label + $tp('真实图像示例')" referrerpolicy="no-referrer" />
+        <img :src="item.image" :alt="$tp(item.label) + ' · ' + $tp('真实图像示例')" referrerpolicy="no-referrer" />
       </button>
     </div>
     <div class="type-description" aria-live="polite"><span aria-hidden="true">ⓘ</span><p>{{ selected?.description || $tp('请选择标注类型，查看任务说明。') }}</p></div>

@@ -17,9 +17,16 @@ const phrases = new Set()
 const missing = new Map()
 const match = process.argv.find(arg => arg.startsWith('--match='))?.slice(8).toLowerCase()
 let fileCount = 0
+let scriptCount = 0
 
 function check(value, file) {
   if (!han.test(value)) return
+  if (/<(?:div|span|p)\b/i.test(value)) {
+    value.split(/<[^>]+>/).forEach(part => check(part.trim(), file))
+    return
+  }
+  // Generated filenames are business artifacts, not interface copy.
+  if (/\.(xlsx?|csv|zip|json|txt|pdf|docx?|png|jpe?g|mp4)$/i.test(value)) return
   phrases.add(value)
   const english = phraseCatalog['en-US'][value] || tableHeaderEnglish[value]
   if (!english || han.test(english)) {
@@ -61,7 +68,12 @@ function checkReturnedText(node, file) {
 }
 
 function inspect(file) {
-  if (match && !path.relative(repositoryRoot, file).toLowerCase().includes(match)) return
+  if (match && !path.relative(repositoryRoot, file).replaceAll('\\', '/').toLowerCase().includes(match.replaceAll('\\', '/'))) return
+  if (!file.endsWith('.vue')) {
+    scriptCount++
+    inspectScript({ content: fs.readFileSync(file, 'utf8') }, file)
+    return
+  }
   const { descriptor, errors } = parseSfc(fs.readFileSync(file, 'utf8'))
   if (errors.length) throw new Error(`${file}: ${errors.join(', ')}`)
   fileCount++
@@ -83,6 +95,10 @@ function inspect(file) {
   }
   if (descriptor.template) walk(parseTemplate(descriptor.template.content))
   const script = descriptor.scriptSetup || descriptor.script
+  inspectScript(script, file)
+}
+
+function inspectScript(script, file) {
   if (script) visit(babel.parse(script.content, { sourceType: 'module', plugins: ['typescript'] }), node => {
     if (node.type === 'CallExpression' && node.callee?.type === 'MemberExpression' && ['ElMessage', 'ElMessageBox'].includes(node.callee.object?.name)) {
       node.arguments.filter(arg => arg.type !== 'SpreadElement').forEach(arg => checkExpression(script.content.slice(arg.start, arg.end), file))
@@ -90,9 +106,14 @@ function inspect(file) {
     if (node.type === 'CallExpression' && ['uiText', 'translatePhrase', 'tp'].includes(node.callee?.name) && node.arguments[0]?.type === 'StringLiteral') check(node.arguments[0].value, file)
     if (node.type === 'ObjectProperty' && /^(label|title|placeholder|description|message|text|content|emptyText)$/.test(node.key.name || node.key.value || '') && node.value.type === 'StringLiteral') check(node.value.value, file)
     if (node.type === 'VariableDeclarator' && node.init?.type === 'ObjectExpression' && /names|states|units|labels|descriptions|types/i.test(node.id.name || '')) {
-      node.init.properties.forEach(prop => { if (prop.value?.type === 'StringLiteral') check(prop.value.value, file) })
+      node.init.properties.forEach(prop => { if (prop.value) checkReturnedText(prop.value, file) })
     }
     if (node.type === 'NewExpression' && node.callee?.name === 'Error' && node.arguments[0]?.type === 'StringLiteral') check(node.arguments[0].value, file)
+    if (node.type === 'AssignmentExpression' && process.argv.includes('--assignments')) {
+      const target = script.content.slice(node.left.start, node.left.end)
+      if (/error|message|title|label|hint|description|placeholder|content|terminalOutput|text/i.test(target)
+        && !/FunctionExpression/.test(node.right.type)) checkReturnedText(node.right, file)
+    }
     if (node.type === 'ReturnStatement') checkReturnedText(node.argument, file)
     if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') checkReturnedText(node.body, file)
   })
@@ -102,12 +123,13 @@ function scan(directory) {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const file = path.join(directory, entry.name)
     if (entry.isDirectory()) scan(file)
-    else if (entry.isFile() && file.endsWith('.vue')) inspect(file)
+    else if (entry.isFile() && (file.endsWith('.vue') || process.argv.includes('--scripts') && /\.(m?js|ts)$/.test(file)
+      && !/[\\/](i18n|lang|assets)[\\/]/.test(file))) inspect(file)
   }
 }
 
 scan(path.join(frontendRoot, 'src'))
-console.log(`Checked ${fileCount} complete Vue files and ${phrases.size} interface phrases, including nested templates, dynamic messages, display maps, and validation text.`)
+console.log(`Checked ${fileCount} complete Vue files, ${scriptCount} script files and ${phrases.size} interface phrases, including nested templates, dynamic messages, display maps, and validation text.`)
 console.log(`Missing English translations: ${missing.size}`)
 for (const [phrase, files] of missing) console.log(`${JSON.stringify(phrase)}\n  ${[...files].join('\n  ')}`)
 if (process.argv.includes('--strict') && missing.size) process.exitCode = 1

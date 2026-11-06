@@ -256,7 +256,7 @@
 
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
     <GbHelpDialog v-model="showHelp" mode="service" />
   </div>
@@ -268,7 +268,7 @@ import GbHelpDialog from '@/components/GbHelpDialog.vue'
 import { EditPen, QuestionFilled } from '@element-plus/icons-vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 import {
   batchDeleteDevice,
   deleteDevice,

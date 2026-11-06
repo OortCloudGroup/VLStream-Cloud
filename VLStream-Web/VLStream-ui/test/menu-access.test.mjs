@@ -19,7 +19,7 @@ test('grant editor follows verified administrator state and clears it after revo
 test('each application route is either deliberately public or has a page permission', async () => {
   const source = await readFile(new URL('../src/router/index.js', import.meta.url), 'utf8')
   const routes = [...source.matchAll(/path:\s*'([^']+)'/g)].map(match => match[1])
-  const baseline = new Set(['/login', '/', '/workspace', '/user-profile', '/cloud-platform', '/compute-safety'])
+  const baseline = new Set(['/login', '/', '/workspace', '/user-profile', '/cloud-platform'])
   assert.deepEqual(routes.filter(path => !baseline.has(path) && !isManagedMenuRoute(path)), [])
 })
 

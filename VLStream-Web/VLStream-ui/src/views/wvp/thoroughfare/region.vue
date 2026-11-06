@@ -183,7 +183,7 @@
     </div>
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="formMap.gbAddress" />
+      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="formMap.gbAddress" />
     </el-dialog>
   </div>
 </template>
@@ -193,7 +193,7 @@ import { clacPXToVW } from "@/utils/wvpCompat";
 import CollapseToggle from "@/components/CollapseToggle.vue";
 import { checkPermi } from "@/utils/wvpPermission";
 import { queryForTree } from "../../../api/wvp/region.js";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 import {
   addChannelToRegion,
   deleteChannelToRegion,

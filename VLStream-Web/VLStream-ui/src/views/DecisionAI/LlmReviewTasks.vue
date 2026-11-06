@@ -5,7 +5,7 @@
       <div class="page-header">
         <div>
           <h2>{{ $tp('大模型复核') }}</h2>
-          <p>{{ $tp('查看 YOLO 事件的二次判断、失败原因与人工复核记录。') }}</p>
+          <p>{{ $tp('查看预警事件的二次判断、失败原因与人工复核记录。') }}</p>
         </div>
         <el-button @click="load">{{ $tp('刷新') }}</el-button>
       </div>

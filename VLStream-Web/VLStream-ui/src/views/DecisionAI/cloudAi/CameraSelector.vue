@@ -1,18 +1,18 @@
 <template>
-    <el-dialog :model-value="open" title="选择摄像机" width="760px" class="cloud-ai-dialog" append-to-body @update:model-value="$emit('update:open', $event)">
+    <el-dialog :model-value="open" :title="$tp(&quot;选择摄像机&quot;)" width="760px" class="cloud-ai-dialog" append-to-body @update:model-value="$emit('update:open', $event)">
         <div class="cloud-ai-toolbar">
-            <el-select v-model="protocol" aria-label="设备协议" @change="load"><el-option v-for="(label, item) in protocolNames" :key="item" :label="label" :value="item" /></el-select>
-            <el-input v-model="search" placeholder="搜索设备名称" clearable @keyup.enter="load" @clear="load" /><el-button @click="load">搜索</el-button>
+            <el-select v-model="protocol" :aria-label="$tp(&quot;设备协议&quot;)" @change="load"><el-option v-for="(label, item) in protocolNames" :key="item" :label="label" :value="item" /></el-select>
+            <el-input v-model="search" :placeholder="$tp(&quot;搜索设备名称&quot;)" clearable @keyup.enter="load" @clear="load" /><el-button @click="load">{{ $tp("搜索") }}</el-button>
         </div>
         <el-alert v-if="error" :title="error" type="error" :closable="false" />
         <el-table v-loading="loading" :data="rows" max-height="390" row-key="id">
-            <el-table-column label="摄像机" min-width="220"><template #default="{ row }"><span class="cloud-ai-main-text">{{ row.deviceName || row.name || row.deviceId }}</span><span class="cloud-ai-secondary">{{ row.deviceId || row.deviceCode || row.ip || '设备主码流' }}</span></template></el-table-column>
-            <el-table-column label="视频源" min-width="190"><template #default="{ row }"><el-select v-if="streams[row.id]?.length" v-model="selectedStreams[row.id]" placeholder="选择码流" aria-label="视频源"><el-option v-for="source in streams[row.id]" :key="String(source.streamId)" :label="`${source.name || '主码流'} · ${mediaName(source.type)}`" :value="source.streamId || 'main'" :disabled="!source.supported" /></el-select><span v-else-if="streams[row.id]" class="cloud-ai-help">暂无可用通道</span><el-button v-else link type="primary" :loading="streamLoading === row.id" @click="loadStreams(row)">查看视频源</el-button></template></el-table-column>
-            <el-table-column width="85" align="right"><template #default="{ row }"><el-button link type="primary" :disabled="!selectedStreams[row.id]" :loading="adding === row.id" @click="add(row)">添加</el-button></template></el-table-column>
+            <el-table-column :label="$tp(&quot;摄像机&quot;)" min-width="220"><template #default="{ row }"><span class="cloud-ai-main-text">{{ row.deviceName || row.name || row.deviceId }}</span><span class="cloud-ai-secondary">{{ row.deviceId || row.deviceCode || row.ip || '设备主码流' }}</span></template></el-table-column>
+            <el-table-column :label="$tp(&quot;视频源&quot;)" min-width="190"><template #default="{ row }"><el-select v-if="streams[row.id]?.length" v-model="selectedStreams[row.id]" :placeholder="$tp(&quot;选择码流&quot;)" :aria-label="$tp(&quot;视频源&quot;)"><el-option v-for="source in streams[row.id]" :key="String(source.streamId)" :label="`${source.name || '主码流'} · ${mediaName(source.type)}`" :value="source.streamId || 'main'" :disabled="!source.supported" /></el-select><span v-else-if="streams[row.id]" class="cloud-ai-help">{{ $tp("暂无可用通道") }}</span><el-button v-else link type="primary" :loading="streamLoading === row.id" @click="loadStreams(row)">{{ $tp("查看视频源") }}</el-button></template></el-table-column>
+            <el-table-column width="85" align="right"><template #default="{ row }"><el-button link type="primary" :disabled="!selectedStreams[row.id]" :loading="adding === row.id" @click="add(row)">{{ $tp("添加") }}</el-button></template></el-table-column>
         </el-table>
         <div class="cloud-ai-footer"><el-pagination small layout="prev, pager, next" :page-size="10" :total="total" v-model:current-page="current" @current-change="load(false)" /></div>
-        <p class="cloud-ai-help">支持各协议设备的有效视频源。平台在任务运行时开流，由 GPU 实际收帧判断可用性；无需保持浏览器打开。</p>
-        <template #footer><el-button @click="$emit('update:open', false)">完成选择</el-button></template>
+        <p class="cloud-ai-help">{{ $tp("支持各协议设备的有效视频源。平台在任务运行时开流，由 GPU 实际收帧判断可用性；无需保持浏览器打开。") }}</p>
+        <template #footer><el-button @click="$emit('update:open', false)">{{ $tp("完成选择") }}</el-button></template>
     </el-dialog>
 </template>
 <script setup>

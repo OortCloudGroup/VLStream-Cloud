@@ -51,7 +51,6 @@
         </div>
 
         <div class="header-right">
-          <el-button v-if="!localEventRoute" link @click="$router.push('/compute-safety')">{{ tp('算力安全停机') }}</el-button>
           <LocaleSwitcher v-if="localEventRoute || tenantMode !== 'multi' || !rightInfoReady" />
           <OortCloudPopover v-if="!localEventRoute && ((tenantMode === 'multi' && !rightInfoReady) || (tenantMode !== 'multi' && isSuperAdmin))" :tenant-mode="tenantMode" />
 
@@ -126,6 +125,7 @@
               <div class="stat-content"><span class="stat-label">{{ $tp('离线：') }}</span><span class="stat-value">{{ sidebarDeviceStats.offline }}</span></div>
             </div>
             <div class="stat-item unknown">
+              <div class="stat-icon"><img src="@/assets/设备-未知@3x.png" :alt="$tp('未知状态')" width="20" height="20"></div>
               <div class="stat-content"><span class="stat-label">{{ $tp('未知状态') }}：</span><span class="stat-value">{{ sidebarDeviceStats.unknown }}</span></div>
             </div>
           </div>

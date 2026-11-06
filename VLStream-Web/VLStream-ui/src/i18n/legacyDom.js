@@ -1,4 +1,4 @@
-import { currentLocale, translatePhrase } from './index'
+import { currentLocale, translateUiMessage } from './index'
 
 const translatedAttributes = ['placeholder', 'title', 'aria-label', 'alt']
 const originalText = new WeakMap()
@@ -22,7 +22,7 @@ const translateTextNode = node => {
   const source = originalText.get(node)
   const trimmed = source.trim().replace(/\s+/g, ' ')
   if (!trimmed) return
-  const translated = translatePhrase(trimmed)
+  const translated = translateUiMessage(trimmed)
   if (translated === trimmed && currentLocale.value !== 'zh-CN') return
   const start = source.match(/^\s*/)?.[0] || ''
   const end = source.match(/\s*$/)?.[0] || ''
@@ -33,6 +33,7 @@ const translateTextNode = node => {
 
 const translateElement = element => {
   if (!(element instanceof Element) || element.closest('[data-i18n-ignore]')) return
+  if (element.hasAttribute('data-i18n-ignore-attributes')) return
   let attributes = originalAttributes.get(element)
   if (!attributes) {
     attributes = {}
@@ -48,7 +49,7 @@ const translateElement = element => {
       }
       attributes[name] = { source: value, applied: value }
     }
-    const translated = translatePhrase(attributes[name].source)
+    const translated = translateUiMessage(attributes[name].source)
     attributes[name].applied = translated
     if (value !== translated) element.setAttribute(name, translated)
   })
@@ -88,11 +89,13 @@ export const installLegacyDomI18n = () => {
   observer = new MutationObserver(records => {
     records.forEach(record => {
       if (record.type === 'characterData') translateTextNode(record.target)
+      if (record.type === 'attributes') translateElement(record.target)
       record.addedNodes.forEach(translateTree)
     })
   })
   const root = document.body
-  if (root) observer.observe(root, { childList: true, subtree: true, characterData: true })
+  if (root) observer.observe(root, { childList: true, subtree: true, characterData: true,
+    attributes: true, attributeFilter: translatedAttributes })
   window.addEventListener('vlstream:locale-changed', scheduleTranslation)
 }
 

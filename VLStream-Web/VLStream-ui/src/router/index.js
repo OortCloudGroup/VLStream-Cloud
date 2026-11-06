@@ -376,11 +376,6 @@ const routes = [
         meta: { title: '算力管理', icon: '容器实例' }
       },
       {
-        path: '/compute-safety', name: 'ComputeSafety',
-        component: () => import('@/views/AIComputingScheduling/ComputeSafety.vue'),
-        meta: { title: '我的算力安全停机', hideInMenu: true }
-      },
-      {
         path: '/user-profile',
         name: 'UserProfile',
         component: () => import('@/views/UserProfile.vue'),

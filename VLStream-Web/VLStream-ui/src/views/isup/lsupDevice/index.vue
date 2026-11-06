@@ -338,7 +338,7 @@
     </el-dialog>
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
     <el-dialog :title="$tp('SDK播放')" v-model="openPlaySDK" width="45%" append-to-body @close="closeSDK">
@@ -363,7 +363,7 @@ import {
   ptzCtrlStart
 } from "../../../api/isup/lsupDevice.js";
 import Hikvision from "@/components/Hikvision/index.vue";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 
 import Jessibuca from "@/components/jessibuca/index.vue";
 import RtcPlayer from "@/components/rtcPlayer/index.vue";

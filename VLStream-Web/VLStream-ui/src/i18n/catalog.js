@@ -1,3 +1,6 @@
+import { computeEnglish } from './computeEnglish.js'
+import { siteEnglish } from './siteEnglish.js'
+import { runtimeEnglish } from './runtimeEnglish.js'
 import { uiEnglish } from './uiEnglish.js'
 import { gbHelpEnglish } from './gbHelpPhrases.js'
 
@@ -444,7 +447,7 @@ catalogTsv.trim().split('\n').forEach((line, lineIndex) => {
 })
 
 // Preserve reviewed locale entries; untranslated UI phrases fall back to English.
-Object.entries({ ...uiEnglish, ...gbHelpEnglish }).forEach(([source, english]) => {
+Object.entries({ ...uiEnglish, ...gbHelpEnglish, ...computeEnglish, ...siteEnglish, ...runtimeEnglish }).forEach(([source, english]) => {
   localeColumns.forEach(code => {
     phraseCatalog[code][source] ||= code === 'zh-CN' ? source : english
   })
@@ -456,7 +459,9 @@ const conciseEnglishNavigation = {
   '算法管理': 'Algorithms', '大模型管理': 'LLMs', '数据集管理': 'Datasets',
   '用户管理': 'Users', '角色管理': 'Roles', '菜单管理': 'Menus',
   '部门管理': 'Departments', '岗位管理': 'Positions', '固件管理': 'Firmware',
-  '工单管理': 'Work orders', 'VLS协议设备固件管理': 'VLS firmware'
+  '工单管理': 'Work orders', 'VLS协议设备固件管理': 'VLS firmware',
+  'VLStream协议': 'VLStream', 'ISUP协议': 'ISUP', 'EHome协议': 'EHome',
+  'RTSP协议': 'RTSP', 'ONVIF协议': 'ONVIF', '国标协议': 'GB28181'
 }
 Object.assign(phraseCatalog['en-US'], conciseEnglishNavigation)
 

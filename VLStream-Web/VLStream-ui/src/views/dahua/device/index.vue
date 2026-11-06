@@ -197,7 +197,7 @@
     </el-dialog>
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
     <el-dialog :title="$tp('播放视频')" v-model="openPlay" width="45%" append-to-body  @close="closeProxyPlay">
@@ -555,7 +555,7 @@ import {
   timerCapturePicture
 } from "../../../api/dahua/device.js";
 import {checkPermi} from "@/utils/wvpPermission";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 import moment from "moment";
 import Hikvision from "@/components/Hikvision/index.vue";
 
