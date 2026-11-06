@@ -5,27 +5,19 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-/** One deployment mode; explicit legacy gates retain their previous semantics. No secret toString. */
+/** Merchant connectivity and bounded paid-admission policy. No secret toString. */
 @Getter
 @Setter
 @Component
 @ConfigurationProperties(prefix = "vlstream.compute.external-billing")
 public class ExternalBillingProperties {
-    public enum Mode { OFF, READ_ONLY, PAID }
-    private Mode mode;
-    /** Deprecated compatibility inputs. Null means absent, not permission. */
-    private Boolean enabled;
-    /** Enabling read access alone must never enable funds movement. */
-    private Boolean allowWrites;
-    /** Product admission is independent of transport and remains closed until configured. */
-    private Boolean paidAdmissionEnabled;
     private String baseUrl;
     private String merchantId;
     private String apiKey;
-    private Boolean safetyStopEnabled;
     private int settlementIntervalSeconds = 60;
     private int holdStopLeadSeconds = 60;
     private int maximumRunSeconds = 0;
+    /** Optional observed stop-duration evidence. It is not a supplier SLA or a stop guarantee. */
     private Integer verifiedProviderStopSeconds;
     private String maximumHoldQuota;
     /** One explicitly configured DEV acceptance run. No default permission or money amount. */
@@ -41,57 +33,64 @@ public class ExternalBillingProperties {
     /** Backend-approved, time-limited supplier price evidence, keyed by canonical node id. */
     private java.util.Map<String, com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingRate> rates = new java.util.LinkedHashMap<>();
 
-    public boolean isEnabled() { return mode == null ? Boolean.TRUE.equals(enabled) : mode != Mode.OFF; }
-    public boolean isAllowWrites() { return mode == null ? Boolean.TRUE.equals(allowWrites) : mode == Mode.PAID; }
-    public boolean isPaidAdmissionEnabled() { return mode == null ? Boolean.TRUE.equals(paidAdmissionEnabled) : mode == Mode.PAID; }
-    public boolean isSafetyStopEnabled() { return mode == null ? Boolean.TRUE.equals(safetyStopEnabled) : mode == Mode.PAID; }
-    public void setEnabled(Boolean value) { enabled = value; }
-    public void setEnabled(boolean value) { enabled = value; }
-    public void setAllowWrites(Boolean value) { allowWrites = value; }
-    public void setAllowWrites(boolean value) { allowWrites = value; }
-    public void setPaidAdmissionEnabled(Boolean value) { paidAdmissionEnabled = value; }
-    public void setPaidAdmissionEnabled(boolean value) { paidAdmissionEnabled = value; }
-    public void setSafetyStopEnabled(Boolean value) { safetyStopEnabled = value; }
-    public void setSafetyStopEnabled(boolean value) { safetyStopEnabled = value; }
-    public boolean paidConfigured() { return isEnabled() && isAllowWrites() && isPaidAdmissionEnabled() && isSafetyStopEnabled(); }
+    /** The target self endpoint requires a valid HTTPS destination and verified user proof. */
+    public boolean hasIdentityConfiguration() { return identityConfigurationReason() == null; }
+
+    /** Local presence only; this grants no user payment authority and sends no request. */
+    public boolean hasMerchantConfiguration() { return merchantConfigurationReason() == null; }
+
+    /** New orders need explicit bounds. Original-operation recovery uses its persisted evidence. */
+    public boolean paidConfigured() { return unavailableReason() == null; }
+
+    public String identityConfigurationReason() {
+        if (baseUrl == null || baseUrl.trim().isEmpty()) return "平台计费缺配置：base-url 服务地址";
+        try {
+            java.net.URI uri = new java.net.URI(baseUrl);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
+                || uri.getQuery() != null || uri.getFragment() != null || uri.getPort() == 0 || uri.getPort() < -1 || uri.getPort() > 65535)
+                return "平台计费配置无效：base-url 必须是有效的 HTTPS 服务地址";
+        } catch (Exception invalid) { return "平台计费配置无效：base-url 必须是有效的 HTTPS 服务地址"; }
+        return null;
+    }
+
+    public String merchantConfigurationReason() {
+        String identity = identityConfigurationReason();
+        if (identity != null) return identity;
+        if (merchantId == null || merchantId.trim().isEmpty()) return "平台计费缺配置：merchant-id 商户身份";
+        if (apiKey == null || apiKey.trim().isEmpty()) return "平台计费缺配置：api-key 商户凭据";
+        if (!merchantId.matches("[A-Za-z0-9_-]{1,64}")) return "平台计费配置无效：merchant-id 商户身份格式";
+        if (!cleanIdentity(apiKey)) return "平台计费配置无效：api-key 商户凭据格式";
+        return null;
+    }
 
     /** Local presence only. Never contacts the wallet or creates an upstream grant. */
     public String unavailableReason() {
-        if (!isEnabled()) return "平台计费服务尚未启用，请联系部署管理员";
-        if (baseUrl == null || baseUrl.trim().isEmpty()) return "平台计费服务地址未配置";
-        if (merchantId == null || merchantId.trim().isEmpty() || apiKey == null || apiKey.trim().isEmpty()) return "平台计费应用身份未配置，请联系部署管理员";
-        if (!paidConfigured()) return mode == Mode.READ_ONLY ? "当前仅开放余额查询，尚未启用付费开机" : "平台计费部署配置不完整，请联系部署管理员";
+        String merchant = merchantConfigurationReason();
+        if (merchant != null) return merchant;
+        if (maximumRunSeconds < 1 || maximumRunSeconds > 86400) return "平台计费缺少有效配置：maximum-run-seconds 运行时限";
+        if (holdStopLeadSeconds < 1 || holdStopLeadSeconds > 3600)
+            return "平台计费配置无效：hold-stop-lead-seconds 停机提前量必须在 1 到 3600 秒之间";
+        if (verifiedProviderStopSeconds != null) {
+            if (verifiedProviderStopSeconds < 1)
+                return "平台计费配置无效：verified-provider-stop-seconds 停机观测证据须为正数";
+            if (holdStopLeadSeconds < verifiedProviderStopSeconds)
+                return "平台计费配置无效：hold-stop-lead-seconds 必须覆盖已配置的停机观测时长";
+        }
+        if (settlementIntervalSeconds < 1 || settlementIntervalSeconds > 3600)
+            return "平台计费配置无效：settlement-interval-seconds 结算周期必须在 1 到 3600 秒之间";
+        try { ExactQuota.integer(maximumHoldQuota, true); }
+        catch (RuntimeException invalid) { return "平台计费缺少有效配置：maximum-hold-quota 资金上限"; }
         return null;
     }
 
     @javax.annotation.PostConstruct
     public void validateDeployment() {
-        if (mode == null) {
-            if (enabled != null || allowWrites != null || paidAdmissionEnabled != null || safetyStopEnabled != null)
-                org.slf4j.LoggerFactory.getLogger(ExternalBillingProperties.class).warn("旧版计费布尔配置仍按原语义生效；请迁移为单一 external-billing.mode，不能混用冲突的旧开关");
-            return;
-        }
-        conflict(enabled, mode != Mode.OFF, "enabled");
-        conflict(allowWrites, mode == Mode.PAID, "allow-writes");
-        conflict(paidAdmissionEnabled, mode == Mode.PAID, "paid-admission-enabled");
-        conflict(safetyStopEnabled, mode == Mode.PAID, "safety-stop-enabled");
-        if (mode == Mode.OFF) return;
-        try {
-            java.net.URI uri = new java.net.URI(baseUrl == null ? "" : baseUrl);
-            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null)
-                throw new IllegalArgumentException();
-        } catch (Exception invalid) { throw new IllegalStateException("计费 mode 已启用，但 base-url 不是有效的 HTTPS 服务地址"); }
-        if (merchantId == null || merchantId.trim().isEmpty() || apiKey == null || apiKey.trim().isEmpty())
-            throw new IllegalStateException("计费 mode 已启用，但 merchant-id 或 api-key 未配置；不输出凭据值");
-        if (mode == Mode.PAID) {
-            if (verifiedProviderStopSeconds == null || verifiedProviderStopSeconds < 1 || holdStopLeadSeconds < verifiedProviderStopSeconds
-                || maximumRunSeconds < 1 || maximumRunSeconds > 86400)
-                throw new IllegalStateException("PAID 模式缺少有效运行时限或可靠停机预算，hold-stop-lead-seconds 必须覆盖 verified-provider-stop-seconds");
-            try { ExactQuota.integer(maximumHoldQuota, true); }
-            catch (RuntimeException invalid) { throw new IllegalStateException("PAID 模式缺少有效的 maximum-hold-quota 上限"); }
-        }
+        String reason = unavailableReason();
+        if (reason != null) org.slf4j.LoggerFactory.getLogger(ExternalBillingProperties.class).warn("{}", reason);
     }
-    private void conflict(Boolean legacy, boolean expected, String name) {
-        if (legacy != null && legacy != expected) throw new IllegalStateException("external-billing.mode 与旧开关 " + name + " 冲突；请移除旧开关，不能静默改变部署语义");
+    private static boolean cleanIdentity(String value) {
+        if (!value.equals(value.trim())) return false;
+        for (int index = 0; index < value.length(); index++) if (Character.isISOControl(value.charAt(index))) return false;
+        return true;
     }
 }

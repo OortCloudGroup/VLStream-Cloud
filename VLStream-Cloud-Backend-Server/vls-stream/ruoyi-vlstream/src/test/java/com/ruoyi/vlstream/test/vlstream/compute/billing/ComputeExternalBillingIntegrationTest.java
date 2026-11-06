@@ -43,10 +43,15 @@ class ComputeExternalBillingIntegrationTest {
         Loopback loopback = new Loopback(fixture, expiry);
         try {
             ExternalBillingProperties properties = fixture.properties;
-            properties.setAllowWrites(true);
-            properties.setBaseUrl("http://127.0.0.1:" + loopback.server.getAddress().getPort());
+            properties.setBaseUrl("https://fixture.invalid");
             properties.setApiKey("TEST_ONLY_LOOPBACK_NOT_A_REAL_CREDENTIAL");
-            NewApiBillingClient client = new NewApiBillingClient(properties, fixture.json);
+            NewApiBillingClient client = new NewApiBillingClient(properties, fixture.json) {
+                @Override protected java.net.HttpURLConnection openConnection(java.net.URI target) throws java.io.IOException {
+                    assertEquals("https", target.getScheme()); assertEquals("fixture.invalid", target.getHost());
+                    return (java.net.HttpURLConnection) java.net.URI.create("http://127.0.0.1:" + loopback.server.getAddress().getPort()
+                        + target.getRawPath() + (target.getRawQuery() == null ? "" : "?" + target.getRawQuery())).toURL().openConnection();
+                }
+            };
             ComputeFundingIntentService journal = new ComputeFundingIntentService(fixture.jdbc, fixture.manager, fixture.json);
             ComputeFundingRecoveryService recovery = new ComputeFundingRecoveryService(journal,
                 (Supplier<ExternalBillingGateway>) () -> client, properties);

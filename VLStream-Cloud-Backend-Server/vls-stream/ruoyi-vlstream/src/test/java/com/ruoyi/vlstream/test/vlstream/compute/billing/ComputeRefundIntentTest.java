@@ -61,7 +61,8 @@ class ComputeRefundIntentTest {
         originalBody = original.toString();
         jdbc.update("INSERT INTO vls_compute_billing_slice(merchant_charge_id,usage_id,slice_sequence,interval_start_ms,interval_end_ms,idempotency_key,request_json,request_hash,amount_text,remainder_numerator,remainder_denominator,state,charge_id,ledger_entry_id) VALUES(?,?,0,0,1,'original-charge-key',?,?,?,'0','1','SETTLED','201','301')",
             chargeReference, usage, originalBody, ComputeBillingSettlementService.hash(originalBody), "1000");
-        properties = new ExternalBillingProperties(); properties.setEnabled(true); properties.setMerchantId("vls-test");
+        properties = new ExternalBillingProperties(); properties.setMerchantId("vls-test");
+        properties.setBaseUrl("https://fixture.invalid"); properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL");
         gateway = new FakeGateway(); service = restarted();
     }
 
@@ -77,11 +78,12 @@ class ComputeRefundIntentTest {
     }
     int count() { return jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_refund_intent", Integer.class); }
 
-    @Test void migrationAddsOnlyEmptyLocalJournalAndWritesRemainOff() {
+    @Test void migrationAddsOnlyEmptyLocalJournalAndMissingConfigurationCannotMoveFunds() {
         assertEquals(0, count());
-        assertFalse(new ExternalBillingProperties().isEnabled());
-        assertFalse(new ExternalBillingProperties().isAllowWrites());
-        assertFalse(new ExternalBillingProperties().isSafetyStopEnabled());
+        ExternalBillingProperties missing = new ExternalBillingProperties();
+        assertFalse(missing.hasMerchantConfiguration());
+        assertFalse(missing.paidConfigured());
+        assertNotNull(missing.merchantConfigurationReason());
     }
 
     @Test void refundContractUsesOnlyDefinedFieldsWithExactStrings() {
@@ -184,17 +186,18 @@ class ComputeRefundIntentTest {
         assertEquals(0, count()); assertNotNull(prepare("correction-1", "400").key);
     }
 
-    @Test void defaultWriteGateDoesNotConsultGatewayOrSend() {
+    @Test void missingOrInvalidMerchantConfigurationDoesNotConsultGatewayOrSend() {
         ComputeRefundIntentService.Intent intent = prepare("correction-1", "400"); AtomicInteger accessed = new AtomicInteger();
         ComputeRefundIntentService guarded = new ComputeRefundIntentService(jdbc, manager, json, properties,
             (java.util.function.Supplier<ExternalBillingGateway>) () -> { accessed.incrementAndGet(); return gateway; });
+        properties.setApiKey(null);
         guarded.dispatch(intent.id); assertEquals(0, accessed.get()); assertEquals(0, gateway.writes);
-        properties.setAllowWrites(true); properties.setEnabled(false); guarded.dispatch(intent.id);
+        properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL"); properties.setBaseUrl("http://fixture.invalid"); guarded.dispatch(intent.id);
         assertEquals(0, accessed.get()); assertEquals("PREPARED", service.recover(intent.id).state);
     }
 
     @Test void uncertainSubmissionNeverReplaysOrInventsRefundQueryContract() {
-        ComputeRefundIntentService.Intent intent = prepare("correction-1", "400"); properties.setAllowWrites(true);
+        ComputeRefundIntentService.Intent intent = prepare("correction-1", "400");
         service.dispatch(intent.id); restarted().dispatch(intent.id);
         ComputeRefundIntentService.Intent unknown = service.recover(intent.id);
         assertEquals("UNKNOWN", unknown.state); assertEquals(1, gateway.writes); assertEquals(0, gateway.queries);
@@ -203,7 +206,7 @@ class ComputeRefundIntentTest {
     }
 
     @Test void applicationGuardRunsInsideClaimTransactionBeforeSubmissionAndCanRejectRestartedPreparedIntent() {
-        ComputeRefundIntentService.Intent intent=prepare("guarded-correction","400");properties.setAllowWrites(true);
+        ComputeRefundIntentService.Intent intent=prepare("guarded-correction","400");
         AtomicInteger checks=new AtomicInteger();
         assertThrows(IllegalStateException.class,()->restarted().dispatch(intent.id,()->{
             assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
@@ -218,7 +221,7 @@ class ComputeRefundIntentTest {
     }
 
     @Test void applicationGuardRollbackPreservesImmutableRequestAndPreventsAnyGatewayWrite() {
-        ComputeRefundIntentService.Intent intent=prepare("guarded-rollback","400");properties.setAllowWrites(true);
+        ComputeRefundIntentService.Intent intent=prepare("guarded-rollback","400");
         assertThrows(IllegalStateException.class,()->service.dispatch(intent.id,()->{
             jdbc.update("UPDATE vls_compute_billing_slice SET state='UNKNOWN' WHERE merchant_charge_id=?",chargeReference);
             throw new IllegalStateException("Refuse before submission claim");
@@ -231,7 +234,7 @@ class ComputeRefundIntentTest {
     @Test void receiptRequiresHoldRequeryWithoutClaimingRefundIsAvailable() throws Exception {
         ComputeRefundIntentService.Intent intent = prepare("correction-1", "400");
         gateway.next = new ExternalBillingGateway.Result(ExternalBillingGateway.Status.SUCCEEDED, "", receipt("400", "501"));
-        properties.setAllowWrites(true); service.dispatch(intent.id);
+        service.dispatch(intent.id);
         ComputeRefundIntentService.Intent recorded = service.recover(intent.id);
         assertEquals("RECEIPT_UNVERIFIED", recorded.state); assertEquals("NEEDS_HOLD_REQUERY", recorded.errorCode);
         assertTrue(recorded.needsHoldRequery); assertEquals("0", json.readTree(recorded.receipt).path("available_quota").asText());
@@ -271,7 +274,7 @@ class ComputeRefundIntentTest {
     }
 
     @Test void explicitRejectionDoesNotReleaseReservationOrRetryNewKey() {
-        ComputeRefundIntentService.Intent intent = prepare("correction-1", "1000"); properties.setAllowWrites(true);
+        ComputeRefundIntentService.Intent intent = prepare("correction-1", "1000");
         gateway.next = new ExternalBillingGateway.Result(ExternalBillingGateway.Status.REJECTED, "REFUND_EXCEEDED", null);
         service.dispatch(intent.id); service.dispatch(intent.id);
         assertEquals("REJECTED", service.recover(intent.id).state); assertEquals(1, gateway.writes);
@@ -357,15 +360,28 @@ class ComputeRefundIntentTest {
         assertEquals(0, gateway.writes); assertEquals(2, gateway.queries);
     }
 
-    @Test void readOnlyRecoveryDoesNotConsultGatewayWhenDisabledMissingOrMerchantChanged() {
+    @Test void originalRecoveryDoesNotConsultGatewayWhenConfigurationMissingOrMerchantChanged() {
         ComputeRefundIntentService.Intent intent = unknownRefund();
-        properties.setEnabled(false); service.reconcile(intent.id); assertEquals(0, gateway.queries);
-        properties.setEnabled(true); properties.setMerchantId("other"); service.reconcile(intent.id); assertEquals(0, gateway.queries);
+        properties.setApiKey(null); service.reconcile(intent.id); assertEquals(0, gateway.queries);
+        properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL"); properties.setMerchantId("other"); service.reconcile(intent.id); assertEquals(0, gateway.queries);
         properties.setMerchantId("vls-test");
         ComputeRefundIntentService unavailable = new ComputeRefundIntentService(jdbc, manager, json, properties,
             (java.util.function.Supplier<ExternalBillingGateway>) () -> null);
         assertEquals("UNKNOWN", unavailable.reconcile(intent.id).state);
         assertEquals(0, gateway.writes);
+    }
+
+    @Test void originalRefundAndLedgerRecoveryDoNotRequireNewAdmissionBudgets() throws Exception {
+        ComputeRefundIntentService.Intent intent = prepare("original-budget-correction", "400");
+        properties.setMaximumRunSeconds(0); properties.setMaximumHoldQuota(null);
+        properties.setVerifiedProviderStopSeconds(null); properties.setHoldStopLeadSeconds(0);
+        assertTrue(properties.hasMerchantConfiguration()); assertFalse(properties.paidConfigured());
+        service.dispatch(intent.id);
+        assertEquals(1, gateway.writes); assertEquals("UNKNOWN", service.recover(intent.id).state);
+        lookupReady(intent); gateway.pages.add(page(false, null, debit(), credit(intent)));
+        assertEquals("LEDGER_RECONCILED", restarted().reconcile(intent.id).state);
+        assertEquals(1, gateway.writes); assertEquals(2, gateway.queries);
+        assertEquals(intent.key, gateway.lastKey); assertEquals(intent.body, gateway.lastBody);
     }
 
     @Test void lateMatchingPostReceiptPreservesReconciledEvidenceAndHoldRequeryClock() throws Exception {

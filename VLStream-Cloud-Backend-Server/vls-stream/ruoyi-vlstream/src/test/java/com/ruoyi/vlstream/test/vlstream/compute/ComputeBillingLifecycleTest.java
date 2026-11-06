@@ -36,7 +36,7 @@ class ComputeBillingLifecycleTest {
         when(nodes.serverRows(any())).thenAnswer(call->jdbc.query("SELECT * FROM vls_compute_node ORDER BY id",new BeanPropertyRowMapper<>(ComputeNode.class)));
         provider=mock(ComputePowerProvider.class);when(provider.supports(any())).thenReturn(true);
         DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("provider",provider);
-        properties=new ExternalBillingProperties();properties.setEnabled(true);properties.setSafetyStopEnabled(true);
+        properties=new ExternalBillingProperties();
         service=new ComputeBillingLifecycleService(jdbc,nodes,beans.getBeanProvider(ComputePowerProvider.class),new DataSourceTransactionManager(ds),json,properties);service.arm("usage-test",payer);
     }
     void job(String state,String owner){jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,node_id,public_claim_id,public_owner_subject,job_state) VALUES('job-test','tenant-test',1,'claim-test',?,?)",owner,state);}
@@ -62,9 +62,11 @@ class ComputeBillingLifecycleTest {
     @Test void changedProviderIdentityCannotTargetAnotherInstance() {
         jdbc.update("UPDATE vls_compute_node SET provider_instance_id='other-instance'");assertThrows(IllegalStateException.class,()->service.requestSafeStop("usage-test"));verify(provider,never()).submit(any(),anyString(),anyString());
     }
-    @Test void disabledSafetySwitchDoesNotQueueCloudOperation() {
-        properties.setSafetyStopEnabled(false);service.requestSafeStop("usage-test");assertNull(jdbc.queryForObject("SELECT power_operation_id FROM vls_compute_node",String.class));
-        properties.setEnabled(false);assertThrows(IllegalStateException.class,()->service.observe("usage-test"));verify(provider,never()).status(any());
+    @Test void missingNewAdmissionConfigurationDoesNotBlockOriginalObservationOrSafeStop() {
+        assertFalse(properties.hasMerchantConfiguration());assertFalse(properties.paidConfigured());
+        service.requestSafeStop("usage-test");assertNotNull(jdbc.queryForObject("SELECT power_operation_id FROM vls_compute_node",String.class));
+        when(provider.status(any())).thenReturn(new ComputePowerProvider.Snapshot("RUNNING","UNKNOWN","FIXTURE"));
+        assertEquals("RUNNING",service.observe("usage-test").snapshot.power);verify(provider).status(any());
     }
     @Test void providerObservationRunsOutsideDbTransactionAndDoesNotDeclareStopFromRequest() {
         when(provider.status(any())).thenAnswer(call->{assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());return new ComputePowerProvider.Snapshot("RUNNING","UNKNOWN","TEST_ONLY");});
@@ -86,7 +88,7 @@ class ComputeBillingLifecycleTest {
         rate.setValidFrom("2026-01-01T00:00:00Z");rate.setValidUntil("2027-01-01T00:00:00Z");rate.setQuotaUnit("quota");rate.setConversionVersion("conversion-test");rate.setQuotaPerCurrencyUnit(java.math.BigDecimal.ONE);rate.setQuotaScale(0);rate.setQuotaRounding(java.math.RoundingMode.DOWN);rate.setPricePolicy("LOCKED_FOR_RUN");rate.setProviderPriceLockConfirmed(true);rate.setPriceEvidence("TEST_ONLY_EXISTING_APPROVED_PRICE");
         long start=System.currentTimeMillis()-61000;
         jdbc.update("INSERT INTO vls_compute_usage(id,tenant_id,opening_user_id,payer_account_ref,server_key,rate_snapshot,state,billing_start_at) VALUES('usage-test','tenant-test','actor-test','platform-test','node-server:1',?,'RUNNING',?)",json.writeValueAsString(rate),new java.sql.Timestamp(start));
-        properties.setMerchantId("merchant-test");
+        properties.setMerchantId("merchant-test");properties.setBaseUrl("https://fixture.invalid");properties.setApiKey("fixture-merchant-token");
         com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway gateway=new com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway(){
             @Override public Result byKey(String key){return Result.of(Status.NOT_AUTHORIZED);}
             @Override public Result byReference(String ref){return Result.of(Status.NOT_FOUND);}

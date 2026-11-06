@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class NewApiBillingClientTest {
     final ObjectMapper json = new ObjectMapper();
     ExternalBillingProperties properties() {
-        ExternalBillingProperties properties = new ExternalBillingProperties(); properties.setEnabled(true);
+        ExternalBillingProperties properties = new ExternalBillingProperties(); properties.setBaseUrl("https://fixture.invalid");
         properties.setMerchantId("test-only-merchant"); properties.setApiKey("TEST_ONLY_NOT_A_REAL_CREDENTIAL"); return properties;
     }
     class Fixture extends NewApiBillingClient {
@@ -119,9 +119,9 @@ class NewApiBillingClientTest {
         JsonNode config = client.config(); assertFalse(config.has("quota_per_currency_unit"));
         assertThrows(IllegalArgumentException.class, () -> ExactQuota.compute(java.math.BigDecimal.ONE, 1000, config.path("numerator").asText(), "1"));
     }
-    @Test void realAdapterHasNoFinancialWriteFallbackEvenWhenEnabled() {
-        Fixture client = new Fixture(); assertFalse(client.supportsAtomicCapture());
-        assertThrows(IllegalStateException.class, () -> client.capture("original-key", "{}")); assertNull(client.path);
+    @Test void configuredAdapterStillRequiresOriginalHoldEvidenceBeforeAnyFinancialWrite() {
+        Fixture client = new Fixture(); assertTrue(client.supportsAtomicCapture());
+        assertThrows(IllegalArgumentException.class, () -> client.capture("original-key", "{}")); assertNull(client.path);
     }
     @Test void loopbackHttpContractDoesNotFollowRedirectOrLeakBearerToRedirectTarget() throws Exception {
         com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
@@ -134,15 +134,17 @@ class NewApiBillingClientTest {
         server.createContext("/redirect-target", exchange -> { redirected.incrementAndGet(); exchange.sendResponseHeaders(200,0); exchange.close(); });
         server.start();
         try {
-            ExternalBillingProperties p = properties(); p.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
-            assertEquals(ExternalBillingGateway.Status.UNKNOWN, new NewApiBillingClient(p,json).byKey("key-test").status);
+            ExternalBillingProperties p = properties();
+            assertEquals(ExternalBillingGateway.Status.UNKNOWN, loopbackClient(p,server.getAddress().getPort()).byKey("key-test").status);
             assertEquals(1, requests.get()); assertEquals(0, redirected.get());
         } finally { server.stop(0); }
     }
-    @Test void disabledOrMissingIdentityDoesNotAttemptTransport() {
-        ExternalBillingProperties p = properties(); p.setEnabled(false);
+    @Test void missingOrInvalidMerchantConfigurationDoesNotAttemptTransport() {
+        ExternalBillingProperties p = properties(); p.setMerchantId(null);
         assertThrows(IllegalStateException.class, () -> new NewApiBillingClient(p,json).byKey("key-test"));
-        p.setEnabled(true); p.setApiKey(null);
+        p.setMerchantId("test-only-merchant"); p.setApiKey(null);
+        assertThrows(IllegalStateException.class, () -> new NewApiBillingClient(p,json).byKey("key-test"));
+        p.setApiKey("TEST_ONLY_NOT_A_REAL_CREDENTIAL"); p.setBaseUrl("http://127.0.0.1:1");
         assertThrows(IllegalStateException.class, () -> new NewApiBillingClient(p,json).byKey("key-test"));
     }
 
@@ -155,7 +157,7 @@ class NewApiBillingClientTest {
         }
         Reply reply() { try { return new Reply(code, json.readTree(response)); } catch (Exception e) { throw new IllegalArgumentException("bad fixture"); } }
     }
-    ExternalBillingProperties writeProperties() { ExternalBillingProperties p = properties(); p.setAllowWrites(true); return p; }
+    ExternalBillingProperties writeProperties() { return properties(); }
     String captureBody() { return "{ \"merchant_id\":\"test-only-merchant\",\"merchant_charge_id\":\"charge-1\",\"user_id\":123,"
         + "\"hold_id\":9007199254740993,\"business_type\":\"GPU_COMPUTE\",\"usage_session_id\":\"session-1\","
         + "\"charge_quota\":\"11\",\"conversion_version\":\"v1-test\" }"; }
@@ -165,9 +167,9 @@ class NewApiBillingClientTest {
         + "\"captured_quota\":\"5\",\"released_quota\":\"0\",\"remaining_quota\":\"15\",\"hold_status\":\"PARTIALLY_CAPTURED\","
         + "\"expires_at\":1700000000001,\"balance_version\":4,\"created_at\":1700000000,\"updated_at\":1700000001}"; }
 
-    @Test void fundsMovementRequiresSeparateDefaultOffPermission() {
-        ExternalBillingProperties defaults = new ExternalBillingProperties(); assertFalse(defaults.isEnabled()); assertFalse(defaults.isAllowWrites());
-        defaults.setEnabled(true); defaults.setMerchantId("test-only-merchant");
+    @Test void fundsMovementRequiresCompleteMerchantConfiguration() {
+        ExternalBillingProperties defaults = new ExternalBillingProperties(); assertFalse(defaults.hasMerchantConfiguration());
+        defaults.setMerchantId("test-only-merchant");
         NewApiBillingClient client = new NewApiBillingClient(defaults, json);
         assertFalse(client.supportsAtomicCapture());
         assertThrows(IllegalStateException.class, () -> client.capture("key-1", captureBody()));
@@ -179,6 +181,7 @@ class NewApiBillingClientTest {
 
     @Test void captureUsesOnlyAtomicChargePathAndPreservesOriginalKeyAndBytes() {
         WriteFixture client = new WriteFixture(); client.response = captureReceipt();
+        assertFalse(writeProperties().paidConfigured()); // New admission policy cannot block the original hold's settlement.
         assertTrue(client.supportsAtomicCapture());
         assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.capture("same-original-key", captureBody()).status);
         assertEquals("/api/v1/external-billing/charges", client.path); assertEquals(captureBody(), client.original); assertEquals("same-original-key", client.key);
@@ -204,6 +207,7 @@ class NewApiBillingClientTest {
 
     @Test void topupAndReleaseCarryOwnBusinessReferencesAndRejectLegacyReleaseSending() {
         WriteFixture client = new WriteFixture();
+        assertFalse(writeProperties().paidConfigured());
         client.response = "{\"hold_id\":101,\"hold_quota\":\"20\",\"captured_quota\":\"5\",\"released_quota\":\"0\",\"remaining_quota\":\"15\",\"hold_status\":\"PARTIALLY_CAPTURED\",\"balance_version\":2}";
         String topup = FundingContracts.topup("test-only-merchant", "topup-1", "123", "10", "reserve").toString();
         assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.topupHold("101", "topup-key", topup).status);
@@ -302,6 +306,7 @@ class NewApiBillingClientTest {
 
     @Test void refundUsesOriginalChargePathAndIndependentPersistedKeyWithoutAssumingAvailableBalance() {
         WriteFixture client = new WriteFixture();
+        assertFalse(writeProperties().paidConfigured());
         String body = "{\"merchant_id\":\"test-only-merchant\",\"merchant_refund_id\":\"refund-1\",\"original_ledger_entry_id\":\"3\",\"refund_quota\":\"5\",\"reason_code\":\"OVERCHARGED\"}";
         client.response = "{\"status\":\"SUCCEEDED\",\"operation_id\":\"10\",\"refund_id\":\"20\",\"ledger_entry_id\":\"30\",\"refunded_quota\":\"5\",\"available_quota\":\"99\",\"balance_version\":11}";
         assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.refund("2", "new-refund-key", body).status);
@@ -356,12 +361,20 @@ class NewApiBillingClientTest {
         });
         server.start();
         try {
-            ExternalBillingProperties p = writeProperties(); p.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
-            NewApiBillingClient client = new NewApiBillingClient(p, json);
+            ExternalBillingProperties p = writeProperties();
+            NewApiBillingClient client = loopbackClient(p,server.getAddress().getPort());
             assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.capture("fixed-key", captureBody()).status);
             assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.capture("fixed-key", captureBody()).status);
             assertEquals(java.util.Arrays.asList(captureBody(), captureBody()), bodies);
             assertEquals(java.util.Arrays.asList("fixed-key", "fixed-key"), keys);
         } finally { server.stop(0); }
+    }
+    private NewApiBillingClient loopbackClient(ExternalBillingProperties properties,int port) {
+        return new NewApiBillingClient(properties,json) {
+            @Override protected java.net.HttpURLConnection openConnection(java.net.URI target) throws java.io.IOException {
+                assertEquals("https",target.getScheme());assertEquals("fixture.invalid",target.getHost());
+                return (java.net.HttpURLConnection)java.net.URI.create("http://127.0.0.1:"+port+target.getRawPath()).toURL().openConnection();
+            }
+        };
     }
 }

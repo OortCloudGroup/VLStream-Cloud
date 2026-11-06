@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.compat.tenant;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePaidRunService;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingAccountService;
@@ -33,22 +34,29 @@ public class ComputeBillingBindingController {
     @org.springframework.beans.factory.annotation.Autowired private ComputeBillingAccountService accounts;
     @org.springframework.beans.factory.annotation.Autowired private ExternalBillingProperties properties;
     @org.springframework.beans.factory.annotation.Autowired private ComputePaidRunService paidRuns;
+    @org.springframework.beans.factory.annotation.Autowired private ComputeBillingPolicy billingPolicy;
     public ComputeBillingBindingController(ComputePlatformAuthorizationService authorization,ObjectProvider<NewApiBillingClient> clients,
                                          ComputeBillingSettlementService settlements,ComputeBillingLifecycleService lifecycle){
         this.authorization=authorization;this.clients=clients;this.settlements=settlements;this.lifecycle=lifecycle;
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/identity")
-    public R<BillingPayer> identity(){return R.data(authorization.billingPayer(client()));}
+    public R<BillingPayer> identity(){return R.data(authorization.billingPayer(identityClient()));}
     /** Configuration presence only: never contacts NewAPI or creates permissions. */
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/capabilities")
     public R<Map<String,Object>> capabilities(){
         Map<String,Object> view=new LinkedHashMap<>();
-        view.put("accountAvailable",properties.isEnabled()&&clients.getIfAvailable()!=null);
-        view.put("paidAdmissionEnabled",properties.isEnabled()&&properties.isAllowWrites()&&properties.isSafetyStopEnabled()&&properties.isPaidAdmissionEnabled());
-        view.put("mode",properties.getMode()==null?"LEGACY":properties.getMode().name());
-        view.put("unavailableReason",properties.unavailableReason());
+        boolean clientAvailable=clients.getIfAvailable()!=null;
+        view.put("identityAvailable",properties.hasIdentityConfiguration()&&clientAvailable);
+        view.put("accountAvailable",properties.hasMerchantConfiguration()&&clientAvailable);
+        String reason=properties.unavailableReason();
+        if(reason==null)try {
+            if(properties.getHoldStopLeadSeconds()<billingPolicy.checkedStopBudgetSeconds(properties.getVerifiedProviderStopSeconds()))
+                reason="余额到期停机提前量未覆盖可靠停机预算";
+        } catch(IllegalArgumentException invalid){reason=invalid.getMessage();}
+        view.put("paidAdmissionEnabled",properties.paidConfigured()&&clientAvailable&&reason==null);
+        view.put("unavailableReason",reason==null&&!clientAvailable?"平台计费客户端不可用，请检查服务启动错误":reason);
         return R.data(view);
     }
     public static class AccountCheck {
@@ -58,7 +66,7 @@ public class ComputeBillingBindingController {
     @PostMapping("/account/check")
     public R<ComputeBillingAccountService.Account> account(@RequestBody AccountCheck request){
         if(request==null||!request.acceptBillingPermissions)throw new ServiceException("请先确认平台余额查询与GPU计费权限");
-        NewApiBillingClient client=client();
+        NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
         try{return R.data(accounts.check(payer,client,client.config(),true));}
         catch(IllegalStateException unavailable){throw new ServiceException("BILLING_NOT_AUTHORIZED".equals(unavailable.getMessage())?"平台尚未接受当前账户的计费授权，请稍后重试":"平台余额暂未确认，请稍后重试");}
@@ -66,22 +74,22 @@ public class ComputeBillingBindingController {
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/nodes/{nodeId}/quote")
     public R<ComputePaidRunService.View> quote(@PathVariable Long nodeId){
-        NewApiBillingClient client=client();
+        NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
         return R.data(paidRuns.quote(nodeId,payer,client.config()));
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs")
-    public R<java.util.List<ComputePaidRunService.View>> runs(){return R.data(paidRuns.list(authorization.billingPayer(client())));}
+    public R<java.util.List<ComputePaidRunService.View>> runs(){return R.data(paidRuns.list(authorization.billingPayer(identityClient())));}
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs/{runId}")
-    public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.get(runId,authorization.billingPayer(client())));}
+    public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.get(runId,authorization.billingPayer(identityClient())));}
     /** The original run identifies the pending archive; payer, instance and price stay server-owned.
      * This only prepares a fresh quote. The existing explicit accept flow owns funding/start. */
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{sourceRunId}/archive-recovery-quote")
     public R<ComputePaidRunService.View> archiveRecoveryQuote(@PathVariable String sourceRunId){
-        NewApiBillingClient client=client();
+        NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
         return R.data(paidRuns.quoteArchiveRecovery(sourceRunId,payer,client.config()));
     }
@@ -89,7 +97,7 @@ public class ComputeBillingBindingController {
     @PostMapping("/runs/{runId}/accept")
     public R<ComputePaidRunService.View> accept(@PathVariable String runId,@RequestBody AccountCheck request){
         if(request==null||!request.acceptBillingPermissions)throw new ServiceException("请确认本次报价与平台计费权限");
-        NewApiBillingClient client=client();BillingPayer payer=newOperationPayer(client);
+        NewApiBillingClient client=merchantClient();BillingPayer payer=newOperationPayer(client);
         ComputePaidRunService.View original=paidRuns.get(runId,payer);
         if("QUOTED".equals(original.getState())){
             ComputeBillingAccountService.Account account=accounts.check(payer,client,client.config(),true);
@@ -100,11 +108,11 @@ public class ComputeBillingBindingController {
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/stop")
-    public R<ComputePaidRunService.View> stop(@PathVariable String runId){return R.data(paidRuns.stop(runId,authorization.billingPayer(client())));}
+    public R<ComputePaidRunService.View> stop(@PathVariable String runId){return R.data(paidRuns.stop(runId,authorization.billingPayer(identityClient())));}
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/sessions/{usageId}/bind")
     public R<String> bind(@PathVariable String usageId){
-        NewApiBillingClient client=client();BillingPayer payer=newOperationPayer(client);
+        NewApiBillingClient client=merchantClient();BillingPayer payer=newOperationPayer(client);
         settlements.bindAcceptedUsage(usageId,payer,client.config());
         lifecycle.arm(usageId,payer);
         return R.data("已保存当前可信付款身份与实例占用快照；收费准入还须通过本次预冻结与安全停机检查");
@@ -116,5 +124,14 @@ public class ComputeBillingBindingController {
         ComputeBillingTrialGuard.requirePayerScope(properties,payer);
         return payer;
     }
-    private NewApiBillingClient client(){NewApiBillingClient client=clients.getIfAvailable();if(client==null)throw new ServiceException(properties.unavailableReason()==null?"平台计费客户端不可用，请检查服务启动错误":properties.unavailableReason());return client;}
+    private NewApiBillingClient merchantClient(){
+        if(!properties.hasMerchantConfiguration())throw new ServiceException(properties.merchantConfigurationReason());
+        return identityClient();
+    }
+    private NewApiBillingClient identityClient(){
+        if(!properties.hasIdentityConfiguration())throw new ServiceException(properties.identityConfigurationReason());
+        NewApiBillingClient client=clients.getIfAvailable();
+        if(client==null)throw new ServiceException("平台计费客户端不可用，请检查服务启动错误");
+        return client;
+    }
 }

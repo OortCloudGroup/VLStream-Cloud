@@ -29,7 +29,7 @@ const renderPanel = async instance => {
     value && Object.prototype.hasOwnProperty.call(value, 'value') ? value.value : value]))
   const app = Vue.createSSRApp({ setup: () => bindings, render })
   app.component('el-alert', { props: ['title', 'type'], render() { return Vue.h('aside', { 'data-alert-type': this.type }, this.title) } })
-  app.component('el-button', { render() { return Vue.h('button', this.$slots.default?.()) } })
+  app.component('el-button', { props: ['disabled'], render() { return Vue.h('button', { disabled: this.disabled }, this.$slots.default?.()) } })
   return renderToString(app)
 }
 const defer = () => {
@@ -50,7 +50,7 @@ function harness(options = {}) {
     onMounted: fn => mounts.push(fn), onUnmounted: fn => unmounts.push(fn),
     useRouter: () => ({ push: async value => { calls.route.push(value) } }),
     ElMessageBox: { confirm: async (...args) => { calls.confirmations.push(args); return options.confirm ? options.confirm(...args) : 'confirm' }, alert: async () => {} },
-    getComputeBillingCapabilities: async () => { calls.capabilities++; return { data: { accountAvailable: true, paidAdmissionEnabled: options.enabled !== false } } },
+    getComputeBillingCapabilities: async () => { calls.capabilities++; return { data: options.capabilities || { accountAvailable: true, paidAdmissionEnabled: options.enabled !== false } } },
     checkComputeBillingAccount: async () => { calls.account++; return { data: {} } },
     quoteComputePaidRun: async () => { calls.normalQuote++; return { data: quote() } },
     quoteComputeArchiveRecovery: async id => { calls.recoveryQuote.push(id); return options.quote ? options.quote(id) : { data: quote() } },
@@ -83,6 +83,87 @@ test('mount and polling read capabilities/runs only; pending archive never autom
   assert.equal(h.calls.proof, 0)
   assert.equal(h.calls.normalQuote, 0)
   assert.deepEqual(h.calls.recoveryQuote, [])
+  assert.deepEqual(h.calls.accept, [])
+})
+
+test('missing merchant configuration is explained without contacting the account or hiding the balance entry', async () => {
+  const reason = '平台计费缺配置：merchant-id 商户身份'
+  const h = harness({ capabilities: { accountAvailable: false, paidAdmissionEnabled: false, unavailableReason: reason } })
+  await h.mount()
+  const html = await renderPanel(h.instance)
+  assert.match(html, /平台账户配置待确认/)
+  assert.match(html, /<button[^>]*disabled[^>]*>查询余额/)
+  assert.ok(html.includes(reason))
+  assert.doesNotMatch(html, /暂未开放|尚未启用|READ_ONLY|PAID|OFF/)
+  assert.equal(h.calls.list, 0)
+  assert.equal(h.calls.account, 0)
+  assert.equal(h.calls.proof, 0)
+  assert.deepEqual(h.calls.accept, [])
+})
+
+test('base-only identity availability lists and polls original runs and permits explicit normal stop without merchant access', async () => {
+  const h = harness({ capabilities: { identityAvailable: true, accountAvailable: false, paidAdmissionEnabled: false,
+    unavailableReason: '平台计费缺配置：api-key 商户凭据' } })
+  h.setRows([{ ...original(), state: 'RUNNING', archiveRecoveryAvailable: false }])
+  await h.mount()
+  assert.equal(h.calls.list, 1)
+  let html = await renderPanel(h.instance)
+  assert.match(html, /<button[^>]*disabled[^>]*>查询余额/)
+  assert.match(html, /停止并结算/)
+  assert.doesNotMatch(html, /<button[^>]*disabled[^>]*>停止并结算/)
+  h.timers[0]()
+  await flush()
+  assert.equal(h.calls.list, 2)
+  assert.equal(h.calls.account, 0)
+  assert.equal(h.calls.proof, 0)
+  await h.instance.stop(original())
+  assert.equal(h.calls.proof, 1)
+  assert.deepEqual(h.calls.stop, ['source-1'])
+  assert.equal(h.calls.account, 0)
+  assert.equal(h.calls.normalQuote, 0)
+  assert.deepEqual(h.calls.accept, [])
+})
+
+test('explicit identity unavailability prevents original run polling even if an old account flag is true', async () => {
+  const h = harness({ capabilities: { identityAvailable: false, accountAvailable: true, paidAdmissionEnabled: false } })
+  await h.mount()
+  h.timers[0]()
+  await flush()
+  assert.equal(h.calls.list, 0)
+  assert.equal(h.calls.account, 0)
+  assert.equal(h.calls.proof, 0)
+})
+
+test('configured billing starts only after current platform authorization and explicit quote confirmation', async () => {
+  const confirmation = defer(), h = harness({ confirm: () => confirmation.promise })
+  await h.mount()
+  const action = h.instance.start({ id: '-6000', paidAdmissionEnabled: true })
+  await flush()
+  assert.equal(h.calls.proof, 1)
+  assert.equal(h.calls.normalQuote, 1)
+  assert.deepEqual(h.calls.accept, [])
+  assert.match(h.calls.confirmations[0][0], /13.00 CNY/)
+  confirmation.resolve('confirm')
+  await action
+  assert.deepEqual(h.calls.accept, ['recovery-1'])
+  assert.equal(h.calls.account, 0)
+})
+
+test('missing platform identity cannot quote or accept even with complete billing configuration', async () => {
+  const h = harness({ proof: async () => null })
+  await h.mount()
+  await h.instance.start({ id: '-6000', paidAdmissionEnabled: true })
+  assert.equal(h.calls.normalQuote, 0)
+  assert.deepEqual(h.calls.accept, [])
+  assert.equal(h.calls.confirmations.length, 0)
+})
+
+test('unavailable target reports its specific configuration reason without quoting or accepting', async () => {
+  const h = harness()
+  await h.mount()
+  await h.instance.start({ id: '-6000', paidAdmissionEnabled: false, paidUnavailableReason: '官方算力供应商调用身份未配置' })
+  assert.equal(h.instance.error.value, '官方算力供应商调用身份未配置')
+  assert.equal(h.calls.normalQuote, 0)
   assert.deepEqual(h.calls.accept, [])
 })
 

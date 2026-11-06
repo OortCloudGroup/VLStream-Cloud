@@ -1,7 +1,7 @@
 <template>
   <section class="billing-panel" :aria-label="uiText('平台余额与付费实例')">
     <div class="account-line">
-      <div><strong>{{ uiText('平台账户余额') }}</strong><span v-if="account">{{ phrase('可用 {available} {currency} · 冻结 {held} {currency}（上次查询 {time}）', { available: currency(account.availableQuota), held: currency(account.heldQuota), currency: account.currency, time: accountCheckedAt }) }}</span><span v-else>{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '账户服务暂未开放') }}</span></div>
+      <div><strong>{{ uiText('平台账户余额') }}</strong><span v-if="account">{{ phrase('可用 {available} {currency} · 冻结 {held} {currency}（上次查询 {time}）', { available: currency(account.availableQuota), held: currency(account.heldQuota), currency: account.currency, time: accountCheckedAt }) }}</span><span v-else>{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '平台账户配置待确认') }}</span></div>
       <el-button :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
     </div>
     <el-alert v-if="capabilities.unavailableReason" type="info" :title="uiText(capabilities.unavailableReason)" :closable="false" show-icon />
@@ -32,6 +32,7 @@ const props = defineProps({ resources: { type: Array, default: () => [] } })
 const emit = defineEmits(['changed'])
 const router = useRouter()
 const capabilities = ref({ accountAvailable: false, paidAdmissionEnabled: false })
+const canReadRuns = () => capabilities.value.identityAvailable ?? capabilities.value.accountAvailable
 const account = ref(null), runs = ref([]), busy = ref(''), error = ref('')
 const recoveryAttempts = ref({})
 const accountCheckedAt = ref('')
@@ -95,7 +96,7 @@ const checkAccount = () => execute('account', async (proof, valid) => {
   if (valid()) { account.value = response.data; accountCheckedAt.value = new Date().toLocaleTimeString() }
 })
 const start = item => execute(String(item.id), async (proof, valid) => {
-  if (!capabilities.value.paidAdmissionEnabled || !item.paidAdmissionEnabled) throw new Error('当前实例尚未开放付费开机')
+  if (!capabilities.value.paidAdmissionEnabled || !item.paidAdmissionEnabled) throw new Error(item.paidUnavailableReason || capabilities.value.unavailableReason || '当前实例计费配置尚未确认，请刷新后重试')
   const quote = (await quoteComputePaidRun(item.id)).data
   if (!valid()) return
   const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认本次付费开机'), { confirmButtonText: uiText('确认报价并开机'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
@@ -113,7 +114,7 @@ const archiveQuoteText = (quote, run) => {
   return `归档恢复价格 ${quote.hourlyPrice} ${quote.currency}/整实例小时。本次使用新订单、新冻结 ${quote.reserveQuota} ${quote.quotaUnit}（含停止安全预留），不会复用旧订单冻结。开机后仅取回原任务产物，不重新训练；原产物仍受供应商磁盘保留期限限制。运行时限 ${quote.maximumRunSeconds} 秒；归档完成或到期会请求停止，实际确认关机前仍计费，停止与对账后释放未消费余额。允许 VLS 查询余额并按已确认用量扣费；统一平台可能保存此计费授权，可在平台撤销。是否确认报价并开机恢复归档？`
 }
 const recoverArchive = run => execute(`archive:${recoverySourceId(run)}`, async (proof, valid) => {
-  if (!capabilities.value.paidAdmissionEnabled) throw new Error('当前尚未开放付费归档恢复')
+  if (!capabilities.value.paidAdmissionEnabled) throw new Error(capabilities.value.unavailableReason || '当前归档恢复计费配置尚未确认，请刷新后重试')
   const sourceId = recoverySourceId(run)
   let attempt = recoveryAttempts.value[sourceId]
   if (['QUOTE_UNKNOWN', 'ACCEPT_UNKNOWN', 'ACCEPTED'].includes(attempt?.phase)) {
@@ -168,13 +169,13 @@ onMounted(async () => {
     const response = await getComputeBillingCapabilities()
     if (current(identity, epoch)) {
       capabilities.value = response.data || capabilities.value
-      if (capabilities.value.accountAvailable) await refreshRuns()
+      if (canReadRuns()) await refreshRuns()
     }
   } catch { /* Existing free-resource flow remains available. */ }
   window.addEventListener('modelHubAuthChanged', reset)
   timer = setInterval(() => {
     try { identity.assertCurrent() } catch { reset(); return }
-    if (account.value || runs.value.length) refreshRuns()
+    if (canReadRuns()) refreshRuns()
   }, 10000)
 })
 onUnmounted(() => { active = false; clearInterval(timer); window.removeEventListener('modelHubAuthChanged', reset) })

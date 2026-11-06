@@ -71,7 +71,7 @@ public class ComputeTrialRefundService {
 
     public View review(String runId) {
         requireAdministrator(); String tenant=trustedTenant();
-        require(properties.isEnabled(),"Billing reads are disabled");
+        require(properties.hasMerchantConfiguration(),properties.merchantConfigurationReason());
         Context context=tx.execute(s->locked(runId,tenant));
         verifyShutdown(context.run);
         View view=new View(); view.runId=runId; view.usageId=text(context.run,"usage_id");
@@ -88,7 +88,7 @@ public class ComputeTrialRefundService {
     public Result advance(String runId, Request request) {
         String actor=requireAdministrator(), tenant=trustedTenant();
         require(actor.matches("[A-Za-z0-9_-]{1,64}"),"Auditable administrator identifier required");
-        require(properties.isEnabled() && properties.isAllowWrites(),"Paid billing writes are disabled");
+        require(properties.hasMerchantConfiguration(),properties.merchantConfigurationReason());
         require(!TransactionSynchronizationManager.isActualTransactionActive(),"Cleanup transport requires committed intents");
         require(request!=null,"Reviewed capture required");
         // Do not retain caller-mutable fields across evidence I/O.

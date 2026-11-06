@@ -59,9 +59,10 @@ class ComputeBillingTrialGuardTest {
     }
     private void budget(String extra) { tx.execute(s->{guard.requireCaptureBudget("usage",new BigInteger(extra));return null;}); }
 
-    @Test void defaultsNeverEnableDevEvenWhenOtherFlagsWereEnabled() {
+    @Test void merchantConfigurationNeverGrantsADevTrialPermit() {
         properties.setTrial(new ExternalBillingProperties.Trial());
-        properties.setEnabled(true);properties.setAllowWrites(true);properties.setPaidAdmissionEnabled(true);
+        properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL");
+        assertTrue(properties.hasMerchantConfiguration());
         assertThrows(IllegalStateException.class,()->guard.requirePayer(payer));
     }
     @Test void normalUnconfiguredDestinationPreservesExistingScope() {

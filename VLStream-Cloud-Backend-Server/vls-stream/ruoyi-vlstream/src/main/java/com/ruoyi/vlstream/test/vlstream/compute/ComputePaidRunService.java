@@ -109,7 +109,7 @@ public class ComputePaidRunService {
     }
 
     private View quote(Long nodeId,BillingPayer payer,JsonNode config,String recoverySource) {
-        enabled();
+        requirePaidConfiguration();
         trial().requirePayer(payer);
         ComputeNode before=nodes.get(nodeId);
         trial().requireNode(before);
@@ -205,7 +205,7 @@ public class ComputePaidRunService {
 
     /** Controller checks current self + accepted wallet permissions before calling this method. */
     public View accept(String runId,BillingPayer payer) {
-        enabled();
+        requirePaidConfiguration();
         Map<String,Object> before=owned(runId,payer,false);
         if(!"QUOTED".equals(text(before,"state")))return view(before);
         trial().requirePayer(payer);
@@ -285,7 +285,7 @@ public class ComputePaidRunService {
         try{requireTraining(node);return true;}catch(RuntimeException unavailable){return false;}
     }
     public void requireTraining(ComputeNode node) {
-        enabled();ComputePlatformAuthorization.Context actor=nodes.publicInventory().identity();
+        requirePaidConfiguration();ComputePlatformAuthorization.Context actor=nodes.publicInventory().identity();
         List<Map<String,Object>> rows=jdbc.queryForList("SELECT * FROM vls_compute_paid_run WHERE active_instance_key=? AND state='RUNNING'",node.getPublicInstanceKey());
         if(rows.size()!=1)throw new ServiceException("请先完成付费开机，并等待余额与实例状态确认");
         Map<String,Object> run=rows.get(0);
@@ -301,11 +301,9 @@ public class ComputePaidRunService {
 
     @Scheduled(fixedDelay=5000,initialDelay=30000)
     public void scan() {
-        if(!configured())return;
         for(String run:jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key IS NOT NULL AND worker_lease_until_ms<? ORDER BY update_time LIMIT 50",String.class,System.currentTimeMillis()))tick(run);
     }
     public void tick(String id) {
-        if(!configured())return;
         // Scope selection survives expiry/disable so the original run can still stop/clean up.
         // It must precede the worker lease and every funding/provider recovery side effect.
         if(!trial().selectsRun(id))return;
@@ -456,7 +454,14 @@ public class ComputePaidRunService {
         });
     }
     private long stopDeadline(Map<String,Object> run) {
-        long margin=Math.addExact((long)policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
+        long margin=0;
+        if(policy!=null)try {
+            policy.validate();
+            margin=Math.addExact((long)policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
+        }catch(IllegalArgumentException invalidCurrentPolicy){
+            // Existing orders retain the safety margin they accepted even when
+            // deployment admission policy is later absent or invalid.
+        }
         JsonNode saved=parse(text(run,"quote_snapshot")).path("run_budget");
         if(!saved.isMissingNode()) {
             JsonNode stop=saved.path("stop_budget_seconds"),poll=saved.path("polling_safety_seconds");
@@ -533,11 +538,10 @@ public class ComputePaidRunService {
             ||!"API".equals(node.getControlMode())||nodes.isCompanyShared(node))throw new ServiceException("当前资源不支持个人付费开机");
         if(!node.getId().equals(nodes.serverRows(node).get(0).getId()))throw new ServiceException("请选择实例的主资源记录");
         ComputeBillingPolicy.requireEconomicalPaidOffer(node,System.currentTimeMillis());
-        if(!providers.orderedStream().anyMatch(p->p.supports(node)))throw new ServiceException("当前厂商控制未启用");
+        if(!providers.orderedStream().anyMatch(p->p.supports(node)))throw new ServiceException("当前厂商控制配置不完整");
         if(nodes.serverRows(node).stream().anyMatch(n->n.getPowerOperationId()!=null))throw new ServiceException("请先等待原实例操作完成");
         if(!archive)nodes.assertNoActiveJobs(node.getId());
     }
-    private boolean configured(){return properties.isEnabled()&&properties.isAllowWrites()&&properties.isSafetyStopEnabled()&&properties.isPaidAdmissionEnabled();}
     private ComputeBillingTrialGuard trial(){return trialGuard==null?new ComputeBillingTrialGuard(jdbc,json,properties):trialGuard;}
     private JsonNode freshConfig() {
         ExternalBillingGateway gateway=externalGateways==null?null:externalGateways.getIfAvailable();
@@ -548,10 +552,11 @@ public class ComputePaidRunService {
         if(!trial().protectedUsage(usage))return null;
         JsonNode current=freshConfig();trial().requireNewUsage(usage,current);return current;
     }
-    private void enabled(){
-        if(!configured())throw new ServiceException("当前环境尚未开放付费开机");
+    private void requirePaidConfiguration(){
+        if(!properties.paidConfigured())throw new ServiceException(properties.unavailableReason());
+        if(policy==null)throw new ServiceException("平台计费缺配置：billing-policy 停机预算");
         policy.checkedStopBudgetSeconds(properties.getVerifiedProviderStopSeconds());
-        if(properties.getHoldStopLeadSeconds()<policy.getStopBudgetSeconds())throw new ServiceException("余额到期停机提前量未覆盖可靠停机预算");
+        if(properties.getHoldStopLeadSeconds()<policy.getStopBudgetSeconds())throw new ServiceException("余额到期停机提前量未覆盖配置的停机预算");
         if(properties.getMaximumRunSeconds()<1||properties.getMaximumRunSeconds()>86400)throw new ServiceException("当前环境尚未配置单次运行时限");
         ExactQuota.integer(properties.getMaximumHoldQuota(),true);
     }

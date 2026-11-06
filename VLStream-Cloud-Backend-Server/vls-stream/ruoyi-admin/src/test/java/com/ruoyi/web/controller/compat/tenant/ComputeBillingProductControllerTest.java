@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.compat.tenant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePaidRunService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePlatformAuthorization;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.*;
@@ -18,20 +19,102 @@ class ComputeBillingProductControllerTest {
     NewApiBillingClient client;ExternalBillingProperties properties;ComputePaidRunService paid;
     ComputeBillingAccountService accounts;BillingPayer payer;ObjectMapper json=new ObjectMapper();
     ComputeBillingSettlementService settlements;ComputeBillingLifecycleService lifecycle;
+    ObjectProvider<NewApiBillingClient> clients;
     @BeforeEach @SuppressWarnings("unchecked") void setup() throws Exception {
         authorization=mock(ComputePlatformAuthorizationService.class);client=mock(NewApiBillingClient.class);
-        ObjectProvider<NewApiBillingClient> clients=mock(ObjectProvider.class);when(clients.getIfAvailable()).thenReturn(client);
+        clients=mock(ObjectProvider.class);when(clients.getIfAvailable()).thenReturn(client);
         settlements=mock(ComputeBillingSettlementService.class);lifecycle=mock(ComputeBillingLifecycleService.class);
         controller=new ComputeBillingBindingController(authorization,clients,settlements,lifecycle);
         properties=new ExternalBillingProperties();paid=mock(ComputePaidRunService.class);accounts=mock(ComputeBillingAccountService.class);
+        configureBilling();
         ReflectionTestUtils.setField(controller,"properties",properties);ReflectionTestUtils.setField(controller,"paidRuns",paid);ReflectionTestUtils.setField(controller,"accounts",accounts);
+        ReflectionTestUtils.setField(controller,"billingPolicy",new ComputeBillingPolicy());
         ComputePlatformAuthorization.Context actor=new ComputePlatformAuthorization.Context();actor.setAuthorized(true);actor.setVlsUserId("current-actor");actor.setVlsTenantId("current-tenant");actor.setPlatformUserId("subject-not-payer-id");
         payer=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":13}"));when(authorization.billingPayer(client)).thenReturn(payer);
     }
     @Test void capabilityReadDoesNotContactWalletOrResolveAnotherIdentity() {
-        assertEquals(false,controller.capabilities().getData().get("accountAvailable"));
+        properties.setBaseUrl(null);
+        java.util.Map<String,Object> view=controller.capabilities().getData();
+        assertEquals(false,view.get("identityAvailable"));
+        assertEquals(false,view.get("accountAvailable"));
+        assertEquals(false,view.get("paidAdmissionEnabled"));
+        assertEquals("平台计费缺配置：base-url 服务地址",view.get("unavailableReason"));
+        assertFalse(view.containsKey("mode"));
         verifyNoInteractions(client,authorization,accounts,paid);
         assertNotNull(ComputeBillingBindingController.class.getAnnotation(cn.dev33.satoken.annotation.SaCheckLogin.class));
+    }
+    @Test void realMerchantAndSafetyConfigurationMakesBillingAvailableWithoutDeploymentSwitches() {
+        configureBilling();
+        java.util.Map<String,Object> view=controller.capabilities().getData();
+        assertEquals(true,view.get("identityAvailable"));
+        assertEquals(true,view.get("accountAvailable"));
+        assertEquals(true,view.get("paidAdmissionEnabled"));
+        assertNull(view.get("unavailableReason"));
+        assertFalse(view.containsKey("mode"));
+        verifyNoInteractions(client,authorization,accounts,paid);
+    }
+    @Test void invalidNewRunSafetyPolicyKeepsAccountAndOriginalRunAccess() {
+        configureBilling();
+        properties.setHoldStopLeadSeconds(120);
+        java.util.Map<String,Object> view=controller.capabilities().getData();
+        assertEquals(true,view.get("accountAvailable"));
+        assertEquals(false,view.get("paidAdmissionEnabled"));
+        assertEquals("余额到期停机提前量未覆盖可靠停机预算",view.get("unavailableReason"));
+        controller.runs();controller.stop("original-run");
+        verify(paid).list(payer);verify(paid).stop("original-run",payer);
+        verifyNoInteractions(client,accounts);
+    }
+    @Test void missingClientCannotAdvertiseAccountOrPaidAvailability() {
+        configureBilling();when(clients.getIfAvailable()).thenReturn(null);
+        java.util.Map<String,Object> view=controller.capabilities().getData();
+        assertEquals(false,view.get("accountAvailable"));
+        assertEquals(false,view.get("paidAdmissionEnabled"));
+        assertEquals("平台计费客户端不可用，请检查服务启动错误",view.get("unavailableReason"));
+        assertThrows(ServiceException.class,()->controller.quote(1L));
+        verifyNoInteractions(client,authorization,accounts,paid);
+    }
+    @Test void baseOnlyConfigurationRetainsVerifiedIdentityAndOriginalRunAccessWithoutMerchantCredentials() {
+        properties.setMerchantId(null);properties.setApiKey(null);properties.setMaximumRunSeconds(0);
+        java.util.Map<String,Object> view=controller.capabilities().getData();
+        assertEquals(true,view.get("identityAvailable"));
+        assertEquals(false,view.get("accountAvailable"));assertEquals(false,view.get("paidAdmissionEnabled"));
+        assertSame(payer,controller.identity().getData());
+        controller.runs();controller.run("original-run");controller.stop("original-run");
+        verify(authorization,times(4)).billingPayer(client);
+        verify(paid).list(payer);verify(paid).get("original-run",payer);verify(paid).stop("original-run",payer);
+        assertEquals("13",payer.userId);assertEquals("subject-not-payer-id",payer.platformSubject);
+        assertEquals("current-tenant",payer.tenantId);assertEquals("current-actor",payer.actorId);
+        verifyNoInteractions(client,accounts,settlements,lifecycle);
+    }
+    @Test void baseOnlyConfigurationStillRejectsEveryNewMerchantOperationBeforeIdentityOrWalletCalls() {
+        properties.setMerchantId(null);properties.setApiKey(null);
+        for(org.junit.jupiter.api.function.Executable operation:newOperations())assertThrows(ServiceException.class,operation);
+        verifyNoInteractions(client,authorization,accounts,paid,settlements,lifecycle);
+    }
+    @Test void absentIdentityServiceAddressCannotResolveSelfOrReadOrStopOriginalRuns() {
+        properties.setBaseUrl(null);properties.setMerchantId(null);properties.setApiKey(null);
+        assertThrows(ServiceException.class,()->controller.identity());
+        assertThrows(ServiceException.class,()->controller.runs());
+        assertThrows(ServiceException.class,()->controller.run("original-run"));
+        assertThrows(ServiceException.class,()->controller.stop("original-run"));
+        verifyNoInteractions(client,authorization,accounts,paid);
+    }
+    @Test void missingMerchantCredentialsNeverBypassFailedCurrentSelfVerificationForOriginalRuns() {
+        properties.setMerchantId(null);properties.setApiKey(null);
+        ServiceException unavailable=new ServiceException("Current authoritative self unavailable");
+        when(authorization.billingPayer(client)).thenThrow(unavailable);
+        assertSame(unavailable,assertThrows(ServiceException.class,()->controller.identity()));
+        assertSame(unavailable,assertThrows(ServiceException.class,()->controller.runs()));
+        assertSame(unavailable,assertThrows(ServiceException.class,()->controller.run("original-run")));
+        assertSame(unavailable,assertThrows(ServiceException.class,()->controller.stop("original-run")));
+        verify(authorization,times(4)).billingPayer(client);
+        verifyNoInteractions(client,accounts,paid);
+    }
+    private void configureBilling() {
+        properties.setBaseUrl("https://billing-fixture.invalid");properties.setMerchantId("fixture-merchant");
+        properties.setApiKey("fixture-merchant-token");properties.setMaximumHoldQuota("1000000");
+        properties.setMaximumRunSeconds(600);properties.setVerifiedProviderStopSeconds(60);
+        properties.setHoldStopLeadSeconds(300);
     }
     @Test void absentConsentStopsBeforeSelfConfigOrBalance() {
         assertThrows(ServiceException.class,()->controller.account(new ComputeBillingBindingController.AccountCheck()));

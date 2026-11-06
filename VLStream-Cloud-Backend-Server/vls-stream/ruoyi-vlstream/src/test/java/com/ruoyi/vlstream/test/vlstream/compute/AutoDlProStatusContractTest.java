@@ -31,20 +31,27 @@ class AutoDlProStatusContractTest {
         node.setProviderInstanceId("pro-fixture");node.setProviderCredentialCipher("fixture-cipher");
         ConfiguredComputeRegistry configured=mock(ConfiguredComputeRegistry.class);
         when(configured.providerTokenPresent(any())).thenReturn(true);when(configured.providerToken(any())).thenReturn("SYNTHETIC_TEST_ONLY");
+        when(configured.official(any())).thenAnswer(call->officialIdentity(call.getArgument(0)));
         org.springframework.test.util.ReflectionTestUtils.setField(provider,"configured",configured);
     }
     @AfterEach void verifyTransport(){transport.verify();}
-    @Test void singleOfficialControlDoesNotEnableLegacyNodesOrAnotherInstance(){
+    @Test void existingOfficialConfigurationDoesNotEnableLegacyNodesOrAnotherInstance(){
         provider=new AutoDlProPowerProvider(mock(ComputeCredentialCipher.class),false,AutoDlProPowerProvider.transport());
         ConfiguredComputeRegistry configured=mock(ConfiguredComputeRegistry.class);when(configured.providerTokenPresent(any())).thenReturn(true);
+        when(configured.official(any())).thenAnswer(call->officialIdentity(call.getArgument(0)));
         org.springframework.test.util.ReflectionTestUtils.setField(provider,"configured",configured);
-        org.springframework.test.util.ReflectionTestUtils.setField(provider,"officialControl",true);
-        org.springframework.test.util.ReflectionTestUtils.setField(provider,"officialControlInstanceId","pro-123456abcdef");
-        node.setConfigurationManaged(true);node.setId(-6000L);node.setConfigurationCode("official-autodl");node.setProviderInstanceId("pro-123456abcdef");assertTrue(provider.supports(node));
+        officialNode();assertTrue(provider.supports(node));
         node.setConfigurationManaged(false);assertFalse(provider.supports(node));node.setConfigurationManaged(true);node.setProviderInstanceId("pro-abcdef123456");assertFalse(provider.supports(node));
     }
+    private void officialNode() {
+        node.setConfigurationManaged(true);node.setId(-6000L);node.setConfigurationCode("official-autodl");node.setProviderInstanceId("pro-123456abcdef");
+    }
+    private static boolean officialIdentity(ComputeNode node) {
+        return node!=null&&node.isConfigurationManaged()&&Long.valueOf(-6000L).equals(node.getId())
+            &&"official-autodl".equals(node.getConfigurationCode())&&"pro-123456abcdef".equals(node.getProviderInstanceId());
+    }
     void state(String value) {
-        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"status?instance_uuid=pro-fixture")).andExpect(method(HttpMethod.GET))
+        transport.expect(requestTo(AutoDlProPowerProvider.BASE+"status?instance_uuid="+node.getProviderInstanceId())).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"code\":\"Success\",\"data\":\""+value+"\"}",MediaType.APPLICATION_JSON));
     }
     String item(String id,String status) {
@@ -70,14 +77,14 @@ class AutoDlProStatusContractTest {
         assertThrows(RuntimeException.class,()->ComputeBillingPolicy.requireEconomicalPaidOffer(node,System.currentTimeMillis()));
     }
     @Test void documentedCanonicalShutdownConfirmsOnlyOfficialPhysicalStopNotFreeSupplierStorage() {
-        state("shutdown");node.setConfigurationManaged(true);
+        officialNode();state("shutdown");
         ComputePowerProvider.Snapshot result=provider.status(node);
         assertEquals("STOPPED",result.power);assertEquals("AUTODL_PRO_PHYSICAL_STOPPED",result.stoppedMode);
         assertTrue(ComputeBillingPolicy.computeStopConfirmed(node,result));
         node.setConfigurationManaged(false);assertFalse(ComputeBillingPolicy.computeStopConfirmed(node,result));
     }
     @Test void supplierPrepaymentDoesNotExtendOfficialUserBillingAfterPhysicalShutdown() {
-        state("shutdown");node.setConfigurationManaged(true);
+        officialNode();state("shutdown");
         ComputePowerProvider.Snapshot result=provider.status(node);
         assertNull(result.chargeType);assertTrue(ComputeBillingPolicy.computeStopConfirmed(node,result));
     }

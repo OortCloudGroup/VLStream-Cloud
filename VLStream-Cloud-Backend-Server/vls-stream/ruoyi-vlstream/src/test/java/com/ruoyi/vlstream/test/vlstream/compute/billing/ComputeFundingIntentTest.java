@@ -70,10 +70,10 @@ class ComputeFundingIntentTest {
         return service.recordHoldDetail(h.id, h.requestHash, detail(h, 1, "1000", "0", "0", "1000"));
     }
 
-    @Test void migrationOnlyCreatesEmptyLocalJournalAndDefaultBillingIsOff() {
+    @Test void migrationOnlyCreatesEmptyLocalJournalAndMissingConfigurationCannotAdmitWork() {
         assertEquals(0, fixture.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_funding_intent", Integer.class));
-        assertFalse(new ExternalBillingProperties().isEnabled());
-        assertFalse(new ExternalBillingProperties().isSafetyStopEnabled());
+        assertFalse(new ExternalBillingProperties().hasMerchantConfiguration());
+        assertFalse(new ExternalBillingProperties().paidConfigured());
     }
     @Test void originalHoldSurvivesRestartWithoutChangingExpiryKeyBodyOrReference() {
         ComputeFundingIntentService.Intent h = hold();
@@ -453,6 +453,32 @@ class ComputeFundingIntentTest {
         assertEquals(legacy, recovered.body); assertEquals(r.key, recovered.key); assertNull(service.claimInitialSend(r.id, 1790000000000L));
     }
 
+    @Test void missingNewAdmissionBudgetsPreventFirstHoldSubmissionWithoutClaimingAnUnknownSend() {
+        ComputeFundingIntentService.Intent h = hold(); FundingGateway gateway = new FundingGateway();
+        fixture.properties.setMaximumRunSeconds(0); fixture.properties.setMaximumHoldQuota(null);
+        fixture.properties.setVerifiedProviderStopSeconds(null); fixture.properties.setHoldStopLeadSeconds(0);
+        ComputeFundingRecoveryService recovery = new ComputeFundingRecoveryService(service,
+            (java.util.function.Supplier<ExternalBillingGateway>) () -> gateway, fixture.properties);
+        assertTrue(fixture.properties.hasMerchantConfiguration()); assertFalse(fixture.properties.paidConfigured());
+        assertEquals("PREPARED", recovery.advance(h.id, 1790000000000L).state);
+        assertEquals(0, gateway.writes); assertEquals(0, gateway.operations); assertEquals(0, gateway.references);
+        assertEquals(h.key, service.recover(h.id).key); assertEquals(h.body, service.recover(h.id).body);
+    }
+
+    @Test void originalFinalReleaseAndLostReceiptRecoverySurviveMissingNewAdmissionBudgets() {
+        ComputeFundingIntentService.Intent h = observed();
+        ComputeFundingIntentService.Intent release = service.prepareFinalRelease(h.id, "1000");
+        ReplayGateway gateway = new ReplayGateway(h); gateway.loseFirstReply = true;
+        fixture.properties.setMaximumRunSeconds(0); fixture.properties.setMaximumHoldQuota(null);
+        fixture.properties.setVerifiedProviderStopSeconds(null); fixture.properties.setHoldStopLeadSeconds(0);
+        ComputeFundingRecoveryService recovery = new ComputeFundingRecoveryService(service,
+            (java.util.function.Supplier<ExternalBillingGateway>) () -> gateway, fixture.properties);
+        assertEquals("UNKNOWN", recovery.advance(release.id, 1790000000000L).state);
+        assertEquals("OPERATION_CONFIRMED", recovery.advance(release.id, 1790000000001L).state);
+        assertEquals(2, gateway.writes); assertEquals(1, gateway.effects); assertEquals(0, gateway.remaining());
+        assertEquals(release.key, gateway.lastKey); assertEquals(release.body, gateway.lastBody);
+    }
+
     @Test void lostTopupReceiptReplaysExactOriginalOnceAndConfirmsOneFinancialEffect() {
         ComputeFundingIntentService.Intent h = observed();
         ComputeFundingIntentService.Intent topup = service.prepareTopup(h.id, "topup-replay", "100", "METERING", 1790000000000L);
@@ -561,7 +587,11 @@ class ComputeFundingIntentTest {
     }
     JsonNode parseBody(String body) { try { return fixture.json.readTree(body); } catch (Exception e) { throw new IllegalStateException(e); } }
     ComputeFundingRecoveryService coordinator(ExternalBillingGateway gateway) {
-        ExternalBillingProperties properties = new ExternalBillingProperties(); properties.setEnabled(true); properties.setAllowWrites(true);
+        ExternalBillingProperties properties = new ExternalBillingProperties();
+        properties.setBaseUrl("https://fixture.invalid"); properties.setMerchantId("vls-test");
+        properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL");
+        properties.setMaximumRunSeconds(600); properties.setMaximumHoldQuota("10000000");
+        properties.setVerifiedProviderStopSeconds(30); properties.setHoldStopLeadSeconds(60);
         return new ComputeFundingRecoveryService(service, (java.util.function.Supplier<ExternalBillingGateway>) () -> gateway, properties);
     }
     class FundingGateway implements ExternalBillingGateway {

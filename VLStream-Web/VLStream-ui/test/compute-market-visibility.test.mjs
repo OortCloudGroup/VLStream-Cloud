@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { parse, compileTemplate } from 'vue/compiler-sfc'
+import * as Vue from 'vue'
+import { renderToString } from '@vue/server-renderer'
 
 const source = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
 const { marketDisplayResources } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
@@ -100,5 +103,39 @@ test('a partial official identity or incompatible GPU or billing never receives 
     { billingType: 'FREE' }
   ]) {
     assert.equal(getMarketSpecifications({ ...resource, ...changed }), null)
+  }
+})
+
+test('the actual market keeps its paid startup entry and explains missing target configuration', async () => {
+  const marketSource = await readFile(new URL('../src/views/AIComputingScheduling/ComputeMarket.vue', import.meta.url), 'utf8')
+  const compiled = compileTemplate({ source: parse(marketSource).descriptor.template.content, id: 'always-available-market' })
+  assert.deepEqual(compiled.errors, [])
+  const render = new Function('Vue', compiled.code
+    .replace(/^import \{(.*?)\} from "vue"$/gm, (_, names) => `const {${names.replace(/ as /g, ': ')}} = Vue`)
+    .replace('export function render', 'function render') + '\nreturn render')(Vue)
+  for (const configured of [false, true]) {
+    const item = { ...official, claimState: 'FREE', powerState: 'UNKNOWN', paidAdmissionEnabled: configured,
+      paidUnavailableReason: configured ? null : '官方算力供应商调用身份未配置' }
+    const app = Vue.createSSRApp({ setup: () => ({
+      loading: false, route: { query: {} }, resources: [item], pagedResources: [item], page: 1, pageSize: 20,
+      marketText: text => text, marketError: '', operating: '', marketResourceName: row => row.name,
+      getMarketSpecifications: () => null, marketPricePresentation: () => ({ amount: '13.00', unit: '/整实例小时' }),
+      load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, billingPanel: {}, router: { push() {} }
+    }), render })
+    app.component('ComputeBillingPanel', { render: () => Vue.h('section') })
+    for (const name of ['el-alert', 'el-empty', 'ArrowRight', 'el-icon', 'el-pagination']) app.component(name, { render: () => Vue.h('span') })
+    app.component('el-button', { props: ['disabled'], render() { return Vue.h('button', { disabled: this.disabled }, this.$slots.default?.()) } })
+    app.directive('loading', { getSSRProps: () => ({}) })
+    const html = await renderToString(app)
+    assert.match(html, /付费开机/)
+    assert.match(html, /确认报价后按用量结算/)
+    assert.doesNotMatch(html, /暂未开放|尚未启用|READ_ONLY|PAID|OFF/)
+    if (configured) {
+      assert.doesNotMatch(html, /<button[^>]*disabled[^>]*>付费开机/)
+      assert.doesNotMatch(html, /官方算力供应商调用身份未配置/)
+    } else {
+      assert.match(html, /<button[^>]*disabled[^>]*>付费开机/)
+      assert.match(html, /官方算力供应商调用身份未配置/)
+    }
   }
 })

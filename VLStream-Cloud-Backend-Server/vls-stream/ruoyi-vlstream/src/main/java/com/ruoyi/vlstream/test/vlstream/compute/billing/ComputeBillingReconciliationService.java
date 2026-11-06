@@ -25,7 +25,7 @@ public class ComputeBillingReconciliationService {
         this.jdbc = jdbc; this.transaction = new TransactionTemplate(manager); this.properties = properties; this.gateways = gateways; this.json = json;
     }
     public void tick() {
-        if (!properties.isEnabled()) return;
+        if (!properties.hasMerchantConfiguration()) return;
         ExternalBillingGateway gateway = gateways.getIfAvailable(); String merchant = properties.getMerchantId();
         if (gateway == null || merchant == null) return;
         String lease = UUID.randomUUID().toString();

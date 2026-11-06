@@ -53,8 +53,8 @@ class ComputeTrialRefundTest {
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(root!=null&&!Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();assertNotNull(root);
         for(String migration:new String[]{"048__compute_billing_slices","049__compute_billing_coordination","052__compute_funding_intents","053__compute_funding_hold_recovery","054__compute_corrective_refund_intents","056__compute_paid_run_orchestration"})
             try(java.sql.Connection c=ds.getConnection()){ScriptUtils.executeSqlScript(c,new FileSystemResource(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_"+migration+".sql")));}
-        properties=new ExternalBillingProperties();properties.setMode(ExternalBillingProperties.Mode.PAID);
-        properties.setBaseUrl(ComputeBillingTrialGuard.TARGET);properties.setMerchantId("vls");properties.getTrial().setRunId(run);
+        properties=new ExternalBillingProperties();
+        properties.setBaseUrl(ComputeBillingTrialGuard.TARGET);properties.setMerchantId("vls");properties.setApiKey("fixture-merchant-token");properties.getTrial().setRunId(run);
         String expiry=Instant.now().plusSeconds(3600).toString();
         properties.setMaximumRunSeconds(600);properties.getTrial().setEnabled(true);properties.getTrial().setMaximumWalletCny("3.47");properties.getTrial().setExpiresAt(expiry);
         snapshot=json.createObjectNode().put("price_snapshot_id","price").put("approved_hourly_price","13.00").put("quota_unit","quota")
@@ -222,9 +222,10 @@ class ComputeTrialRefundTest {
         jdbc.update("UPDATE vls_compute_funding_intent SET state='UNKNOWN' WHERE operation_kind='RELEASE'");
         assertThrows(IllegalStateException.class,()->service.advance(run,request));noRefund();
     }
-    @ParameterizedTest @ValueSource(strings={"OFF","READ_ONLY"})
-    void disabledWriteModeRejectsBeforeAnyJournalOrTransport(String mode) {
-        properties.setMode(ExternalBillingProperties.Mode.valueOf(mode));assertThrows(IllegalStateException.class,()->service.advance(run,request));noRefund();assertEquals(0,powerReads.get());
+    @ParameterizedTest @ValueSource(strings={"MISSING_TOKEN","INVALID_HTTPS"})
+    void missingMerchantConfigurationRejectsBeforeAnyJournalOrTransport(String invalid) {
+        if("MISSING_TOKEN".equals(invalid))properties.setApiKey(null);else properties.setBaseUrl("http://fixture.invalid");
+        assertThrows(IllegalStateException.class,()->service.advance(run,request));noRefund();assertEquals(0,powerReads.get());
     }
     @Test void normalNonTrialConsumptionIsNeverEligible() {
         jdbc.update("UPDATE vls_compute_billing_session SET accepted_snapshot='{}'");assertThrows(IllegalStateException.class,()->service.advance(run,request));noRefund();

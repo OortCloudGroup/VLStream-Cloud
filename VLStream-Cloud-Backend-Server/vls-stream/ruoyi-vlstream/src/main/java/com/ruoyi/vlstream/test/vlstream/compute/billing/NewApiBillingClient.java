@@ -3,7 +3,6 @@ package com.ruoyi.vlstream.test.vlstream.compute.billing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePlatformAuthorization;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -15,9 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/** Documented merchant adapter. Read access and funds movement have separate, default-off gates. */
+/** Documented billing adapter. User self and merchant operations retain separate verified identities. */
 @Component
-@Conditional(ExternalBillingClientCondition.class)
 public class NewApiBillingClient implements ExternalBillingGateway {
     private final ExternalBillingProperties properties;
     private final ObjectMapper json;
@@ -28,10 +26,10 @@ public class NewApiBillingClient implements ExternalBillingGateway {
 
     /** Non-secret merchant binding for administrative evidence import. */
     public boolean servesMerchant(String merchantId) {
-        return merchantId != null && merchantId.equals(properties.getMerchantId());
+        return properties.hasMerchantConfiguration() && merchantId != null && merchantId.equals(properties.getMerchantId());
     }
 
-    @Override public boolean supportsAtomicCapture() { return properties.isEnabled() && properties.isAllowWrites(); }
+    @Override public boolean supportsAtomicCapture() { return properties.hasMerchantConfiguration(); }
     @Override public Result capture(String originalKey, String immutableBody) {
         JsonNode body = checkedWrite(originalKey, immutableBody);
         exactId(body.get("hold_id")); // This boundary never falls back to an available-balance charge.
@@ -166,7 +164,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     }
 
     private JsonNode checkedWrite(String key, String body) {
-        if (!supportsAtomicCapture()) throw new IllegalStateException("External billing writes disabled");
+        requireMerchantConfiguration();
         if (key == null || !key.matches("[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")) throw new IllegalArgumentException("Invalid billing operation key");
         try {
             JsonNode parsed = json.readTree(body);
@@ -243,6 +241,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
 
     /** Uses only the same SSO proof and gateway context already verified for this actor. */
     public BillingPayer resolveSelf(ComputePlatformAuthorization.Context actor, SelfAuthorization authorization) {
+        requireIdentityConfiguration();
         if (authorization == null || !authorization.matches(actor)) throw new IllegalArgumentException("Verified self identity changed");
         Reply result = readSelf(authorization);
         if (result.status != 200 || !result.body.path("success").isBoolean() || !result.body.path("success").booleanValue()
@@ -318,7 +317,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
 
     private boolean failed(JsonNode body) { return body.has("success") && (!body.path("success").isBoolean() || !body.path("success").booleanValue()); }
     private String merchantKey() {
-        if (properties.getMerchantId() == null || properties.getMerchantId().trim().isEmpty()) throw new IllegalStateException("Billing merchant is not configured");
+        requireMerchantConfiguration();
         return properties.getApiKey();
     }
     private static String segment(String value) {
@@ -335,25 +334,29 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         return request("GET", path, bearer, null, null);
     }
     protected Reply readSelf(SelfAuthorization authorization) {
-        return request("GET", "/api/user/self", authorization.headers(), null, null);
+        if (authorization == null) throw new IllegalArgumentException("Verified self identity required");
+        return request("GET", "/api/user/self", authorization.headers(), null, null, true);
     }
     protected Reply post(String path, String bearer, String key, String body) {
         return request("POST", path, bearer, key, body);
     }
     private Reply request(String method, String path, String bearer, String key, String requestBody) {
-        if (!properties.isEnabled()) throw new IllegalStateException("External billing disabled");
+        requireMerchantConfiguration();
         if (bearer == null || bearer.trim().isEmpty()) throw new IllegalStateException("Billing identity unavailable");
         Map<String,String> headers = new LinkedHashMap<>();
         headers.put("Authorization", "Bearer " + bearer);
-        return request(method, path, headers, key, requestBody);
+        return request(method, path, headers, key, requestBody, false);
     }
-    private Reply request(String method, String path, Map<String,String> headers, String key, String requestBody) {
-        if (!properties.isEnabled()) throw new IllegalStateException("External billing disabled");
+    private Reply request(String method, String path, Map<String,String> headers, String key, String requestBody, boolean selfIdentity) {
+        if (selfIdentity) {
+            if (!"GET".equals(method) || !"/api/user/self".equals(path) || key != null || requestBody != null)
+                throw new IllegalArgumentException("Only verified self lookup may use user identity");
+            requireIdentityConfiguration();
+        } else requireMerchantConfiguration();
         HttpURLConnection connection = null;
         try {
             URI base = URI.create(properties.getBaseUrl());
-            boolean loopback = "127.0.0.1".equals(base.getHost()) || "localhost".equals(base.getHost());
-            if ((!"https".equals(base.getScheme()) && !(loopback && "http".equals(base.getScheme()))) || base.getUserInfo() != null || base.getQuery() != null || base.getFragment() != null)
+            if (!"https".equalsIgnoreCase(base.getScheme()) || base.getHost() == null || base.getUserInfo() != null || base.getQuery() != null || base.getFragment() != null)
                 throw new IllegalArgumentException("Billing endpoint must be trusted HTTPS");
             String url = base.toString().replaceAll("/+$", "") + path;
             connection = openConnection(URI.create(url));
@@ -389,5 +392,13 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     }
     protected HttpURLConnection openConnection(URI target) throws java.io.IOException {
         return (HttpURLConnection) target.toURL().openConnection();
+    }
+    private void requireMerchantConfiguration() {
+        String reason = properties.merchantConfigurationReason();
+        if (reason != null) throw new IllegalStateException(reason);
+    }
+    private void requireIdentityConfiguration() {
+        String reason = properties.identityConfigurationReason();
+        if (reason != null) throw new IllegalStateException(reason);
     }
 }

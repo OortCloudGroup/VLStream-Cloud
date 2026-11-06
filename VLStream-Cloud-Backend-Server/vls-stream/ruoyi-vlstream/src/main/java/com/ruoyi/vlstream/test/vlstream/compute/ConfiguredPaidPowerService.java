@@ -27,6 +27,7 @@ public class ConfiguredPaidPowerService {
     private final ConfiguredComputeRegistry configured;
     private final ObjectProvider<ComputePowerProvider> providers;
     private final ComputeBillingLedgerService ledger;
+    private final com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService settlements;
 
     ComputeNode refresh(ComputeNode node) {
         configured.verifyOfficial(node);configured.recordPower(node,provider(node).status(node));return configured.resolve(node.getId());
@@ -43,6 +44,14 @@ public class ConfiguredPaidPowerService {
         ComputePowerProvider supplier=provider(verified);
         if("PREPARED".equals(phase)) {
             if(!stop) {
+                try {
+                    // An accepted order may have waited across a restart or configuration
+                    // change. Recheck its original held funds before the first power write.
+                    settlements.requirePaidAdmission(usage);
+                } catch(RuntimeException denied) {
+                    blockUnsentStart(id,usage,"ADMISSION_UNAVAILABLE");
+                    return;
+                }
                 try { requireTrialStart(run,verified); }
                 catch(RuntimeException denied) {
                     // No power submission has happened. Preserve the original hold for safe cancellation.

@@ -68,7 +68,7 @@ class ConfiguredOfficialRunIntegrationTest {
         doAnswer(call->{assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());if("start".equals(call.getArgument(1))){started=Instant.now();f.wallet.power="RUNNING";}else{stopped=Instant.now();f.wallet.power="STOPPED";}return null;}).when(f.supplier).submit(any(),anyString(),anyString());
         installPower();
     }
-    void installPower(){DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("supplier",f.supplier);power=new ConfiguredPaidPowerService(jdbc,registry,beans.getBeanProvider(ComputePowerProvider.class),f.ledger);ReflectionTestUtils.setField(f.runs,"configuredPower",power);ReflectionTestUtils.setField(f.lifecycle,"configuredPower",power);}
+    void installPower(){DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("supplier",f.supplier);power=new ConfiguredPaidPowerService(jdbc,registry,beans.getBeanProvider(ComputePowerProvider.class),f.ledger,f.settlements);ReflectionTestUtils.setField(f.runs,"configuredPower",power);ReflectionTestUtils.setField(f.lifecycle,"configuredPower",power);}
     @AfterEach void cleanup(){f.clear();}
     ComputeNode node(){return nodes.get(-6000L);}
     String accepted(){ComputePaidRunService.View quote=f.runs.quote(-6000L,f.payer,f.config);assertEquals("13.00",quote.getHourlyPrice());f.runs.accept(quote.getRunId(),f.payer);return quote.getRunId();}
@@ -125,11 +125,92 @@ class ConfiguredOfficialRunIntegrationTest {
         assertTrue(f.wallet.capturePosts>=2);assertEquals(f.wallet.capturePosts,f.wallet.chargesByReference.size());
     }
     @Test void restartAfterAmbiguousStartQueriesOriginalWithoutResendOrEarlyRelease() {
+        f.properties.setVerifiedProviderStopSeconds(null);
         doThrow(new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN)).when(f.supplier).submit(any(),eq("start"),anyString());
         String id=accepted();queued(id);f.runs.tick(id);String operation=jdbc.queryForObject("SELECT start_operation_id FROM vls_compute_paid_run",String.class);
         registry.initialize();installPower();f.runs.tick(id);f.runs.tick(id);
         assertEquals("STARTING",f.runs.get(id,f.payer).getState());assertTrue(f.wallet.remaining()>0);assertEquals(0,f.wallet.releasePosts);
         verify(f.supplier,times(1)).submit(any(),eq("start"),eq(operation));assertEquals("UNKNOWN",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+    }
+    @Test void firstOrderWithoutPriorStopObservationStillRequiresTheOriginalHoldAndClosesNormally() {
+        f.properties.setVerifiedProviderStopSeconds(null);
+        String id=accepted();assertEquals(0,f.wallet.holdPosts);assertEquals(0,f.wallet.capturePosts);
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        String usage=f.runs.get(id,f.payer).getUsageId();
+        assertThrows(IllegalStateException.class,()->f.settlements.requirePaidAdmission(usage));
+        queued(id);assertEquals(1,f.wallet.holdPosts);
+        assertDoesNotThrow(()->f.settlements.requirePaidAdmission(usage));
+        f.runs.tick(id);f.runs.tick(id);assertEquals("RUNNING",f.runs.get(id,f.payer).getState());
+        finish(id);finish(id);
+        assertEquals("COMPLETED",f.runs.get(id,f.payer).getState());assertEquals(0,f.wallet.remaining());
+        assertEquals(1,f.wallet.holdPosts);assertEquals(1,f.wallet.releasePosts);
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @ParameterizedTest @ValueSource(strings={"STOP_BUDGET","POLL_MARGIN","STOP_LEAD","MONEY_CAP","MISSING_POLICY"})
+    void firstQuoteWithoutStopObservationsRejectsInvalidBudgetsOrMissingPolicy(String invalid) {
+        f.properties.setVerifiedProviderStopSeconds(null);
+        ComputeBillingPolicy policy=new ComputeBillingPolicy();
+        if("STOP_BUDGET".equals(invalid))policy.setStopBudgetSeconds(0);
+        if("POLL_MARGIN".equals(invalid))policy.setPollingSafetySeconds(0);
+        if("STOP_LEAD".equals(invalid))f.properties.setHoldStopLeadSeconds(299);
+        if("MONEY_CAP".equals(invalid))f.properties.setMaximumHoldQuota("1");
+        ReflectionTestUtils.setField(f.runs,"policy","MISSING_POLICY".equals(invalid)?null:policy);
+        assertThrows(RuntimeException.class,()->f.runs.quote(-6000L,f.payer,f.config));
+        assertEquals(0,f.wallet.holdPosts);assertEquals(0,f.wallet.capturePosts);
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_paid_run",Integer.class));
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void firstPowerSubmissionWithoutStopObservationsStillRejectsMissingAdmissionPolicy() {
+        f.properties.setVerifiedProviderStopSeconds(null);String id=accepted();queued(id);
+        ReflectionTestUtils.setField(f.settlements,"policy",null);
+        assertThrows(IllegalStateException.class,()->f.settlements.requirePaidAdmission(f.runs.get(id,f.payer).getUsageId()));
+        power.advance(jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id),node());
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        assertEquals("PREPARED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        for(int i=0;i<5;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());assertEquals(1,f.wallet.releasePosts);
+    }
+    @Test void firstPowerSubmissionRechecksCurrentAdmissionWithoutLosingOriginalRelease() {
+        String id=accepted();queued(id);
+        f.properties.setMaximumRunSeconds(0);f.properties.setMaximumHoldQuota(null);f.properties.setVerifiedProviderStopSeconds(null);
+        power.advance(jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id),node());
+        verify(f.supplier,never()).submit(any(),eq("start"),anyString());
+        assertEquals("PREPARED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        for(int i=0;i<5;i++)f.runs.tick(id);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());
+        assertEquals(1,f.wallet.holdPosts);assertEquals(1,f.wallet.releasePosts);assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.remaining());
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+    }
+    @Test void missingNewAdmissionBudgetStillStopsAndSettlesTheOriginalRunningOrder() {
+        String id=accepted();running(id);
+        f.properties.setMaximumRunSeconds(0);f.properties.setMaximumHoldQuota(null);f.properties.setVerifiedProviderStopSeconds(null);
+        ReflectionTestUtils.setField(f.runs,"policy",null);ReflectionTestUtils.setField(f.settlements,"policy",null);
+        finish(id);
+        assertEquals("COMPLETED",f.runs.get(id,f.payer).getState());
+        assertEquals(1,f.wallet.holdPosts);assertEquals(1,f.wallet.releasePosts);assertEquals(0,f.wallet.remaining());
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+    }
+    @Test void firstPowerSubmissionRejectsNewStopPolicyThatNoLongerCoversAcceptedLead() {
+        String id=accepted();queued(id);
+        ComputeBillingPolicy changed=new ComputeBillingPolicy();changed.setStopBudgetSeconds(400);
+        ReflectionTestUtils.setField(f.settlements,"policy",changed);
+        power.advance(jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",id),node());
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        assertEquals("PREPARED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+    }
+    @Test void missingMerchantCannotPreventOriginalPhysicalStopOrSendAnyFurtherFunds() {
+        String id=accepted();running(id);int moneyRequests=f.wallet.holdPosts+f.wallet.capturePosts+f.wallet.releasePosts;
+        f.properties.setApiKey(null);f.runs.stop(id,f.payer);
+        for(int i=0;i<3;i++)f.runs.tick(id);
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+        assertEquals("STOPPED",f.wallet.power);
+        assertEquals(moneyRequests,f.wallet.holdPosts+f.wallet.capturePosts+f.wallet.releasePosts);
+        assertTrue(f.wallet.remaining()>0);assertNotNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run",String.class));
     }
     void rejectStart(String id,ComputeProviderException rejected) {
         doThrow(rejected).when(f.supplier).submit(any(),eq("start"),anyString());

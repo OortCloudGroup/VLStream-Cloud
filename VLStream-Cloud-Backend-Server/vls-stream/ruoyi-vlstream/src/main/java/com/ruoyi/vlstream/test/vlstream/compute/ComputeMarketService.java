@@ -27,6 +27,7 @@ public class ComputeMarketService {
     private ComputeSharedQueueService sharedQueue;
     @org.springframework.beans.factory.annotation.Autowired private org.springframework.beans.factory.ObjectProvider<ComputePaidRunService> paidRuns;
     @org.springframework.beans.factory.annotation.Autowired private com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties billingProperties;
+    @org.springframework.beans.factory.annotation.Autowired private ComputeBillingPolicy billingPolicy;
     private ComputePublicInventoryService inventory() {
         if (publicInventory==null) throw new ServiceException("公共整实例占用服务未就绪");
         return publicInventory;
@@ -130,10 +131,10 @@ public class ComputeMarketService {
             resource.setStopped("STOPPED".equals(node.getPowerState()));
             resource.setSchedulable(ComputeAvailability.ready(node, now) && (!shared || "MINE".equals(claim) && "FREE".equals(node.getBillingType())));
             if("POINTS".equals(node.getBillingType())) {
-                boolean configured=billingProperties!=null&&billingProperties.isEnabled()&&billingProperties.isAllowWrites()&&billingProperties.isSafetyStopEnabled()&&billingProperties.isPaidAdmissionEnabled()
-                    &&(nodes.officialConfigured(node)?"VLS_FIXED".equals(node.getPricePolicy())&&node.getUserHourlyPrice()!=null:billingProperties.getRates().containsKey(String.valueOf(node.getId())));
+                String unavailable=paidUnavailableReason(node);
+                boolean configured=unavailable==null;
                 resource.setPaidAdmissionEnabled(configured);
-                if(!configured)resource.setPaidUnavailableReason(billingProperties==null?"平台计费配置不可用":billingProperties.unavailableReason()==null?"实例固定价格或计费报价未配置":billingProperties.unavailableReason());
+                resource.setPaidUnavailableReason(unavailable);
                 ComputePaidRunService paid=paidRuns==null?null:paidRuns.getIfAvailable();
                 resource.setSchedulable(configured&&paid!=null&&"MINE".equals(claim)&&ComputeAvailability.ready(node,now)&&paid.trainingAvailable(node));
             }
@@ -155,6 +156,24 @@ public class ComputeMarketService {
         return result;
     }
 
+    /** Local configuration projection only. Payer verification, current price and HOLD are
+     * checked again by the explicit quote/accept flow before any paid operation. */
+    private String paidUnavailableReason(ComputeNode node) {
+        if(billingProperties==null)return "平台计费配置不可用";
+        if(!billingProperties.paidConfigured())return billingProperties.unavailableReason();
+        try {
+            if(billingProperties.getHoldStopLeadSeconds()<billingPolicy.checkedStopBudgetSeconds(billingProperties.getVerifiedProviderStopSeconds()))
+                return "余额到期停机提前量未覆盖可靠停机预算";
+        } catch(IllegalArgumentException invalid){return invalid.getMessage();}
+        if(nodes.officialConfigured(node)) {
+            if(!"VLS_FIXED".equals(node.getPricePolicy())||node.getUserHourlyPrice()==null)
+                return "官方算力用户固定价格未配置";
+            if(configured==null||!configured.providerTokenPresent(node))return "官方算力供应商调用身份未配置";
+        } else if(!billingProperties.getRates().containsKey(String.valueOf(node.getId())))return "实例计费报价未配置";
+        if(!powerProviders.stream().anyMatch(provider->provider.supports(node)))return "实例电源控制配置不完整";
+        return null;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void publish(Long id, ComputeRequests.Offer request) {
         nodes.requireMutable(id);
@@ -171,7 +190,7 @@ public class ComputeMarketService {
         if (request.isPublished() && "POINTS".equals(request.getBillingType()))
             ComputeBillingPolicy.requireEconomicalPaidOffer(rows.get(0), System.currentTimeMillis());
         if ("POINTS".equals(request.getBillingType()) && request.getPointsPerHour() == null)
-            throw new ServiceException("请配置价格；积分结算未接入前收费资源仅展示");
+            throw new ServiceException("请配置实例价格");
         jdbc.update("UPDATE vls_compute_node SET resource_scope=?,billing_type=?,points_per_hour=?,scheduling_mode=? WHERE tenant_id=? AND id=?",
             request.isPublished() ? "PLATFORM" : "PRIVATE", request.getBillingType(),
             "POINTS".equals(request.getBillingType()) ? request.getPointsPerHour() : null, scheduling, ComputeNodeService.tenant(), id);

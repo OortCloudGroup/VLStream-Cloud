@@ -25,14 +25,6 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
     private final ObjectMapper json = new ObjectMapper();
     @Autowired(required = false)
     private ConfiguredComputeRegistry configured;
-    @Value("${vlstream.compute.official-autodl-control.enabled:#{null}}")
-    private Boolean officialControl;
-    @Autowired(required = false)
-    private com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties billing;
-    @Autowired(required = false)
-    private ComputeBillingPolicy billingPolicy;
-    @Value("${vlstream.compute.official-autodl-control.instance-id:}")
-    private String officialControlInstanceId;
     @Autowired
     public AutoDlProPowerProvider(ComputeCredentialCipher cipher, @Value("${vlstream.compute.cloud-control.enabled:false}") boolean enabled) {
         this(cipher, enabled, transport());
@@ -54,39 +46,18 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         return new RestTemplate(factory);
     }
     @Override public boolean supports(ComputeNode node) {
-        boolean unified=billing!=null&&billing.getMode()!=null;
-        boolean officialEnabled=unified?billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID:Boolean.TRUE.equals(officialControl);
-        boolean scoped=officialEnabled&&node.isConfigurationManaged()&&Long.valueOf(-6000L).equals(node.getId())
-            &&"official-autodl".equals(node.getConfigurationCode())&&officialControlInstanceId!=null
-            &&officialControlInstanceId.matches("pro-[a-f0-9]{12}")&&officialControlInstanceId.equals(node.getProviderInstanceId());
-        if(unified&&officialEnabled&&configured!=null&&configured.official(node)&&Long.valueOf(-6000L).equals(node.getId())&&"official-autodl".equals(node.getConfigurationCode())
-            &&node.getProviderInstanceId()!=null&&node.getProviderInstanceId().matches("pro-[a-f0-9]{12}"))scoped=true;
-        if(node.isConfigurationManaged()&&unified&&!scoped)return false;
-        if(!unified&&Boolean.TRUE.equals(officialControl)&&!scoped)return false;
-        return (enabled||scoped) && "API".equals(node.getControlMode()) && "autodl".equals(node.getProvider())
-            && "AUTODL_PRO".equals(node.getProviderProduct()) && (node.isConfigurationManaged()
-                ? configured!=null&&configured.providerTokenPresent(node) : node.isProviderCredentialConfigured())
-            && node.getProviderInstanceId() != null && !node.getProviderInstanceId().isEmpty();
-    }
-    @javax.annotation.PostConstruct
-    public void validateOfficialMode() {
-        if(billing!=null&&billing.getMode()!=null&&officialControl!=null
-            &&officialControl!=(billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID))
-            throw new IllegalStateException("external-billing.mode 与旧 official-autodl-control.enabled 冲突，请移除旧开关");
-        if(billing!=null&&billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID&&billingPolicy!=null) {
-            int budget=billingPolicy.checkedStopBudgetSeconds(billing.getVerifiedProviderStopSeconds());
-            if(billing.getHoldStopLeadSeconds()<budget||billing.getSettlementIntervalSeconds()<1)
-                throw new IllegalStateException("PAID 模式停机提前量未覆盖 billing-policy.stop-budget-seconds，或结算周期无效");
-        }
-        if(billing!=null&&billing.getMode()==com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties.Mode.PAID&&configured!=null) {
-            for(ComputeNode node:configured.published())if(configured.official(node)) {
-                if(!Long.valueOf(-6000L).equals(node.getId())||!"official-autodl".equals(node.getConfigurationCode())
-                    ||!configured.providerTokenPresent(node)||!"VLS_FIXED".equals(node.getPricePolicy())||node.getUserHourlyPrice()==null)
-                    throw new IllegalStateException("PAID 模式的官方 AutoDL 资源缺少匹配的实例控制身份或固定价格，请检查 company-resources 配置");
-                if(officialControlInstanceId!=null&&!officialControlInstanceId.isEmpty()&&!officialControlInstanceId.equals(node.getProviderInstanceId()))
-                    throw new IllegalStateException("旧 official-autodl-control.instance-id 与当前官方资源不一致，请移除旧配置并核对实例");
-            }
-        }
+        if(node==null || !"API".equals(node.getControlMode()) || !"autodl".equals(node.getProvider())
+            || !"AUTODL_PRO".equals(node.getProviderProduct()) || node.getProviderInstanceId()==null
+            || node.getProviderInstanceId().isEmpty())return false;
+        if(!node.isConfigurationManaged())return enabled&&node.isProviderCredentialConfigured();
+        // Official control is a normal capability of the existing configured target.
+        // New starts are admitted by the durable paid-run/HOLD outbox; status and
+        // original-order stops must remain available when new admission is unavailable.
+        if(configured==null || !Long.valueOf(-6000L).equals(node.getId())
+            || !"official-autodl".equals(node.getConfigurationCode())
+            || !node.getProviderInstanceId().matches("pro-[a-f0-9]{12}"))return false;
+        try { return configured.official(node)&&configured.providerTokenPresent(node); }
+        catch(RuntimeException invalidConfiguration) { return false; }
     }
     @Override public void submit(ComputeNode node, String action, String operationId) {
         if (!"start".equals(action) && !"stop".equals(action)) throw new IllegalArgumentException("Unsupported power action");

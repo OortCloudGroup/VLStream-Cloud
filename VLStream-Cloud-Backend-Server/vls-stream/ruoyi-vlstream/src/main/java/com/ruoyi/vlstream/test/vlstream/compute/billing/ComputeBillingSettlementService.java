@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-/** Durable VLS-side slice/outbox coordinator. No paid-start enablement.
+/** Durable VLS-side slice/outbox coordinator.
  * All external I/O follows a committed local intent, preserving its original funding association. */
 @Service
 public class ComputeBillingSettlementService {
@@ -28,6 +28,8 @@ public class ComputeBillingSettlementService {
     private final ExternalBillingProperties properties;
     private final Supplier<ExternalBillingGateway> gateways;
     private final ComputeBillingTrialGuard trial;
+    @Autowired
+    private com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy policy = new com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy();
 
     @Autowired
     public ComputeBillingSettlementService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
@@ -48,7 +50,7 @@ public class ComputeBillingSettlementService {
 
     /** Pre-start binding for a committed RESERVED usage; no fabricated running timestamp. */
     public void bindReserved(String usageId, BillingPayer payer, BillingSnapshot snapshot) {
-        if(!properties.isPaidAdmissionEnabled())throw new IllegalStateException("Paid admission disabled");
+        if(!properties.paidConfigured())throw new IllegalStateException(properties.unavailableReason());
         bind(usageId,payer,snapshot,true);
     }
 
@@ -232,13 +234,18 @@ public class ComputeBillingSettlementService {
         });
     }
 
-    /** Off means no I/O at all. Current real client remains unable to authorize a new paid task. */
+    /** New work requires current configuration, armed original control and fresh held funds. */
     public void requirePaidAdmission(String usageId) {
-        ExternalBillingGateway gateway = properties.isEnabled() ? gateways.get() : null;
-        if (gateway == null || !gateway.supportsAtomicCapture()) throw new IllegalStateException("Paid billing requires verified atomic capture; disabled");
+        if (!properties.paidConfigured()) throw new IllegalStateException(properties.unavailableReason());
+        if (policy == null) throw new IllegalStateException("平台计费缺配置：billing-policy 停机预算");
+        int stopBudget = policy.checkedStopBudgetSeconds(properties.getVerifiedProviderStopSeconds());
+        if (properties.getHoldStopLeadSeconds() < stopBudget)
+            throw new IllegalStateException("余额到期停机提前量未覆盖配置的停机预算");
+        ExternalBillingGateway gateway = gateways.get();
+        if (gateway == null || !gateway.supportsAtomicCapture()) throw new IllegalStateException("Paid billing requires verified atomic capture configuration");
         Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
         if (session.get("risk_code") != null || number(session, "stop_requested") != 0) throw new IllegalStateException("Funding/authorization blocks new work");
-        if(!properties.isPaidAdmissionEnabled()||!properties.isSafetyStopEnabled()||session.get("control_snapshot")==null)
+        if(!properties.getMerchantId().equals(session.get("merchant_id"))||session.get("control_snapshot")==null)
             throw new IllegalStateException("Paid resource admission requires armed funding and safety-stop integration");
         if(session.get("funding_hold_intent_id")==null||session.get("funding_hold_id")==null||session.get("funding_expires_at_ms")==null
             ||number(session,"funding_expires_at_ms")<=System.currentTimeMillis()+properties.getHoldStopLeadSeconds()*1000L)
@@ -253,13 +260,15 @@ public class ComputeBillingSettlementService {
 
     /** Explicit coordinator seam; not registered with any periodic executor in this stage. */
     public void dispatch(String reference) {
-        if (!properties.isEnabled()) return;
+        if (!properties.hasMerchantConfiguration()) return;
         ExternalBillingGateway gateway = gateways.get(); if (gateway == null) return;
         if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive())
             throw new IllegalStateException("External I/O requires a committed intent");
         String lease = UUID.randomUUID().toString();
         Map<String, Object> row = transactions.execute(tx -> {
             Map<String, Object> candidate = jdbc.queryForMap("SELECT * FROM vls_compute_billing_slice WHERE merchant_charge_id=? FOR UPDATE", reference);
+            String merchant = jdbc.queryForObject("SELECT merchant_id FROM vls_compute_billing_session WHERE usage_id=?", String.class, candidate.get("usage_id"));
+            if (!properties.getMerchantId().equals(merchant)) return null;
             String state = String.valueOf(candidate.get("state"));
             if ("SETTLED".equals(state) || "NO_DEBIT".equals(state) || "BLOCKED".equals(state) || number(candidate, "lease_until_ms") > System.currentTimeMillis()) return null;
             jdbc.update("UPDATE vls_compute_billing_slice SET lease_token=?,lease_until_ms=? WHERE merchant_charge_id=?", lease, System.currentTimeMillis() + 30000, reference);
@@ -409,7 +418,6 @@ public class ComputeBillingSettlementService {
                 || !original.get("idempotency_key").equals(current.get("idempotency_key")))
                 throw new IllegalStateException("TRIAL_ORIGINAL_REQUEST_CHANGED");
             if (protectedTrial) {
-                if (!properties.isAllowWrites()) throw new IllegalStateException("TRIAL_WRITES_DISABLED");
                 trial.requireNewUsage(usageId, freshConfig);
                 trial.requireCaptureBudget(usageId, BigInteger.ZERO);
                 if (!request.has("hold_id") || session.get("funding_hold_intent_id") == null
@@ -464,7 +472,7 @@ public class ComputeBillingSettlementService {
     /** Local-only continuation when funding proof arrives after an original charge was settled.
      * Never sends or retries a request, and never withdraws an already requested physical stop. */
     public void resumeResolvedSubmissionRisk(String usageId) {
-        if (!properties.isEnabled()) return;
+        if (!properties.hasMerchantConfiguration()) return;
         transactions.execute(tx -> {
             if (!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='SETTLED'", usageId).isEmpty())
                 clearResolvedSubmissionRisk(usageId);

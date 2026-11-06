@@ -578,7 +578,6 @@ class ComputeBillingCaptureTest {
         beans.registerSingleton("gateway", gateway);
         ComputeBillingReconciliationService reconciliation = new ComputeBillingReconciliationService(f.jdbc, f.manager, f.properties, beans.getBeanProvider(ExternalBillingGateway.class), f.json);
         ComputeBillingCoordinator coordinator = new ComputeBillingCoordinator(f.jdbc, f.service, f.properties, beans.getBeanProvider(BillingLifecycleGateway.class), reconciliation);
-        f.properties.setSafetyStopEnabled(true);
         coordinator.tick(usage, lifecycle);
         assertEquals(1, stopRequests[0]);
         assertEquals(0, f.service.audit(usage).size());

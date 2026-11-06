@@ -50,7 +50,6 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
         });
     }
     @Override public Observation observe(String usageId) {
-        if(!properties.isEnabled())throw new IllegalStateException("Billing disabled");
         ComputeNode node=transaction.execute(tx->control(usageId));
         ComputePowerProvider provider=provider(node);
         ComputePowerProvider.Snapshot result=provider.status(node);
@@ -68,7 +67,6 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
     }
     ComputeNode controlledNode(String usageId){return control(usageId);}
     @Override public void requestSafeStop(String usageId) {
-        if(!properties.isEnabled()||!properties.isSafetyStopEnabled())return;
         transaction.execute(tx->{
             Map<String,Object> session=session(usageId);
             if(((Number)session.get("stop_requested")).intValue()!=1||"STOP_CONFIRMED".equals(session.get("safety_state")))return null;

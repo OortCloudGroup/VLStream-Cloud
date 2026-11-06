@@ -54,7 +54,10 @@ class ComputeBillingSettlementTest {
             migration = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_048__compute_billing_slices.sql").toString();
         }
         try (java.sql.Connection connection = ds.getConnection()) { ScriptUtils.executeSqlScript(connection, new FileSystemResource(migration)); }
-        properties = new ExternalBillingProperties(); properties.setMerchantId("vls-test"); properties.setEnabled(true);
+        properties = new ExternalBillingProperties(); properties.setMerchantId("vls-test");
+        properties.setBaseUrl("https://fixture.invalid"); properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL");
+        properties.setMaximumRunSeconds(600); properties.setMaximumHoldQuota("10000000");
+        properties.setVerifiedProviderStopSeconds(30); properties.setHoldStopLeadSeconds(60);
         gateway = new FakeGateway(); service = service(jdbc);
     }
     ComputeBillingSettlementService service(JdbcTemplate template) { return new ComputeBillingSettlementService(template, manager, json, properties, (java.util.function.Supplier<ExternalBillingGateway>) () -> gateway); }
@@ -85,7 +88,8 @@ class ComputeBillingSettlementTest {
     @Test void migrationOnlyAddsEmptyLocalTablesAndPreservesLegacyRows() {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_slice", Integer.class));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_session", Integer.class));
-        assertFalse(new ExternalBillingProperties().isEnabled());
+        assertFalse(new ExternalBillingProperties().hasMerchantConfiguration());
+        assertFalse(new ExternalBillingProperties().paidConfigured());
     }
     @Test void payerUsesAuthoritativeSelfAndRejectsMissingProofOrUnsafeTypes() throws Exception {
         BillingPayer p = BillingPayer.fromVerifiedSelf(actor("a"), json.readTree("{\"id\":9007199254740993}")); assertEquals("9007199254740993", p.userId);
@@ -165,13 +169,21 @@ class ComputeBillingSettlementTest {
         assertEquals("8334", row(tail).get("amount_text")); assertEquals(2, service.audit(id).size());
         assertThrows(IllegalArgumentException.class, () -> service.prepareInterval(id, start + 100000));
     }
-    @Test void disabledBillingMakesZeroExternalCallsAndCannotAdmitPaidWork() throws Exception {
-        String ref = interval(usage("a", "1", "500000", "1"), 60000); properties.setEnabled(false);
+    @Test void missingMerchantConfigurationMakesZeroExternalCallsAndCannotAdmitPaidWork() throws Exception {
+        String ref = interval(usage("a", "1", "500000", "1"), 60000); properties.setApiKey(null);
         service.dispatch(ref); assertEquals(0, gateway.queries); assertEquals(0, gateway.captures.size());
         assertThrows(IllegalStateException.class, () -> service.requirePaidAdmission("unused"));
     }
     @Test void evenSuccessfulFakeCannotEnablePaidAdmission() throws Exception {
         String id = usage("a", "1", "500000", "1"); assertThrows(IllegalStateException.class, () -> service.requirePaidAdmission(id));
+    }
+    @Test void originalCaptureRecoveryDoesNotRequireNewAdmissionBudgets() throws Exception {
+        String ref = interval(usage("a", "1", "500000", "1"), 60000);
+        properties.setMaximumRunSeconds(0); properties.setMaximumHoldQuota(null);
+        properties.setVerifiedProviderStopSeconds(null); properties.setHoldStopLeadSeconds(0);
+        assertTrue(properties.hasMerchantConfiguration()); assertFalse(properties.paidConfigured());
+        service.dispatch(ref); service(jdbc).dispatch(ref);
+        assertEquals("SETTLED", state(ref)); assertEquals(1, gateway.captures.size());
     }
     @Test void missingAtomicCaptureBlocksSendAndPersistsStopRequirement() throws Exception {
         String ref = interval(usage("a", "1", "500000", "1"), 60000); gateway.captureSupported = false;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
-/** Default-off periodic orchestration. No task/instance is admitted or started here. */
+/** Original-session orchestration. No task/instance is admitted or started here. */
 @Service
 public class ComputeBillingCoordinator {
     private final JdbcTemplate jdbc;
@@ -23,9 +23,7 @@ public class ComputeBillingCoordinator {
     }
     @Scheduled(fixedDelayString = "${vlstream.compute.external-billing.poll-delay-ms:15000}", initialDelayString = "${vlstream.compute.external-billing.initial-delay-ms:30000}")
     public void scan() {
-        if (!properties.isEnabled()) return;
         BillingLifecycleGateway lifecycle = lifecycles.getIfAvailable(); if (lifecycle == null) return;
-        if (properties.getSettlementIntervalSeconds() < 1 || properties.getSettlementIntervalSeconds() > 3600) throw new IllegalStateException("Invalid settlement interval");
         // Apply tick's confirmed-start gate before LIMIT: never-started history otherwise
         // keeps next_poll_ms=0 and can starve every active usage. Pending/unknown starts
         // retain their original state and stop request for ComputePaidRunService recovery.
@@ -34,7 +32,6 @@ public class ComputeBillingCoordinator {
         reconciliation.tick();
     }
     public void tick(String usageId, BillingLifecycleGateway lifecycle) {
-        if (!properties.isEnabled()) return;
         // A DEV trial must not observe, stop, meter or release another user's historical run.
         // Selection ignores spend-permit expiry so this original still receives safe cleanup.
         if (!trial.selectsUsage(usageId)) return;
@@ -51,6 +48,8 @@ public class ComputeBillingCoordinator {
             Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
             long cursor = ((Number) session.get("metered_until_ms")).longValue();
             long proven = ((Number) session.get("last_running_ms")).longValue();
+            if (properties.getSettlementIntervalSeconds() < 1 || properties.getSettlementIntervalSeconds() > 3600)
+                throw new IllegalStateException("Invalid settlement interval");
             long interval = Math.multiplyExact((long) properties.getSettlementIntervalSeconds(), 1000L);
             // Topup never extends this original expiry. Request a safe stop early enough to begin
             // shutdown, while continuing to meter actual runtime until a stopped observation.
@@ -75,10 +74,8 @@ public class ComputeBillingCoordinator {
         } catch (Exception e) { risk(usageId, "COORDINATION_UNAVAILABLE"); }
         Map<String, Object> state = jdbc.queryForMap("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=?", usageId);
         if (((Number) state.get("stop_requested")).intValue() == 1) {
-            if (properties.isSafetyStopEnabled()) {
-                try { lifecycle.requestSafeStop(usageId); }
-                catch (Exception e) { jdbc.update("UPDATE vls_compute_billing_session SET safety_state='RETRY_REQUIRED' WHERE usage_id=? AND safety_state<>'STOP_CONFIRMED'", usageId); }
-            }
+            try { lifecycle.requestSafeStop(usageId); }
+            catch (Exception e) { jdbc.update("UPDATE vls_compute_billing_session SET safety_state='RETRY_REQUIRED' WHERE usage_id=? AND safety_state<>'STOP_CONFIRMED'", usageId); }
         }
         jdbc.update("UPDATE vls_compute_billing_session SET next_poll_ms=? WHERE usage_id=?",System.currentTimeMillis()+15000,usageId);
     }

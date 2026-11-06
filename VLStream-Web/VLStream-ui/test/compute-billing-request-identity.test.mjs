@@ -12,7 +12,7 @@ const strip = source => source.replace(/^import .*$/gm, '').replace(/^export /gm
 const identityFactory = new Function('request', 'authManager', 'getOortCloudSession', 'isMultiTenantMode', 'window',
   strip(identitySource) + '\nreturn { currentIdentityRequest, captureComputeIdentity, computePathPart };')
 const apiFactory = new Function('currentIdentityRequest', 'computePathPart', 'captureComputeIdentity', 'axios',
-  strip(apiSource) + '\nreturn { quoteComputeArchiveRecovery, acceptComputePaidRun, listComputePaidRuns, stopComputePaidRun };')
+  strip(apiSource) + '\nreturn { quoteComputePaidRun, quoteComputeArchiveRecovery, acceptComputePaidRun, listComputePaidRuns, stopComputePaidRun };')
 const headerFunction = requestSource.slice(requestSource.indexOf('export const applyAuthHeaders ='), requestSource.indexOf('\n}', requestSource.indexOf('export const applyAuthHeaders =')) + 2)
 const headersFactory = new Function('__deps', `
   const {isTrustedApiRequest,clearIdentityHeaders,captureRequestIdentity,isSessionRedirecting,
@@ -42,13 +42,13 @@ function harness(options = {}) {
     isIdentityCurrent: snapshot => Object.keys(identity).every(key => identity[key] === snapshot[key])
   }
   const fakeWindow = { location: { origin: 'https://fixture.invalid' }, addEventListener: (name, fn) => events.set(name, fn) }
-  const helper = identityFactory(request, authManager, () => ({ accessToken: proof }), () => false, fakeWindow)
+  const helper = identityFactory(request, authManager, mode => ({ accessToken: mode === 'multi' ? identity.platformToken : proof }), () => options.multi === true, fakeWindow)
   const applyHeaders = headersFactory({
     isTrustedApiRequest: () => true, clearIdentityHeaders() {},
     captureRequestIdentity: config => { config.vlsIdentity = { ...identity } },
     isSessionRedirecting: () => false, getLocalSessionToken: () => identity.token,
     sessionExpiryError: () => Error('fixture-expired'), getPlatformAccessToken: () => identity.platformToken,
-    isLocalEventReadRequest: () => false, getBaseURL: () => '', window: fakeWindow, isMultiTenantMode: () => false,
+    isLocalEventReadRequest: () => false, getBaseURL: () => '', window: fakeWindow, isMultiTenantMode: () => options.multi === true,
     replaceHeader: (headers, name, value) => {
       for (const key of Object.keys(headers)) if (key.toLowerCase() === name.toLowerCase()) delete headers[key]
       if (value !== undefined) headers[name] = value
@@ -73,6 +73,28 @@ test('recovery quote calls only the source-run endpoint with no financial body',
   assert.equal(config.headers.get('accesstoken'), 'fixture-independent-sso-a')
   assert.equal(config.headers.get('tenantId'), 'fixture-tenant-a')
   assert.equal(config.silentError, true)
+})
+
+for (const multi of [false, true]) test(`${multi ? 'multi' : 'single'} tenant normal paid flow pins its existing platform identity without a billing mode`, async () => {
+  const h = harness({ multi })
+  await h.api.quoteComputePaidRun('-6000')
+  await h.api.acceptComputePaidRun('original-run')
+  await h.api.stopComputePaidRun('original-run')
+  assert.deepEqual(h.sent.map(({ method, url }) => ({ method, url })), [
+    { method: 'post', url: '/vlsCompute/billing/nodes/-6000/quote' },
+    { method: 'post', url: '/vlsCompute/billing/runs/original-run/accept' },
+    { method: 'post', url: '/vlsCompute/billing/runs/original-run/stop' }
+  ])
+  for (const config of h.sent) {
+    assert.equal(config.localAuthToken, 'fixture-local-a')
+    assert.equal(config.platformAuthToken, multi ? 'fixture-bound-platform' : 'fixture-independent-sso-a')
+    assert.equal(config.headers.get('Authorization'), 'Bearer fixture-local-a')
+    assert.equal(config.headers.get('accesstoken'), multi ? 'fixture-bound-platform' : 'fixture-independent-sso-a')
+    assert.equal(config.headers.get('tenantId'), 'fixture-tenant-a')
+  }
+  assert.deepEqual(JSON.parse(h.sent[1].data), { acceptBillingPermissions: true })
+  assert.equal(h.sent[0].data, undefined)
+  assert.equal(h.sent[2].data, undefined)
 })
 
 test('explicit acceptance preserves the original accept contract and JSON serialization', async () => {

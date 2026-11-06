@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
+@Tag("dev")
 class AutoDlRuntimeSshTest {
     ConfiguredComputeRegistry registry=mock(ConfiguredComputeRegistry.class);
     AutoDlProPowerProvider provider=mock(AutoDlProPowerProvider.class);
@@ -57,7 +58,7 @@ class AutoDlRuntimeSshTest {
         AutoDlRuntimeSsh unavailable=mock(AutoDlRuntimeSsh.class);when(unavailable.dynamic(node)).thenReturn(true);doThrow(new java.io.IOException("FIXTURE")).when(unavailable).prepare("run1",node);
         ComputePowerProvider power=mock(ComputePowerProvider.class);when(power.supports(node)).thenReturn(true);when(power.status(node)).thenReturn(new ComputePowerProvider.Snapshot("RUNNING","UNKNOWN","FIXTURE"));
         DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("power",power);
-        ConfiguredPaidPowerService service=new ConfiguredPaidPowerService(jdbc,registry,beans.getBeanProvider(ComputePowerProvider.class),mock(ComputeBillingLedgerService.class));ReflectionTestUtils.setField(service,"runtimeSsh",unavailable);
+        ConfiguredPaidPowerService service=new ConfiguredPaidPowerService(jdbc,registry,beans.getBeanProvider(ComputePowerProvider.class),mock(ComputeBillingLedgerService.class),mock(com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService.class));ReflectionTestUtils.setField(service,"runtimeSsh",unavailable);
         Map<String,Object> usage=new HashMap<>();usage.put("billing_start_at",new java.sql.Timestamp(System.currentTimeMillis()-31000));when(jdbc.queryForMap(anyString(),any())).thenReturn(usage);
         Map<String,Object> run=new HashMap<>();run.put("run_id","run1");run.put("usage_id","usage1");run.put("state","STARTING");run.put("power_start_state","ACCEPTED");run.put("power_stop_state","PREPARED");service.advance(run,node);
         verify(jdbc).update(contains("risk_code='SSH_PREPARATION_FAILED'"),eq("usage1"));verify(power,never()).submit(any(),anyString(),anyString());

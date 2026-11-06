@@ -54,7 +54,7 @@ class TrialFundsIsolationTest {
             }
         }
         properties = f.properties; properties.setBaseUrl(ComputeBillingTrialGuard.TARGET);
-        properties.setMerchantId("vls"); properties.setAllowWrites(true);
+        properties.setMerchantId("vls");
         properties.getTrial().setEnabled(true); properties.getTrial().setRunId(run);
         properties.getTrial().setMaximumWalletCny("1.00");
         properties.getTrial().setExpiresAt(Instant.now().plusSeconds(3600).toString());
@@ -350,18 +350,21 @@ class TrialFundsIsolationTest {
         } finally { gateway.resume.countDown(); pool.shutdownNow(); }
     }
 
-    @Test void refundAndFinalReleaseIgnoreExpiredTrialConversionButKeepGlobalWriteGate() {
+    @Test void refundAndFinalReleaseUseOriginalEvidenceWithoutNewAdmissionBudgetsOrExpiredTrialConversion() {
         String original = settledCharge();
         ComputeRefundIntentService.Intent refund = refunds.prepare(original, "original-correction", "1", "OVERCHARGED");
         String holdId = f.jdbc.queryForObject("SELECT hold_intent_id FROM vls_compute_paid_run", String.class);
         ComputeFundingIntentService.Intent release = funding.prepareFinalRelease(holdId, reserve);
         int configCalls = gateway.configs;
         properties.getTrial().setEnabled(false); properties.getTrial().setExpiresAt(Instant.now().minusSeconds(1).toString());
+        properties.setMaximumRunSeconds(0); properties.setMaximumHoldQuota(null);
+        properties.setVerifiedProviderStopSeconds(null); properties.setHoldStopLeadSeconds(0);
+        assertTrue(properties.hasMerchantConfiguration()); assertFalse(properties.paidConfigured());
         gateway.configFails = true; restart();
         refunds.dispatch(refund.id); recovery().advance(release.id, System.currentTimeMillis());
         assertEquals(1, gateway.refunds); assertEquals(1, gateway.releases); assertEquals(configCalls, gateway.configs);
         assertEquals("UNKNOWN", refunds.recover(refund.id).state);
-        properties.setAllowWrites(false);
+        properties.setApiKey(null);
         refunds.dispatch(refund.id); recovery().advance(release.id, System.currentTimeMillis());
         assertEquals(1, gateway.refunds); assertEquals(1, gateway.releases);
     }
@@ -424,8 +427,8 @@ class TrialFundsIsolationTest {
         assertEquals(0, gateway.releases);
     }
 
-    @Test void disabledBillingHasNoExternalCalls() {
-        ComputeFundingIntentService.Intent hold = hold(); properties.setEnabled(false);
+    @Test void missingMerchantConfigurationHasNoExternalCalls() {
+        ComputeFundingIntentService.Intent hold = hold(); properties.setApiKey(null);
         recovery().advance(hold.id, System.currentTimeMillis());
         assertEquals(0, gateway.configs); assertEquals(0, gateway.holds); assertEquals(0, gateway.holdLookups);
     }

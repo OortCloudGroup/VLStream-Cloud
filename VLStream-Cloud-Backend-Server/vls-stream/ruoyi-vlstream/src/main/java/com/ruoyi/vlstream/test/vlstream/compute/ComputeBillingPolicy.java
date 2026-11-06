@@ -4,7 +4,6 @@ import com.ruoyi.common.exception.ServiceException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.Instant;
-import javax.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -24,7 +23,6 @@ public class ComputeBillingPolicy {
     private boolean faultCompensationEnabled = false;
     private String supplierMinimumCostBearer = "PLATFORM";
 
-    @PostConstruct
     public void validate() {
         if (openingReserveSeconds < stopBudgetSeconds || pollingSafetySeconds <= 0 || stopBudgetSeconds < 300 || stopBudgetSeconds <= pollingSafetySeconds
             || urgentReminderSeconds <= stopBudgetSeconds || earlyReminderSeconds <= urgentReminderSeconds)
@@ -44,12 +42,13 @@ public class ComputeBillingPolicy {
         return rate.unroundedQuota(openingReserveSeconds * 1000L);
     }
 
-    /** No guessed provider shutdown latency: unknown/insufficient coverage cannot authorize an automatic stop budget. */
-    public int checkedStopBudgetSeconds(Integer reliableProviderStopSeconds) {
+    /** An explicit shutdown budget is required; optional observations must fit it.
+     * Neither a configured budget nor a previous observation is a provider shutdown SLA. */
+    public int checkedStopBudgetSeconds(Integer observedProviderStopSeconds) {
         validate();
-        if (reliableProviderStopSeconds == null || reliableProviderStopSeconds <= 0
-            || (long)reliableProviderStopSeconds + pollingSafetySeconds > stopBudgetSeconds)
-            throw new IllegalArgumentException("供应商可靠停机耗时未核验或超出安全预算，需调整阈值");
+        if (observedProviderStopSeconds != null && (observedProviderStopSeconds <= 0
+            || (long)observedProviderStopSeconds + pollingSafetySeconds > stopBudgetSeconds))
+            throw new IllegalArgumentException("已配置的供应商停机观测耗时无效或超出停机预算，需调整阈值");
         return stopBudgetSeconds;
     }
 

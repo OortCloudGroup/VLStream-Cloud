@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** Internal funding transport coordinator; no public endpoint or automatic scheduler.
- * Both write gates default OFF. All external calls occur after the journal transaction ends. */
+ * All external calls require the original merchant and occur after the journal transaction ends. */
 @Service
 public class ComputeFundingRecoveryService {
     private final ComputeFundingIntentService journal;
@@ -29,12 +29,16 @@ public class ComputeFundingRecoveryService {
         if (TransactionSynchronizationManager.isActualTransactionActive())
             throw new IllegalStateException("Funding transport cannot run inside a database transaction");
         ComputeFundingIntentService.Intent original = journal.recover(intentId);
-        if (!properties.isEnabled() || !properties.isAllowWrites() || !"HOLDS_V3".equals(original.contractVersion)
+        if (!properties.hasMerchantConfiguration() || !original.merchantId.equals(properties.getMerchantId())
+            || !"HOLDS_V3".equals(original.contractVersion)
             || ComputeFundingIntentService.CONFLICT.equals(original.state) || ComputeFundingIntentService.REJECTED.equals(original.state)
             || ComputeFundingIntentService.OPERATION_CONFIRMED.equals(original.state)) return original;
         ExternalBillingGateway gateway = gateways.get();
         if (gateway == null) return original;
         if (ComputeFundingIntentService.PREPARED.equals(original.state)) {
+            // New funding needs current admission policy; an original release and
+            // an already uncertain operation retain their immutable cleanup path.
+            if (!"RELEASE".equals(original.operation) && !properties.paidConfigured()) return original;
             try {
                 // Read the current conversion outside the journal transaction, before committing
                 // UNKNOWN. Config failure must not claim an HTTP request that was never sent.

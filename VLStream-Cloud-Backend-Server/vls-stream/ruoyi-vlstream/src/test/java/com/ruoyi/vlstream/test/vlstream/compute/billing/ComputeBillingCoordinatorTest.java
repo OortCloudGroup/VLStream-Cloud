@@ -28,13 +28,25 @@ class ComputeBillingCoordinatorTest {
         try(java.sql.Connection connection=f.jdbc.getDataSource().getConnection()){ScriptUtils.executeSqlScript(connection,new FileSystemResource(migration.replace("048__compute_billing_slices","049__compute_billing_coordination")));}
         lifecycle=new Lifecycle();gateway=new LedgerGateway();beans=new DefaultListableBeanFactory();beans.registerSingleton("lifecycle",lifecycle);beans.registerSingleton("gateway",gateway);
         reconciliation=reconciler();coordinator=new ComputeBillingCoordinator(f.jdbc,f.service,f.properties,beans.getBeanProvider(BillingLifecycleGateway.class),reconciliation);
-        f.properties.setSafetyStopEnabled(true);
     }
     ComputeBillingReconciliationService reconciler(){return new ComputeBillingReconciliationService(f.jdbc,f.manager,f.properties,beans.getBeanProvider(ExternalBillingGateway.class),f.json);}
     String usage() throws Exception{return f.usage("tenant-test","1","500000","1");}
     void due(){f.jdbc.update("UPDATE vls_compute_billing_slice SET next_attempt_ms=0");}
-    @Test void disabledSchedulerPerformsNoProviderOrLedgerCalls() throws Exception {
-        usage();f.properties.setEnabled(false);coordinator.scan();assertEquals(0,lifecycle.observations);assertEquals(0,gateway.ledgerCalls);
+    @Test void missingMerchantConfigurationStillObservesAndStopsOriginalUsageWithoutLedgerCalls() throws Exception {
+        String id=usage();f.properties.setApiKey(null);
+        f.jdbc.update("UPDATE vls_compute_billing_session SET control_snapshot='TEST_ONLY_CONTROL',stop_requested=1,risk_code='ORIGINAL_STOP_REQUEST' WHERE usage_id=?",id);
+        lifecycle.power="UNKNOWN";coordinator.scan();
+        assertEquals(1,lifecycle.observations);assertEquals(1,lifecycle.stops);assertEquals(0,gateway.ledgerCalls);
+        assertEquals("STOP_REQUESTED",f.jdbc.queryForObject("SELECT safety_state FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+    }
+    @Test void missingNewAdmissionBudgetsDoNotBlockOriginalSafetyStop() throws Exception {
+        String id=usage();
+        f.properties.setMaximumRunSeconds(0);f.properties.setMaximumHoldQuota(null);
+        f.properties.setVerifiedProviderStopSeconds(null);f.properties.setHoldStopLeadSeconds(0);
+        f.jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code='ORIGINAL_STOP_REQUEST' WHERE usage_id=?",id);
+        lifecycle.power="UNKNOWN";coordinator.tick(id,lifecycle);
+        assertEquals(1,lifecycle.observations);assertEquals(1,lifecycle.stops);
+        assertFalse(f.properties.paidConfigured());
     }
     @Test void devTrialTickIgnoresAnotherRunBeforeAnyLifecycleSettlementOrRiskChange() throws Exception {
         String selected=usage(),other=usage();
@@ -47,7 +59,6 @@ class ComputeBillingCoordinatorTest {
         String checkpoint="SELECT risk_code,stop_requested,safety_state,metered_until_ms,last_running_ms,next_poll_ms,physical_stop_observed_ms FROM vls_compute_billing_session WHERE usage_id=?";
         Map<String,Object> before=f.jdbc.queryForMap(checkpoint,other);
         f.properties.setBaseUrl(ComputeBillingTrialGuard.TARGET);f.properties.setMerchantId("vls");
-        f.properties.setAllowWrites(true);f.properties.setPaidAdmissionEnabled(true);
         f.properties.getTrial().setEnabled(true);f.properties.getTrial().setRunId(run);
         f.properties.getTrial().setMaximumWalletCny("3.47");f.properties.getTrial().setExpiresAt(Instant.now().plusSeconds(3600).toString());
         ComputeBillingSettlementService settlements=org.mockito.Mockito.mock(ComputeBillingSettlementService.class);

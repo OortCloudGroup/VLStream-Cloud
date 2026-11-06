@@ -102,13 +102,22 @@ class ComputeBillingPolicyTest {
         policy = new ComputeBillingPolicy(); policy.setAutomaticDeletionEnabled(true);
         assertThrows(IllegalArgumentException.class, policy::validate);
     }
-    @Test void unknownOrSlowProviderStopCannotFitAnAssumedFiveMinuteWindow() {
+    @Test void optionalStopObservationDoesNotTurnTheConfiguredBudgetIntoAProviderSla() {
         ComputeBillingPolicy policy = new ComputeBillingPolicy();
+        assertEquals(300, policy.checkedStopBudgetSeconds(null));
         assertEquals(300, policy.checkedStopBudgetSeconds(240));
-        assertThrows(IllegalArgumentException.class, () -> policy.checkedStopBudgetSeconds(null));
         assertThrows(IllegalArgumentException.class, () -> policy.checkedStopBudgetSeconds(0));
+        assertThrows(IllegalArgumentException.class, () -> policy.checkedStopBudgetSeconds(-1));
         assertThrows(IllegalArgumentException.class, () -> policy.checkedStopBudgetSeconds(241));
         assertThrows(IllegalArgumentException.class, () -> policy.checkedStopBudgetSeconds(Integer.MAX_VALUE));
+    }
+    @Test void absentStopObservationCannotAuthorizeMissingOrInconsistentShutdownBudgets() {
+        ComputeBillingPolicy missing = new ComputeBillingPolicy();missing.setStopBudgetSeconds(0);
+        assertThrows(IllegalArgumentException.class, () -> missing.checkedStopBudgetSeconds(null));
+        ComputeBillingPolicy noPolling = new ComputeBillingPolicy();noPolling.setPollingSafetySeconds(0);
+        assertThrows(IllegalArgumentException.class, () -> noPolling.checkedStopBudgetSeconds(null));
+        ComputeBillingPolicy noMargin = new ComputeBillingPolicy();noMargin.setPollingSafetySeconds(300);
+        assertThrows(IllegalArgumentException.class, () -> noMargin.checkedStopBudgetSeconds(null));
     }
     @Test void initialEstimateUsesOnlyConfiguredComputeWindowAndDoesNotAssumeAUserDiskFee() {
         ComputeBillingPolicy policy = new ComputeBillingPolicy();

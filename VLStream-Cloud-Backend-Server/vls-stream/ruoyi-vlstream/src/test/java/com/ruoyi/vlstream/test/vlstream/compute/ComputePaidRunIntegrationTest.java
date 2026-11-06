@@ -55,7 +55,7 @@ class ComputePaidRunIntegrationTest {
         when(supplier.status(any())).thenAnswer(call->{ComputePowerProvider.Snapshot snapshot=new ComputePowerProvider.Snapshot(wallet.power,"AVAILABLE_HINT","TEST_ONLY");snapshot.stoppedMode="StopCharging";snapshot.chargeType="PostPaid";snapshot.gpuAmount=1;return snapshot;});
         doAnswer(call->{wallet.power="start".equals(call.getArgument(1))?"RUNNING":"STOPPED";return null;}).when(supplier).submit(any(),anyString(),anyString());
         DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("supplier",supplier);
-        properties=new ExternalBillingProperties();properties.setEnabled(true);properties.setAllowWrites(true);properties.setPaidAdmissionEnabled(true);properties.setSafetyStopEnabled(true);properties.setMerchantId("vls-test");properties.setMaximumRunSeconds(60);properties.setMaximumHoldQuota("1000");properties.setVerifiedProviderStopSeconds(30);properties.setHoldStopLeadSeconds(300);properties.setSettlementIntervalSeconds(1);
+        properties=new ExternalBillingProperties();properties.setBaseUrl("https://fixture.invalid");properties.setApiKey("fixture-merchant-token");properties.setMerchantId("vls-test");properties.setMaximumRunSeconds(60);properties.setMaximumHoldQuota("1000");properties.setVerifiedProviderStopSeconds(30);properties.setHoldStopLeadSeconds(300);properties.setSettlementIntervalSeconds(1);
         ComputeBillingRate rate=new ComputeBillingRate();rate.setVersion("fixture-verified-rate");rate.setCostSource("VERIFIED_MANUAL");rate.setCurrency("CNY");rate.setCostScope("INSTANCE_COMPUTE");rate.setCostUnit("PER_INSTANCE_HOUR");rate.setCostHourly(new BigDecimal("1800"));rate.setValidFrom("2026-01-01T00:00:00Z");rate.setValidUntil("2030-01-01T00:00:00Z");rate.setQuotaUnit("quota");rate.setConversionVersion("fixture-conversion");rate.setQuotaPerCurrencyUnit(BigDecimal.ONE);rate.setQuotaScale(0);rate.setQuotaRounding(RoundingMode.DOWN);rate.setPricePolicy("LOCKED_FOR_RUN");rate.setProviderPriceLockConfirmed(true);rate.setPriceEvidence("TEST_FIXTURE_ONLY");properties.getRates().put("1",rate);
         config=json.readTree("{\"settlement_currency\":\"CNY\",\"quota_unit\":\"quota\",\"conversion_version\":\"fixture-conversion\",\"quota_per_currency_unit\":{\"numerator\":\"1\",\"denominator\":\"1\"},\"effective_at\":\"2026-01-01T00:00:00Z\",\"valid_until\":\"2030-01-01T00:00:00Z\"}");
         wallet=new Wallet();ledger=new ComputeBillingLedgerService(jdbc,json);
@@ -197,7 +197,7 @@ class ComputePaidRunIntegrationTest {
         assertEquals(0,wallet.capturePosts);
     }
     @Test void disabledUnpricedAndForeignPayerCannotTriggerTransport() throws Exception {
-        properties.setPaidAdmissionEnabled(false);assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));properties.setPaidAdmissionEnabled(true);
+        properties.setMaximumHoldQuota(null);assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));properties.setMaximumHoldQuota("1000");
         properties.getRates().clear();assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));assertEquals(0,wallet.holdPosts);
         setup();String id=accepted();BillingPayer other=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":14}"));
         assertThrows(RuntimeException.class,()->runs.get(id,other));assertThrows(RuntimeException.class,()->runs.stop(id,other));assertThrows(RuntimeException.class,()->runs.accept(id,other));assertEquals(0,wallet.holdPosts);

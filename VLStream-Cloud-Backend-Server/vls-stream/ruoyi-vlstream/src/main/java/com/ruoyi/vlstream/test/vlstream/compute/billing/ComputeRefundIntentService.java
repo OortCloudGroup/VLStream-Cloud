@@ -104,7 +104,7 @@ public class ComputeRefundIntentService {
      * Delayed records outside these windows remain unknown instead of scanning the merchant's history. */
     public Intent reconcile(String intentId) {
         Intent original = recover(intentId);
-        if (!properties.isEnabled() || !"UNKNOWN".equals(original.state) || original.receipt != null || original.holdId == null)
+        if (!properties.hasMerchantConfiguration() || !"UNKNOWN".equals(original.state) || original.receipt != null || original.holdId == null)
             return original;
         if (TransactionSynchronizationManager.isActualTransactionActive())
             throw new IllegalStateException("Refund lookup requires a committed intent");
@@ -273,7 +273,7 @@ public class ComputeRefundIntentService {
         return intent;
     }
 
-    /** First submission only. No scheduled executor consumes this journal and paid admission stays closed. */
+    /** First submission only. No scheduled executor consumes this corrective-refund journal. */
     public void dispatch(String intentId) {
         dispatch(intentId, null);
     }
@@ -282,7 +282,7 @@ public class ComputeRefundIntentService {
      * checks and acquire its application locks before this journal takes its session/intent locks.
      * The same transaction retains those locks until the UNKNOWN submission claim is committed. */
     public void dispatch(String intentId, Runnable lockedGuard) {
-        if (!properties.isEnabled() || !properties.isAllowWrites()) return;
+        if (!properties.hasMerchantConfiguration()) return;
         ExternalBillingGateway gateway = gateways.get();
         if (gateway == null) return;
         if (TransactionSynchronizationManager.isActualTransactionActive())
@@ -301,6 +301,7 @@ public class ComputeRefundIntentService {
             Map<String, Object> stored = row(intentId);
             Intent intent = checked(session, charge(text(stored, "merchant_charge_id")), stored);
             if (!"PREPARED".equals(intent.state)) return null;
+            if (!intent.merchantId.equals(properties.getMerchantId())) return null;
             trial.requireCleanupScope(usageId);
             // Commit possible submission before the network write. A crash must recover as UNKNOWN.
             jdbc.update("UPDATE vls_compute_refund_intent SET state='UNKNOWN',error_code='REFUND_RESULT_UNCERTAIN' WHERE refund_intent_id=?", intentId);
