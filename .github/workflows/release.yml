@@ -28,9 +28,11 @@ jobs:
         working-directory: VLStream-Cloud-Backend-Server/vls-stream
         run: |
           version="${GITHUB_REF_NAME#v}"
-          project_version=$(mvn -ntp help:evaluate -Dexpression=project.version -q -DforceStdout)
-          test "$project_version" = "$version"
-          test "$(node -p "require('../../VLStream-Web/VLStream-ui/package.json').version")" = "$version"
+          backend_version=$(python3 -c 'import xml.etree.ElementTree as ET; root=ET.parse("pom.xml").getroot(); print(root.findtext("{http://maven.apache.org/POM/4.0.0}version"))')
+          frontend_version=$(python3 -c 'import json; print(json.load(open("../../VLStream-Web/VLStream-ui/package.json", encoding="utf-8"))["version"])')
+          printf 'Tag version: %s\nBackend POM version: %s\nFrontend package version: %s\n' "$version" "$backend_version" "$frontend_version"
+          test "$backend_version" = "$version"
+          test "$frontend_version" = "$version"
       - name: Build backend
         working-directory: VLStream-Cloud-Backend-Server/vls-stream
         run: mvn -ntp -Pprod -Dmaven.test.skip=true clean package
