@@ -494,7 +494,7 @@
 
     <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body
       destroy-on-close @opened="Create" @close="Destruction">
-      <MapGaoDe ref="MapContainer" :auto-initialize="false" @update-value="updateDialogMap" :position="position" :toponym="toponym"/>
+      <MapLocation ref="MapContainer" :auto-initialize="false" @update-value="updateDialogMap" :position="position" :toponym="toponym"/>
     </el-dialog>
 
     <!-- device -->
@@ -518,139 +518,14 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="WSDiscovery" v-model="showWS" width="60%" append-to-body>
-      <el-steps :active="stepsName" finish-status="success" align-center>
-        <el-step :title="$tp('设备认证')" />
-        <el-step :title="$tp('添加设备')" />
-      </el-steps>
-      <el-table :data="listWS" border v-if="stepsName === 0">
-        <el-table-column :label="$tp('状态')" fixed="left" width="110">
-        <template #default="scope"><ProtocolAvailabilityBadge :availability="scope.row.availability" /></template>
-      </el-table-column>
-      <el-table-column label="ip" align="center" prop="ip" show-overflow-tooltip/>
-        <el-table-column :label="$tp('访问地址')" align="center" prop="hostName" show-overflow-tooltip />
-        <el-table-column :label="$tp('用户名')" align="center">
-          <template #default="{ row }">
-            <el-input v-model="row.username" :placeholder="$tp('请输入用户名')"></el-input>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$tp('密码')" align="center">
-          <template #default="{ row }">
-            <el-input v-model="row.password" :placeholder="$tp('请输入密码')" show-password></el-input>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$tp('认证方式')" align="center">
-          <template #default="{ row }">
-            <el-radio-group v-model="row.auth">
-              <el-radio value="1" size="large">WS-Usemame token</el-radio>
-              <el-radio value="2" size="large">Digest</el-radio>
-            </el-radio-group>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$tp('操作')" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
-          <template #default="scope">
-            <div style="display:flex; align-items: center;justify-content: center">
-              <el-button link type="primary" icon="Check" @click="handleAuth(scope.row)" :loading="authenticatingDevice"
-                         v-hasPermi="['onvif:device:auth']">{{ $tp('认证') }} </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div v-if="stepsName === 1">
-        <el-alert :title="$tp('设备未上报的描述可按标签手动补充，也可留空；填写只保存平台资料，不改变设备能力。')" type="info" :closable="false" style="margin-bottom: 12px" />
-        <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form ref="resultRef" :model="resultForm" :rules="rulesResult2" label-width="120px">
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item :label="$tp('设备名称')" prop="name">
-                    <el-input v-model="resultForm.name" :placeholder="$tp('请输入设备名称')"/>
-                  </el-form-item>
-                  <el-form-item label="ONVIF IP" prop="ip">
-                    <el-input v-model="resultForm.ip" :placeholder="$tp('请输入ONVIF IP')"/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('ONVIF用户名')" prop="username">
-                    <el-input v-model="resultForm.username" :placeholder="$tp('请输入ONVIF用户名')"/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('ONVIF密码')" prop="password">
-                    <el-input v-model="resultForm.password" :placeholder="$tp('请输入ONVIF密码')"/>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item :label="$tp('厂商')" prop="firm">
-                    <el-input v-model="resultForm.firm" :placeholder="$tp('设备未上报')" maxlength="30"/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('型号')" prop="model">
-                    <el-input v-model="resultForm.model" :placeholder="$tp('设备未上报')" maxlength="20"/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('固件版本')" prop="firmwareVersion">
-                    <el-input v-model="resultForm.firmwareVersion" :placeholder="$tp('请输入固件版本')" maxlength="100"/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('通道')" prop="channel">
-                    <el-select
-                        v-model="resultForm.channel"
-                        class="m-2"
-                        :placeholder="$tp('请选择通道')"
-                        size="large"
-                    >
-                      <el-option
-                          v-for="item in channelList"
-                          :key="item.value"
-                          :label="item.label"
-                          :value="item.value"
-                      >
-                      </el-option>
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item :label="$tp('播放类型')" prop="playType">
-                    <el-radio-group v-model="resultForm.playType">
-                      <el-radio value="1">{{ $tp('本地') }}</el-radio>
-                      <el-radio value="2">{{ $tp('推流') }}</el-radio>
-                      <el-radio value="3">EasyNTS</el-radio>
-                    </el-radio-group>
-                  </el-form-item>
-                  <el-form-item :label="$tp('流id')" prop="streamId" v-if="resultForm.playType === '2'">
-                    <el-input v-model="resultForm.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="resultForm.playType === '3'">
-                    <el-input v-model="resultForm.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
-                              show-word-limit/>
-                  </el-form-item>
-                  <el-form-item :label="$tp('直播流地址')" prop="url" v-if="resultForm.playType === '1'">
-                    <el-select
-                        v-model="resultForm.url"
-                        class="m-2"
-                        :placeholder="$tp('请选择直播流地址')"
-                        size="large"
-                    >
-                      <el-option
-                          v-for="item in resultForm.streamUris"
-                          :key="item"
-                          :label="item"
-                          :value="item"
-                      >
-                      </el-option>
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <div style="display: flex;justify-content: center">
-                <el-button type="primary" @click="submitResultForm2" v-hasPermi="['onvif:device:add']">{{ $tp('添 加') }} </el-button>
-              </div>
-            </el-form>
-          </el-col>
-        </el-row>
-      </div>
-    </el-dialog>
+    <OnvifDiscoveryDialog v-model="showWS" :discovered="listWS" :existing="existingWS" @added="getList" />
   </div>
 </DeviceClassificationLayout>
 </template>
 
 <script setup name="CameraManage">
 import ProtocolAvailabilityBadge from '@/components/ProtocolAvailabilityBadge.vue'
-import { prepareOnvifAuthentication } from '@/utils/onvifAuthentication'
+import OnvifDiscoveryDialog from './OnvifDiscoveryDialog.vue'
 import { onBeforeUnmount } from 'vue'
 import { createPtzHoldController } from '@/utils/onvifPtzHold'
 import { createPtzCapabilitiesController, canUsePtzMovement, canUsePtzPresets } from '@/utils/onvifPtzCapabilities'
@@ -659,7 +534,7 @@ import wvpRequest from '@/utils/wvpRequest'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import {
-  addDevice, addOnvif,
+  addDevice, deviceList as loadOnvifDevices,
   delDevice,
   getChannelToken,
   getDevice,
@@ -671,7 +546,7 @@ import Hikvision from "@/components/Hikvision/index.vue";
 import RtspDevicePlayer from "@/components/RtspDevicePlayer.vue";
 import {computed, ref} from "vue";
 import {probe} from "../../../api/onvif/addCamera.js";
-import MapGaoDe from "@/components/MapGaoDe/index.vue";
+import MapLocation from "@/components/MapLocation/index.vue";
 import {ElLoading} from 'element-plus';
 import Jessibuca from "@/components/jessibuca/index.vue";
 import RtcPlayer from "@/components/rtcPlayer/index.vue";
@@ -702,7 +577,6 @@ const total = ref(0);
 const title = ref("");
 const brand = ref("");
 const token = ref("");
-const stepsName = ref(0)
 const playTabsName = ref("absolute");
 const presetName = ref("");
 const urls = ref({});
@@ -851,15 +725,13 @@ function checkPtzCapabilities() {
 }
 
 const listWS = ref([]);
-const authenticatingDevice = ref(false);
+const existingWS = ref([]);
 const showDiscoveryOptions = ref(false);
 const discoveryMode = ref('subnet');
 const discoverySubnet = ref('192.168.70.0/24');
 const discoveryLoading = ref(false);
 
-const next = () => {
-  if (stepsName.value++ > 2) stepsName.value = 0
-}
+
 
 function handleWSDiscovery() {
   showDiscoveryOptions.value = true;
@@ -872,7 +744,6 @@ async function startWSDiscovery() {
     proxy.$modal.msgError(proxy.$tp('请输入扫描网段'));
     return;
   }
-  stepsName.value = 0;
   discoveryLoading.value = true;
   const loadingService = ElLoading.service({
     lock: true,
@@ -881,8 +752,11 @@ async function startWSDiscovery() {
     background: 'rgba(0, 0, 0, 0.7)',
   });
   try {
-    const res = await WSDiscovery(discoveryMode.value === 'subnet' ? { subnet } : {});
+    const [res, saved] = await Promise.all([
+      WSDiscovery(discoveryMode.value === 'subnet' ? { subnet } : {}), loadOnvifDevices({})
+    ]);
     listWS.value = res.data;
+    existingWS.value = saved.data;
     showDiscoveryOptions.value = false;
     showWS.value = true;
   } catch (error) {
@@ -984,35 +858,6 @@ const submitResultForm = () => {
       probeForm.value = {};
       resultForm.value = {};
       openAdd.value = false;
-      getList();
-    }
-  });
-}
-
-const submitResultForm2 = () => {
-  proxy.$refs["resultRef"].validate(async valid => {
-    if (valid) {
-      const data = {
-        id: null,
-        name: resultForm.value.name,
-        ip: resultForm.value.ip,
-        userName: resultForm.value.username,
-        password: resultForm.value.password,
-        firm: resultForm.value.firm,
-        url: resultForm.value.url,
-        model: resultForm.value.model,
-        firmwareVersion: resultForm.value.firmwareVersion,
-        streamUris: resultForm.value.streamUris,
-        playType: resultForm.value.playType,
-        streamId: resultForm.value.streamId,
-        easyNTSUrl: resultForm.value.easyNTSUrl,
-        channel: resultForm.value.channel,
-      };
-      await addDevice(data);
-      proxy.$modal.msgSuccess("操作成功");
-      resultForm.value = {};
-      showWS.value = false;
-      stepsName.value = 0;
       getList();
     }
   });
@@ -1217,34 +1062,6 @@ function handleSelectionChange(selection) {
 }
 
 
-async function handleAuth(row) {
-  if (authenticatingDevice.value) return;
-  if (!row.username || !row.username.trim()) {
-    proxy.$modal.msgError("请输入用户名");
-    return;
-  }
-  if (!row.password || !row.password.trim()) {
-    proxy.$modal.msgError("请输入密码");
-    return;
-  }
-  if (!row.auth || !['1', '2'].includes(row.auth)) {
-    proxy.$modal.msgError("请选择认证方式");
-    return;
-  }
-  authenticatingDevice.value = true;
-  try {
-    const res = await addOnvif(row);
-    const authenticated = prepareOnvifAuthentication(res.data, row);
-    if (!showWS.value) return;
-    channelList.value = authenticated.options;
-    resultForm.value = authenticated.result;
-    stepsName.value = 1;
-  } catch (error) {
-    if (error.name === 'OnvifAuthenticationResultError') proxy.$modal.msgError(error.message);
-  } finally {
-    authenticatingDevice.value = false;
-  }
-}
 function handleAdd(row) {
   title.value = "添加onvif 设备";
   probeForm.value = {

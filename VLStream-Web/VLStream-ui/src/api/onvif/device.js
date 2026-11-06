@@ -20,6 +20,7 @@ export function addOnvif(data) {
   return request({
     url: '/onvif/device/addOnvif',
     method: 'post',
+    timeout: 60000,
     data: data
   })
 }
@@ -55,6 +56,7 @@ export function addDevice(data) {
   return request({
     url: '/onvif/device',
     method: 'post',
+    timeout: 60000,
     data: data
   })
 }
