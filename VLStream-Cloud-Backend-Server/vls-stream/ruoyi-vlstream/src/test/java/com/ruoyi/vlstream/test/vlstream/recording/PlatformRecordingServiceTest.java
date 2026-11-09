@@ -50,4 +50,32 @@ class PlatformRecordingServiceTest {
         verify(access).require("ONVIF", "29");
         verify(jdbc).update("UPDATE vls_platform_record_source SET manual_enabled=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND tenant_id=?", false, "shared-source", "tenant-a");
     }
+    @Test void retentionOnlyAcceptsDeclaredPoliciesAndPermanentNeverExpires() {
+        long now = 1800000000000L;
+        for (int days : new int[]{7,30,90}) assertEquals(now - java.util.concurrent.TimeUnit.DAYS.toMillis(days), PlatformRecordingService.retentionCutoff(days, now));
+        assertEquals(Long.MIN_VALUE, PlatformRecordingService.retentionCutoff(0, now));
+        for (Integer days : Arrays.asList(null, -1, 1, 8, 365)) assertThrows(ServiceException.class, () -> PlatformRecordingService.validateRetention(days));
+    }
+    @Test void retentionIsTenantAndDeviceAuthorizedAndDoesNotChangeDemand() {
+        Map<String,Object> row = new HashMap<>(); row.put("protocol", "ONVIF"); row.put("device_row_id", "29");
+        when(jdbc.queryForList(anyString(), eq("shared-source"), eq("tenant-a"))).thenReturn(Collections.singletonList(row));
+        service.retention("shared-source", 0);
+        verify(access).require("ONVIF", "29");
+        verify(jdbc).update("UPDATE vls_platform_record_source SET retention_days=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND tenant_id=?", 0, "shared-source", "tenant-a");
+    }
+    @Test void permanentSourcesAreExcludedFromFileAndIndexCleanup() {
+        Map<String,Object> row = new HashMap<>(); row.put("id", UUID.randomUUID().toString()); row.put("retention_days", 0);
+        when(jdbc.queryForList("SELECT id,retention_days FROM vls_platform_record_source")).thenReturn(Collections.singletonList(row));
+        service.cleanup();
+        verify(jdbc).queryForList("SELECT id,retention_days FROM vls_platform_record_source");
+        verifyNoMoreInteractions(jdbc);
+    }
+    @Test void statusRequiresCurrentDeviceAccessAndLiveRecordingLease() {
+        String sql = "SELECT COUNT(*) FROM vls_platform_record_source WHERE tenant_id=? AND protocol=? AND device_row_id=? AND state='RECORDING' AND lease_until>=CURRENT_TIMESTAMP";
+        when(jdbc.queryForObject(sql, Integer.class, "tenant-a", "ONVIF", "29")).thenReturn(1, 0);
+        assertTrue(service.recording("ONVIF", "29")); assertFalse(service.recording("ONVIF", "29"));
+        doThrow(new ServiceException("denied", 403)).when(access).require("ONVIF", "29");
+        assertThrows(ServiceException.class, () -> service.recording("ONVIF", "29"));
+        verify(jdbc, times(2)).queryForObject(sql, Integer.class, "tenant-a", "ONVIF", "29");
+    }
 }

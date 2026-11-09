@@ -45,7 +45,7 @@ public class PlatformRecordingService {
 
     public List<Map<String,Object>> list(String protocol, String rowId) {
         access.require(protocol, rowId);
-        List<Map<String,Object>> result = jdbc.queryForList("SELECT id,protocol,device_row_id,stream_id,source_json,manual_enabled,plan_json,state,error_code,IF(lease_until>=CURRENT_TIMESTAMP,1,0) AS lease_valid FROM vls_platform_record_source WHERE tenant_id=? AND protocol=? AND device_row_id=? ORDER BY stream_id",
+        List<Map<String,Object>> result = jdbc.queryForList("SELECT id,protocol,device_row_id,stream_id,source_json,manual_enabled,plan_json,retention_days,state,error_code,IF(lease_until>=CURRENT_TIMESTAMP,1,0) AS lease_valid FROM vls_platform_record_source WHERE tenant_id=? AND protocol=? AND device_row_id=? ORDER BY stream_id",
             CloudAiService.tenant(), protocol, rowId);
         for (Map<String,Object> item : result) {
             item.put("source", read(String.valueOf(item.remove("source_json"))));
@@ -66,6 +66,27 @@ public class PlatformRecordingService {
             source.path("streamId").asText(""), source.path("grantId").asText(), source.toString());
         return jdbc.queryForMap("SELECT id FROM vls_platform_record_source WHERE tenant_id=? AND protocol=? AND device_row_id=? AND stream_id=?",
             tenant, source.path("protocol").asText(), source.path("deviceRowId").asText(), source.path("streamId").asText(""));
+    }
+
+    public synchronized void retention(String id, Integer days) {
+        owned(id);
+        validateRetention(days);
+        jdbc.update("UPDATE vls_platform_record_source SET retention_days=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND tenant_id=?", days, id, CloudAiService.tenant());
+    }
+
+    static void validateRetention(Integer days) {
+        if (days == null || !Arrays.asList(0, 7, 30, 90).contains(days)) throw new ServiceException("录像保留时间仅支持7天、30天、90天或永久", 400);
+    }
+
+    static long retentionCutoff(int days, long now) {
+        validateRetention(days);
+        return days == 0 ? Long.MIN_VALUE : now - TimeUnit.DAYS.toMillis(days);
+    }
+
+    public boolean recording(String protocol, String rowId) {
+        access.require(protocol, rowId);
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM vls_platform_record_source WHERE tenant_id=? AND protocol=? AND device_row_id=? AND state='RECORDING' AND lease_until>=CURRENT_TIMESTAMP", Integer.class, CloudAiService.tenant(), protocol, rowId);
+        return count != null && count > 0;
     }
 
     public void manual(String id, boolean enabled) {
@@ -111,6 +132,7 @@ public class PlatformRecordingService {
 
     public synchronized Map<String,Object> runtime() {
         Map<String,Object> result = new LinkedHashMap<>(); result.put("retentionDays", 7);
+        result.put("retentionOptions", Arrays.asList(7, 30, 90, 0));
         try { checkRuntime(); result.put("ready", true); }
         catch (ServiceException failure) { result.put("ready", false); result.put("message", failure.getMessage()); }
         return result;
@@ -241,24 +263,27 @@ public class PlatformRecordingService {
     }
 
     @Scheduled(fixedDelayString = "${platform.recording.cleanup-ms:3600000}")
-    public void cleanup() {
-        long cutoff = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7);
-        for (Map<String,Object> segment : jdbc.queryForList("SELECT id,source_id FROM vls_platform_record_segment WHERE end_ms<? LIMIT 10000", cutoff)) {
-            String id = String.valueOf(segment.get("id")), source = String.valueOf(segment.get("source_id"));
-            try {
-                Files.deleteIfExists(segmentPath(source, id, ".mp4"));
-                Files.deleteIfExists(segmentPath(source, id, ".json"));
-                jdbc.update("DELETE FROM vls_platform_record_segment WHERE id=? AND end_ms<?", id, cutoff);
-            } catch (IOException failure) { log.warn("Expired recording cleanup failed: segmentId={}", id); }
-        }
-        // Crash leftovers have no finalized index. Only our UUID directories and known spool
-        // extensions are eligible, and only after the same seven-day retention interval.
-        for (String source : jdbc.queryForList("SELECT id FROM vls_platform_record_source", String.class)) {
+    public synchronized void cleanup() {
+        for (Map<String,Object> policy : jdbc.queryForList("SELECT id,retention_days FROM vls_platform_record_source")) {
+            String source = String.valueOf(policy.get("id"));
+            int days = ((Number) policy.get("retention_days")).intValue();
+            if (days == 0) continue;
+            long cutoff = retentionCutoff(days, System.currentTimeMillis());
+            for (Map<String,Object> segment : jdbc.queryForList("SELECT id FROM vls_platform_record_segment WHERE source_id=? AND end_ms<? LIMIT 10000", source, cutoff)) {
+                String id = String.valueOf(segment.get("id"));
+                try {
+                    Files.deleteIfExists(segmentPath(source, id, ".mp4"));
+                    Files.deleteIfExists(segmentPath(source, id, ".json"));
+                    jdbc.update("DELETE FROM vls_platform_record_segment WHERE id=? AND source_id=? AND end_ms<?", id, source, cutoff);
+                } catch (IOException failure) { log.warn("Expired recording cleanup failed: segmentId={}", id); }
+            }
             Path folder = sourcePath(source); if (!Files.isDirectory(folder)) continue;
+            // Only abandoned spool files may be removed by mtime. Finalized MP4/JSON
+            // files must first be indexed, then evaluated using their recording end time.
             try (DirectoryStream<Path> files = Files.newDirectoryStream(folder)) {
                 for (Path file : files) {
                     String name = file.getFileName().toString();
-                    if (name.matches("[a-f0-9-]{36}\\.(part|json\\.tmp|mp4|json)") && !Files.isSymbolicLink(file)
+                    if (name.matches("[a-f0-9-]{36}\\.(part|json\\.tmp)") && !Files.isSymbolicLink(file)
                         && Files.getLastModifiedTime(file).toMillis() < cutoff) Files.deleteIfExists(file);
                 }
             } catch (IOException failure) { log.warn("Recording spool cleanup failed: sourceId={}", source); }

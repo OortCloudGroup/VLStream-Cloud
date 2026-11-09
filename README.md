@@ -333,7 +333,20 @@ deployment manifest before production release.
 | MySQL | Business database | `8.4.10-oraclelinux9` | [GitHub Repository](https://github.com/mysql/mysql-server) | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [GitHub Repository](https://github.com/redis/redis) | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [GitHub Repository](https://github.com/minio/minio) | [AGPLv3 or commercial license](https://min.io/compliance) |
+| Python **(required for platform recording)** | Background recording receiver process | `3.10+` | [GitHub Repository](https://github.com/python/cpython) | [PSF-2.0](https://github.com/python/cpython/blob/3.10/LICENSE) |
+| PyAV (`av`, **required for platform recording**) | Video decoding, H.264 encoding and MP4 segmentation | `17.1.0` | [GitHub Repository](https://github.com/PyAV-Org/PyAV) | [BSD-3-Clause](https://github.com/PyAV-Org/PyAV/blob/v17.1.0/LICENSE.txt); linked media libraries retain their respective licenses |
+| aiortc **(required for platform recording)** | Server-side CameraRTC / WebRTC media reception | `1.15.0` | [GitHub Repository](https://github.com/aiortc/aiortc) | [BSD-3-Clause](https://github.com/aiortc/aiortc/blob/1.15.0/LICENSE) |
+| aiohttp **(required for platform recording)** | Asynchronous HTTP / WebSocket communication in the receiver | `3.14.5` | [GitHub Repository](https://github.com/aio-libs/aiohttp) | [Apache-2.0](https://github.com/aio-libs/aiohttp/blob/v3.14.5/LICENSE.txt) |
 | HiSilicon OM conversion worker / tool environment **(optional)** | Required only when generating `.om` models for Hi3519DV500; not a prerequisite for starting VLS or using PT models | Target-compatible SVP/ATC SDK, supplied separately | [Optional conversion worker setup](./docs/OM_CONVERSION.md) | Subject to the vendor SDK license; not bundled with VLS |
+
+**Platform recording dependencies (required for manual or scheduled recording):** Java handles authorization and scheduling; a Python subprocess receives video, encodes it and writes MP4 segments. CameraRTC, ONVIF and RTSP platform recordings currently share this runtime. No training GPU is required.
+
+The recording directory must be writable and persistent. It defaults to `./data/platform-recordings`, with per-channel retention of 7 (default), 30 or 90 days, or permanent retention, and a 1 GiB free-space reserve.
+
+Use the versions in [recording requirements.txt](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/resources/recording/requirements.txt).
+Set `PLATFORM_RECORDING_PYTHON` to the Python executable and `PLATFORM_RECORDING_DIRECTORY` to the recording directory.
+For Docker, install Python and these dependencies **inside the VLS backend image** and mount persistent storage for recordings. Installing only on the host or updating only the JAR is insufficient. Preserve these dependencies when replacing the image.
+See [platform recording setup](./docs/PLATFORM_RECORDING.md) for installation, configuration and verification.
 
 Nginx or an equivalent gateway is normally required for frontend static files
 and reverse proxying. WebRTC Streamer `v0.8.16` is optional for the VLS direct

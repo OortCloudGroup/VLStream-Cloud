@@ -4,7 +4,7 @@
     <el-button size="small" @click="playback">{{ $tp('回放') }}</el-button>
     <el-dialog v-model="visible" :title="$tp('平台录像')" width="560px" append-to-body destroy-on-close>
       <div v-loading="loading" class="recording-settings">
-        <p>{{ $tp('关闭播放器后继续录制，录像保留 7 天。') }}</p>
+        <p>{{ $tp('关闭播放器后继续录制，保留时间按当前通道设置。') }}</p>
         <el-alert v-if="error" :title="error" type="error" :closable="false" />
         <el-alert v-if="!canStart" :title="$tp('设备离线或状态未知：可查看历史录像、保存计划，上线后再开始录制。')" type="info" :closable="false" />
         <el-select v-model="selected" :placeholder="$tp('选择通道')" @change="loadPlan">
@@ -16,6 +16,14 @@
           </el-button>
         </div>
         <el-alert v-if="current?.error_code" :title="$tp(errorText(current.error_code))" type="warning" :closable="false" />
+        <el-divider />
+        <div class="recording-status"><strong>{{ $tp('录像保留时间') }}</strong>
+          <el-select v-model="retentionDays" :aria-label="$tp('录像保留时间')" style="width: 150px">
+            <el-option v-for="option in retentionOptions" :key="option.days" :value="option.days" :label="$tp(option.label)" />
+          </el-select>
+        </div>
+        <small>{{ $tp('适用于已有和后续录像；缩短期限将在下次清理时删除超期录像，永久不自动清理。') }}</small>
+        <el-button :disabled="loading || !choices.length" @click="saveRetention">{{ $tp('保存保留时间') }}</el-button>
         <el-divider />
         <div class="recording-status"><strong>{{ $tp('定时录像') }}</strong><el-switch v-model="plan.enabled" :aria-label="$tp('定时录像')" /></div>
         <el-checkbox-group v-model="plan.weekDays">
@@ -44,20 +52,23 @@ const canStart = computed(() => props.protocol !== 'VLSTREAM' || props.online ==
 const emit = defineEmits(['changed'])
 const router = useRouter()
 const visible = ref(false), loading = ref(false), error = ref(''), rows = ref([]), choices = ref([]), selected = ref('')
-const key = value => String(value ?? '')
+// An empty stream ID is a valid device-default channel, not an empty selection.
+const key = value => `stream:${String(value ?? '')}`
 const current = computed(() => rows.value.find(row => key(row.stream_id) === selected.value))
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const retentionDays = ref(7)
+const retentionOptions = [{ days: 7, label: '7天' }, { days: 30, label: '30天' }, { days: 90, label: '90天' }, { days: 0, label: '永久' }]
 const plan = reactive({ enabled: false, weekDays: [1, 2, 3, 4, 5, 6, 7], startTime: '00:00', endTime: '00:00' })
 let generation = 0, timer, disposed = false
 const errorText = code => code === 'DEVICE_OFFLINE' ? '设备离线或在线状态无法确认，不能开始录像' : code === 'STORAGE_FULL' ? '存储空间不足，已暂停录制' : code === 'CAPACITY' ? '录像资源繁忙，等待可用资源' : '未收到可用画面或后台录像环境不可用，请检查设备和服务状态'
-function loadPlan() { Object.assign(plan, current.value?.plan || { enabled: false, weekDays: [1, 2, 3, 4, 5, 6, 7], startTime: '00:00', endTime: '00:00' }) }
+function loadPlan() { retentionDays.value = Number(current.value?.retention_days ?? 7); Object.assign(plan, current.value?.plan || { enabled: false, weekDays: [1, 2, 3, 4, 5, 6, 7], startTime: '00:00', endTime: '00:00' }) }
 async function refresh(ticket = generation) {
   const values = await api.sources(props.protocol, props.rowId)
   if (ticket !== generation || disposed) return
   rows.value = values
 }
 async function open() {
-  visible.value = true; loading.value = true; error.value = ''; choices.value = []; rows.value = []
+  visible.value = true; loading.value = true; error.value = ''; choices.value = []; rows.value = []; selected.value = ''; loadPlan()
   const ticket = ++generation
   try {
     await refresh(ticket)
@@ -67,13 +78,14 @@ async function open() {
     if (ticket !== generation || disposed) return
     const merged = new Map(rows.value.map(row => [key(row.stream_id), { streamId: row.stream_id, name: row.source?.channelName || row.source?.name }]))
     available.filter(item => item.supported).forEach(item => merged.set(key(item.streamId), item))
-    choices.value = [...merged.values()]; selected.value = key(choices.value[0]?.streamId); loadPlan()
+    choices.value = [...merged.values()]; selected.value = choices.value.length ? key(choices.value[0].streamId) : ''; loadPlan()
   } catch (failure) { if (ticket === generation) error.value = recordingError(failure) }
   finally { if (ticket === generation) loading.value = false }
 }
 async function ensureSource() {
   // Fresh authorization only for an explicit new recording/plan; stopping works while offline.
-  const result = await api.bind({ protocol: props.protocol, deviceRowId: props.rowId, streamId: selected.value || null })
+  const choice = choices.value.find(item => key(item.streamId) === selected.value)
+  const result = await api.bind({ protocol: props.protocol, deviceRowId: props.rowId, streamId: String(choice?.streamId ?? '') || null })
   return result.id
 }
 async function mutate(operation) {
@@ -91,6 +103,10 @@ const toggleManual = () => mutate(async () => {
 const savePlan = () => mutate(async () => {
   const id = !plan.enabled && current.value ? current.value.id : await ensureSource()
   await api.plan(id, { ...plan, weekDays: [...plan.weekDays] })
+})
+const saveRetention = () => mutate(async () => {
+  const id = current.value?.id || await ensureSource()
+  await api.retention(id, retentionDays.value)
 })
 function playback() { visible.value = false; router.push({ path: '/video-playback', query: { protocol: props.protocol, rowId: String(props.rowId) } }) }
 watch(visible, value => {

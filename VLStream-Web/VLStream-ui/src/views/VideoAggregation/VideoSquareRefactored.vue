@@ -263,6 +263,7 @@
       </div>
     </div>
   </div>
+  <Teleport v-if="mapRecordingTarget" :to="mapRecordingTarget.host"><PlatformRecordingActions :key="mapRecordingTarget.source.protocol + mapRecordingTarget.source.rowId" :protocol="mapRecordingTarget.source.protocol" :row-id="mapRecordingTarget.source.rowId" :online="videoSourceOnline(mapRecordingTarget.source)" /></Teleport>
   <VideoSquareDevicePicker v-model="showDevicePicker" :devices="visibleDevices" :loading="loading" :error="catalogError" @select="assignSelectedDevice" />
   <el-dialog v-model="showCustomLayout" :title="$tp('自定义布局')" width="400px" class="square-custom-layout">
     <el-form label-position="top">
@@ -307,6 +308,8 @@ import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
 import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
 import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
+import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
+import { defaultVideoSource, videoSourceOnline } from '@/utils/videoSquareCatalog'
 import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
 import { VIDEO_PROTOCOLS, videoDeviceCoordinates, matchesVideoDevice, normalizeVideoDevice, videoDeviceForProtocols } from '@/utils/videoSquareCatalog'
@@ -436,8 +439,10 @@ const selectPresentation = mode => {
     dialog.cameras[0] = catalogVideoCamera(visibleDevices.value[0])
     dialog.activeWindowIndex = 0
   }
-  // 底部排列默认四个窗口：保留已有画面，空位按在线优先自动补设备
-  if (mode === 'bottom') fillLayoutWindows(dialog, currentDevices.value, BOTTOM_DEFAULT_WINDOW_COUNT)
+  if (mode === 'bottom') {
+    resizeVideoLayout(dialog, BOTTOM_DEFAULT_WINDOW_COUNT, 'grid')
+    loadLayoutCameras(dialog)
+  }
 }
 const selectThumbnail = (dialogId, deviceId) => {
   const device = currentDevices.value.find(item => item.id === deviceId)
@@ -537,6 +542,7 @@ const dialogOPlayerTasks = ref(new Map())
 
 // relatedvariable
 let mapInstance = null
+const mapRecordingTarget = ref(null)
 let mapMarkers = []
 let mapInitialized = false
 let isComponentMounted = false
@@ -977,6 +983,7 @@ const updateMapMarkers = () => {
   })
   mapMarkers = []
 
+  mapRecordingTarget.value = null
   // device -
   const deviceIcon = L.icon({
     iconUrl: new URL('@/assets/人员备份 2.png', import.meta.url).href,
@@ -988,13 +995,56 @@ const updateMapMarkers = () => {
   // device
   filteredCameraMarkers.value.forEach(markerData => {
     const popup = createVideoDeviceLocationPopup(markerData, resolveDeviceAddress, uiText)
+    const device = markerData.deviceData
+    const [heading, address, fallbackCoordinates] = [...popup.element.children]
+    heading.className = 'map-device-heading'
+    const row = (icon, label, value) => {
+      const item = document.createElement('div')
+      item.className = 'map-device-row'
+      const glyph = document.createElement('span')
+      glyph.className = 'map-device-glyph'
+      glyph.setAttribute('aria-hidden', 'true')
+      glyph.textContent = icon
+      const caption = document.createElement('span')
+      caption.className = 'map-device-label'
+      caption.textContent = uiText(label)
+      const content = typeof value === 'string' ? document.createElement('span') : value
+      if (typeof value === 'string') content.textContent = value
+      item.append(glyph, caption, content)
+      return item
+    }
+    const status = document.createElement('span')
+    status.className = 'map-device-status ' + (device.status === 'ONLINE' ? 'online' : 'offline')
+    status.textContent = uiText(({ ONLINE: '在线', OFFLINE: '离线' })[device.status] || '未知状态')
+    popup.element.replaceChildren(heading,
+      row('▣', '名称', markerData.name || '—'),
+      row('☑', '是否在线', status),
+      row('≋', '协议', device.protocols?.join(' / ') || device.protocol || device.sourceType || '—'),
+      row('⌖', '当前位置', address),
+      row('◎', '坐标', markerData.lng.toFixed(6) + ', ' + markerData.lat.toFixed(6)), fallbackCoordinates)
+    const play = document.createElement('button')
+    play.type = 'button'
+    play.className = 'map-device-play'
+    play.textContent = uiText('实时画面')
+    play.addEventListener('click', () => {
+      handleCameraClick(markerData)
+      if (!openWindowCount.value) restoreLayoutWindows(undefined, 1)
+      marker.closePopup()
+    })
+    const recordingHost = document.createElement('div')
+    const actions = document.createElement('div')
+    actions.className = 'map-device-actions'
+    actions.append(play, recordingHost)
+    popup.element.append(actions)
     const marker = L.marker([markerData.lat, markerData.lng], { icon: deviceIcon })
-      .bindPopup(popup.element, { maxWidth: 320, maxHeight: 220 })
+      .bindPopup(popup.element, { minWidth: 280, maxWidth: 320, className: 'square-device-popup' })
       .on('popupopen', async () => {
+        const sources = device.preferredProtocols?.length ? device.sources?.filter(source => device.preferredProtocols.includes(source.protocol)) : device.sources
+        const source = defaultVideoSource(sources)
+        mapRecordingTarget.value = source ? { host: recordingHost, source } : null
         // A refresh/filter/unmount may have removed this marker while resolving.
         if (await popup.resolve(() => mapInstance?.hasLayer(marker) && marker.isPopupOpen())) marker.getPopup().update()
       })
-      .on('click', () => handleCameraClick(markerData))
       .addTo(mapInstance)
 
     mapMarkers.push(marker)
@@ -1025,11 +1075,20 @@ const loadDeviceList = async () => {
   }
 }
 
+const loadLayoutCameras = dialog => {
+  dialog.cameras = Array.from({ length: dialog.layoutCount }, (_, index) =>
+    visibleDevices.value[index] ? catalogVideoCamera(visibleDevices.value[index]) : null)
+  dialog.activeWindowIndex = 0
+  devicePickerTarget.value = null
+}
+
 const openVideoDialogs = (count, variant = 'grid') => {
   videoGridStyle(count, variant)
   if (count > 1) presentationMode.value = 'grid'
   layoutChoice.value = {count, variant}
-  resizeVideoLayout(ensureLayoutDialog(), count, variant)
+  const dialog = ensureLayoutDialog()
+  resizeVideoLayout(dialog, count, variant)
+  loadLayoutCameras(dialog)
   layoutClosed.value = false
   layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
 }

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 public class PlatformRecordingController {
     private final PlatformRecordingService service;
     @GetMapping("/runtime") public R<?> runtime() { return R.data(service.runtime()); }
+    @PutMapping("/sources/{id}/retention") public R<?> retention(@PathVariable String id, @RequestBody Retention body) { service.retention(id, body.days); return R.success("录像保留时间已保存"); }
+    public static class Retention { public Integer days; }
     @GetMapping("/sources") public R<?> sources(@RequestParam String protocol, @RequestParam String rowId) { return R.data(service.list(protocol, rowId)); }
     @PostMapping("/sources") public R<?> bind(@RequestBody Token token) { return R.data(service.bind(token.token)); }
     @PutMapping("/sources/{id}/manual") public R<?> manual(@PathVariable String id, @RequestBody Toggle body) { service.manual(id, body.enabled); return R.success("录像请求已保存"); }

@@ -333,7 +333,20 @@ sequenceDiagram
 | MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GitHub 仓库](https://github.com/mysql/mysql-server) | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [GitHub 仓库](https://github.com/redis/redis) | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [GitHub 仓库](https://github.com/minio/minio) | [AGPLv3 或商业许可](https://min.io/compliance) |
+| Python **（平台录像必需）** | 执行后台录像接收进程 | `3.10+` | [GitHub 仓库](https://github.com/python/cpython) | [PSF-2.0](https://github.com/python/cpython/blob/3.10/LICENSE) |
+| PyAV（`av`，**平台录像必需**） | 视频解码、H.264 编码及 MP4 分段封装 | `17.1.0` | [GitHub 仓库](https://github.com/PyAV-Org/PyAV) | [BSD-3-Clause](https://github.com/PyAV-Org/PyAV/blob/v17.1.0/LICENSE.txt)；所链接媒体库遵循各自许可 |
+| aiortc **（平台录像必需）** | CameraRTC / WebRTC 服务端媒体接收 | `1.15.0` | [GitHub 仓库](https://github.com/aiortc/aiortc) | [BSD-3-Clause](https://github.com/aiortc/aiortc/blob/1.15.0/LICENSE) |
+| aiohttp **（平台录像必需）** | 接收器异步 HTTP / WebSocket 通信 | `3.14.5` | [GitHub 仓库](https://github.com/aio-libs/aiohttp) | [Apache-2.0](https://github.com/aio-libs/aiohttp/blob/v3.14.5/LICENSE.txt) |
 | 海思 OM 转换工作进程 / 工具环境 **（可选）** | 仅生成 Hi3519DV500 的 `.om` 模型时需要；不是 VLS 启动或使用 PT 模型的前提 | 与目标芯片匹配的 SVP/ATC SDK，单独提供 | [可选转换容器部署](./docs/OM_CONVERSION.md) | 遵循厂商 SDK 授权协议，VLS 不随包分发 |
+
+**平台录像依赖（启用手动或计划录像时必需）：** Java 负责权限和任务调度，Python 子进程负责接收视频、编码及分段保存 MP4。当前 CameraRTC、ONVIF、RTSP 等平台录像来源共用此运行环境；无需训练 GPU。
+
+录像目录须可写且持久化，默认 `./data/platform-recordings`，按通道选择保留 7／30／90 天或永久（默认 7 天）、预留 1 GiB 空间。
+
+依赖版本以 [录像 requirements.txt](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/resources/recording/requirements.txt) 为准。
+通过 `PLATFORM_RECORDING_PYTHON` 指定 Python 可执行文件，`PLATFORM_RECORDING_DIRECTORY` 指定录像目录。
+Docker 部署必须在 **VLS backend 镜像内**安装 Python 和依赖，并为录像目录挂载持久卷；仅在宿主机安装或仅更新 JAR 均不足。后续更换镜像时须保留这些依赖。
+安装、配置及检查步骤见 [平台录像说明](./docs/PLATFORM_RECORDING.md)。
 
 前端部署通常还需要 Nginx 或等价网关，用于静态文件和反向代理。WebRTC
 Streamer `v0.8.16` 仅用于 VLS 直连 RTSP 转 WebRTC 的可选链路；FFmpeg 是
