@@ -30,6 +30,7 @@ public class ComputeFundingIntentService {
     public static final String CONFLICT = "CONFLICT";
     public static final String EXTERNAL_RELEASE_ADOPTED = "EXTERNAL_RELEASE_ADOPTED";
     public static final String ADOPTED_RELEASE_CONTRACT = "ADOPTED_RELEASE_V1";
+    public static final String OWNER_ADOPTED_RELEASE_CONTRACT = "OWNER_ADOPTED_RELEASE_V1";
     private static final String BASE = "/api/v1/external-billing/holds";
     private static final String CURRENT_CONTRACT = "HOLDS_V3";
     private final JdbcTemplate jdbc;
@@ -289,6 +290,15 @@ public class ComputeFundingIntentService {
         return !"RELEASE".equals(intent.operation) && trial.protectedUsage(intent.usageId);
     }
 
+    public boolean matchesOrigin(ExternalBillingProperties properties, String usageId) {
+        return BillingLedgerOrigin.matchesUsage(jdbc, properties, usageId);
+    }
+
+    /** Read-only transport preflight; denied origins must not trigger recovery conflict writes. */
+    public Intent transportCandidate(String intentId) {
+        return new Intent(jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?", intentId));
+    }
+
     /** Validate the immutable original for an idempotent HTTP replay, never a new financial
      * operation. The paid-run worker lease bounds attempts; this is not a new exclusive claim. */
     public Intent prepareOriginalReplay(String intentId, long nowMillis, long queryStartedAtMs, JsonNode lookup) {
@@ -483,7 +493,7 @@ public class ComputeFundingIntentService {
 
     private Intent checked(Map<String, Object> session, Map<String, Object> row) {
         Intent intent = new Intent(row);
-        if (ADOPTED_RELEASE_CONTRACT.equals(intent.contractVersion)) return checkedAdopted(session, intent);
+        if (ADOPTED_RELEASE_CONTRACT.equals(intent.contractVersion) || OWNER_ADOPTED_RELEASE_CONTRACT.equals(intent.contractVersion)) return checkedAdopted(session, intent);
         if (!intent.usageId.equals(text(session, "usage_id")) || !intent.merchantId.equals(text(session, "merchant_id"))
             || !intent.payerUserId.equals(text(session, "payer_user_id")) || !intent.key.matches("[0-9a-f-]{36}")
             || !ComputeBillingSettlementService.hash(intent.body).equals(intent.requestHash))
@@ -567,17 +577,44 @@ public class ComputeFundingIntentService {
         FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(audit.path("release_receipt"));
         FundingContracts.HoldDetail detail=FundingContracts.holdDetail(audit.path("authority").path("hold"));
         JsonNode operation=audit.path("authority").path("operation");
+        boolean authorized;
+        if(OWNER_ADOPTED_RELEASE_CONTRACT.equals(intent.contractVersion)) {
+            Map<String,Object> run=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",audit.path("run_id").asText());
+            Map<String,Object> usage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",intent.usageId);
+            authorized="OWNER".equals(audit.path("actor_type").asText()) && !audit.has("administrator")
+                && intent.usageId.equals(text(run,"usage_id")) && intent.id.equals(text(run,"release_intent_id"))
+                && intent.parentId.equals(text(run,"hold_intent_id")) && intent.merchantId.equals(text(run,"merchant_id"))
+                && intent.payerUserId.equals(text(run,"payer_user_id")) && "CANCELLED".equals(text(run,"state"))
+                && text(session,"tenant_id").equals(text(run,"tenant_id")) && text(session,"tenant_id").equals(text(usage,"tenant_id"))
+                && audit.path("actor_id").isTextual() && !audit.path("actor_id").asText().trim().isEmpty()
+                && audit.path("actor_id").asText().equals(text(run,"opening_user_id"))
+                && audit.path("actor_id").asText().equals(text(session,"opening_user_id"))
+                && audit.path("actor_id").asText().equals(text(usage,"opening_user_id"))
+                && audit.path("platform_subject").isTextual() && !audit.path("platform_subject").asText().trim().isEmpty()
+                && audit.path("platform_subject").asText().equals(text(run,"platform_subject"))
+                && audit.path("platform_subject").asText().equals(text(usage,"payer_account_ref"))
+                && intent.payerUserId.equals(audit.path("payer_user_id").asText());
+        } else authorized=com.ruoyi.common.helper.LoginHelper.isAdmin(audit.path("administrator").asText());
+        boolean expired="EXPIRED".equals(detail.holdStatus)||"EXPIRED".equals(receipt.holdStatus);
+        boolean releasedStatus=("RELEASED".equals(detail.holdStatus)||"EXPIRED".equals(detail.holdStatus))
+            &&("RELEASED".equals(receipt.holdStatus)||"EXPIRED".equals(receipt.holdStatus));
+        if(expired) {
+            String expires=requiredText(parse(parent.body),"expires_at");
+            long observedAt=ExactQuota.integer(audit.path("observed_at_ms").asText(),true).longValueExact();
+            releasedStatus=releasedStatus&&expires.equals(detail.expiresAt)
+                &&ExactQuota.integer(expires,true).longValueExact()<=observedAt&&observedAt<=System.currentTimeMillis();
+        }
         if (!"HOLD".equals(parent.operation) || !(CONFLICT.equals(parent.state) || DETAIL_OBSERVED.equals(parent.state))
             || !parent.holdId.equals(intent.holdId)
             || !intent.path.equals(BASE+"/"+parent.holdId+"/release") || !intent.reference.equals("vls-release:"+intent.usageId+":final")
             || !FundingContracts.release(intent.merchantId,intent.reference,intent.payerUserId,requiredText(original,"release_quota")).toString().equals(intent.body)
-            || !com.ruoyi.common.helper.LoginHelper.isAdmin(audit.path("administrator").asText())
+            || !authorized
             || !text(session,"tenant_id").equals(audit.path("tenant_id").asText()) || !audit.path("reason").asText().matches("[A-Z][A-Z0-9_]{0,63}")
             || !intent.holdId.equals(receipt.holdId) || !detail.holdId.equals(intent.holdId) || !parent.reference.equals(detail.merchantHoldId)
             || !intent.payerUserId.equals(detail.userId) || !"0".equals(detail.remainingQuota) || !"0".equals(detail.capturedQuota)
-            || !"RELEASED".equals(detail.holdStatus) || !detail.holdQuota.equals(detail.releasedQuota)
+            || !releasedStatus || !detail.holdQuota.equals(detail.releasedQuota)
             || !detail.releasedQuota.equals(receipt.releasedQuota) || !detail.releasedQuota.equals(original.path("release_quota").asText())
-            || !"0".equals(receipt.remainingQuota) || !"0".equals(receipt.heldQuota) || !"RELEASED".equals(receipt.holdStatus)
+            || !"0".equals(receipt.remainingQuota) || !"0".equals(receipt.heldQuota)
             || !intent.key.equals(operation.path("idempotency_key").asText()) || !"SUCCEEDED".equals(operation.path("status").asText())
             || !intent.holdId.equals(operation.path("hold_id").asText()) || !intent.payerUserId.equals(operation.path("user_id").asText()))
             throw new IllegalStateException("Invalid adopted release association/evidence");

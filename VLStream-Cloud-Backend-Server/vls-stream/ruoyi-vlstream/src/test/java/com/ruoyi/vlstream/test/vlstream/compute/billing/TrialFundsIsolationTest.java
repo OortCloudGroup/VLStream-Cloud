@@ -60,6 +60,9 @@ class TrialFundsIsolationTest {
         properties.getTrial().setExpiresAt(Instant.now().plusSeconds(3600).toString());
         snapshot = (ObjectNode) f.json.readTree(f.jdbc.queryForObject(
             "SELECT accepted_snapshot FROM vls_compute_billing_session WHERE usage_id=?", String.class, usage));
+        // This setup creates a new synthetic DEV acceptance from the base fixture.
+        snapshot.remove(BillingLedgerOrigin.FIELD);
+        BillingLedgerOrigin.bind(snapshot,properties);
         snapshot.put("approved_hourly_price", "13.00");
         ((ObjectNode) snapshot.path("accepted_rate")).put("pricePolicy", "VLS_FIXED");
         snapshot.putObject(ComputeBillingTrialGuard.MARKER).put("version", 1).put("run_id", run)

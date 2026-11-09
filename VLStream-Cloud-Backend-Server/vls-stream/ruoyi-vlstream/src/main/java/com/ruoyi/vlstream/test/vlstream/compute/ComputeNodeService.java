@@ -24,6 +24,8 @@ public class ComputeNodeService {
     private final ObjectMapper json;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ConfiguredComputeRegistry configured;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private AutoDlRuntimeSsh runtimeSsh;
     boolean configured(Long id) { return configured != null && configured.contains(id); }
     boolean officialConfigured(ComputeNode node){return configured!=null&&configured.official(node);}
     ComputeBillingRate configuredFixedRate(ComputeNode node,JsonNode config){return configured.fixedRate(node,config);}
@@ -292,7 +294,17 @@ public class ComputeNodeService {
             details = json.writeValueAsString(result);
             if (result.path("contractVersion").asInt() == 1 && result.path("ready").asBoolean()) state = "READY";
         } catch (Exception e) { details = "{\"message\":\"无法完成环境检查，请先按接入指南初始化实例，并核对 SSH 和初始化脚本输出的 Python 路径\"}"; }
-        if(node.isConfigurationManaged())return configured.recordProbe(node,state,details,key);
+        if(node.isConfigurationManaged()) {
+            if(runtimeSsh!=null&&runtimeSsh.dynamic(node)) {
+                try(AutoDlRuntimeSsh.Binding binding=runtimeSsh.require(node)) {
+                    if(!java.util.Objects.equals(binding.key,key))return false;
+                } catch(IOException unverified) {return false;}
+                // The observed key was pinned by this original run's Binding.
+                // Keep catalog identity/fingerprint checks without persisting it there.
+                key=node.getHostKey();
+            }
+            return configured.recordProbe(node,state,details,key);
+        }
         // A probe from an older edit must never mark a different connection ready.
         return jdbc.update("UPDATE vls_compute_node SET probe_state=?,probe_json=?,host_key=?,probe_time=NOW(),power_state=IF(?='READY','RUNNING',power_state),power_checked_at=IF(?='READY',NOW(),power_checked_at) WHERE tenant_id=? AND id=? AND host=? AND port=? AND username=? AND auth_mode=? AND password_cipher <=> ? AND python_path=? AND work_dir=? AND gpu_index=? AND power_operation_id IS NULL AND lifecycle_revision=? AND resource_scope=? AND enabled=? AND management_owner_subject <=> ?",
             state, details, key, state, state, node.getTenantId(), node.getId(), node.getHost(), node.getPort(), node.getUsername(), node.getAuthMode(), node.getPasswordCipher(), node.getPythonPath(), node.getWorkDir(), node.getGpuIndex(), node.getLifecycleRevision(), node.getResourceScope(), node.isEnabled(),node.getManagementOwnerSubject()) == 1;

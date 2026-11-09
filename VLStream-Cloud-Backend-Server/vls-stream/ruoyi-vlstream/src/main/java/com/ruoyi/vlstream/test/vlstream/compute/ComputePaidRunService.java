@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot;
+import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingLedgerOrigin;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingTrialGuard;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeFundingIntentService;
@@ -35,11 +36,14 @@ import java.util.Collections;
  * Quotes do not move funds. Acceptance commits the original payer/rate/hold before transport.
  * Repeated browser actions recover the same run; uncertain operations are never replaced. */
 @Service
+@lombok.extern.slf4j.Slf4j
 public class ComputePaidRunService {
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private ConfiguredPaidPowerService configuredPower;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private ComputePaidArchiveRecoveryService archiveRecovery;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ComputeOriginalReleaseService originalRelease;
     @org.springframework.beans.factory.annotation.Autowired
     private ComputeBillingTrialGuard trialGuard;
     @org.springframework.beans.factory.annotation.Autowired
@@ -75,7 +79,8 @@ public class ComputePaidRunService {
         private final boolean archiveRecovery,archiveRecoveryAvailable;
         private final String archiveRecoverySourceRunId;
         private final List<String> archiveRecoveryJobIds;
-        private View(Map<String,Object> row,BillingSnapshot price,String charged,String remaining,boolean recoveryAvailable,List<String> recoveryJobs,String recoverySource) {
+        private final BillingDiagnostics billingDiagnostics;
+        private View(Map<String,Object> row,BillingSnapshot price,String charged,String remaining,boolean recoveryAvailable,List<String> recoveryJobs,String recoverySource,BillingDiagnostics diagnostics) {
             runId=text(row,"run_id");nodeId=text(row,"node_id");state=text(row,"state");errorCode=text(row,"error_code");
             // Retain the original trusted rejection without hiding a later funds
             // reconciliation error or changing the accepted immutable snapshots.
@@ -86,11 +91,39 @@ public class ComputePaidRunService {
             quoteUntilMs=number(row,"quote_until_ms");holdUntilMs=number(row,"hold_until_ms");maximumRunSeconds=(int)number(row,"maximum_run_seconds");
             archiveRecoverySourceRunId=recoverySource;archiveRecoveryJobIds=Collections.unmodifiableList(new ArrayList<>(recoveryJobs));
             archiveRecovery=!recoveryJobs.isEmpty();archiveRecoveryAvailable=recoveryAvailable;
+            billingDiagnostics=diagnostics;
         }
         private static String priceCurrency(BillingSnapshot price) {
             try{return new ObjectMapper().readTree(price.json).path("accepted_rate").path("currency").asText();}
             catch(Exception invalid){throw new IllegalStateException("Invalid accepted currency");}
         }
+    }
+
+    /** Owner-only local evidence. Never includes transport requests, keys or connection credentials. */
+    @Getter
+    public static final class BillingDiagnostics {
+        private final String usageState,safetyState;
+        private final Long billingStartMs,billingEndMs,meteredUntilMs,lastRunningMs,stopObservedMs;
+        private final List<Map<String,Object>> slices;
+        private BillingDiagnostics(Map<String,Object> usage,Map<String,Object> session,List<Map<String,Object>> audit) {
+            usageState=text(usage,"state");safetyState=text(session,"safety_state");
+            billingStartMs=epoch(usage.get("billing_start_at"));billingEndMs=epoch(usage.get("billing_end_at"));
+            meteredUntilMs=optionalNumber(session,"metered_until_ms");lastRunningMs=optionalNumber(session,"last_running_ms");
+            stopObservedMs=optionalNumber(session,"physical_stop_observed_ms");
+            List<Map<String,Object>> safe=new ArrayList<>();
+            for(Map<String,Object> slice:audit) {
+                Map<String,Object> value=new java.util.LinkedHashMap<>();
+                for(String[] field:new String[][]{{"sliceSequence","slice_sequence"},{"intervalStartMs","interval_start_ms"},
+                    {"intervalEndMs","interval_end_ms"},{"amount","amount_text"},{"state","state"},{"errorCode","error_code"},
+                    {"chargeId","charge_id"},{"ledgerEntryId","ledger_entry_id"},{"createdAtMs","create_time_ms"},
+                    {"leaseUntilMs","lease_until_ms"},{"attemptCount","attempt_count"}})value.put(field[0],slice.get(field[1]));
+                value.put("tail",number(slice,"is_tail")==1);value.put("leasePresent",number(slice,"lease_present")==1);
+                safe.add(Collections.unmodifiableMap(value));
+            }
+            slices=Collections.unmodifiableList(safe);
+        }
+        private static Long epoch(Object value){return value==null?null:((Timestamp)value).getTime();}
+        private static Long optionalNumber(Map<String,Object> row,String field){return row.get(field)==null?null:number(row,field);}
     }
 
     /** No balance call here: trusted auto-grant must follow explicit account/paid-use acceptance. */
@@ -160,6 +193,7 @@ public class ComputePaidRunService {
             if(quota.signum()<=0||quota.compareTo(ExactQuota.integer(properties.getMaximumHoldQuota(),true))>0)
                 throw new ServiceException("所需预冻结超出当前实例的已配置消费上限");
             ObjectNode acceptedSnapshot=(ObjectNode)parse(snapshot.json);
+            BillingLedgerOrigin.bind(acceptedSnapshot,properties);
             acceptedSnapshot.putObject("run_budget").put("stop_budget_seconds",policy.getStopBudgetSeconds())
                 .put("polling_safety_seconds",policy.getPollingSafetySeconds());
             if(recoverySource!=null) {
@@ -203,11 +237,19 @@ public class ComputePaidRunService {
             &&run.get("power_start_attempt_ms")==null&&run.get("power_stop_attempt_ms")==null;
     }
 
+    /** Check before the controller can query a wallet or grant for an existing quote. */
+    public void requireQuoteOrigin(String runId,BillingPayer payer) {
+        Map<String,Object> run=owned(runId,payer,false);
+        if(!BillingLedgerOrigin.matches(text(run,"quote_snapshot"),text(run,"merchant_id"),properties))
+            throw new ServiceException("计费账本来源未核实，请重新确认报价");
+    }
+
     /** Controller checks current self + accepted wallet permissions before calling this method. */
     public View accept(String runId,BillingPayer payer) {
         requirePaidConfiguration();
         Map<String,Object> before=owned(runId,payer,false);
         if(!"QUOTED".equals(text(before,"state")))return view(before);
+        requireQuoteOrigin(runId,payer);
         trial().requirePayer(payer);
         trial().requireNode(nodes.get(Long.valueOf(text(before,"node_id"))));
         final JsonNode freshConfig=trial().requested()||parse(text(before,"quote_snapshot")).has("trial_guard")?freshConfig():null;
@@ -217,6 +259,8 @@ public class ComputePaidRunService {
             Map<String,Object> row=owned(runId,payer,true);
             if(!"QUOTED".equals(text(row,"state")))return null;
             if(!java.util.Objects.equals(properties.getMerchantId(),text(row,"merchant_id")))throw new ServiceException("计费服务身份已变化，请重新确认报价");
+            if(!BillingLedgerOrigin.matches(text(row,"quote_snapshot"),text(row,"merchant_id"),properties))
+                throw new ServiceException("计费账本来源已变化，请重新确认报价");
             boolean archive=!recoveryJobs(row).isEmpty();
             eligible(node,archive);
             if(archive)validateRecoverySnapshot(node,row);
@@ -239,6 +283,8 @@ public class ComputePaidRunService {
     }
 
     public View get(String id,BillingPayer payer){return view(owned(id,payer,false));}
+    /** Detailed local evidence is opt-in only for the existing owned HTTP GET. */
+    public View detail(String id,BillingPayer payer){Map<String,Object> row=owned(id,payer,false);return view(row,billingDiagnostics(row));}
     public List<View> list(BillingPayer payer) {
         actor(payer);
         java.util.LinkedHashMap<String,Map<String,Object>> visible=new java.util.LinkedHashMap<>();
@@ -281,6 +327,16 @@ public class ComputePaidRunService {
         throw new ServiceException("原订单正在变更，请查询原订单后继续停止");
     }
 
+    /** The ordinary owner stop may carry proof of an already executed original release.
+     * Ownership precedes every evidence lookup; the existing no-proof stop stays unchanged. */
+    public View stop(String id,BillingPayer payer,ComputeOriginalReleaseService.Request request) {
+        if(request==null)return stop(id,payer);
+        owned(id,payer,false);
+        if(originalRelease==null)throw new ServiceException("原释放凭证核验服务暂不可用");
+        originalRelease.reconcileOwned(id,payer,request);
+        return get(id,payer);
+    }
+
     public boolean trainingAvailable(ComputeNode node) {
         try{requireTraining(node);return true;}catch(RuntimeException unavailable){return false;}
     }
@@ -291,6 +347,8 @@ public class ComputePaidRunService {
         Map<String,Object> run=rows.get(0);
         if(!recoveryJobs(run).isEmpty())throw new ServiceException("本次开机仅恢复原任务归档，不接受新训练");
         if(!java.util.Objects.equals(properties.getMerchantId(),text(run,"merchant_id")))throw new ServiceException("计费服务身份已变化，暂不能开始新训练");
+        if(!BillingLedgerOrigin.matches(text(run,"quote_snapshot"),text(run,"merchant_id"),properties))
+            throw new ServiceException("计费账本来源未核实，暂不能开始新训练");
         if(!actor.getPlatformUserId().equals(text(run,"platform_subject"))||!actor.getVlsTenantId().equals(text(run,"tenant_id"))||!actor.getVlsUserId().equals(text(run,"opening_user_id")))
             throw new ServiceException("训练必须使用本次开机付款账户与租户");
         if(System.currentTimeMillis()>=stopDeadline(run))throw new ServiceException("本次开机的绝对运行预算已到期，请等待原单安全停止与结算");
@@ -310,11 +368,38 @@ public class ComputePaidRunService {
         long now=System.currentTimeMillis(),leaseUntil=now+30000;
         if(jdbc.update("UPDATE vls_compute_paid_run SET worker_lease_until_ms=? WHERE run_id=? AND active_instance_key IS NOT NULL AND worker_lease_until_ms<?",leaseUntil,id,now)!=1)return;
         try{advance(row(id,false));}
-        catch(RuntimeException uncertain){jdbc.update("UPDATE vls_compute_paid_run SET error_code='RECOVERY_PENDING',update_time=NOW() WHERE run_id=?",id);}
+        catch(RuntimeException uncertain){
+            log.warn("Paid run recovery pending run={} exceptionType={} businessFrame={}",id,uncertain.getClass().getName(),recoveryFrame(uncertain));
+            jdbc.update("UPDATE vls_compute_paid_run SET error_code='RECOVERY_PENDING',update_time=NOW() WHERE run_id=?",id);
+        }
         finally{jdbc.update("UPDATE vls_compute_paid_run SET worker_lease_until_ms=0 WHERE run_id=? AND worker_lease_until_ms=?",id,leaseUntil);}
     }
     private void advance(Map<String,Object> run) {
         String id=text(run,"run_id"),usage=text(run,"usage_id"),state=text(run,"state");
+        if(!BillingLedgerOrigin.matches(text(run,"quote_snapshot"),text(run,"merchant_id"),properties)
+            || !BillingLedgerOrigin.matchesUsage(jdbc,properties,usage)) {
+            // Ledger quarantine cannot strand a possibly running physical instance.
+            // Preserve every original funding intent, receipt and active claim.
+            jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=COALESCE(risk_code,'BILLING_ORIGIN_MISMATCH') WHERE usage_id=?",usage);
+            jdbc.update("UPDATE vls_compute_paid_run SET error_code='BILLING_ORIGIN_MISMATCH' WHERE run_id=?",id);
+            Map<String,Object> observed=jdbc.queryForMap("SELECT billing_start_at FROM vls_compute_usage WHERE id=?",usage);
+            if(observed.get("billing_start_at")==null) {
+                String start=text(run,"power_start_state");
+                if("PREPARED".equals(start)) {
+                    if("STARTING".equals(state)&&cancelUnsubmittedStart(run,true))return;
+                    // A concurrent sender may have won the atomic claim; only then
+                    // does this original require physical safety-stop recovery.
+                    if("PREPARED".equals(text(row(id,false),"power_start_state")))return;
+                } else if("CANCELLED".equals(start)||"REJECTED".equals(start)||"REJECTED_NO_STOCK".equals(start))return;
+            }
+            lifecycle.requestSafeStop(usage);
+            Map<String,Object> stopping=row(id,false);
+            if(configuredPower!=null&&"STOPPING".equals(text(stopping,"state"))) {
+                ComputeNode controlled=lifecycle.controlledNode(usage);
+                if(nodes.officialConfigured(controlled))configuredPower.advance(stopping,controlled);
+            }
+            return;
+        }
         String holdId=text(run,"hold_intent_id");
         if("FUNDING".equals(state)||"CANCELLING".equals(state)) {
             Map<String,Object> pending=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);
@@ -343,7 +428,8 @@ public class ComputePaidRunService {
             jdbc.update("UPDATE vls_compute_paid_run SET error_code='FUNDING_REQUIRES_REVIEW' WHERE run_id=?",id);return;
         }
         Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);
-        Map<String,Object> observedUsage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+        Map<String,Object> observedUsage=usage(usage);
+        boolean officialPowerControl=false;
         boolean budgetExpired=System.currentTimeMillis()>=stopDeadline(run);
         if(budgetExpired&&("FUNDING".equals(state)||"STARTING".equals(state)||"RUNNING".equals(state))) {
             jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code IS NULL THEN 'RUN_WINDOW_EXPIRED' ELSE risk_code END WHERE usage_id=?",usage);
@@ -351,11 +437,12 @@ public class ComputePaidRunService {
         }
         if(configuredPower!=null&&("STARTING".equals(state)||"RUNNING".equals(state)||"STOPPING".equals(state))) {
             ComputeNode controlled=lifecycle.controlledNode(usage);
-            if(nodes.officialConfigured(controlled)&&(!"STARTING".equals(state)||number(session,"stop_requested")==0||!"PREPARED".equals(text(run,"power_start_state")))) {
+            officialPowerControl=nodes.officialConfigured(controlled);
+            if(officialPowerControl&&(!"STARTING".equals(state)||number(session,"stop_requested")==0||!"PREPARED".equals(text(run,"power_start_state")))) {
                 configuredPower.advance(run,controlled);
                 run=row(id,false);state=text(run,"state");
                 session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?",usage);
-                observedUsage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+                observedUsage=usage(usage);
             }
         }
         if("FUNDING".equals(state)&&number(session,"stop_requested")!=0) {
@@ -396,7 +483,9 @@ public class ComputePaidRunService {
             });return;
         }
         if(observedUsage.get("billing_start_at")!=null&&observedUsage.get("billing_end_at")==null) {
-            jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
+            // Official power owns its SSH readiness gate. A real billing start alone
+            // must not promote a still-unprepared connection or erase its diagnostic.
+            if(!officialPowerControl)jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
             if(!recoveryJobs(run).isEmpty()&&recoveryAttemptFinished(run)) {
                 jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",usage);
                 session.put("stop_requested",1);
@@ -411,10 +500,20 @@ public class ComputePaidRunService {
         if(!neverStarted&&!stopped)return;
         // Cancellation is not proof that an uncertain hold never committed. Keep the usage
         // claim until the original funding outcome and any required release are confirmed.
-        if(stopped&&(number(session,"metered_until_ms")<number(session,"last_running_ms")
-            ||!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state NOT IN ('SETTLED','NO_DEBIT')"
+        if(stopped&&number(session,"metered_until_ms")<number(session,"last_running_ms")) {
+            jdbc.update("UPDATE vls_compute_paid_run SET error_code='UNMETERED_BILLING_TAIL' WHERE run_id=?",id);return;
+        }
+        List<Map<String,Object>> unsettled=stopped?jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state NOT IN ('SETTLED','NO_DEBIT')"
                 +" AND (state<>'BLOCKED' OR error_code IS NULL OR error_code NOT IN ('TRIAL_UNALLOCATED_BUDGET','TRIAL_UNALLOCATED_PERMIT')"
-                +" OR charge_id IS NOT NULL OR ledger_entry_id IS NOT NULL OR lease_token IS NOT NULL OR lease_until_ms IS NULL OR lease_until_ms<>0)",usage).isEmpty()))return;
+                +" OR charge_id IS NOT NULL OR ledger_entry_id IS NOT NULL OR lease_token IS NOT NULL OR lease_until_ms IS NULL OR lease_until_ms<>0)",usage):Collections.emptyList();
+        boolean sshPreparationTail=stopped&&!unsettled.isEmpty()&&("SSH_PREPARATION_FAILED".equals(session.get("risk_code"))
+            ||!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='BLOCKED' AND error_code IN ('SSH_PREPARATION_FAILED',?)",usage,ComputeBillingSettlementService.RELEASED_SSH_PREPARATION_TAIL).isEmpty());
+        if(sshPreparationTail&&session.get("funding_expires_at_ms")!=null&&number(session,"funding_expires_at_ms")>System.currentTimeMillis()) {
+            settlements.recoverStoppedSshPreparationTail(usage);return; // Normal coordinator dispatch owns the original request.
+        }
+        boolean runWindowTail=stopped&&!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='BLOCKED' AND error_code IN ('RUN_WINDOW_EXPIRED',?)",usage,ComputeBillingSettlementService.RELEASED_RUN_WINDOW_TAIL).isEmpty();
+        if(!unsettled.isEmpty()&&!(sshPreparationTail?settlements.allowExpiredSshPreparationTailRelease(usage)
+            :runWindowTail?settlements.allowExpiredRunWindowTailRelease(usage):settlements.confirmExpiredUnsentTail(usage)))return;
         // The two exact unallocated markers prove that the sealed interval never acquired
         // permission to send. Preserve its amount/error/state; release is not a fake settlement.
         // Every unknown/submitted slice, or any residual send/charge evidence, still blocks here.
@@ -447,11 +546,27 @@ public class ComputePaidRunService {
             jdbc.update("UPDATE vls_compute_paid_run SET release_intent_id=?,state='RELEASING' WHERE run_id=?",release.id,id);
             recovery.advance(release.id,System.currentTimeMillis());return;
         }
+        if(runWindowTail&&!settlements.confirmReleasedRunWindowTail(usage))return;
+        if(sshPreparationTail&&!settlements.confirmReleasedSshPreparationTail(usage))return;
         tx.execute(status->{
             jdbc.update("UPDATE vls_compute_paid_run SET state=?,active_instance_key=NULL,error_code=NULL,update_time=NOW() WHERE run_id=?",neverStarted?"CANCELLED":"COMPLETED",id);
             jdbc.update("UPDATE vls_compute_usage SET active_server_key=NULL,state=CASE WHEN billing_start_at IS NULL THEN 'START_FAILED' ELSE state END WHERE id=?",usage);
             return null;
         });
+    }
+    private Map<String,Object> usage(String id) {
+        return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=?",(rs,index)-> {
+            Map<String,Object> row=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs,index);
+            // DATETIME getObject may be LocalDateTime; preserve the driver's session-zone conversion.
+            row.put("billing_start_at",rs.getTimestamp("billing_start_at"));
+            row.put("billing_end_at",rs.getTimestamp("billing_end_at"));return row;
+        },id);
+    }
+    private static String recoveryFrame(RuntimeException failure) {
+        for(StackTraceElement frame:failure.getStackTrace())
+            if(frame.getClassName().startsWith("com.ruoyi."))
+                return frame.getClassName()+"."+frame.getMethodName()+":"+frame.getLineNumber();
+        return "unavailable";
     }
     private long stopDeadline(Map<String,Object> run) {
         long margin=0;
@@ -574,7 +689,8 @@ public class ComputePaidRunService {
         List<Map<String,Object>> rows=jdbc.queryForList("SELECT * FROM vls_compute_paid_run WHERE run_id=?"+(lock?" FOR UPDATE":""),id);
         if(rows.isEmpty())throw new ServiceException("付费操作不存在或无权访问");return rows.get(0);
     }
-    private View view(Map<String,Object> row) {
+    private View view(Map<String,Object> row) {return view(row,null);}
+    private View view(Map<String,Object> row,BillingDiagnostics diagnostics) {
         BigInteger charged=BigInteger.ZERO;String remaining=null;
         if(row.get("usage_id")!=null) {
             for(String amount:jdbc.queryForList("SELECT amount_text FROM vls_compute_billing_slice WHERE usage_id=? AND state='SETTLED'",String.class,text(row,"usage_id")))charged=charged.add(ExactQuota.integer(amount,false));
@@ -589,7 +705,18 @@ public class ComputePaidRunService {
                 &&jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=?",text(original,"instance_key")).isEmpty())
                 available=!recoverableJobs(nodes.get(Long.valueOf(text(original,"node_id"))),original).isEmpty();
         }catch(RuntimeException unavailable){available=false;}
-        return new View(row,BillingSnapshot.read(text(row,"quote_snapshot"),json),charged.toString(),remaining,available,jobs,recoverySource(row));
+        return new View(row,BillingSnapshot.read(text(row,"quote_snapshot"),json),charged.toString(),remaining,available,jobs,recoverySource(row),diagnostics);
+    }
+
+    private BillingDiagnostics billingDiagnostics(Map<String,Object> row) {
+        String usageId=text(row,"usage_id");if(usageId==null)return null;
+        List<Map<String,Object>> usage=jdbc.query("SELECT state,billing_start_at,billing_end_at FROM vls_compute_usage WHERE id=? AND tenant_id=? AND opening_user_id=? AND payer_account_ref=?",(rs,index)->{
+            Map<String,Object> value=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs,index);
+            value.put("billing_start_at",rs.getTimestamp("billing_start_at"));value.put("billing_end_at",rs.getTimestamp("billing_end_at"));return value;
+        },usageId,row.get("tenant_id"),row.get("opening_user_id"),row.get("platform_subject"));
+        List<Map<String,Object>> sessions=jdbc.queryForList("SELECT safety_state,metered_until_ms,last_running_ms,physical_stop_observed_ms FROM vls_compute_billing_session WHERE usage_id=? AND tenant_id=? AND opening_user_id=? AND merchant_id=? AND payer_user_id=?",usageId,row.get("tenant_id"),row.get("opening_user_id"),row.get("merchant_id"),row.get("payer_user_id"));
+        return new BillingDiagnostics(usage.isEmpty()?Collections.emptyMap():usage.get(0),sessions.isEmpty()?Collections.emptyMap():sessions.get(0),
+            usage.isEmpty()||sessions.isEmpty()?Collections.emptyList():settlements.audit(usageId));
     }
 
     private List<String> recoverableJobs(ComputeNode node,Map<String,Object> source) {

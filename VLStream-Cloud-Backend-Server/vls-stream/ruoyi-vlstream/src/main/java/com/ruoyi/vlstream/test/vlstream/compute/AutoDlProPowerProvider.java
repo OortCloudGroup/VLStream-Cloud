@@ -185,14 +185,16 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
             if (response == null || response.length() > 1024 * 1024) throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN, reply.getStatusCodeValue(), "EMPTY_RESPONSE");
             JsonNode envelope = json.readTree(response);
             if (!"Success".equals(envelope.path("code").asText())) {
-                // No raw vendor code/message/body reaches logs: these responses may
-                // contain credentials. Only the documented, bounded request_id can be
-                // retained for tracing. Generic BadRequest is not a no-power proof.
+                // Retain only bounded, credential-checked identifiers for diagnosis.
+                // This one complete supplier message was verified through the real browser flow;
+                // a business code or a similar message alone is not a no-stock contract.
                 String code=envelope.path("code").asText();
                 String category="BadRequest".equals(code)?"BUSINESS_BAD_REQUEST":
                     ("Unauthorized".equals(code)||"Forbidden".equals(code))?"BUSINESS_AUTHORIZATION":
                     "NotFound".equals(code)?"BUSINESS_NOT_FOUND":"BUSINESS_OTHER";
-                throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,reply.getStatusCodeValue(),category,safeRequestId(envelope,token));
+                ComputeProviderException.Kind kind=method==HttpMethod.POST&&"power_on".equals(path)&&verifiedNoStock(envelope,token)
+                    ?ComputeProviderException.Kind.NO_STOCK:ComputeProviderException.Kind.UNKNOWN;
+                throw new ComputeProviderException(kind,reply.getStatusCodeValue(),category,safeRequestId(envelope,token),safeProviderCode(envelope,token));
             }
             return envelope.path("data");
         } catch (ComputeProviderException e) { throw e; }
@@ -202,6 +204,22 @@ public class AutoDlProPowerProvider implements ComputePowerProvider, ComputeCost
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,"INVALID_RESPONSE");
         } catch (Exception e) { throw new ComputeProviderException(ComputeProviderException.Kind.UNKNOWN,null,transportDiagnostic(e)); }
+    }
+    private static boolean verifiedNoStock(JsonNode envelope,String token) {
+        if(safeProviderCode(envelope,token)==null||!envelope.path("msg").isTextual())return false;
+        String message=envelope.path("msg").textValue();
+        if(!message.matches("[ \\t\\r\\n\\u3000]{0,8}当前算力规格暂无库存[,，] ?请修改配置或稍等再试[ \\t\\r\\n\\u3000]{0,8}"))return false;
+        String lower=message.toLowerCase(java.util.Locale.ROOT),credential=token.toLowerCase(java.util.Locale.ROOT);
+        String core=lower.replaceAll("^[ \\t\\r\\n\\u3000]+|[ \\t\\r\\n\\u3000]+$","");
+        return !credential.contains(core)&&!lower.contains(credential);
+    }
+    private static String safeProviderCode(JsonNode envelope,String token) {
+        JsonNode field=envelope.path("code");
+        if(!field.isTextual())return null;
+        String value=field.textValue();
+        if(!value.matches("[A-Za-z][A-Za-z0-9_]{0,63}"))return null;
+        String lower=value.toLowerCase(java.util.Locale.ROOT),credential=token.toLowerCase(java.util.Locale.ROOT);
+        return credential.contains(lower)||lower.contains(credential)?null:value;
     }
     private static String safeRequestId(JsonNode envelope,String token) {
         JsonNode field=envelope.path("request_id");

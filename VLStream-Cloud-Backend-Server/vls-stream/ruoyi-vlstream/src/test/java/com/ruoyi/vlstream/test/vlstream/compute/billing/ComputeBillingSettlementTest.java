@@ -74,7 +74,9 @@ class ComputeBillingSettlementTest {
     }
     BillingSnapshot snapshot(ComputeBillingRate rate, String n, String d) throws Exception {
         JsonNode config = json.readTree("{\"settlement_currency\":\"CNY\",\"quota_unit\":\"quota\",\"conversion_version\":\"accepted-conversion\",\"quota_per_currency_unit\":{\"numerator\":\"" + n + "\",\"denominator\":\"" + d + "\"},\"effective_at\":\"2026-01-01T00:00:00Z\",\"valid_until\":\"2030-01-01T00:00:00Z\"}");
-        return BillingSnapshot.fromExistingRate(rate, config, Instant.ofEpochMilli(start), json);
+        ObjectNode accepted = (ObjectNode) json.readTree(BillingSnapshot.fromExistingRate(rate, config, Instant.ofEpochMilli(start), json).json);
+        BillingLedgerOrigin.bind(accepted, properties); // New synthetic session, never historical backfill.
+        return BillingSnapshot.read(accepted.toString(), json);
     }
     String usage(String tenant, String cost, String n, String d) throws Exception {
         String id = UUID.randomUUID().toString(); ComputeBillingRate rate = rate(cost);
@@ -90,6 +92,33 @@ class ComputeBillingSettlementTest {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_session", Integer.class));
         assertFalse(new ExternalBillingProperties().hasMerchantConfiguration());
         assertFalse(new ExternalBillingProperties().paidConfigured());
+    }
+    @Test void changedLedgerWithSameMerchantCannotQueryOrCaptureOriginalSlice() throws Exception {
+        String id=usage("a","1","500000","1"),ref=interval(id,60000);
+        Map<String,Object> original=row(ref);properties.setBaseUrl("https://another-ledger.fixture.invalid");
+        service.dispatch(ref);
+        assertEquals(0,gateway.queries);assertTrue(gateway.captures.isEmpty());assertEquals(original,row(ref));
+        assertThrows(IllegalStateException.class,()->service.prepareInterval(id,start+61000));
+    }
+    @Test void legacyMissingOriginCannotQueryCaptureOrAcquireCurrentBinding() throws Exception {
+        String id=usage("a","1","500000","1"),ref=interval(id,60000);
+        ObjectNode saved=(ObjectNode)json.readTree(jdbc.queryForObject("SELECT accepted_snapshot FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+        saved.remove(BillingLedgerOrigin.FIELD);String legacy=saved.toString();
+        jdbc.update("UPDATE vls_compute_billing_session SET accepted_snapshot=? WHERE usage_id=?",legacy,id);
+        Map<String,Object> original=row(ref);service.dispatch(ref);
+        assertEquals(0,gateway.queries);assertTrue(gateway.captures.isEmpty());assertEquals(original,row(ref));
+        assertThrows(IllegalStateException.class,()->service.bindAcceptedUsage(id,BillingPayer.fromVerifiedSelf(actor("a"),json.readTree("{\"id\":123}")),json.createObjectNode()));
+        assertEquals(legacy,jdbc.queryForObject("SELECT accepted_snapshot FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+    }
+    @Test void payerRemaindersStayWithinTheirAcceptedLedgerAndLegacyRowsRemainUntouched() throws Exception {
+        jdbc.update("INSERT INTO vls_compute_account_remainder VALUES('123','quota','9','10')");
+        String first=interval(usage("a","0.3","1","1"),3600000);assertEquals("NO_DEBIT",state(first));
+        properties.setBaseUrl("https://second-ledger.fixture.invalid");
+        String second=interval(usage("b","0.3","1","1"),3600000);assertEquals("NO_DEBIT",state(second));
+        assertEquals(3,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_account_remainder",Integer.class));
+        assertEquals("9",jdbc.queryForObject("SELECT numerator_text FROM vls_compute_account_remainder WHERE payer_user_id='123' AND quota_unit='quota'",String.class));
+        assertEquals("123",json.readTree(String.valueOf(row(second).get("request_json"))).path("user_id").asText());
+        assertEquals("quota",json.readTree(jdbc.queryForObject("SELECT accepted_snapshot FROM vls_compute_billing_session WHERE usage_id=?",String.class,row(second).get("usage_id"))).path("quota_unit").asText());
     }
     @Test void payerUsesAuthoritativeSelfAndRejectsMissingProofOrUnsafeTypes() throws Exception {
         BillingPayer p = BillingPayer.fromVerifiedSelf(actor("a"), json.readTree("{\"id\":9007199254740993}")); assertEquals("9007199254740993", p.userId);
@@ -163,6 +192,8 @@ class ComputeBillingSettlementTest {
         assertThrows(IllegalArgumentException.class, () -> service.recordRunningObservation(id, Instant.now().plusSeconds(100)));
     }
     @Test void finalShortTailStopsAtConfirmedEndAndDoesNotRebillEarlierSlice() throws Exception {
+        // This audit now includes the dispatcher counter introduced by migration 049.
+        jdbc.execute("ALTER TABLE vls_compute_billing_slice ADD COLUMN attempt_count INT NOT NULL DEFAULT 0");
         String id = usage("a", "1", "500000", "1"); interval(id, 60000);
         jdbc.update("UPDATE vls_compute_usage SET state='STOPPED',billing_end_at=? WHERE id=?", new Timestamp(start + 90000), id);
         String tail = service.prepareInterval(id, start + 90000); assertEquals(1, ((Number) row(tail).get("is_tail")).intValue());

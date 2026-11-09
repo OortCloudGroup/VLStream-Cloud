@@ -28,7 +28,10 @@ public class ComputeFundingRecoveryService {
     public ComputeFundingIntentService.Intent advance(String intentId, long nowMillis) {
         if (TransactionSynchronizationManager.isActualTransactionActive())
             throw new IllegalStateException("Funding transport cannot run inside a database transaction");
-        ComputeFundingIntentService.Intent original = journal.recover(intentId);
+        ComputeFundingIntentService.Intent original = journal.transportCandidate(intentId);
+        if (!journal.matchesOrigin(properties, original.usageId)) return original;
+        original = journal.recover(intentId);
+        if (!journal.matchesOrigin(properties, original.usageId)) return original;
         if (!properties.hasMerchantConfiguration() || !original.merchantId.equals(properties.getMerchantId())
             || !"HOLDS_V3".equals(original.contractVersion)
             || ComputeFundingIntentService.CONFLICT.equals(original.state) || ComputeFundingIntentService.REJECTED.equals(original.state)

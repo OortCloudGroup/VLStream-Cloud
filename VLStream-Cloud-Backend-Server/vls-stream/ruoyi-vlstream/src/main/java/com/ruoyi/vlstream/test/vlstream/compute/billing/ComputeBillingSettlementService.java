@@ -22,6 +22,11 @@ import java.util.function.Supplier;
  * All external I/O follows a committed local intent, preserving its original funding association. */
 @Service
 public class ComputeBillingSettlementService {
+    public static final String EXPIRED_UNSENT_TAIL = "HOLD_EXPIRED_NEVER_DEBITED";
+    public static final String RELEASED_RUN_WINDOW_TAIL = "RUN_WINDOW_EXPIRED_RELEASED_UNCHARGED";
+    public static final String RELEASED_SSH_PREPARATION_TAIL = "SSH_PREPARATION_FAILED_RELEASED_UNCHARGED";
+    private static final long TAIL_CLOCK_SKEW_MS = 2000L;
+    private static final long TAIL_BIRTH_MARGIN_MS = 5000L;
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transactions;
     private final ObjectMapper json;
@@ -55,6 +60,8 @@ public class ComputeBillingSettlementService {
     }
 
     private void bind(String usageId, BillingPayer payer, BillingSnapshot snapshot, boolean reserved) {
+        if(!BillingLedgerOrigin.matches(snapshot.json,properties.getMerchantId(),properties))
+            throw new IllegalArgumentException("BILLING_ORIGIN_MISMATCH");
         transactions.execute(tx -> {
             Map<String, Object> usage = usage(usageId);
             if (!payer.actorId.equals(usage.get("opening_user_id")) || !payer.tenantId.equals(usage.get("tenant_id"))
@@ -86,13 +93,428 @@ public class ComputeBillingSettlementService {
     }
     /** Application binding entry: no client-supplied payer, price, amount or conversion. */
     public void bindAcceptedUsage(String usageId, BillingPayer payer, JsonNode authoritativeConfig) {
-        Map<String, Object> usage = jdbc.queryForMap("SELECT rate_snapshot,billing_start_at FROM vls_compute_usage WHERE id=?", usageId);
+        requireBoundOrigin(usageId);
+        String accepted = jdbc.queryForObject("SELECT accepted_snapshot FROM vls_compute_billing_session WHERE usage_id=?", String.class, usageId);
+        bind(usageId, payer, BillingSnapshot.read(accepted, json));
+    }
+
+    /** Missing historical origin is never inferred from a newly configured endpoint. */
+    public void requireBoundOrigin(String usageId) { BillingLedgerOrigin.requireUsage(jdbc, properties, usageId); }
+
+    /** A control-plane SSH failure does not invalidate already confirmed runtime.
+     * Only the original, unattempted final slice can regain dispatch under its still-valid hold. */
+    public boolean recoverStoppedSshPreparationTail(String usageId) {
         try {
-            com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingRate rate = json.readValue(String.valueOf(usage.get("rate_snapshot")), com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingRate.class);
-            Timestamp start = jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage WHERE id=?", (rs, index) -> rs.getTimestamp(1), usageId);
-            if (start == null) throw new IllegalArgumentException("Confirmed running usage required");
-            bind(usageId, payer, BillingSnapshot.fromExistingRate(rate, authoritativeConfig, start.toInstant(), json));
-        } catch (java.io.IOException e) { throw new IllegalArgumentException("Invalid accepted usage rate"); }
+            tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
+            ExpiredTail original=expiredTail(usageId,false,false,true);
+            tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            long evidenceAt=System.currentTimeMillis();
+            ExternalBillingGateway.Result reference=gateway.byReference(String.valueOf(original.tail.get("merchant_charge_id")));
+            ExternalBillingGateway.Result key=gateway.byKey(String.valueOf(original.tail.get("idempotency_key")));
+            tailRequire(reference!=null&&key!=null&&reference.status==ExternalBillingGateway.Status.NOT_FOUND
+                &&key.status==ExternalBillingGateway.Status.NOT_FOUND,"EXPIRED_TAIL_ORIGINAL_LOOKUP_UNCONFIRMED");
+            ExternalBillingGateway.Result observed=gateway.holdById(original.holdId);
+            tailRequire(observed!=null&&observed.status==ExternalBillingGateway.Status.SUCCEEDED&&observed.charge!=null,"EXPIRED_TAIL_HOLD_CONFLICT");
+            FundingContracts.HoldDetail detail=FundingContracts.holdDetail(observed.charge);
+            verifyActiveSshTailHold(original,detail);
+            return Boolean.TRUE.equals(transactions.execute(tx->{
+                ExpiredTail current=expiredTail(usageId,true,false,true);
+                tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                long now=System.currentTimeMillis();
+                tailRequire(now>=evidenceAt&&now-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
+                verifyActiveSshTailHold(current,detail);
+                lockTailRemainder(current,usageId);
+                // Keep the original reason as audit evidence. PREPARED alone restores the
+                // ordinary dispatcher, which rechecks this same reference/key and hold.
+                tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET state='PREPARED' WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code='SSH_PREPARATION_FAILED' AND attempt_count=0 AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
+                    current.tail.get("merchant_charge_id"))==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                return true;
+            }));
+        } catch(ExpiredTailBlocked blocked) {expiredTailReason(usageId,blocked.reason);return false;}
+        catch(RuntimeException unavailable) {expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;}
+    }
+
+    private void verifyActiveSshTailHold(ExpiredTail value,FundingContracts.HoldDetail detail) {
+        tailRequire(value.expires>System.currentTimeMillis()&&("ACTIVE".equals(detail.holdStatus)||"PARTIALLY_CAPTURED".equals(detail.holdStatus))
+            &&"0".equals(detail.releasedQuota),"EXPIRED_TAIL_HOLD_CONFLICT");
+        verifyTailHoldObservation(value,detail);
+        tailRequire(ExactQuota.integer(detail.remainingQuota,false).compareTo(ExactQuota.integer(String.valueOf(value.tail.get("amount_text")),true))>=0,"EXPIRED_TAIL_HOLD_CONFLICT");
+        long now=System.currentTimeMillis(),observed=number(value.observation,"observed_at_ms");
+        tailRequire(observed<=now&&now-observed<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
+    }
+
+    /** Only an expired tail first made dispatchable after expiry may be waived.
+     * It remains BLOCKED with its original amount/body/key. No debit or refund is issued. */
+    public boolean confirmExpiredUnsentTail(String usageId) {
+        try {
+            tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
+            ExpiredTail original=expiredTail(usageId,false);
+            if(EXPIRED_UNSENT_TAIL.equals(original.tail.get("error_code")))return true;
+            tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            ExternalBillingGateway gateway=gateways.get();
+            tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            long evidenceAt=System.currentTimeMillis();
+            ExternalBillingGateway.Result reference=gateway.byReference(String.valueOf(original.tail.get("merchant_charge_id")));
+            ExternalBillingGateway.Result key=gateway.byKey(String.valueOf(original.tail.get("idempotency_key")));
+            tailRequire(reference!=null&&key!=null&&reference.status==ExternalBillingGateway.Status.NOT_FOUND
+                &&key.status==ExternalBillingGateway.Status.NOT_FOUND,"EXPIRED_TAIL_ORIGINAL_LOOKUP_UNCONFIRMED");
+            ExternalBillingGateway.Result observed=gateway.holdById(original.holdId);
+            tailRequire(observed!=null&&observed.status==ExternalBillingGateway.Status.SUCCEEDED&&observed.charge!=null,"EXPIRED_TAIL_HOLD_CONFLICT");
+            FundingContracts.HoldDetail detail=FundingContracts.holdDetail(observed.charge);
+            verifyExpiredTailHold(original,detail);
+            return Boolean.TRUE.equals(transactions.execute(tx->{
+                ExpiredTail current=expiredTail(usageId,true);
+                if(EXPIRED_UNSENT_TAIL.equals(current.tail.get("error_code")))return true;
+                tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                long now=System.currentTimeMillis();
+                tailRequire(now>=evidenceAt&&now-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
+                verifyExpiredTailHold(current,detail);
+                String remainderUnit=lockTailRemainder(current,usageId);
+                jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
+                    current.before.numerator.toString(),current.before.denominator.toString(),current.payer,remainderUnit);
+                tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET error_code=? WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code='HOLD_EXPIRED' AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
+                    EXPIRED_UNSENT_TAIL,current.tail.get("merchant_charge_id"))==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                jdbc.update("UPDATE vls_compute_paid_run SET error_code='EXPIRED_TAIL_NEVER_DEBITED' WHERE usage_id=?",usageId);
+                return true;
+            }));
+        } catch(ExpiredTailBlocked blocked) {
+            expiredTailReason(usageId,blocked.reason);return false;
+        } catch(RuntimeException unavailable) {
+            expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;
+        }
+    }
+
+    /** Expiry prevents a new debit. This only permits the original final RELEASE;
+     * the tail stays blocked until the release transaction forms a hold-lock barrier. */
+    public boolean allowExpiredRunWindowTailRelease(String usageId) {
+        return allowExpiredStoppedTailRelease(usageId,false);
+    }
+
+    public boolean allowExpiredSshPreparationTailRelease(String usageId) {
+        return allowExpiredStoppedTailRelease(usageId,true);
+    }
+
+    private boolean allowExpiredStoppedTailRelease(String usageId,boolean sshPreparation) {
+        try {
+            tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
+            ExpiredTail original=expiredTail(usageId,false,true,sshPreparation);
+            if(releasedTailReason(sshPreparation).equals(original.tail.get("error_code")))return true;
+            tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            long evidenceAt=System.currentTimeMillis();
+            FundingContracts.HoldDetail detail=null;
+            if(original.release==null) {
+                ExternalBillingGateway.Result observed=gateway.holdById(original.holdId);
+                tailRequire(observed!=null&&observed.status==ExternalBillingGateway.Status.SUCCEEDED&&observed.charge!=null,"EXPIRED_TAIL_HOLD_CONFLICT");
+                detail=FundingContracts.holdDetail(observed.charge);verifyExpiredTailHold(original,detail);
+            }
+            final FundingContracts.HoldDetail beforeRelease=detail;
+            return Boolean.TRUE.equals(transactions.execute(tx->{
+                ExpiredTail current=expiredTail(usageId,true,true,sshPreparation);
+                tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                tailRequire(System.currentTimeMillis()>=evidenceAt&&System.currentTimeMillis()-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
+                if(beforeRelease!=null)verifyExpiredTailHold(current,beforeRelease);
+                lockTailRemainder(current,usageId);return true;
+            }));
+        } catch(ExpiredTailBlocked blocked) {expiredTailReason(usageId,blocked.reason);return false;}
+        catch(RuntimeException unavailable) {expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;}
+    }
+
+    /** A confirmed original RELEASE serializes after any old capture on this same hold.
+     * Absence lookups only become conclusive after that barrier and exact counter checks. */
+    public boolean confirmReleasedRunWindowTail(String usageId) {
+        return confirmReleasedStoppedTail(usageId,false);
+    }
+
+    public boolean confirmReleasedSshPreparationTail(String usageId) {
+        return confirmReleasedStoppedTail(usageId,true);
+    }
+
+    private boolean confirmReleasedStoppedTail(String usageId,boolean sshPreparation) {
+        try {
+            tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
+            ExpiredTail original=expiredTail(usageId,false,true,sshPreparation);
+            if(releasedTailReason(sshPreparation).equals(original.tail.get("error_code")))return true;
+            verifyRunWindowReleaseReceipt(original);
+            tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
+            long evidenceAt=System.currentTimeMillis();
+            ExternalBillingGateway.Result observed=gateway.holdById(original.holdId);
+            tailRequire(observed!=null&&observed.status==ExternalBillingGateway.Status.SUCCEEDED&&observed.charge!=null,"EXPIRED_TAIL_HOLD_CONFLICT");
+            FundingContracts.HoldDetail detail=FundingContracts.holdDetail(observed.charge);verifyReleasedTailHold(original,detail);
+            for(Map<String,Object> slice:original.slices)if("SETTLED".equals(slice.get("state"))) {
+                ExternalBillingGateway.Result capture=gateway.byReference(String.valueOf(slice.get("merchant_charge_id")));
+                tailRequire(capture!=null&&capture.status==ExternalBillingGateway.Status.SUCCEEDED
+                    &&matchesReleasedCapture(jsonTree(String.valueOf(slice.get("request_json"))),capture.charge)
+                    &&String.valueOf(slice.get("charge_id")).equals(capture.charge.path("charge_id").asText())
+                    &&String.valueOf(slice.get("ledger_entry_id")).equals(capture.charge.path("ledger_entry_id").asText()),"EXPIRED_TAIL_CAPTURE_CONFLICT");
+                tailRequire(capture.charge.path("refunded_quota").isTextual()&&"0".equals(capture.charge.path("refunded_quota").asText()),"EXPIRED_TAIL_CAPTURE_REFUNDED");
+                if(!capture.charge.has("merchant_id")||!capture.charge.has("hold_id")) {
+                    ExternalBillingGateway.Result operation=gateway.byKey(String.valueOf(slice.get("idempotency_key")));
+                    tailRequire(operation!=null&&operation.status==ExternalBillingGateway.Status.SUCCEEDED
+                        &&matchesCaptureOperation(slice,jsonTree(String.valueOf(slice.get("request_json"))),capture.charge,operation.charge),"EXPIRED_TAIL_CAPTURE_CONFLICT");
+                }
+            }
+            ExternalBillingGateway.Result reference=gateway.byReference(String.valueOf(original.tail.get("merchant_charge_id")));
+            ExternalBillingGateway.Result key=gateway.byKey(String.valueOf(original.tail.get("idempotency_key")));
+            tailRequire(reference!=null&&key!=null&&reference.status==ExternalBillingGateway.Status.NOT_FOUND
+                &&key.status==ExternalBillingGateway.Status.NOT_FOUND,"EXPIRED_TAIL_ORIGINAL_LOOKUP_UNCONFIRMED");
+            return Boolean.TRUE.equals(transactions.execute(tx->{
+                ExpiredTail current=expiredTail(usageId,true,true,sshPreparation);
+                if(releasedTailReason(sshPreparation).equals(current.tail.get("error_code")))return true;
+                tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                tailRequire(System.currentTimeMillis()>=evidenceAt&&System.currentTimeMillis()-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
+                verifyRunWindowReleaseReceipt(current);verifyReleasedTailHold(current,detail);
+                String unit=lockTailRemainder(current,usageId);
+                jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
+                    current.before.numerator.toString(),current.before.denominator.toString(),current.payer,unit);
+                tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET error_code=? WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code=? AND attempt_count=0 AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
+                    releasedTailReason(sshPreparation),current.tail.get("merchant_charge_id"),sshPreparation?"SSH_PREPARATION_FAILED":"RUN_WINDOW_EXPIRED")==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                jdbc.update("UPDATE vls_compute_paid_run SET error_code=? WHERE usage_id=?",sshPreparation?"SSH_PREPARATION_TAIL_WAIVED_AFTER_RELEASE":"RUN_WINDOW_TAIL_WAIVED_AFTER_RELEASE",usageId);return true;
+            }));
+        } catch(ExpiredTailBlocked blocked) {expiredTailReason(usageId,blocked.reason);return false;}
+        catch(RuntimeException unavailable) {expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;}
+    }
+
+    private static String releasedTailReason(boolean sshPreparation) {
+        return sshPreparation?RELEASED_SSH_PREPARATION_TAIL:RELEASED_RUN_WINDOW_TAIL;
+    }
+
+    private String lockTailRemainder(ExpiredTail current,String usageId) {
+        String unit="origin:"+hash(BillingLedgerOrigin.namespace(properties)+"\n"+current.snapshot.quotaUnit);
+        Map<String,Object> account=jdbc.queryForMap("SELECT * FROM vls_compute_account_remainder WHERE payer_user_id=? AND quota_unit=? FOR UPDATE",current.payer,unit);
+        tailRequire(fraction(account,"numerator_text","denominator_text").toString().equals(current.after.toString()),"EXPIRED_TAIL_REMAINDER_CHANGED");
+        // After this account lock, no other account writer can commit a successor until this decision commits.
+        for(Map<String,Object> successor:datedRows("SELECT s.*,u.accepted_snapshot,u.merchant_id FROM vls_compute_billing_slice s JOIN vls_compute_billing_session u ON u.usage_id=s.usage_id WHERE u.payer_user_id=? AND u.quota_unit=? AND u.merchant_id=? AND s.merchant_charge_id<>?",
+            current.payer,current.snapshot.quotaUnit,properties.getMerchantId(),current.tail.get("merchant_charge_id"))) {
+            if(!BillingLedgerOrigin.matches(String.valueOf(successor.get("accepted_snapshot")),properties.getMerchantId(),properties))continue;
+            if(usageId.equals(successor.get("usage_id"))&&number(successor,"slice_sequence")<number(current.tail,"slice_sequence"))continue;
+            tailRequire(successor.get("create_time") instanceof Timestamp&&((Timestamp)successor.get("create_time")).getTime()<current.createdAt,"EXPIRED_TAIL_SUCCESSOR_EXISTS");
+        }
+        return unit;
+    }
+
+    private ExpiredTail expiredTail(String id,boolean lock) {
+        return expiredTail(id,lock,false);
+    }
+    private ExpiredTail expiredTail(String id,boolean lock,boolean releaseBarrier) {
+        return expiredTail(id,lock,releaseBarrier,false);
+    }
+    private ExpiredTail expiredTail(String id,boolean lock,boolean releaseBarrier,boolean sshPreparation) {
+        String suffix=lock?" FOR UPDATE":"";
+        Map<String,Object> usage=usage(id);
+        Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?"+suffix,id);
+        tailRequire(BillingLedgerOrigin.matches(String.valueOf(session.get("accepted_snapshot")),String.valueOf(session.get("merchant_id")),properties),"EXPIRED_TAIL_ORIGIN_MISMATCH");
+        java.util.List<Map<String,Object>> runs=datedRows("SELECT * FROM vls_compute_paid_run WHERE usage_id=?"+suffix,id);
+        tailRequire(runs.size()==1,"EXPIRED_TAIL_RUN_NOT_UNIQUE");Map<String,Object> run=runs.get(0);
+        tailRequire("STOPPING".equals(run.get("state"))||"RELEASING".equals(run.get("state")),"EXPIRED_TAIL_RUN_STATE");
+        tailRequire(run.get("active_instance_key")!=null&&run.get("active_instance_key").equals(run.get("instance_key")),"EXPIRED_TAIL_RUN_CLAIM_MISMATCH");
+        for(String field:new String[]{"tenant_id","opening_user_id","merchant_id","payer_user_id"})
+            tailRequire(java.util.Objects.equals(run.get(field),session.get(field)),"EXPIRED_TAIL_OWNERSHIP_CONFLICT");
+        tailRequire(java.util.Objects.equals(usage.get("tenant_id"),session.get("tenant_id"))
+            &&java.util.Objects.equals(usage.get("opening_user_id"),session.get("opening_user_id"))
+            &&java.util.Objects.equals(usage.get("server_key"),session.get("instance_ref"))
+            &&(usage.get("active_server_key")==null||java.util.Objects.equals(usage.get("active_server_key"),usage.get("server_key")))
+            &&("node-server:"+run.get("node_id")).equals(session.get("instance_ref"))
+            &&java.util.Objects.equals(usage.get("payer_account_ref"),run.get("platform_subject"))
+            &&java.util.Objects.equals(usage.get("start_operation_id"),run.get("start_operation_id")),"EXPIRED_TAIL_OWNERSHIP_CONFLICT");
+        tailRequire(jsonTree(String.valueOf(run.get("quote_snapshot"))).equals(jsonTree(String.valueOf(session.get("accepted_snapshot")))),"EXPIRED_TAIL_OWNERSHIP_CONFLICT");
+        tailRequire("STOPPED".equals(usage.get("state")),"EXPIRED_TAIL_USAGE_NOT_STOPPED");
+        tailRequire(usage.get("billing_start_at") instanceof Timestamp&&usage.get("billing_end_at") instanceof Timestamp,"EXPIRED_TAIL_USAGE_TIME_MISSING");
+        tailRequire("STOP_CONFIRMED".equals(session.get("safety_state"))&&number(session,"physical_stop_observed_ms")>0,"EXPIRED_TAIL_STOP_UNCONFIRMED");
+        long ended=((Timestamp)usage.get("billing_end_at")).getTime();
+        tailRequire(number(session,"metered_until_ms")==ended&&number(session,"last_running_ms")==ended,"EXPIRED_TAIL_METERING_MISMATCH");
+        BillingSnapshot snapshot=BillingSnapshot.read(String.valueOf(session.get("accepted_snapshot")),json);
+        java.util.List<Map<String,Object>> slices=datedRows("SELECT * FROM vls_compute_billing_slice WHERE usage_id=? ORDER BY slice_sequence"+suffix,id);
+        Map<String,Object> tail=null;BigInteger captured=BigInteger.ZERO;long sequence=0,cursor=((Timestamp)usage.get("billing_start_at")).getTime();
+        for(Map<String,Object> slice:slices) {
+            tailRequire(number(slice,"slice_sequence")==sequence++,"EXPIRED_TAIL_SLICE_SEQUENCE_GAP");
+            tailRequire(number(slice,"interval_start_ms")==cursor&&number(slice,"interval_end_ms")>cursor,"EXPIRED_TAIL_SLICE_INTERVAL_GAP");
+            cursor=number(slice,"interval_end_ms");
+            verifyTailSlice(slice,session,snapshot);
+            String state=String.valueOf(slice.get("state"));
+            if("SETTLED".equals(state)) {
+                tailRequire(slice.get("charge_id")!=null&&slice.get("ledger_entry_id")!=null,"EXPIRED_TAIL_SETTLED_RECEIPT_MISSING");
+                captured=captured.add(ExactQuota.integer(String.valueOf(slice.get("amount_text")),true));
+            } else if("NO_DEBIT".equals(state))tailRequire("0".equals(slice.get("amount_text")),"EXPIRED_TAIL_NO_DEBIT_NONZERO");
+            else {
+                tailRequire(tail==null,"EXPIRED_TAIL_MULTIPLE_UNSETTLED");
+                tailRequire("BLOCKED".equals(state),"EXPIRED_TAIL_UNSETTLED_SLICE_STATE");
+                tailRequire(sshPreparation?("SSH_PREPARATION_FAILED".equals(slice.get("error_code"))||(releaseBarrier&&RELEASED_SSH_PREPARATION_TAIL.equals(slice.get("error_code")))):releaseBarrier?("RUN_WINDOW_EXPIRED".equals(slice.get("error_code"))||RELEASED_RUN_WINDOW_TAIL.equals(slice.get("error_code")))
+                    :("HOLD_EXPIRED".equals(slice.get("error_code"))||EXPIRED_UNSENT_TAIL.equals(slice.get("error_code"))),"EXPIRED_TAIL_UNSETTLED_SLICE_REASON");
+                tailRequire(number(slice,"is_tail")==1&&number(slice,"interval_end_ms")==ended,"EXPIRED_TAIL_NOT_FINAL_TAIL");
+                tailRequire(slice.get("charge_id")==null&&slice.get("ledger_entry_id")==null,"EXPIRED_TAIL_DEBIT_EVIDENCE");
+                tail=slice;
+            }
+        }
+        tailRequire(tail!=null,"EXPIRED_TAIL_MISSING");
+        tailRequire(number(tail,"slice_sequence")==sequence-1,"EXPIRED_TAIL_NOT_LAST_SLICE");
+        tailRequire(number(session,"next_sequence")==sequence,"EXPIRED_TAIL_SEQUENCE_CURSOR_MISMATCH");
+        tailRequire(cursor==ended,"EXPIRED_TAIL_INTERVAL_END_MISMATCH");
+        tailRequire(number(tail,"attempt_count")==0,"EXPIRED_TAIL_SEND_EVIDENCE");
+        tailRequire(session.get("funding_hold_intent_id")!=null&&session.get("funding_hold_id")!=null
+            &&session.get("funding_hold_intent_id").equals(run.get("hold_intent_id")),"EXPIRED_TAIL_HOLD_CONFLICT");
+        Map<String,Object> hold=jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?"+suffix,run.get("hold_intent_id"));
+        Map<String,Object> observation=jdbc.queryForMap("SELECT * FROM vls_compute_funding_hold_observation WHERE hold_intent_id=?"+suffix,run.get("hold_intent_id"));
+        JsonNode holdBody=jsonTree(String.valueOf(hold.get("request_json")));
+        String payer=String.valueOf(session.get("payer_user_id")),merchant=String.valueOf(session.get("merchant_id"));
+        String reference="vls-hold:"+id+":initial",holdId=String.valueOf(session.get("funding_hold_id"));
+        long expires=number(session,"funding_expires_at_ms");
+        tailRequire("HOLD".equals(hold.get("operation_kind"))&&"HOLDS_V3".equals(hold.get("contract_version"))
+            &&"DETAIL_OBSERVED".equals(hold.get("state"))&&hold.get("parent_intent_id")==null&&id.equals(hold.get("usage_id"))
+            &&merchant.equals(hold.get("merchant_id"))&&payer.equals(hold.get("payer_user_id"))&&holdId.equals(hold.get("hold_id"))
+            &&reference.equals(hold.get("business_reference"))&&"/api/v1/external-billing/holds".equals(hold.get("request_path"))
+            &&hash(String.valueOf(hold.get("request_json"))).equals(hold.get("request_hash")),"EXPIRED_TAIL_HOLD_CONFLICT");
+        tailRequire(FundingContracts.hold(merchant,reference,payer,String.valueOf(run.get("reserve_quota")),String.valueOf(expires),BillingSnapshot.required(holdBody,"reason")).toString().equals(hold.get("request_json"))
+            &&expires==number(run,"hold_until_ms"),"EXPIRED_TAIL_HOLD_CONFLICT");
+        tailRequire(run.get("create_time") instanceof Timestamp&&tail.get("create_time") instanceof Timestamp,"EXPIRED_TAIL_CLOCK_UNVERIFIED");
+        long runCreated=((Timestamp)run.get("create_time")).getTime(),quoted=Math.subtractExact(number(run,"quote_until_ms"),120000L),created=((Timestamp)tail.get("create_time")).getTime();
+        if(sshPreparation) {
+            tailRequire("SSH_PREPARATION_FAILED".equals(session.get("risk_code")),"EXPIRED_TAIL_FINANCIAL_RISK");
+            tailRequire(created<expires,"EXPIRED_TAIL_NOT_HISTORICAL_RUN_WINDOW");
+            tailRequire(releaseBarrier?expires<=System.currentTimeMillis():expires>System.currentTimeMillis(),"EXPIRED_TAIL_HOLD_CONFLICT");
+        } else if(releaseBarrier) {
+            tailRequire(expires<=System.currentTimeMillis()&&created<expires,"EXPIRED_TAIL_NOT_HISTORICAL_RUN_WINDOW");
+            tailRequire(session.get("risk_code")==null||"RUN_WINDOW_EXPIRED".equals(session.get("risk_code"))||"HOLD_EXPIRING".equals(session.get("risk_code")),"EXPIRED_TAIL_FINANCIAL_RISK");
+        } else {
+            long databaseNow=verifiedDatabaseNow();
+            tailRequire(runCreated>=quoted-TAIL_CLOCK_SKEW_MS&&runCreated<=quoted+TAIL_CLOCK_SKEW_MS
+                &&runCreated<=((Timestamp)usage.get("billing_start_at")).getTime()+TAIL_CLOCK_SKEW_MS
+                &&created<=databaseNow+TAIL_CLOCK_SKEW_MS,"EXPIRED_TAIL_CLOCK_UNVERIFIED");
+            tailRequire(created>Math.addExact(expires,TAIL_BIRTH_MARGIN_MS),"EXPIRED_TAIL_CREATED_BEFORE_EXPIRY");
+        }
+        ExactQuota after=fraction(tail,"remainder_numerator","remainder_denominator");
+        ExactQuota cost=ExactQuota.compute(snapshot.approvedHourlyPrice,Math.subtractExact(number(tail,"interval_end_ms"),number(tail,"interval_start_ms")),snapshot.numerator,snapshot.denominator);
+        ExactQuota allocated=new ExactQuota(ExactQuota.integer(String.valueOf(tail.get("amount_text")),true),BigInteger.ONE).add(after);
+        ExactQuota before=new ExactQuota(allocated.numerator.multiply(cost.denominator).subtract(cost.numerator.multiply(allocated.denominator)),allocated.denominator.multiply(cost.denominator));
+        tailRequire(before.numerator.compareTo(before.denominator)<0,"EXPIRED_TAIL_REMAINDER_CHANGED");
+        ExpiredTail value=new ExpiredTail();value.run=run;value.session=session;value.usage=usage;value.tail=tail;value.hold=hold;value.observation=observation;
+        value.snapshot=snapshot;value.payer=payer;value.holdId=holdId;value.expires=expires;value.createdAt=created;value.captured=captured;value.after=after;value.before=before;
+        value.slices=slices;
+        java.util.List<Map<String,Object>> evidence=new java.util.ArrayList<>(java.util.Arrays.asList(run,session,usage,hold,observation));
+        if(releaseBarrier) {
+            tailRequire(jdbc.queryForList("SELECT refund_intent_id FROM vls_compute_refund_intent WHERE usage_id=?"+suffix,id).isEmpty(),"EXPIRED_TAIL_REFUND_EXISTS");
+            java.util.List<Map<String,Object>> children=jdbc.queryForList("SELECT * FROM vls_compute_funding_intent WHERE usage_id=? AND intent_id<>?"+suffix,id,run.get("hold_intent_id"));
+            tailRequire(children.size()==(run.get("release_intent_id")==null?0:1),"EXPIRED_TAIL_HOLD_CONFLICT");
+            if(!children.isEmpty()) {
+                value.release=children.get(0);verifyRunWindowReleaseRequest(value);evidence.add(value.release);
+            }
+        } else if(!EXPIRED_UNSENT_TAIL.equals(tail.get("error_code"))) {
+            tailRequire(run.get("release_intent_id")==null,"EXPIRED_TAIL_HOLD_CONFLICT");
+            tailRequire(jdbc.queryForList("SELECT intent_id FROM vls_compute_funding_intent WHERE usage_id=? AND intent_id<>?"+suffix,id,run.get("hold_intent_id")).isEmpty()
+                &&jdbc.queryForList("SELECT refund_intent_id FROM vls_compute_refund_intent WHERE usage_id=?"+suffix,id).isEmpty(),"EXPIRED_TAIL_HOLD_CONFLICT");
+        }
+        value.fingerprint=tailFingerprint(evidence,slices);
+        return value;
+    }
+
+    private void verifyRunWindowReleaseRequest(ExpiredTail value) {
+        Map<String,Object> release=value.release;String reference="vls-release:"+value.session.get("usage_id")+":final";
+        String amount=ExactQuota.integer(String.valueOf(value.run.get("reserve_quota")),true).subtract(value.captured).toString();
+        tailRequire(release!=null&&java.util.Objects.equals(value.run.get("release_intent_id"),release.get("intent_id"))
+            &&"RELEASE".equals(release.get("operation_kind"))&&"HOLDS_V3".equals(release.get("contract_version"))
+            &&java.util.Objects.equals(value.hold.get("intent_id"),release.get("parent_intent_id"))
+            &&java.util.Objects.equals(value.session.get("usage_id"),release.get("usage_id"))
+            &&java.util.Objects.equals(value.session.get("merchant_id"),release.get("merchant_id"))&&value.payer.equals(release.get("payer_user_id"))
+            &&reference.equals(release.get("business_reference"))&&("/api/v1/external-billing/holds/"+value.holdId+"/release").equals(release.get("request_path"))
+            &&hash(String.valueOf(release.get("request_json"))).equals(release.get("request_hash"))
+            &&FundingContracts.release(String.valueOf(value.session.get("merchant_id")),reference,value.payer,amount).toString().equals(release.get("request_json"))
+            &&release.get("conflicting_receipt_json")==null&&!"CONFLICT".equals(release.get("state"))&&!"REJECTED".equals(release.get("state")),"EXPIRED_TAIL_RELEASE_CONFLICT");
+    }
+    private void verifyRunWindowReleaseReceipt(ExpiredTail value) {
+        verifyRunWindowReleaseRequest(value);
+        tailRequire("OPERATION_CONFIRMED".equals(value.release.get("state"))&&value.release.get("receipt_json")!=null,"EXPIRED_TAIL_RELEASE_UNCONFIRMED");
+        FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(jsonTree(String.valueOf(value.release.get("receipt_json"))));
+        String amount=ExactQuota.integer(String.valueOf(value.run.get("reserve_quota")),true).subtract(value.captured).toString();
+        // The upstream may derive EXPIRED after a fully successful original release.
+        // Its receipt and exact released/remaining counters, never this status alone, prove the barrier.
+        tailRequire(value.holdId.equals(receipt.holdId)&&amount.equals(receipt.releasedQuota)&&"0".equals(receipt.remainingQuota)
+            &&("RELEASED".equals(receipt.holdStatus)||"EXPIRED".equals(receipt.holdStatus)),"EXPIRED_TAIL_RELEASE_CONFLICT");
+    }
+    private void verifyReleasedTailHold(ExpiredTail value,FundingContracts.HoldDetail detail) {
+        tailRequire(("RELEASED".equals(detail.holdStatus)||"EXPIRED".equals(detail.holdStatus))&&"0".equals(detail.remainingQuota)
+            &&ExactQuota.integer(String.valueOf(value.run.get("reserve_quota")),true).subtract(value.captured).toString().equals(detail.releasedQuota),"EXPIRED_TAIL_HOLD_CONFLICT");
+        verifyTailHoldObservation(value,detail);
+    }
+    private boolean matchesReleasedCapture(JsonNode request,JsonNode charge) {
+        if(charge==null||!"SUCCEEDED".equals(charge.path("status").asText())||!charge.path("charged_quota").isTextual()
+            ||!request.path("charge_quota").asText().equals(charge.path("charged_quota").asText()))return false;
+        for(String field:new String[]{"merchant_charge_id","user_id","usage_session_id"})
+            if(!request.path(field).asText().equals(charge.path(field).asText()))return false;
+        for(String field:new String[]{"merchant_id","hold_id","metering_ref","price_snapshot_id","conversion_version"})
+            if(charge.has(field)&&!request.path(field).asText().equals(charge.path(field).asText()))return false;
+        return true;
+    }
+
+    private void verifyTailSlice(Map<String,Object> slice,Map<String,Object> session,BillingSnapshot snapshot) {
+        tailRequire(slice.get("lease_token")==null&&number(slice,"lease_until_ms")==0,"EXPIRED_TAIL_LEASE_ACTIVE");
+        long begin=number(slice,"interval_start_ms"),end=number(slice,"interval_end_ms");snapshot.requireInterval(begin,end);
+        String id=String.valueOf(session.get("usage_id")),reference="vls:"+id+":"+number(slice,"slice_sequence"),body=String.valueOf(slice.get("request_json"));
+        tailRequire(reference.equals(slice.get("merchant_charge_id"))&&String.valueOf(slice.get("idempotency_key")).matches("vls-op-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+            &&hash(body).equals(slice.get("request_hash")),"EXPIRED_TAIL_REQUEST_CONFLICT");
+        ObjectNode expected=json.createObjectNode();expected.put("merchant_id",String.valueOf(session.get("merchant_id"))).put("merchant_charge_id",reference);
+        expected.put("user_id",ExactQuota.integer(String.valueOf(session.get("payer_user_id")),true));expected.put("business_type","GPU_COMPUTE").put("usage_session_id",id);
+        expected.put("charge_quota",String.valueOf(slice.get("amount_text")));
+        expected.put("metering_ref","sha256:"+hash(session.get("instance_ref")+":"+id+":"+begin+":"+end+":"+snapshot.json));
+        expected.put("price_snapshot_id",snapshot.priceId).put("conversion_version",snapshot.conversionVersion);
+        expected.put("hold_id",ExactQuota.integer(String.valueOf(session.get("funding_hold_id")),true));
+        tailRequire(expected.toString().equals(body),"EXPIRED_TAIL_REQUEST_CONFLICT");
+    }
+    private void verifyExpiredTailHold(ExpiredTail value,FundingContracts.HoldDetail detail) {
+        tailRequire("EXPIRED".equals(detail.holdStatus)&&"0".equals(detail.releasedQuota),"EXPIRED_TAIL_HOLD_CONFLICT");
+        verifyTailHoldObservation(value,detail);
+    }
+    private void verifyTailHoldObservation(ExpiredTail value,FundingContracts.HoldDetail detail) {
+        Map<String,Object> observation=value.observation;
+        tailRequire(detail.holdId.equals(value.holdId)&&detail.userId.equals(value.payer)
+            &&detail.merchantHoldId.equals("vls-hold:"+value.session.get("usage_id")+":initial")&&detail.expiresAt.equals(String.valueOf(value.expires))
+            &&detail.holdQuota.equals(String.valueOf(value.run.get("reserve_quota")))&&detail.capturedQuota.equals(value.captured.toString()),"EXPIRED_TAIL_HOLD_CONFLICT");
+        for(String[] field:new String[][]{{"hold_id",detail.holdId},{"hold_quota",detail.holdQuota},{"captured_quota",detail.capturedQuota},
+            {"released_quota",detail.releasedQuota},{"remaining_quota",detail.remainingQuota},{"hold_status",detail.holdStatus},
+            {"balance_version",detail.balanceVersion},{"expires_at_ms",detail.expiresAt}})
+            tailRequire(field[1].equals(String.valueOf(observation.get(field[0]))),"EXPIRED_TAIL_HOLD_CONFLICT");
+        tailRequire(observation.get("conflicting_detail_json")==null&&hash(String.valueOf(observation.get("detail_json"))).equals(observation.get("detail_hash")),"EXPIRED_TAIL_HOLD_CONFLICT");
+        FundingContracts.HoldDetail stored=FundingContracts.holdDetail(jsonTree(String.valueOf(observation.get("detail_json"))));
+        tailRequire(stored.holdId.equals(detail.holdId)&&stored.merchantHoldId.equals(detail.merchantHoldId)&&stored.userId.equals(detail.userId)
+            &&stored.holdQuota.equals(detail.holdQuota)&&stored.capturedQuota.equals(detail.capturedQuota)&&stored.releasedQuota.equals(detail.releasedQuota)
+            &&stored.remainingQuota.equals(detail.remainingQuota)&&stored.holdStatus.equals(detail.holdStatus)&&stored.balanceVersion.equals(detail.balanceVersion)
+            &&stored.expiresAt.equals(detail.expiresAt),"EXPIRED_TAIL_HOLD_CONFLICT");
+    }
+    private long verifiedDatabaseNow() {
+        long before=System.currentTimeMillis();Timestamp now=jdbc.queryForObject("SELECT NOW(3)",(rs,index)->rs.getTimestamp(1));long after=System.currentTimeMillis();
+        tailRequire(now!=null&&after>=before&&after-before<=TAIL_CLOCK_SKEW_MS&&now.getTime()>=before-TAIL_CLOCK_SKEW_MS&&now.getTime()<=after+TAIL_CLOCK_SKEW_MS,"EXPIRED_TAIL_CLOCK_UNVERIFIED");
+        return now.getTime();
+    }
+    private java.util.List<Map<String,Object>> datedRows(String sql,Object... parameters) {
+        return jdbc.query(sql,(rs,index)->{Map<String,Object> row=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs,index);
+            row.put("create_time",rs.getTimestamp("create_time"));return row;},parameters);
+    }
+    private ExactQuota fraction(Map<String,Object> row,String numerator,String denominator) {
+        ExactQuota value=new ExactQuota(new BigInteger(String.valueOf(row.get(numerator))),new BigInteger(String.valueOf(row.get(denominator))));
+        tailRequire(value.numerator.compareTo(value.denominator)<0,"EXPIRED_TAIL_REMAINDER_CHANGED");return value;
+    }
+    private String tailFingerprint(java.util.List<Map<String,Object>> rows,java.util.List<Map<String,Object>> slices) {
+        java.util.List<java.util.Map<String,String>> values=new java.util.ArrayList<>();
+        java.util.List<Map<String,Object>> combined=new java.util.ArrayList<>(rows);combined.addAll(slices);
+        for(Map<String,Object> row:combined) {
+            java.util.Map<String,String> value=new java.util.TreeMap<>();row.forEach((key,entry)->value.put(key,entry==null?null:String.valueOf(entry)));values.add(value);
+        }
+        try{return hash(json.writeValueAsString(values));}catch(java.io.IOException invalid){throw new ExpiredTailBlocked("EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");}
+    }
+    private JsonNode jsonTree(String value) {
+        try{return json.readTree(value);}catch(java.io.IOException invalid){throw new ExpiredTailBlocked("EXPIRED_TAIL_REQUEST_CONFLICT");}
+    }
+    private void expiredTailReason(String usage,String reason) {
+        jdbc.update("UPDATE vls_compute_paid_run SET error_code=? WHERE usage_id=? AND state IN ('STOPPING','RELEASING') AND active_instance_key IS NOT NULL",reason,usage);
+    }
+    private static void tailRequire(boolean condition,String reason) {if(!condition)throw new ExpiredTailBlocked(reason);}
+    private static final class ExpiredTailBlocked extends RuntimeException {
+        final String reason;ExpiredTailBlocked(String reason){super(reason);this.reason=reason;}
+    }
+    private static final class ExpiredTail {
+        Map<String,Object> run,session,usage,tail,hold,observation,release;java.util.List<Map<String,Object>> slices;BillingSnapshot snapshot;
+        String payer,holdId,fingerprint;long expires,createdAt;BigInteger captured;ExactQuota before,after;
     }
 
     /** No exact provider event is available here: charge only through the last proven running sample.
@@ -150,6 +572,7 @@ public class ComputeBillingSettlementService {
 
     /** Seal contiguous [cursor,end) once. Keep measuring even after authorization/funding failure. */
     public String prepareInterval(String usageId, long endMillis) {
+        requireBoundOrigin(usageId);
         return transactions.execute(tx -> {
             Map<String, Object> usage = usage(usageId);
             Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usageId);
@@ -166,8 +589,9 @@ public class ComputeBillingSettlementService {
             BillingSnapshot snapshot = BillingSnapshot.read(String.valueOf(session.get("accepted_snapshot")), json);
             snapshot.requireInterval(start, endMillis);
             String user = String.valueOf(session.get("payer_user_id")), unit = snapshot.quotaUnit;
-            jdbc.update("INSERT IGNORE INTO vls_compute_account_remainder(payer_user_id,quota_unit,numerator_text,denominator_text) VALUES(?,?,'0','1')", user, unit);
-            Map<String, Object> tail = jdbc.queryForMap("SELECT * FROM vls_compute_account_remainder WHERE payer_user_id=? AND quota_unit=? FOR UPDATE", user, unit);
+            String remainderUnit = "origin:" + hash(BillingLedgerOrigin.namespace(properties) + "\n" + unit);
+            jdbc.update("INSERT IGNORE INTO vls_compute_account_remainder(payer_user_id,quota_unit,numerator_text,denominator_text) VALUES(?,?,'0','1')", user, remainderUnit);
+            Map<String, Object> tail = jdbc.queryForMap("SELECT * FROM vls_compute_account_remainder WHERE payer_user_id=? AND quota_unit=? FOR UPDATE", user, remainderUnit);
             ExactQuota remainder = new ExactQuota(new BigInteger(String.valueOf(tail.get("numerator_text"))), new BigInteger(String.valueOf(tail.get("denominator_text"))));
             if (remainder.numerator.compareTo(remainder.denominator) >= 0) throw new IllegalStateException("Invalid persisted quota remainder");
             ExactQuota total = ExactQuota.compute(snapshot.approvedHourlyPrice, Math.subtractExact(endMillis, start), snapshot.numerator, snapshot.denominator).add(remainder);
@@ -193,7 +617,9 @@ public class ComputeBillingSettlementService {
             boolean expiredFunding = session.get("funding_expires_at_ms") != null && number(session, "funding_expires_at_ms") <= System.currentTimeMillis();
             // An advance expiry warning requests shutdown, but a still-valid hold may settle the
             // actual stop tail. Authorization/conflict risks and actual expiry remain fail-closed.
-            boolean blockingRisk = session.get("risk_code") != null && !"HOLD_EXPIRING".equals(session.get("risk_code"));
+            boolean stoppingSshFailure="SSH_PREPARATION_FAILED".equals(session.get("risk_code"))
+                &&number(session,"stop_requested")==1&&session.get("control_snapshot")!=null;
+            boolean blockingRisk = session.get("risk_code") != null && !"HOLD_EXPIRING".equals(session.get("risk_code"))&&!"RUN_WINDOW_EXPIRED".equals(session.get("risk_code"))&&!stoppingSshFailure;
             String state = "0".equals(amount) ? "NO_DEBIT" : blockingRisk || missingFunding || expiredFunding ? "BLOCKED" : "PREPARED";
             String trialError = null;
             String trialDenial = null;
@@ -228,7 +654,7 @@ public class ComputeBillingSettlementService {
                 jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=COALESCE(risk_code,?) WHERE usage_id=?", error, usageId);
             }
             jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
-                next.numerator.toString(), next.denominator.toString(), user, unit);
+                next.numerator.toString(), next.denominator.toString(), user, remainderUnit);
             jdbc.update("UPDATE vls_compute_billing_session SET metered_until_ms=?,next_sequence=? WHERE usage_id=?", endMillis, Math.addExact(sequence, 1), usageId);
             return reference;
         });
@@ -237,6 +663,7 @@ public class ComputeBillingSettlementService {
     /** New work requires current configuration, armed original control and fresh held funds. */
     public void requirePaidAdmission(String usageId) {
         if (!properties.paidConfigured()) throw new IllegalStateException(properties.unavailableReason());
+        requireBoundOrigin(usageId);
         if (policy == null) throw new IllegalStateException("平台计费缺配置：billing-policy 停机预算");
         int stopBudget = policy.checkedStopBudgetSeconds(properties.getVerifiedProviderStopSeconds());
         if (properties.getHoldStopLeadSeconds() < stopBudget)
@@ -269,6 +696,7 @@ public class ComputeBillingSettlementService {
             Map<String, Object> candidate = jdbc.queryForMap("SELECT * FROM vls_compute_billing_slice WHERE merchant_charge_id=? FOR UPDATE", reference);
             String merchant = jdbc.queryForObject("SELECT merchant_id FROM vls_compute_billing_session WHERE usage_id=?", String.class, candidate.get("usage_id"));
             if (!properties.getMerchantId().equals(merchant)) return null;
+            if (!BillingLedgerOrigin.matchesUsage(jdbc, properties, String.valueOf(candidate.get("usage_id")))) return null;
             String state = String.valueOf(candidate.get("state"));
             if ("SETTLED".equals(state) || "NO_DEBIT".equals(state) || "BLOCKED".equals(state) || number(candidate, "lease_until_ms") > System.currentTimeMillis()) return null;
             jdbc.update("UPDATE vls_compute_billing_slice SET lease_token=?,lease_until_ms=? WHERE merchant_charge_id=?", lease, System.currentTimeMillis() + 30000, reference);
@@ -466,7 +894,10 @@ public class ComputeBillingSettlementService {
 
     /** Read-only local tail/reconciliation view. Provider and external ledger evidence remain separate. */
     public List<Map<String, Object>> audit(String usageId) {
-        return jdbc.queryForList("SELECT merchant_charge_id,interval_start_ms,interval_end_ms,is_tail,amount_text,state,charge_id,ledger_entry_id,error_code FROM vls_compute_billing_slice WHERE usage_id=? ORDER BY slice_sequence", usageId);
+        return jdbc.query("SELECT merchant_charge_id,slice_sequence,interval_start_ms,interval_end_ms,is_tail,amount_text,state,charge_id,ledger_entry_id,error_code,create_time,CASE WHEN lease_token IS NULL THEN 0 ELSE 1 END AS lease_present,lease_until_ms,attempt_count FROM vls_compute_billing_slice WHERE usage_id=? ORDER BY slice_sequence",(rs,index)->{
+            Map<String,Object> row=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs,index);
+            java.sql.Timestamp created=rs.getTimestamp("create_time");row.remove("create_time");row.put("create_time_ms",created==null?null:created.getTime());return row;
+        },usageId);
     }
 
     /** Local-only continuation when funding proof arrives after an original charge was settled.

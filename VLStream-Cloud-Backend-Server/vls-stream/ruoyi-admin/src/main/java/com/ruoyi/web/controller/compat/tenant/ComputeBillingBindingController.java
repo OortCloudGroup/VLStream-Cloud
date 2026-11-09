@@ -4,6 +4,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePaidRunService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeOriginalReleaseService;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingAccountService;
@@ -83,7 +84,7 @@ public class ComputeBillingBindingController {
     public R<java.util.List<ComputePaidRunService.View>> runs(){return R.data(paidRuns.list(authorization.billingPayer(identityClient())));}
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs/{runId}")
-    public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.get(runId,authorization.billingPayer(identityClient())));}
+    public R<ComputePaidRunService.View> run(@PathVariable String runId){return R.data(paidRuns.detail(runId,authorization.billingPayer(identityClient())));}
     /** The original run identifies the pending archive; payer, instance and price stay server-owned.
      * This only prepares a fresh quote. The existing explicit accept flow owns funding/start. */
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
@@ -100,6 +101,7 @@ public class ComputeBillingBindingController {
         NewApiBillingClient client=merchantClient();BillingPayer payer=newOperationPayer(client);
         ComputePaidRunService.View original=paidRuns.get(runId,payer);
         if("QUOTED".equals(original.getState())){
+            paidRuns.requireQuoteOrigin(runId,payer);
             ComputeBillingAccountService.Account account=accounts.check(payer,client,client.config(),true);
             if(new java.math.BigInteger(account.getAvailableQuota()).compareTo(new java.math.BigInteger(original.getReserveQuota()))<0)
                 throw new ServiceException("平台可用余额不足，请充值后重新确认本次开机");
@@ -108,11 +110,16 @@ public class ComputeBillingBindingController {
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/stop")
-    public R<ComputePaidRunService.View> stop(@PathVariable String runId){return R.data(paidRuns.stop(runId,authorization.billingPayer(identityClient())));}
+    public R<ComputePaidRunService.View> stop(@PathVariable String runId,@RequestBody(required=false) ComputeOriginalReleaseService.Request request){
+        BillingPayer payer=authorization.billingPayer(identityClient());
+        return R.data(request==null?paidRuns.stop(runId,payer):paidRuns.stop(runId,payer,request));
+    }
+    public R<ComputePaidRunService.View> stop(String runId){return stop(runId,null);}
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/sessions/{usageId}/bind")
     public R<String> bind(@PathVariable String usageId){
         NewApiBillingClient client=merchantClient();BillingPayer payer=newOperationPayer(client);
+        settlements.requireBoundOrigin(usageId);
         settlements.bindAcceptedUsage(usageId,payer,client.config());
         lifecycle.arm(usageId,payer);
         return R.data("已保存当前可信付款身份与实例占用快照；收费准入还须通过本次预冻结与安全停机检查");

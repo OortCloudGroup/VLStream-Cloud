@@ -40,7 +40,8 @@ public class ComputeHealthRefreshService {
                     if (nodes.serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null) || (!node.isConfigurationManaged() && !"RUNNING".equals(node.getPowerState())))
                         throw new ServiceException("仅可检查明确运行且无挂起启停操作的实例；请先开机或确认厂商状态");
                     if(nodes.officialConfigured(node)&&!"RUNNING".equals(node.getPowerState()))throw new ServiceException("官方实例尚未确认运行，请等待原开机状态");
-                    if (node.getHostKey() == null || node.getHostKey().isEmpty()) throw new ServiceException("资源管理员须先检查连接并确认 SSH 主机身份");
+                    if (!nodes.officialConfigured(node) && (node.getHostKey() == null || node.getHostKey().isEmpty()))
+                        throw new ServiceException("资源管理员须先检查连接并确认 SSH 主机身份");
                     long now = System.currentTimeMillis();
                     if ("READY".equals(node.getProbeState()) && ComputeAvailability.fresh(node.getProbeTime(), now)) return null;
                     if (node.getProbeRequestedAt() != null && now - node.getProbeRequestedAt().getTime() < 60000L)
@@ -51,6 +52,9 @@ public class ComputeHealthRefreshService {
                     if(!node.isConfigurationManaged()&&!nodes.isCompanyShared(node))jdbc.update("UPDATE vls_compute_node SET probe_state='CHECKING',probe_time=NULL WHERE id=?", id);
                     return node;
                 });
+                // Dynamic official trust belongs to the original paid-run Binding,
+                // not the catalog node. Any HTTPS recovery happens after commit.
+                if (nodes.officialConfigured(visible)) nodes.requireOfficialConnection(snapshot == null ? visible : snapshot);
                 if (snapshot == null) return "已使用五分钟内的环境检查结果，请刷新列表查看";
                 if (!nodes.probeSnapshot(snapshot)) return "检查期间实例状态或发布配置已变化，旧结果已丢弃，请刷新列表";
                 String state = snapshot.isConfigurationManaged()?nodes.get(id).getProbeState():jdbc.queryForObject("SELECT probe_state FROM vls_compute_node WHERE id=?", String.class, id);

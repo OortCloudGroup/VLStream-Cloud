@@ -21,7 +21,13 @@ export const paidRunActive = run => !['QUOTED', 'COMPLETED', 'CANCELLED'].includ
 
 export function paidRunErrorPresentation(run) {
   if (!run?.errorCode && !run?.startFailureCode) return null
-  const pending = '状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。'
+  if (run.state === 'CANCELLED' && run.chargedQuota === '0' && run.remainingQuota === '0'
+    && ['OWNER_ADOPTED_ORIGINAL_RELEASE', 'ADMIN_ADOPTED_ORIGINAL_RELEASE'].includes(run.errorCode)) {
+    return { message: '原失败订单已取消，原冻结已完成释放；本单未扣费。', type: 'success' }
+  }
+  const pending = run.errorCode === 'BILLING_ORIGIN_MISMATCH'
+    ? '原订单的账本来源未确认或与当前账本不一致，资金恢复已暂停；请联系管理员核对，请勿重复开机。'
+    : '状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。'
   // The original order's start cause is separate from current funding/recovery errors.
   // Older responses may carry only errorCode; never infer capacity from provider text.
   const startCode = Object.prototype.hasOwnProperty.call(run, 'startFailureCode') ? run.startFailureCode : run.errorCode

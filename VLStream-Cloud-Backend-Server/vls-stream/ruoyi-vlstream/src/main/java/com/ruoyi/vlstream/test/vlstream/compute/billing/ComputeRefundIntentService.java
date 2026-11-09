@@ -104,6 +104,7 @@ public class ComputeRefundIntentService {
      * Delayed records outside these windows remain unknown instead of scanning the merchant's history. */
     public Intent reconcile(String intentId) {
         Intent original = recover(intentId);
+        if (!BillingLedgerOrigin.matchesUsage(jdbc, properties, original.usageId)) return original;
         if (!properties.hasMerchantConfiguration() || !"UNKNOWN".equals(original.state) || original.receipt != null || original.holdId == null)
             return original;
         if (TransactionSynchronizationManager.isActualTransactionActive())
@@ -144,6 +145,7 @@ public class ComputeRefundIntentService {
                 String cursor = null; Set<String> cursors = new HashSet<>();
                 while (true) {
                     if (++pages > 10) return recover(intentId);
+                    if (!BillingLedgerOrigin.matchesUsage(jdbc, properties, original.usageId)) return recover(intentId);
                     ExternalBillingGateway.Result page = gateway.ledger(window[0], window[1], cursor);
                     if (page.status != ExternalBillingGateway.Status.SUCCEEDED || page.charge == null) return recover(intentId);
                     JsonNode body = page.charge;
@@ -184,6 +186,8 @@ public class ComputeRefundIntentService {
             Map<String, Object> charge = charge(original.chargeReference);
             Intent current = checked(session, charge, stored);
             requireHash(current, original.requestHash);
+            if (!BillingLedgerOrigin.matches(text(session, "accepted_snapshot"), text(session, "merchant_id"), properties))
+                return current;
             if (!current.merchantId.equals(properties.getMerchantId()) || !("UNKNOWN".equals(current.state)
                 || "RECEIPT_UNVERIFIED".equals(current.state) || "LEDGER_RECONCILED".equals(current.state)))
                 return current;
@@ -209,6 +213,8 @@ public class ComputeRefundIntentService {
             Map<String, Object> charge = charge(original.chargeReference);
             Intent current = checked(session, charge, stored);
             requireHash(current, original.requestHash);
+            if (!BillingLedgerOrigin.matches(text(session, "accepted_snapshot"), text(session, "merchant_id"), properties))
+                return current;
             if (current.merchantId.equals(properties.getMerchantId()) && ("UNKNOWN".equals(current.state)
                 || "RECEIPT_UNVERIFIED".equals(current.state) || "LEDGER_RECONCILED".equals(current.state)))
                 jdbc.update("UPDATE vls_compute_refund_intent SET state='CONFLICT',error_code='REFUND_LEDGER_CONFLICT',conflicting_receipt_json=? WHERE refund_intent_id=?", conflict.toString(), intentId);
@@ -283,11 +289,12 @@ public class ComputeRefundIntentService {
      * The same transaction retains those locks until the UNKNOWN submission claim is committed. */
     public void dispatch(String intentId, Runnable lockedGuard) {
         if (!properties.hasMerchantConfiguration()) return;
+        String usageId = owner(intentId);
+        if (!BillingLedgerOrigin.matchesUsage(jdbc, properties, usageId)) return;
         ExternalBillingGateway gateway = gateways.get();
         if (gateway == null) return;
         if (TransactionSynchronizationManager.isActualTransactionActive())
             throw new IllegalStateException("Refund I/O requires a committed intent");
-        String usageId = owner(intentId);
         Intent original = transactions.execute(tx -> {
             if (lockedGuard != null) {
                 // This preliminary read takes no lock: acquiring the refund/session lock before
@@ -300,6 +307,8 @@ public class ComputeRefundIntentService {
             Map<String, Object> session = session(usageId);
             Map<String, Object> stored = row(intentId);
             Intent intent = checked(session, charge(text(stored, "merchant_charge_id")), stored);
+            if (!BillingLedgerOrigin.matches(text(session, "accepted_snapshot"), text(session, "merchant_id"), properties))
+                return null;
             if (!"PREPARED".equals(intent.state)) return null;
             if (!intent.merchantId.equals(properties.getMerchantId())) return null;
             trial.requireCleanupScope(usageId);

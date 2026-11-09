@@ -46,6 +46,44 @@ class ComputeFundingIntentTest {
     }
     ComputeFundingIntentService restarted() { return new ComputeFundingIntentService(fixture.jdbc, fixture.manager, fixture.json); }
     ComputeFundingIntentService.Intent hold() { return service.prepareInitialHold(usage, "1000", expiry, "GPU_COMPUTE"); }
+
+    @Test void sameMerchantOnAnotherLedgerCannotSendOrQueryOriginalFundingIntent() {
+        assertOriginBlocksTransport(() -> fixture.properties.setBaseUrl("https://another-ledger.fixture.invalid"));
+    }
+
+    @Test void legacyFundingWithoutAcceptedLedgerOriginStaysReadableAndCannotUseCurrentMerchant() {
+        assertOriginBlocksTransport(() -> fixture.jdbc.update(
+            "UPDATE vls_compute_billing_session SET accepted_snapshot='{}' WHERE usage_id=?", usage));
+    }
+
+    @Test void sameMerchantOnAnotherLedgerCannotSendOrQueryOriginalRelease() throws Exception {
+        assertOriginBlocksTransport(service.prepareFinalRelease(acknowledged().id, "1000"),
+            () -> fixture.properties.setBaseUrl("https://another-ledger.fixture.invalid"));
+    }
+
+    @Test void legacyReleaseWithoutAcceptedLedgerOriginCannotUseCurrentMerchant() throws Exception {
+        assertOriginBlocksTransport(service.prepareFinalRelease(acknowledged().id, "1000"), () -> fixture.jdbc.update(
+            "UPDATE vls_compute_billing_session SET accepted_snapshot='{}' WHERE usage_id=?", usage));
+    }
+
+    void assertOriginBlocksTransport(Runnable changeOrigin) {
+        assertOriginBlocksTransport(hold(), changeOrigin);
+    }
+
+    void assertOriginBlocksTransport(ComputeFundingIntentService.Intent original, Runnable changeOrigin) {
+        changeOrigin.run();
+        ComputeFundingRecoveryService blocked = new ComputeFundingRecoveryService(service,
+            (java.util.function.Supplier<ExternalBillingGateway>) () -> { throw new AssertionError("Origin must be checked before obtaining the gateway"); },
+            fixture.properties);
+        Map<String, Object> before = fixture.jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?", original.id);
+        assertEquals("PREPARED", blocked.advance(original.id, System.currentTimeMillis()).state);
+        assertEquals(before, fixture.jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?", original.id));
+        service.recordUnknown(original.id, original.requestHash);
+        before = fixture.jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?", original.id);
+        assertEquals("UNKNOWN", blocked.advance(original.id, System.currentTimeMillis()).state);
+        assertEquals(before, fixture.jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?", original.id));
+        assertEquals(original.key, service.recover(original.id).key);
+    }
     JsonNode receipt(String id) throws Exception {
         return fixture.json.readTree("{\"success\":true,\"data\":{\"hold_id\":" + id + ",\"available_quota\":\"9000\",\"held_quota\":\"1000\"}}");
     }

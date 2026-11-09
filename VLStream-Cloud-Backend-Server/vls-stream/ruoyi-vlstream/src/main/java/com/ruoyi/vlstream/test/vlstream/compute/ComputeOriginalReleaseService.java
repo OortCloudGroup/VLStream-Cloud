@@ -7,6 +7,7 @@ import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeFundingIntentService;
+import com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ExactQuota;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.FundingContracts;
@@ -32,6 +33,8 @@ public class ComputeOriginalReleaseService {
     private final ConfiguredComputeRegistry configured;
     private final ObjectProvider<NewApiBillingClient> clients;
     private final ObjectProvider<ComputePowerProvider> providers;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ComputeNodeOwnershipService ownership;
     private java.util.function.LongSupplier clock=System::currentTimeMillis;
 
     public ComputeOriginalReleaseService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
@@ -47,7 +50,16 @@ public class ComputeOriginalReleaseService {
     }
 
     public String reconcile(String runId, Request request) {
-        String administrator=requireAdministrator(), tenant=currentTenant();
+        return reconcile(runId,null,request,requireAdministrator(),currentTenant());
+    }
+
+    /** Explicit current-owner STOP only; imports the same original proof without dispatching it. */
+    public String reconcileOwned(String runId, BillingPayer payer, Request request) {
+        requireOwnerIdentity(payer);
+        return reconcile(runId,payer,request,null,currentTenant());
+    }
+
+    private String reconcile(String runId, BillingPayer payer, Request request, String administrator, String tenant) {
         require(tenant!=null && !tenant.trim().isEmpty(), "Trusted tenant required");
         require(request!=null && request.reason!=null && request.reason.matches("[A-Z][A-Z0-9_]{0,63}"), "Audit reason required");
         require(request.idempotencyKey!=null && request.idempotencyKey.matches("[A-Za-z0-9][A-Za-z0-9._:-]{0,79}"), "Original release key required");
@@ -59,14 +71,15 @@ public class ComputeOriginalReleaseService {
         original.releaseReceipt=request.releaseReceipt==null?null:request.releaseReceipt.deepCopy();
         Map<String,Object> run=run(runId,false);
         require(tenant.equals(text(run,"tenant_id")), "Order tenant mismatch");
+        if(payer!=null)requireOwner(run,payer);
         Map<String,Object> hold=jdbc.queryForMap("SELECT * FROM vls_compute_funding_intent WHERE intent_id=?",text(run,"hold_intent_id"));
         validateRequest(run,hold,original);
-        if (text(run,"release_intent_id")!=null) return transactions.execute(tx->replay(lockRun(run,tenant),original,tenant));
+        if (text(run,"release_intent_id")!=null) return transactions.execute(tx->replay(lockRun(run,tenant,payer),original,tenant));
         require(TransactionSynchronizationManager.isActualTransactionActive()==false,"Evidence reads require no transaction");
         long observedAt=clock.getAsLong();
         ObjectNode evidence=readEvidence(run,hold);
         return transactions.execute(tx->{
-            Map<String,Object> locked=lockRun(run,tenant);
+            Map<String,Object> locked=lockRun(run,tenant,payer);
             if(text(locked,"release_intent_id")!=null)return replay(locked,original,tenant);
             Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",text(locked,"usage_id"));
             Map<String,Object> usage=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=? FOR UPDATE",text(locked,"usage_id"));
@@ -76,6 +89,10 @@ public class ComputeOriginalReleaseService {
             for(String field:new String[]{"tenant_id","opening_user_id","merchant_id","payer_user_id"})
                 require(Objects.equals(text(locked,field),text(session,field)),"Session ownership mismatch");
             require(tenant.equals(text(usage,"tenant_id")) && Objects.equals(text(locked,"start_operation_id"),text(usage,"start_operation_id")),"Usage ownership mismatch");
+            if(payer!=null)require(payer.actorId.equals(text(usage,"opening_user_id"))
+                && payer.platformSubject.equals(text(usage,"payer_account_ref"))
+                && number(session,"metered_until_ms")==0 && number(session,"last_running_ms")==0,
+                "Owner usage association or running evidence mismatch");
             require(("STARTING".equals(text(locked,"state"))||"CANCELLING".equals(text(locked,"state"))||"STOPPING".equals(text(locked,"state")))
                 && number(locked,"worker_lease_until_ms")<System.currentTimeMillis(),"Order is not an idle failed start");
             require(usage.get("billing_start_at")==null && usage.get("billing_end_at")==null
@@ -89,17 +106,22 @@ public class ComputeOriginalReleaseService {
             require(jdbc.queryForList("SELECT id FROM vls_cloud_training_job WHERE (node_id=? OR public_instance_key=?) AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",locked.get("node_id"),text(locked,"instance_key")).isEmpty(),"Training or archive ownership is active");
             long now=clock.getAsLong();
             require(observedAt<=now && now-observedAt<=30000L,"Evidence expired");
-            validateEvidence(locked,parent,original,evidence);
+            validateEvidence(locked,parent,original,evidence,observedAt);
             ObjectNode audit=json.createObjectNode();
-            audit.put("administrator",administrator); audit.put("tenant_id",tenant); audit.put("run_id",runId);
+            if(payer==null)audit.put("administrator",administrator);
+            else {audit.put("actor_type","OWNER");audit.put("actor_id",payer.actorId);
+                audit.put("platform_subject",payer.platformSubject);audit.put("payer_user_id",payer.userId);}
+            audit.put("tenant_id",tenant); audit.put("run_id",runId);
             audit.put("reason",original.reason); audit.put("observed_at_ms",observedAt);
             audit.set("release_receipt",original.releaseReceipt); audit.set("authority",evidence);
             String id=UUID.randomUUID().toString(), reference="vls-release:"+text(locked,"usage_id")+":final";
             jdbc.update("INSERT INTO vls_compute_funding_intent(intent_id,usage_id,operation_kind,business_reference,merchant_id,payer_user_id,parent_intent_id,idempotency_key,request_path,request_json,request_hash,state,contract_version,hold_id,receipt_json,error_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 id,text(locked,"usage_id"),"RELEASE",reference,text(locked,"merchant_id"),text(locked,"payer_user_id"),text(parent,"intent_id"),original.idempotencyKey,
                 "/api/v1/external-billing/holds/"+text(parent,"hold_id")+"/release",original.requestBody,original.requestHash,
-                ComputeFundingIntentService.EXTERNAL_RELEASE_ADOPTED,ComputeFundingIntentService.ADOPTED_RELEASE_CONTRACT,text(parent,"hold_id"),audit.toString(),"ADMIN_ADOPTED_ORIGINAL_RELEASE");
-            jdbc.update("UPDATE vls_compute_paid_run SET release_intent_id=?,state='CANCELLED',active_instance_key=NULL,error_code='ADMIN_ADOPTED_ORIGINAL_RELEASE',update_time=NOW() WHERE run_id=?",id,runId);
+                ComputeFundingIntentService.EXTERNAL_RELEASE_ADOPTED,payer==null?ComputeFundingIntentService.ADOPTED_RELEASE_CONTRACT:ComputeFundingIntentService.OWNER_ADOPTED_RELEASE_CONTRACT,
+                text(parent,"hold_id"),audit.toString(),payer==null?"ADMIN_ADOPTED_ORIGINAL_RELEASE":"OWNER_ADOPTED_ORIGINAL_RELEASE");
+            jdbc.update("UPDATE vls_compute_paid_run SET release_intent_id=?,state='CANCELLED',active_instance_key=NULL,error_code=?,update_time=NOW() WHERE run_id=?",
+                id,payer==null?"ADMIN_ADOPTED_ORIGINAL_RELEASE":"OWNER_ADOPTED_ORIGINAL_RELEASE",runId);
             jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED',active_server_key=NULL WHERE id=?",text(locked,"usage_id"));
             // Preserve risk_code, original HOLD observations, start/stop outbox and data claims.
             jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",text(locked,"usage_id"));
@@ -113,12 +135,29 @@ public class ComputeOriginalReleaseService {
         require(user!=null && LoginHelper.isAdmin(user),"VLS administrator required"); return user;
     }
     protected String currentTenant(){return TenantContextHolder.getTenantId();}
+    protected ComputePlatformAuthorization.Context currentOwner(){return ownership==null?null:ownership.identity();}
+    private void requireOwnerIdentity(BillingPayer payer) {
+        ComputePlatformAuthorization.Context actor=currentOwner();
+        require(payer!=null && actor!=null && actor.isAuthorized() && currentTenant()!=null
+            && payer.actorId!=null && !payer.actorId.trim().isEmpty() && payer.platformSubject!=null && !payer.platformSubject.trim().isEmpty()
+            && payer.userId!=null && !payer.userId.trim().isEmpty() && currentTenant().equals(payer.tenantId)
+            && payer.tenantId.equals(actor.getVlsTenantId()) && payer.actorId.equals(actor.getVlsUserId())
+            && payer.platformSubject.equals(actor.getPlatformUserId()),"Trusted current owner required");
+    }
+    private void requireOwner(Map<String,Object> run,BillingPayer payer) {
+        // Identity is resolved before I/O; locked authorization uses the immutable verified payer.
+        require(payer.tenantId.equals(currentTenant()) && payer.tenantId.equals(text(run,"tenant_id")) && payer.actorId.equals(text(run,"opening_user_id"))
+            && payer.platformSubject.equals(text(run,"platform_subject")) && payer.userId.equals(text(run,"payer_user_id")),"Original owner mismatch");
+    }
 
     /** All evidence comes from authenticated server-side GETs; request-supplied status is insufficient. */
     protected ObjectNode readEvidence(Map<String,Object> run, Map<String,Object> hold) {
         NewApiBillingClient client=clients.getIfAvailable();
         require(client!=null,"Read-only billing client unavailable");
         require(client.servesMerchant(text(run,"merchant_id")),"Billing merchant mismatch");
+        require(client.servesOrigin(text(run,"quote_snapshot"),text(run,"merchant_id")),"BILLING_ORIGIN_MISMATCH");
+        Map<String,Object> session=jdbc.queryForMap("SELECT accepted_snapshot,merchant_id FROM vls_compute_billing_session WHERE usage_id=?",text(run,"usage_id"));
+        require(client.servesOrigin(text(session,"accepted_snapshot"),text(session,"merchant_id")),"BILLING_ORIGIN_MISMATCH");
         ExternalBillingGateway.Result operation=client.holdOperation("RELEASE","vls-release:"+text(run,"usage_id")+":final");
         ExternalBillingGateway.Result detail=client.holdById(text(hold,"hold_id")), wallet=client.balance(text(run,"payer_user_id"));
         require(operation!=null && operation.charge!=null && (operation.status==ExternalBillingGateway.Status.UNKNOWN||operation.status==ExternalBillingGateway.Status.SUCCEEDED)
@@ -144,19 +183,28 @@ public class ComputeOriginalReleaseService {
         require(body.path("merchant_release_id").asText().equals(reference),"Release reference mismatch");
         FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(original.releaseReceipt);
         require(Objects.equals(text(hold,"hold_id"),receipt.holdId) && text(run,"reserve_quota").equals(receipt.releasedQuota)
-            && "0".equals(receipt.heldQuota) && "0".equals(receipt.remainingQuota) && "RELEASED".equals(receipt.holdStatus),"Original release receipt mismatch");
+            && "0".equals(receipt.heldQuota) && "0".equals(receipt.remainingQuota)
+            && releasedOrExpired(receipt.holdStatus,initial.path("expires_at").asText(),clock.getAsLong()),"Original release receipt mismatch");
     }
-    private void validateEvidence(Map<String,Object> run,Map<String,Object> parent,Request original,JsonNode evidence) {
+    private void validateEvidence(Map<String,Object> run,Map<String,Object> parent,Request original,JsonNode evidence,long observedAt) {
         FundingContracts.HoldDetail hold=FundingContracts.holdDetail(evidence.path("hold"));JsonNode op=evidence.path("operation"),wallet=evidence.path("wallet");
+        String expires=parse(text(parent,"request_json")).path("expires_at").asText();
+        FundingContracts.ReleaseReceipt receipt=FundingContracts.releaseResult(original.releaseReceipt);
         require("SUCCEEDED".equals(op.path("status").asText()) && original.idempotencyKey.equals(op.path("idempotency_key").asText())
             && hold.holdId.equals(op.path("hold_id").asText()) && hold.userId.equals(op.path("user_id").asText()),"Original operation proof mismatch");
         require(hold.holdId.equals(text(parent,"hold_id")) && hold.userId.equals(text(run,"payer_user_id")) && hold.merchantHoldId.equals(text(parent,"business_reference"))
-            && hold.holdQuota.equals(text(run,"reserve_quota")) && hold.expiresAt.equals(parse(text(parent,"request_json")).path("expires_at").asText())
-            && "0".equals(hold.capturedQuota) && hold.holdQuota.equals(hold.releasedQuota) && "0".equals(hold.remainingQuota) && "RELEASED".equals(hold.holdStatus),"Released hold proof mismatch");
+            && hold.holdQuota.equals(text(run,"reserve_quota")) && hold.expiresAt.equals(expires)
+            && "0".equals(hold.capturedQuota) && hold.holdQuota.equals(hold.releasedQuota) && "0".equals(hold.remainingQuota)
+            && releasedOrExpired(hold.holdStatus,expires,observedAt)
+            && releasedOrExpired(receipt.holdStatus,expires,observedAt),"Released hold proof mismatch");
         require(hold.userId.equals(wallet.path("user_id").asText()) && "0".equals(wallet.path("held_quota").asText())
             && ExactQuota.integer(wallet.path("balance_quota").asText(),false).equals(ExactQuota.integer(wallet.path("available_quota").asText(),false)),"Wallet proof mismatch");
         require(text(run,"instance_key").equals(evidence.path("instance_key").asText()) && "STOPPED".equals(evidence.path("power").asText())
             && "AUTODL_PRO_PHYSICAL_STOPPED".equals(evidence.path("stopped_mode").asText()),"Physical shutdown proof mismatch");
+    }
+    private boolean releasedOrExpired(String status,String originalExpires,long observedAt) {
+        return "RELEASED".equals(status) || "EXPIRED".equals(status)
+            && ExactQuota.integer(originalExpires,true).longValueExact()<=observedAt;
     }
     private String replay(Map<String,Object> run,Request request,String tenant) {
         ComputeFundingIntentService.Intent prior=journal.recover(text(run,"release_intent_id"));
@@ -165,13 +213,18 @@ public class ComputeOriginalReleaseService {
             && request.releaseReceipt.equals(parse(prior.receipt).path("release_receipt")),"Adoption replay conflict");return prior.id;
     }
     /** Match paid STOP and first-start claims: resolve the immutable mapping before taking locks. */
-    private Map<String,Object> lockRun(Map<String,Object> expected,String tenant) {
+    private Map<String,Object> lockRun(Map<String,Object> expected,String tenant,BillingPayer payer) {
         String usage=text(expected,"usage_id");
         require(usage!=null,"Original usage required");
         Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usage);
         Map<String,Object> current=run(text(expected,"run_id"),true);
         require(usage.equals(text(current,"usage_id")),"Order usage changed");
         require(tenant.equals(text(current,"tenant_id")) && tenant.equals(text(session,"tenant_id")),"Order tenant mismatch");
+        if(payer!=null) {
+            requireOwner(current,payer);
+            for(String field:new String[]{"merchant_id","hold_intent_id","quote_snapshot","reserve_quota","node_id","instance_key"})
+                require(Objects.equals(text(expected,field),text(current,field)),"Original order association changed");
+        }
         return current;
     }
     private Map<String,Object> run(String id,boolean lock){return jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?"+(lock?" FOR UPDATE":""),id);}

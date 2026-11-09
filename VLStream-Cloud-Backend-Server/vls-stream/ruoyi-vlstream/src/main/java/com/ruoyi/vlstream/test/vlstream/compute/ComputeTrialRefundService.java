@@ -199,6 +199,8 @@ public class ComputeTrialRefundService {
         Context c=new Context();
         c.session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE",usage);
         c.run=jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=? FOR UPDATE",runId);
+        require(BillingLedgerOrigin.matches(text(c.run,"quote_snapshot"),text(c.run,"merchant_id"),properties)
+            && BillingLedgerOrigin.matches(text(c.session,"accepted_snapshot"),text(c.session,"merchant_id"),properties),"BILLING_ORIGIN_MISMATCH");
         require(usage.equals(text(c.run,"usage_id")),"Order usage association changed");
         require(tenant.equals(text(c.run,"tenant_id")),"Order tenant mismatch");
         require("COMPLETED".equals(text(c.run,"state")) && c.run.get("active_instance_key")==null

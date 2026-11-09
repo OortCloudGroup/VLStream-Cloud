@@ -61,6 +61,7 @@ class ComputeTrialRefundTest {
             .put("conversion_version","v1").put("numerator","1000").put("denominator","1")
             .put("effective_at",Instant.now().minusSeconds(7200).toString()).put("valid_until",expiry);
         snapshot.putObject("accepted_rate").put("currency","CNY").put("pricePolicy","VLS_FIXED");
+        BillingLedgerOrigin.bind(snapshot,properties); // New synthetic trial acceptance, not legacy recovery.
         snapshot.putObject("trial_guard").put("version",1).put("run_id",run).put("payer_user_id","13").put("instance_id","pro-7920a22db144")
             .put("instance_key","instance").put("node_id","-6000").put("merchant_id","vls").put("base_url",ComputeBillingTrialGuard.TARGET)
             .put("maximum_cny","3.47").put("maximum_quota","3470").put("reservation_quota","3000").put("expires_at",expiry);

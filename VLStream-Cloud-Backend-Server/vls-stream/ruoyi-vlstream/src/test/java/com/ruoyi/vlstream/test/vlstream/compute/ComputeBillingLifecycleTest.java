@@ -99,7 +99,11 @@ class ComputeBillingLifecycleTest {
         DataSourceTransactionManager manager=new DataSourceTransactionManager(jdbc.getDataSource());
         com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService settlements=new com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingSettlementService(jdbc,manager,json,properties,(java.util.function.Supplier<com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway>)()->gateway);
         com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"settlement_currency\":\"CNY\",\"quota_unit\":\"quota\",\"conversion_version\":\"conversion-test\",\"quota_per_currency_unit\":{\"numerator\":\"500000\",\"denominator\":\"1\"},\"effective_at\":\"2026-01-01T00:00:00Z\",\"valid_until\":\"2030-01-01T00:00:00Z\"}");
-        settlements.bindAcceptedUsage("usage-test",payer,config);service.arm("usage-test",payer);
+        com.fasterxml.jackson.databind.node.ObjectNode accepted=(com.fasterxml.jackson.databind.node.ObjectNode)json.readTree(
+            com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot.fromExistingRate(rate,config,java.time.Instant.ofEpochMilli(start),json).json);
+        com.ruoyi.vlstream.test.vlstream.compute.billing.BillingLedgerOrigin.bind(accepted,properties);
+        settlements.bind("usage-test",payer,com.ruoyi.vlstream.test.vlstream.compute.billing.BillingSnapshot.read(accepted.toString(),json));
+        service.arm("usage-test",payer);
         DefaultListableBeanFactory beans=new DefaultListableBeanFactory();beans.registerSingleton("lifecycle",service);beans.registerSingleton("gateway",gateway);
         com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingReconciliationService reconciliation=new com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingReconciliationService(jdbc,manager,properties,beans.getBeanProvider(com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingGateway.class),json);
         com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingCoordinator coordinator=new com.ruoyi.vlstream.test.vlstream.compute.billing.ComputeBillingCoordinator(jdbc,settlements,properties,beans.getBeanProvider(com.ruoyi.vlstream.test.vlstream.compute.billing.BillingLifecycleGateway.class),reconciliation);

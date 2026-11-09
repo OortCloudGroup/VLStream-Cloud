@@ -63,6 +63,9 @@ class ComputeRefundIntentTest {
             chargeReference, usage, originalBody, ComputeBillingSettlementService.hash(originalBody), "1000");
         properties = new ExternalBillingProperties(); properties.setMerchantId("vls-test");
         properties.setBaseUrl("https://fixture.invalid"); properties.setApiKey("TEST_ONLY_MERCHANT_CREDENTIAL");
+        ObjectNode accepted = json.createObjectNode();
+        BillingLedgerOrigin.bind(accepted, properties);
+        jdbc.update("UPDATE vls_compute_billing_session SET accepted_snapshot=? WHERE usage_id=?", accepted.toString(), usage);
         gateway = new FakeGateway(); service = restarted();
     }
 
@@ -369,6 +372,32 @@ class ComputeRefundIntentTest {
             (java.util.function.Supplier<ExternalBillingGateway>) () -> null);
         assertEquals("UNKNOWN", unavailable.reconcile(intent.id).state);
         assertEquals(0, gateway.writes);
+    }
+
+    @Test void sameMerchantOnAnotherLedgerCannotDispatchOrReconcileOriginalRefund() {
+        assertOriginBlocksTransport(() -> properties.setBaseUrl("https://another-ledger.fixture.invalid"));
+    }
+
+    @Test void legacyRefundWithoutAcceptedLedgerOriginStaysReadableAndCannotUseCurrentMerchant() {
+        assertOriginBlocksTransport(() -> jdbc.update(
+            "UPDATE vls_compute_billing_session SET accepted_snapshot='{}' WHERE usage_id=?", usage));
+    }
+
+    void assertOriginBlocksTransport(Runnable changeOrigin) {
+        ComputeRefundIntentService.Intent original = prepare("origin-bound-correction", "400");
+        changeOrigin.run();
+        ComputeRefundIntentService blocked = new ComputeRefundIntentService(jdbc, manager, json, properties,
+            (java.util.function.Supplier<ExternalBillingGateway>) () -> { throw new AssertionError("Origin must be checked before obtaining the gateway"); });
+        java.util.Map<String, Object> before = jdbc.queryForMap(
+            "SELECT * FROM vls_compute_refund_intent WHERE refund_intent_id=?", original.id);
+        blocked.dispatch(original.id);
+        assertEquals(before, jdbc.queryForMap("SELECT * FROM vls_compute_refund_intent WHERE refund_intent_id=?", original.id));
+        service.recordUnknown(original.id, original.requestHash);
+        before = jdbc.queryForMap("SELECT * FROM vls_compute_refund_intent WHERE refund_intent_id=?", original.id);
+        assertEquals("UNKNOWN", blocked.reconcile(original.id).state);
+        assertEquals(before, jdbc.queryForMap("SELECT * FROM vls_compute_refund_intent WHERE refund_intent_id=?", original.id));
+        assertEquals(original.key, blocked.recover(original.id).key);
+        assertEquals(0, gateway.queries); assertEquals(0, gateway.writes);
     }
 
     @Test void originalRefundAndLedgerRecoveryDoNotRequireNewAdmissionBudgets() throws Exception {

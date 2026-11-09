@@ -48,6 +48,44 @@ class ComputeBillingCoordinatorTest {
         assertEquals(1,lifecycle.observations);assertEquals(1,lifecycle.stops);
         assertFalse(f.properties.paidConfigured());
     }
+    @Test void changedLedgerAndMissingOriginStillObserveAndPhysicallyStopWithoutMoneyQueries() throws Exception {
+        for(boolean missing:new boolean[]{false,true}) {
+            String id=usage();
+            if(missing)f.jdbc.update("UPDATE vls_compute_billing_session SET accepted_snapshot='{}' WHERE usage_id=?",id);
+            else f.properties.setBaseUrl("https://another-ledger.fixture.invalid");
+            lifecycle.power="RUNNING";lifecycle.at=60000;int before=lifecycle.stops;
+            coordinator.tick(id,lifecycle);
+            assertEquals(before+1,lifecycle.stops);assertEquals(0,f.gateway.queries);assertEquals(0,gateway.ledgerCalls);
+            assertEquals("BILLING_ORIGIN_MISMATCH",f.jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+            assertEquals(0,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_slice WHERE usage_id=?",Integer.class,id));
+        }
+    }
+    @Test void legacyCursorOrAnotherOriginsSlicesCannotTriggerCurrentLedgerQueries() throws Exception {
+        String ref=f.interval(usage(),60000);
+        f.jdbc.update("INSERT INTO vls_compute_billing_reconciliation(merchant_id,from_second,to_second,state,page_cursor) VALUES(?,1,2,'PENDING','legacy-cursor')",f.properties.getMerchantId());
+        Map<String,Object> original=f.jdbc.queryForMap("SELECT * FROM vls_compute_billing_reconciliation");
+        f.properties.setBaseUrl("https://another-ledger.fixture.invalid");gateway.page=page(ref,false,"");reconciliation.tick();
+        assertEquals(0,gateway.ledgerCalls);assertEquals(original,f.jdbc.queryForMap("SELECT * FROM vls_compute_billing_reconciliation"));
+        f.jdbc.update("UPDATE vls_compute_billing_session SET accepted_snapshot='{}'");reconciliation.tick();
+        assertEquals(0,gateway.ledgerCalls);assertEquals(0,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_ledger_seen",Integer.class));
+    }
+    @Test void sameMerchantUsesSeparateCursorAndLedgerEntryNamespacesAcrossEndpoints() throws Exception {
+        String first=f.interval(usage(),60000),firstBase=f.properties.getBaseUrl();
+        String firstNamespace=BillingLedgerOrigin.namespace(f.properties);
+        gateway.page=page(first,true,"first-cursor");reconciliation.tick();
+        Map<String,Object> oldCursor=f.jdbc.queryForMap("SELECT * FROM vls_compute_billing_reconciliation WHERE merchant_id=?",firstNamespace);
+        f.properties.setBaseUrl("https://second-ledger.fixture.invalid");
+        String second=f.interval(usage(),60000),secondNamespace=BillingLedgerOrigin.namespace(f.properties);
+        gateway.page=page(second,false,"");reconciliation.tick();
+        assertNotEquals(firstNamespace,secondNamespace);
+        assertEquals(oldCursor,f.jdbc.queryForMap("SELECT * FROM vls_compute_billing_reconciliation WHERE merchant_id=?",firstNamespace));
+        assertEquals(2,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_ledger_seen WHERE ledger_entry_id='ledger-test'",Integer.class));
+        assertEquals(2,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_reconciliation",Integer.class));
+        assertEquals(0,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_ledger_seen WHERE merchant_id=?",Integer.class,f.properties.getMerchantId()));
+        f.properties.setBaseUrl(firstBase);gateway.page=page(first,false,"");reconciliation.tick();
+        assertEquals("DONE",f.jdbc.queryForObject("SELECT state FROM vls_compute_billing_reconciliation WHERE merchant_id=?",String.class,firstNamespace));
+        assertEquals(2,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_ledger_seen",Integer.class));
+    }
     @Test void devTrialTickIgnoresAnotherRunBeforeAnyLifecycleSettlementOrRiskChange() throws Exception {
         String selected=usage(),other=usage();
         String run="91de8320-9030-4263-8d5f-8602dcc9482e";

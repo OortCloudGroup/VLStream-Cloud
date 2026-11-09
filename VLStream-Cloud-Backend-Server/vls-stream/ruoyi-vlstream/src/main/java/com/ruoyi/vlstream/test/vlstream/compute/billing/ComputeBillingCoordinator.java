@@ -46,6 +46,9 @@ public class ComputeBillingCoordinator {
             }
             else if (!"STOPPING".equals(observation.snapshot.power)) risk(usageId, "PROVIDER_STATE_UNKNOWN");
             Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
+            if (!BillingLedgerOrigin.matches(String.valueOf(session.get("accepted_snapshot")),String.valueOf(session.get("merchant_id")),properties)) {
+                risk(usageId, "BILLING_ORIGIN_MISMATCH");
+            } else {
             long cursor = ((Number) session.get("metered_until_ms")).longValue();
             long proven = ((Number) session.get("last_running_ms")).longValue();
             if (properties.getSettlementIntervalSeconds() < 1 || properties.getSettlementIntervalSeconds() > 3600)
@@ -70,6 +73,7 @@ public class ComputeBillingCoordinator {
                 long delay = Math.min(30000L, 1000L << Math.min(attempts - 1, 5));
                 jdbc.update("UPDATE vls_compute_billing_slice SET attempt_count=?,next_attempt_ms=? WHERE merchant_charge_id=?", attempts, System.currentTimeMillis() + delay, row.get("merchant_charge_id"));
                 if (attempts >= 5 && !jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE merchant_charge_id=? AND state IN ('UNKNOWN','PROCESSING')", row.get("merchant_charge_id")).isEmpty()) risk(usageId, "SETTLEMENT_CONFIRMATION_EXPIRED");
+            }
             }
         } catch (Exception e) { risk(usageId, "COORDINATION_UNAVAILABLE"); }
         Map<String, Object> state = jdbc.queryForMap("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=?", usageId);

@@ -29,6 +29,10 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         return properties.hasMerchantConfiguration() && merchantId != null && merchantId.equals(properties.getMerchantId());
     }
 
+    public boolean servesOrigin(String acceptedSnapshot, String merchantId) {
+        return servesMerchant(merchantId) && BillingLedgerOrigin.matches(acceptedSnapshot, merchantId, properties);
+    }
+
     @Override public boolean supportsAtomicCapture() { return properties.hasMerchantConfiguration(); }
     @Override public Result capture(String originalKey, String immutableBody) {
         JsonNode body = checkedWrite(originalKey, immutableBody);

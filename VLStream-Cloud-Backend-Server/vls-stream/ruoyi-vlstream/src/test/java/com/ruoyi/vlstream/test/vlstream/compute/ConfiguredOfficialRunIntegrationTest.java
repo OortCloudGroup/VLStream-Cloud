@@ -77,6 +77,136 @@ class ConfiguredOfficialRunIntegrationTest {
     void settle(String id){String usage=f.runs.get(id,f.payer).getUsageId();f.coordinator.tick(usage,f.lifecycle);for(String ref:jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice",String.class))f.settlements.dispatch(ref);}
     void finish(String id){f.runs.stop(id,f.payer);f.runs.tick(id);f.runs.tick(id);settle(id);for(int i=0;i<5;i++)f.runs.tick(id);}
 
+    @Test void mysqlDatetimeObjectsAreNormalizedByTheDriversTypedTimestampInBothConsumers() throws Exception {
+        java.time.LocalDateTime local=java.time.LocalDateTime.of(2026,11,9,4,18,56);
+        java.sql.Timestamp typed=java.sql.Timestamp.valueOf(local);
+        java.sql.ResultSet rows=mock(java.sql.ResultSet.class);java.sql.ResultSetMetaData metadata=mock(java.sql.ResultSetMetaData.class);
+        when(rows.getMetaData()).thenReturn(metadata);when(metadata.getColumnCount()).thenReturn(2);
+        when(metadata.getColumnLabel(1)).thenReturn("billing_start_at");when(metadata.getColumnLabel(2)).thenReturn("billing_end_at");
+        when(rows.getObject(1)).thenReturn(local);when(rows.getObject(2)).thenReturn(local);
+        when(rows.getTimestamp("billing_start_at")).thenReturn(typed);when(rows.getTimestamp("billing_end_at")).thenReturn(typed);
+        Map<String,Object> raw=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rows,0);
+        assertTrue(raw.get("billing_start_at") instanceof java.time.LocalDateTime);
+        assertThrows(ClassCastException.class,()->{java.sql.Timestamp ignored=(java.sql.Timestamp)raw.get("billing_start_at");});
+        JdbcTemplate mysql=mock(JdbcTemplate.class);
+        when(mysql.queryForObject(anyString(),org.mockito.ArgumentMatchers.<org.springframework.jdbc.core.RowMapper<Map<String,Object>>>any(),eq("fixture-usage")))
+            .thenAnswer(call->{org.springframework.jdbc.core.RowMapper<Map<String,Object>> mapper=call.getArgument(1);return mapper.mapRow(rows,0);});
+        ReflectionTestUtils.setField(f.runs,"jdbc",mysql);ReflectionTestUtils.setField(power,"jdbc",mysql);
+        for(Object consumer:new Object[]{f.runs,power}) {
+            Map<String,Object> normalized=ReflectionTestUtils.invokeMethod(consumer,"usage","fixture-usage");
+            assertSame(typed,normalized.get("billing_start_at"));assertSame(typed,normalized.get("billing_end_at"));
+        }
+    }
+    @Test void recoveryDiagnosticsExcludeExceptionMessagesCausesAndFullStackTraces() {
+        String id="diagnostic-fixture";JdbcTemplate unavailable=mock(JdbcTemplate.class);
+        when(unavailable.update(contains("SET worker_lease_until_ms=?"),anyLong(),eq(id),anyLong())).thenReturn(1);
+        ClassCastException failure=new ClassCastException("SENSITIVE_FIXTURE_BODY");failure.initCause(new IllegalStateException("SENSITIVE_FIXTURE_CAUSE"));
+        failure.setStackTrace(new StackTraceElement[]{new StackTraceElement("com.ruoyi.vlstream.test.vlstream.compute.ConfiguredPaidPowerService","advance","ConfiguredPaidPowerService.java",134)});
+        when(unavailable.queryForList(anyString(),eq(id))).thenAnswer(call->{throw failure;});ReflectionTestUtils.setField(f.runs,"jdbc",unavailable);
+        ch.qos.logback.classic.Logger logger=(ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger(ComputePaidRunService.class);
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> messages=new ch.qos.logback.core.read.ListAppender<>();messages.start();logger.addAppender(messages);
+        try {
+            f.runs.tick(id);assertEquals(1,messages.list.size());
+            ch.qos.logback.classic.spi.ILoggingEvent event=messages.list.get(0);String logged=event.getFormattedMessage();
+            assertTrue(logged.contains("java.lang.ClassCastException"));assertTrue(logged.contains("ConfiguredPaidPowerService.advance:134"));
+            assertFalse(logged.contains("SENSITIVE_FIXTURE"));assertNull(event.getThrowableProxy());
+        } finally {logger.detachAppender(messages);messages.stop();}
+    }
+    @Test void officialBillingStartDoesNotPromoteFailedDynamicSshPreparationOrLeakItsException() throws Exception {
+        String id=accepted();queued(id);
+        AutoDlRuntimeSsh runtime=mock(AutoDlRuntimeSsh.class);when(runtime.dynamic(any())).thenReturn(true);
+        doThrow(new java.io.IOException("TEST_ONLY_SSH_SECRET_NEVER_LOG")).when(runtime).prepare(eq(id),any());
+        ReflectionTestUtils.setField(power,"runtimeSsh",runtime);
+        ch.qos.logback.classic.Logger logger=(ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger(ConfiguredPaidPowerService.class);
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> messages=new ch.qos.logback.core.read.ListAppender<>();messages.start();logger.addAppender(messages);
+        try {
+            f.runs.tick(id);f.runs.tick(id);
+            assertEquals("RUNNING",f.wallet.power);assertNotNull(jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage",java.sql.Timestamp.class));
+            assertEquals("STARTING",f.runs.get(id,f.payer).getState());assertEquals("SSH_PREPARATION_PENDING",f.runs.get(id,f.payer).getErrorCode());
+            assertFalse(f.runs.trainingAvailable(node()));assertThrows(com.ruoyi.common.exception.ServiceException.class,()->f.runs.requireTraining(node()));
+            assertEquals(2,messages.list.size());
+            for(ch.qos.logback.classic.spi.ILoggingEvent event:messages.list) {
+                String logged=event.getFormattedMessage();assertTrue(logged.contains("Official SSH preparation pending run="+id));
+                assertTrue(logged.contains("diagnostic=UNKNOWN"));assertTrue(logged.contains("failureType=IO"));
+                assertFalse(logged.contains("TEST_ONLY_SSH_SECRET"));assertNull(event.getThrowableProxy());
+            }
+            verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+            assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.releasePosts);
+        } finally {logger.detachAppender(messages);messages.stop();}
+    }
+    @Test void onlySuccessfulDynamicSshPreparationPromotesTheOriginalOfficialStart() throws Exception {
+        String id=accepted();queued(id);
+        AutoDlRuntimeSsh runtime=mock(AutoDlRuntimeSsh.class);when(runtime.dynamic(any())).thenReturn(true);
+        doThrow(new java.io.IOException("TEST_ONLY_SSH_PENDING")).when(runtime).prepare(eq(id),any());
+        ReflectionTestUtils.setField(power,"runtimeSsh",runtime);f.runs.tick(id);
+        java.sql.Timestamp billingStart=jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage",java.sql.Timestamp.class);
+        assertNotNull(billingStart);assertEquals("STARTING",f.runs.get(id,f.payer).getState());assertEquals("SSH_PREPARATION_PENDING",f.runs.get(id,f.payer).getErrorCode());
+        doNothing().when(runtime).prepare(eq(id),any());f.runs.tick(id);
+        assertEquals("RUNNING",f.runs.get(id,f.payer).getState());assertNull(f.runs.get(id,f.payer).getErrorCode());
+        assertEquals(billingStart,jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage",java.sql.Timestamp.class));
+        assertEquals(0,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        verify(runtime,times(2)).prepare(eq(id),any());verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+        assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.releasePosts);
+    }
+    @Test void dynamicSshPreparationPastThirtySecondsQueuesOnlyTheOriginalPhysicalStop() throws Exception {
+        String id=accepted();queued(id);
+        AutoDlRuntimeSsh runtime=mock(AutoDlRuntimeSsh.class);when(runtime.dynamic(any())).thenReturn(true);
+        doThrow(new java.io.IOException("TEST_ONLY_SSH_TIMEOUT")).when(runtime).prepare(eq(id),any());
+        ReflectionTestUtils.setField(power,"runtimeSsh",runtime);f.runs.tick(id);
+        assertEquals("STARTING",f.runs.get(id,f.payer).getState());
+        jdbc.update("UPDATE vls_compute_usage SET billing_start_at=?",new java.sql.Timestamp(System.currentTimeMillis()-31000L));
+        f.runs.tick(id);
+        assertEquals("STOPPING",f.runs.get(id,f.payer).getState());
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session",Integer.class));
+        assertEquals("SSH_PREPARATION_FAILED",jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session",String.class));
+        assertFalse(f.runs.trainingAvailable(node()));verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+        for(int i=0;i<3;i++)f.runs.tick(id);
+        assertEquals("STOPPED",f.wallet.power);assertNotNull(jdbc.queryForObject("SELECT billing_end_at FROM vls_compute_usage",java.sql.Timestamp.class));
+        verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());
+        assertEquals(0,f.wallet.capturePosts);
+    }
+    @Test void runningOfficialSshRecoveryClearsOnlyItsPendingDiagnostic() throws Exception {
+        String id=accepted();running(id);
+        AutoDlRuntimeSsh runtime=mock(AutoDlRuntimeSsh.class);when(runtime.dynamic(any())).thenReturn(true);
+        doThrow(new java.io.IOException("TEST_ONLY_TRANSIENT_SSH_FAILURE")).when(runtime).prepare(eq(id),any());
+        ReflectionTestUtils.setField(power,"runtimeSsh",runtime);f.runs.tick(id);
+        assertEquals("RUNNING",f.runs.get(id,f.payer).getState());assertEquals("SSH_PREPARATION_PENDING",f.runs.get(id,f.payer).getErrorCode());
+        doNothing().when(runtime).prepare(eq(id),any());f.runs.tick(id);
+        assertEquals("RUNNING",f.runs.get(id,f.payer).getState());assertNull(f.runs.get(id,f.payer).getErrorCode());
+        jdbc.update("UPDATE vls_compute_paid_run SET error_code='FUNDING_REQUIRES_REVIEW' WHERE run_id=?",id);f.runs.tick(id);
+        assertEquals("RUNNING",f.runs.get(id,f.payer).getState());assertEquals("FUNDING_REQUIRES_REVIEW",f.runs.get(id,f.payer).getErrorCode());
+        verify(runtime,times(3)).prepare(eq(id),any());verify(f.supplier,times(1)).submit(any(),eq("start"),anyString());verify(f.supplier,never()).submit(any(),eq("stop"),anyString());
+        assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.releasePosts);
+    }
+
+    @Test void sameMerchantNewLedgerCannotAcceptOldQuoteOrFreezeFunds() {
+        String id=f.runs.quote(-6000L,f.payer,f.config).getRunId();
+        f.properties.setBaseUrl("https://another-ledger.fixture.invalid");
+        assertThrows(RuntimeException.class,()->f.runs.requireQuoteOrigin(id,f.payer));
+        assertThrows(RuntimeException.class,()->f.runs.accept(id,f.payer));
+        assertEquals(0,f.wallet.holdPosts);verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        assertEquals("QUOTED",f.runs.get(id,f.payer).getState());
+    }
+    @Test void changedLedgerStillStopsOriginalRunningInstanceWithoutAnyMoneyRequest() {
+        String id=accepted();running(id);
+        List<Map<String,Object>> original=jdbc.queryForList("SELECT * FROM vls_compute_funding_intent");
+        int money=f.wallet.holdPosts+f.wallet.capturePosts+f.wallet.releasePosts;
+        f.properties.setBaseUrl("https://another-ledger.fixture.invalid");
+        f.runs.stop(id,f.payer);for(int i=0;i<3;i++)f.runs.tick(id);
+        verify(f.supplier,times(1)).submit(any(),eq("stop"),anyString());assertEquals("STOPPED",f.wallet.power);
+        assertEquals(money,f.wallet.holdPosts+f.wallet.capturePosts+f.wallet.releasePosts);
+        assertEquals(original,jdbc.queryForList("SELECT * FROM vls_compute_funding_intent"));
+        assertNotNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run",String.class));
+    }
+    @Test void originMismatchBeforePowerSubmissionDoesNotSendAnUnnecessaryStop() {
+        String id=accepted();queued(id);
+        f.properties.setBaseUrl("https://another-ledger.fixture.invalid");f.runs.tick(id);f.runs.tick(id);
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        assertEquals("CANCELLED",jdbc.queryForObject("SELECT power_start_state FROM vls_compute_paid_run",String.class));
+        assertEquals(1,f.wallet.holdPosts);assertEquals(0,f.wallet.capturePosts);assertEquals(0,f.wallet.releasePosts);
+        assertNotNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run",String.class));
+    }
+
     @Test void officialQuoteAllowsNoSshEndpointBeforePowerOnWithoutFundingOrProviderWrites() {
         resource.setHost(null);resource.setHostKey(null);resource.setPrivateKeyFile(null);resource.setPublicKeyFingerprint(null);
         registry.initialize();installPower();
@@ -492,6 +622,53 @@ class ConfiguredOfficialRunIntegrationTest {
         assertEquals("STOPPED",node().getPowerState());assertFalse(ComputeAvailability.ready(node(),System.currentTimeMillis()));
         registry.recordPower(snapshot,new ComputePowerProvider.Snapshot("RUNNING","UNKNOWN","FIXTURE_ONLY"));registry.pending(snapshot,"original-stop","stop",true);
         assertFalse(registry.recordProbe(snapshot,"READY","{\"contractVersion\":1,\"ready\":true}",snapshot.getHostKey()));
+    }
+    @Test void officialConsumerHealthUsesAuthenticatedDynamicBindingWithoutStaticCatalogKey() throws Exception {
+        try(DynamicHealth fixture=new DynamicHealth()) {
+            assertTrue(fixture.health.refresh(-6000L).contains("通过"));
+            assertEquals("READY",node().getProbeState());assertNull(node().getHostKey());assertNull(resource.getHostKey());
+            assertTrue(fixture.health.refresh(-6000L).contains("五分钟"));
+            verify(fixture.ssh,times(1)).open(any());verify(fixture.provider,times(1)).connectionSnapshot(any());
+        }
+    }
+    @Test void dynamicProbeCannotRecordAKeyDifferentFromTheOriginalAuthenticatedBinding() throws Exception {
+        try(DynamicHealth fixture=new DynamicHealth()) {
+            when(fixture.connection.hostKey()).thenReturn("unverified-fixture-key");
+            assertTrue(fixture.health.refresh(-6000L).contains("丢弃"));
+            assertNotEquals("READY",node().getProbeState());assertNull(node().getHostKey());assertNull(resource.getHostKey());
+        }
+    }
+    @Test void officialHealthWithoutAuthenticatedDynamicTrustStillRefusesSsh() throws Exception {
+        try(DynamicHealth fixture=new DynamicHealth()) {
+            ReflectionTestUtils.setField(fixture.runtime,"hostProof",null);
+            assertThrows(RuntimeException.class,()->fixture.health.refresh(-6000L));
+            verify(fixture.ssh,never()).open(any());assertNotEquals("READY",node().getProbeState());
+            assertNull(node().getHostKey());assertNull(resource.getHostKey());
+        }
+    }
+    class DynamicHealth implements AutoCloseable {
+        final AutoDlRuntimeSsh runtime;
+        final AutoDlProPowerProvider provider=mock(AutoDlProPowerProvider.class);
+        final ComputeSsh ssh=mock(ComputeSsh.class);
+        final ComputeSsh.Connection connection=mock(ComputeSsh.Connection.class);
+        final ComputeHealthRefreshService health;
+        DynamicHealth() throws Exception {
+            String trustedKey=resource.getHostKey();
+            resource.setHost(null);resource.setHostKey(null);resource.setPrivateKeyFile(null);resource.setPublicKeyFingerprint(null);
+            registry.initialize();installPower();String id=accepted();running(id);
+            jdbc.execute("CREATE ALIAS GET_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.acquireLock'");
+            jdbc.execute("CREATE ALIAS RELEASE_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.releaseLock'");
+            ObjectNode endpoint=f.json.createObjectNode().put("proxy_host","connect.fixture.seetacloud.com").put("ssh_port",23456).put("root_password","SYNTHETIC_HEALTH_PASSWORD");
+            when(provider.connectionSnapshot(any())).thenAnswer(call->{assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());return endpoint;});
+            runtime=new AutoDlRuntimeSsh(registry,provider,jdbc);
+            AutoDlJupyterHostProof proof=mock(AutoDlJupyterHostProof.class);when(proof.read(endpoint)).thenReturn(trustedKey);ReflectionTestUtils.setField(runtime,"hostProof",proof);
+            doAnswer(call->{assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());try(AutoDlRuntimeSsh.Binding binding=runtime.require(call.getArgument(0))){assertEquals(trustedKey,binding.key);}return null;}).when(ssh).requireDeploymentIdentity(any());
+            when(ssh.open(any())).thenAnswer(call->{try(AutoDlRuntimeSsh.Binding binding=runtime.require(call.getArgument(0))){assertEquals(trustedKey,binding.key);}return connection;});
+            when(connection.hostKey()).thenReturn(trustedKey);when(connection.execute(anyString(),eq(180))).thenReturn("VLS_PROBE={\"contractVersion\":1,\"ready\":true}");
+            ReflectionTestUtils.setField(nodes,"ssh",ssh);ReflectionTestUtils.setField(nodes,"runtimeSsh",runtime);
+            health=new ComputeHealthRefreshService(jdbc,nodes,new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
+        }
+        @Override public void close(){runtime.destroy();}
     }
     @Test void officialTrainingEnqueuesFrozenTargetAndStopWaitsForItsArchiveBeforePowerOff() throws Exception {
         String id=accepted();running(id);

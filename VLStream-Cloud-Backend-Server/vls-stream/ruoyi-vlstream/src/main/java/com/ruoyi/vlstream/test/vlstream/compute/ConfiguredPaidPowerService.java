@@ -70,8 +70,8 @@ public class ConfiguredPaidPowerService {
                 supplier.submit(verified,stop?"stop":"start",operation);
                 jdbc.update("UPDATE vls_compute_paid_run SET "+column+"='ACCEPTED',error_code=NULL WHERE run_id=? AND "+column+"='SUBMITTED'",id);
             } catch(ComputeProviderException rejected) {
-                log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={} providerRequestId={}",
-                    id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic(),rejected.getProviderRequestId());
+                log.warn("Official power operation unresolved run={} action={} operation={} kind={} http={} diagnostic={} providerRequestId={} providerCode={}",
+                    id,stop?"stop":"start",operation,rejected.getKind(),rejected.getHttpStatus(),rejected.getDiagnostic(),rejected.getProviderRequestId(),rejected.getProviderCode());
                 if(!stop&&rejected.getKind()!=ComputeProviderException.Kind.UNKNOWN) {
                     boolean noStock=rejected.getKind()==ComputeProviderException.Kind.NO_STOCK;
                     // The original outbox retains the trusted start cause independently
@@ -95,7 +95,7 @@ public class ConfiguredPaidPowerService {
 
         ComputePowerProvider.Snapshot observed=supplier.status(verified);configured.recordPower(verified,observed);
         Instant now=Instant.now();
-        Map<String,Object> usageRow=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+        Map<String,Object> usageRow=usage(usage);
         if("RUNNING".equals(observed.power)) {
             if(usageRow.get("billing_start_at")==null) {
                 Instant event=validStartEvent(run,observed,now);
@@ -106,13 +106,15 @@ public class ConfiguredPaidPowerService {
                 if(runtimeSsh!=null&&runtimeSsh.dynamic(verified))try {runtimeSsh.prepare(id,verified);}
                 catch(Exception pending) {
                     connected=false;
+                    log.warn("Official SSH preparation pending run={} diagnostic={} failureType={}",id,
+                        AutoDlRuntimeSsh.safeDiagnostic(pending),AutoDlRuntimeSsh.safeFailureType(pending));
                     jdbc.update("UPDATE vls_compute_paid_run SET error_code='SSH_PREPARATION_PENDING' WHERE run_id=?",id);
-                    Map<String,Object> latest=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+                    Map<String,Object> latest=usage(usage);
                     Object started=latest.get("billing_start_at");
                     if(started instanceof java.sql.Timestamp&&System.currentTimeMillis()-((java.sql.Timestamp)started).getTime()>=30000L)
                         jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code='SSH_PREPARATION_FAILED' WHERE usage_id=?",usage);
                 }
-                if(connected)jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND state='STARTING'",id);
+                if(connected)jdbc.update("UPDATE vls_compute_paid_run SET state='RUNNING',error_code=NULL WHERE run_id=? AND (state='STARTING' OR (state='RUNNING' AND error_code='SSH_PREPARATION_PENDING'))",id);
             }
         } else if(ComputeBillingPolicy.computeStopConfirmed(verified,observed)) {
             if(runtimeSsh!=null)runtimeSsh.clear(verified);
@@ -129,13 +131,20 @@ public class ConfiguredPaidPowerService {
                     return;
                 }
                 ledger.confirmedRunning(usage,now,start,"PROVIDER_EVENT");
-                usageRow=jdbc.queryForMap("SELECT * FROM vls_compute_usage WHERE id=?",usage);
+                usageRow=usage(usage);
             }
             Instant start=((java.sql.Timestamp)usageRow.get("billing_start_at")).toInstant();
             Instant event=observed.providerStoppedAt;
             if(event!=null&&(event.isBefore(start)||event.isAfter(now)))event=null;
             ledger.confirmedStopped(usage,now,event==null?now:event,event==null?"OBSERVATION":"PROVIDER_EVENT");
         }
+    }
+    private Map<String,Object> usage(String id) {
+        return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=?",(rs,index)-> {
+            Map<String,Object> row=new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs,index);
+            row.put("billing_start_at",rs.getTimestamp("billing_start_at"));
+            row.put("billing_end_at",rs.getTimestamp("billing_end_at"));return row;
+        },id);
     }
     private void requireTrialStart(Map<String,Object> run,ComputeNode node) {
         String usage=text(run,"usage_id");

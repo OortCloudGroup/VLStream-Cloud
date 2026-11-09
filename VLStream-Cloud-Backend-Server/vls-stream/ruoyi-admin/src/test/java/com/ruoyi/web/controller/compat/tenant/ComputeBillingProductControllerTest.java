@@ -5,6 +5,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingPolicy;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePaidRunService;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeOriginalReleaseService;
 import com.ruoyi.vlstream.test.vlstream.compute.ComputePlatformAuthorization;
 import com.ruoyi.vlstream.test.vlstream.compute.billing.*;
 import org.junit.jupiter.api.*;
@@ -81,7 +82,7 @@ class ComputeBillingProductControllerTest {
         assertSame(payer,controller.identity().getData());
         controller.runs();controller.run("original-run");controller.stop("original-run");
         verify(authorization,times(4)).billingPayer(client);
-        verify(paid).list(payer);verify(paid).get("original-run",payer);verify(paid).stop("original-run",payer);
+        verify(paid).list(payer);verify(paid).detail("original-run",payer);verify(paid).stop("original-run",payer);
         assertEquals("13",payer.userId);assertEquals("subject-not-payer-id",payer.platformSubject);
         assertEquals("current-tenant",payer.tenantId);assertEquals("current-actor",payer.actorId);
         verifyNoInteractions(client,accounts,settlements,lifecycle);
@@ -127,7 +128,46 @@ class ComputeBillingProductControllerTest {
     }
     @Test void originalRunQueriesAndStopUseTheCurrentVerifiedPayer() {
         controller.run("original-run");controller.stop("original-run");
-        verify(paid).get("original-run",payer);verify(paid).stop("original-run",payer);verify(client,never()).capture(anyString(),anyString());
+        verify(paid).detail("original-run",payer);verify(paid,never()).get(anyString(),any());verify(paid).stop("original-run",payer);verify(client,never()).capture(anyString(),anyString());
+    }
+    @Test void optionalStopBodyAndLegacyJavaCallKeepOneRouteAndTheOriginalNoProofPath() throws Exception {
+        java.lang.reflect.Method mapped=ComputeBillingBindingController.class.getMethod("stop",String.class,ComputeOriginalReleaseService.Request.class);
+        org.springframework.web.bind.annotation.PostMapping route=mapped.getAnnotation(org.springframework.web.bind.annotation.PostMapping.class);
+        assertArrayEquals(new String[]{"/runs/{runId}/stop"},route.value());
+        assertFalse(mapped.getParameters()[1].getAnnotation(org.springframework.web.bind.annotation.RequestBody.class).required());
+        assertNull(ComputeBillingBindingController.class.getMethod("stop",String.class).getAnnotation(org.springframework.web.bind.annotation.PostMapping.class));
+        controller.stop("original-run",null);controller.stop("original-run");
+        verify(paid,times(2)).stop("original-run",payer);verify(paid,never()).stop(anyString(),any(),any());
+        verify(authorization,times(2)).billingPayer(client);verifyNoInteractions(client,accounts,settlements,lifecycle);
+    }
+    @Test void stopForwardsTheExactOriginalReleaseProofUsingOnlyTheCurrentVerifiedPayer() throws Exception {
+        properties.setMerchantId(null);properties.setApiKey(null);
+        ComputeOriginalReleaseService.Request proof=new ComputeOriginalReleaseService.Request();
+        proof.idempotencyKey="TEST_ONLY_ORIGINAL_RELEASE_KEY";proof.requestBody="TEST_ONLY_REVIEWED_BODY";
+        proof.requestHash="TEST_ONLY_REVIEWED_HASH";proof.reason="TEST_ONLY_OWNER_REVIEW";
+        com.fasterxml.jackson.databind.JsonNode receipt=json.readTree("{\"fixture\":\"TEST_ONLY_RECEIPT\"}");proof.releaseReceipt=receipt;
+        ComputePaidRunService.View expected=quotedView();when(paid.stop("original-run",payer,proof)).thenReturn(expected);
+        assertSame(expected,controller.stop("original-run",proof).getData());
+        verify(paid).stop(eq("original-run"),same(payer),same(proof));verify(paid,never()).stop(anyString(),any());
+        assertEquals("TEST_ONLY_ORIGINAL_RELEASE_KEY",proof.idempotencyKey);assertEquals("TEST_ONLY_REVIEWED_BODY",proof.requestBody);
+        assertEquals("TEST_ONLY_REVIEWED_HASH",proof.requestHash);assertEquals("TEST_ONLY_OWNER_REVIEW",proof.reason);assertSame(receipt,proof.releaseReceipt);
+        verify(authorization).billingPayer(client);verifyNoInteractions(client,accounts,settlements,lifecycle);
+    }
+    @Test void failedCurrentIdentityPreventsProofNullAndLegacyStopBeforePaidService() {
+        ServiceException denied=new ServiceException("Current authoritative self unavailable");
+        when(authorization.billingPayer(client)).thenThrow(denied);
+        assertSame(denied,assertThrows(ServiceException.class,()->controller.stop("original-run",new ComputeOriginalReleaseService.Request())));
+        assertSame(denied,assertThrows(ServiceException.class,()->controller.stop("original-run",null)));
+        assertSame(denied,assertThrows(ServiceException.class,()->controller.stop("original-run")));
+        verify(authorization,times(3)).billingPayer(client);verifyNoInteractions(client,accounts,paid,settlements,lifecycle);
+    }
+    @Test void incompleteProofRejectionCannotFallBackToTheNoProofStopPath() {
+        ComputeOriginalReleaseService.Request proof=new ComputeOriginalReleaseService.Request();
+        IllegalStateException denied=new IllegalStateException("Original release evidence required");
+        when(paid.stop("original-run",payer,proof)).thenThrow(denied);
+        assertSame(denied,assertThrows(IllegalStateException.class,()->controller.stop("original-run",proof)));
+        verify(paid).stop(eq("original-run"),same(payer),same(proof));verify(paid,never()).stop(anyString(),any());
+        verify(authorization).billingPayer(client);verifyNoInteractions(client,accounts,settlements,lifecycle);
     }
     @Test void archiveRecoveryQuoteUsesOnlyCurrentSelfAndTheOriginalRunWithoutFunding() throws Exception {
         com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture-recovery\"}");
@@ -174,7 +214,7 @@ class ComputeBillingProductControllerTest {
         assertNewOperationsDenied();
         controller.runs();controller.run("original-run");controller.stop("original-run");
         assertSame(payer,controller.identity().getData());
-        verify(paid).list(payer);verify(paid).get("original-run",payer);verify(paid).stop("original-run",payer);
+        verify(paid).list(payer);verify(paid).detail("original-run",payer);verify(paid).stop("original-run",payer);
         verifyNoInteractions(client,accounts,settlements,lifecycle);
     }
     @Test void invalidTrialDoesNotReplaceNormalSelfVerificationOrItsFailure() {
@@ -209,6 +249,19 @@ class ComputeBillingProductControllerTest {
     private ComputeBillingBindingController.AccountCheck consent(){
         ComputeBillingBindingController.AccountCheck request=new ComputeBillingBindingController.AccountCheck();
         request.acceptBillingPermissions=true;return request;
+    }
+    @Test void existingQuoteOriginIsCheckedBeforeAnyMerchantConfigWalletOrGrantRequest() throws Exception {
+        ComputePaidRunService.View quoted=quotedView();when(paid.get("quoted-run",payer)).thenReturn(quoted);
+        doThrow(new ServiceException("BILLING_ORIGIN_MISMATCH")).when(paid).requireQuoteOrigin("quoted-run",payer);
+        assertThrows(ServiceException.class,()->controller.accept("quoted-run",consent()));
+        verify(paid).requireQuoteOrigin("quoted-run",payer);
+        verify(paid,never()).accept(anyString(),any());verifyNoInteractions(client,accounts);
+    }
+    @Test void legacySessionCannotQueryNewConfigurationBeforeBindingSourceIsVerified() {
+        doThrow(new IllegalStateException("BILLING_ORIGIN_MISMATCH")).when(settlements).requireBoundOrigin("usage-test");
+        assertThrows(IllegalStateException.class,()->controller.bind("usage-test"));
+        verifyNoInteractions(client,accounts,lifecycle);
+        verify(settlements,never()).bindAcceptedUsage(anyString(),any(),any());
     }
     private org.junit.jupiter.api.function.Executable[] newOperations(){
         return new org.junit.jupiter.api.function.Executable[]{
@@ -249,8 +302,8 @@ class ComputeBillingProductControllerTest {
         row.put("quote_until_ms","0");row.put("hold_until_ms","0");row.put("maximum_run_seconds","60");
         BillingSnapshot snapshot=BillingSnapshot.read("{\"price_snapshot_id\":\"fixture\",\"conversion_version\":\"controller-fixture\",\"quota_unit\":\"quota\",\"approved_hourly_price\":\"13\",\"numerator\":\"500000\",\"denominator\":\"1\",\"effective_at\":\"2020-01-01T00:00:00Z\",\"valid_until\":\"2030-01-01T00:00:00Z\",\"accepted_rate\":{\"currency\":\"CNY\"}}",json);
         java.lang.reflect.Constructor<ComputePaidRunService.View> constructor=ComputePaidRunService.View.class.getDeclaredConstructor(
-            java.util.Map.class,BillingSnapshot.class,String.class,String.class,boolean.class,java.util.List.class,String.class);
+            java.util.Map.class,BillingSnapshot.class,String.class,String.class,boolean.class,java.util.List.class,String.class,ComputePaidRunService.BillingDiagnostics.class);
         constructor.setAccessible(true);
-        return constructor.newInstance(row,snapshot,"0","0",false,java.util.Collections.emptyList(),null);
+        return constructor.newInstance(row,snapshot,"0","0",false,java.util.Collections.emptyList(),null,null);
     }
 }

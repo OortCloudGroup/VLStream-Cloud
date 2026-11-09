@@ -79,6 +79,27 @@ test('messages alone cannot create a no-stock order notice', () => {
   }
 })
 
+test('confirmed original release is displayed as closed without guessing the old start result', () => {
+  for (const errorCode of ['OWNER_ADOPTED_ORIGINAL_RELEASE', 'ADMIN_ADOPTED_ORIGINAL_RELEASE']) {
+    const run = { state: 'CANCELLED', errorCode, chargedQuota: '0', remainingQuota: '0', startFailureCode: null }
+    assert.equal(paidRunErrorPresentation(run).type, 'success')
+    assert.match(paidRunErrorPresentation(run).message, /已取消.*已完成释放.*未扣费/)
+    assert.doesNotMatch(paidRunErrorPresentation(run).message, /状态确认暂未完成|当前资源被占用/)
+    for (const changed of [{ state: 'RELEASING' }, { remainingQuota: '1' }, { chargedQuota: '1' }, { remainingQuota: null }]) {
+      assert.equal(paidRunErrorPresentation({ ...run, ...changed }).type, 'warning')
+    }
+  }
+})
+
+test('unverified ledger origin pauses funds recovery without promising an upstream query', () => {
+  for (const startFailureCode of [undefined, 'NO_STOCK']) {
+    const presentation = paidRunErrorPresentation({ state: 'RELEASING', errorCode: 'BILLING_ORIGIN_MISMATCH', startFailureCode })
+    assert.match(presentation.message, /^原订单的账本来源.*资金恢复已暂停/)
+    assert.doesNotMatch(presentation.message, /系统会查询原单|已完成释放/)
+    if (startFailureCode) assert.match(presentation.message, /当前资源被占用/)
+  }
+})
+
 for (const errorCode of ['FUNDING_REJECTED', 'FUNDING_REQUIRES_REVIEW', 'RECOVERY_PENDING', 'RELEASE_RECEIPT_PENDING', 'REMAINING_AFTER_CONFIRMED_RELEASE']) {
   test(`current ${errorCode} remains first while the independent original start failure stays visible`, () => {
     for (const startFailureCode of ['NO_STOCK', 'START_REJECTED']) {

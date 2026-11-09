@@ -82,6 +82,99 @@ class ComputePaidRunIntegrationTest {
         actor.setVlsUserId("changed-actor");
         assertThrows(RuntimeException.class,()->runs.list(payer));
     }
+
+    @Test void ownedGetReturnsOnlySafeLocalBillingDiagnosticsWhileQuoteAndListStayCompact() throws Exception {
+        ComputePaidRunService.View quoted=runs.quote(1L,payer,config);assertNull(quoted.getBillingDiagnostics());
+        String id=quoted.getRunId();runs.accept(id,payer);
+        String usage=jdbc.queryForObject("SELECT usage_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id);
+        long started=System.currentTimeMillis()-10000L,ended=started+5000L,created=ended+1000L;
+        jdbc.update("UPDATE vls_compute_usage SET state='STOPPED',billing_start_at=?,billing_end_at=? WHERE id=?",new java.sql.Timestamp(started),new java.sql.Timestamp(ended),usage);
+        jdbc.update("UPDATE vls_compute_billing_session SET safety_state='STOP_CONFIRMED',metered_until_ms=?,last_running_ms=?,physical_stop_observed_ms=? WHERE usage_id=?",ended,ended,ended+1,usage);
+        String reference="vls:"+usage+":0",body="{\"private\":\"private-request-body\"}";
+        jdbc.update("INSERT INTO vls_compute_billing_slice(merchant_charge_id,usage_id,slice_sequence,interval_start_ms,interval_end_ms,is_tail,idempotency_key,request_json,request_hash,amount_text,remainder_numerator,remainder_denominator,state,error_code,lease_token,lease_until_ms,attempt_count,create_time) VALUES(?,?,0,?,?,1,'private-operation-key',?,?,'5','0','1','BLOCKED','HOLD_EXPIRED','private-lease-token',0,3,?)",
+            reference,usage,started,ended,body,ModelArtifactObjectStore.hash(body),new java.sql.Timestamp(created));
+        ComputeBillingSettlementService observed=spy(settlements);ReflectionTestUtils.setField(runs,"settlements",observed);
+        ComputePaidRunService.BillingDiagnostics diagnostic=runs.detail(id,payer).getBillingDiagnostics();assertNotNull(diagnostic);
+        assertEquals("STOPPED",diagnostic.getUsageState());assertEquals("STOP_CONFIRMED",diagnostic.getSafetyState());
+        assertEquals(Long.valueOf(started),diagnostic.getBillingStartMs());assertEquals(Long.valueOf(ended),diagnostic.getBillingEndMs());
+        assertEquals(Long.valueOf(ended),diagnostic.getMeteredUntilMs());assertEquals(Long.valueOf(ended),diagnostic.getLastRunningMs());assertEquals(Long.valueOf(ended+1),diagnostic.getStopObservedMs());
+        assertEquals(1,diagnostic.getSlices().size());Map<String,Object> slice=diagnostic.getSlices().get(0);
+        assertEquals(new HashSet<>(Arrays.asList("sliceSequence","intervalStartMs","intervalEndMs","tail","amount","state","errorCode","chargeId","ledgerEntryId","createdAtMs","leasePresent","leaseUntilMs","attemptCount")),slice.keySet());
+        assertEquals(Boolean.TRUE,slice.get("tail"));assertEquals(Boolean.TRUE,slice.get("leasePresent"));assertEquals("5",slice.get("amount"));assertEquals("HOLD_EXPIRED",slice.get("errorCode"));assertEquals(created,((Number)slice.get("createdAtMs")).longValue());
+        String safe=json.writeValueAsString(diagnostic);for(String secret:Arrays.asList(reference,"private-request-body","private-operation-key","private-lease-token"))assertFalse(safe.contains(secret));
+        assertTrue(runs.list(payer).stream().allMatch(value->value.getBillingDiagnostics()==null));verify(observed,times(1)).audit(usage);
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+
+    @Test void changedPayerTenantActorOrPlatformCannotReadBillingDiagnostics() throws Exception {
+        String id=accepted();ComputeBillingSettlementService observed=spy(settlements);ReflectionTestUtils.setField(runs,"settlements",observed);
+        for(String changed:Arrays.asList("payer","tenant","actor","platform")) {
+            ComputePlatformAuthorization.Context foreign=new ComputePlatformAuthorization.Context();foreign.setAuthorized(true);
+            foreign.setVlsUserId("actor".equals(changed)?"other-actor":"actor-test");foreign.setVlsTenantId("tenant".equals(changed)?"other-tenant":"tenant-test");foreign.setPlatformUserId("platform".equals(changed)?"other-platform":"platform-test");
+            when(inventory.identity()).thenReturn(foreign);
+            BillingPayer foreignPayer=BillingPayer.fromVerifiedSelf(foreign,json.readTree("payer".equals(changed)?"{\"id\":14}":"{\"id\":13}"));
+            assertThrows(RuntimeException.class,()->runs.detail(id,foreignPayer));verify(observed,never()).audit(anyString());
+        }
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    @Test void stopWithNoProofRetainsTheOrdinaryOwnerStop() {
+        String id=accepted();ComputeOriginalReleaseService original=mock(ComputeOriginalReleaseService.class);
+        ReflectionTestUtils.setField(runs,"originalRelease",original);
+        runs.stop(id,payer,(ComputeOriginalReleaseService.Request)null);
+        assertEquals(1,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=(SELECT usage_id FROM vls_compute_paid_run WHERE run_id=?)",Integer.class,id));
+        verifyNoInteractions(original);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    @Test void ownedStopForwardsTheOriginalProofAndReadsTheResultAfterReconciliation() {
+        String id=accepted();ComputeOriginalReleaseService original=mock(ComputeOriginalReleaseService.class);
+        ComputeOriginalReleaseService.Request proof=originalReleaseProof(id);ReflectionTestUtils.setField(runs,"originalRelease",original);
+        when(original.reconcileOwned(eq(id),same(payer),same(proof))).thenAnswer(call->{
+            assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLED',active_instance_key=NULL WHERE run_id=?",id);
+            return "fixture-adopted-intent";
+        });
+        ComputePaidRunService.View result=runs.stop(id,payer,proof);
+        assertEquals(id,result.getRunId());assertEquals("CANCELLED",result.getState());
+        verify(original).reconcileOwned(id,payer,proof);verify(original,never()).reconcile(anyString(),any());
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    @Test void stopProofCannotReachReconciliationForAnotherPayerTenantActorPlatformOrChangedIdentity() throws Exception {
+        String id=accepted();ComputeOriginalReleaseService original=mock(ComputeOriginalReleaseService.class);
+        ReflectionTestUtils.setField(runs,"originalRelease",original);ComputeOriginalReleaseService.Request proof=originalReleaseProof(id);
+        for(String changed:Arrays.asList("payer","tenant","actor","platform")) {
+            ComputePlatformAuthorization.Context foreign=new ComputePlatformAuthorization.Context();foreign.setAuthorized(true);
+            foreign.setVlsUserId("actor".equals(changed)?"other-actor":"actor-test");foreign.setVlsTenantId("tenant".equals(changed)?"other-tenant":"tenant-test");foreign.setPlatformUserId("platform".equals(changed)?"other-platform":"platform-test");
+            when(inventory.identity()).thenReturn(foreign);
+            BillingPayer foreignPayer=BillingPayer.fromVerifiedSelf(foreign,json.readTree("payer".equals(changed)?"{\"id\":14}":"{\"id\":13}"));
+            assertThrows(RuntimeException.class,()->runs.stop(id,foreignPayer,proof));
+        }
+        actor.setVlsUserId("changed-current-actor");when(inventory.identity()).thenReturn(actor);
+        assertThrows(RuntimeException.class,()->runs.stop(id,payer,proof));verifyNoInteractions(original);
+        assertEquals(0,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=(SELECT usage_id FROM vls_compute_paid_run WHERE run_id=?)",Integer.class,id));
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    @Test void rejectedIncompleteStopProofDoesNotFallBackToAnOrdinaryStop() {
+        String id=accepted();ComputeOriginalReleaseService original=mock(ComputeOriginalReleaseService.class);
+        ReflectionTestUtils.setField(runs,"originalRelease",original);ComputeOriginalReleaseService.Request incomplete=new ComputeOriginalReleaseService.Request();
+        IllegalArgumentException rejected=new IllegalArgumentException("Original release proof incomplete");
+        when(original.reconcileOwned(id,payer,incomplete)).thenThrow(rejected);
+        assertSame(rejected,assertThrows(IllegalArgumentException.class,()->runs.stop(id,payer,incomplete)));
+        assertEquals(0,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=(SELECT usage_id FROM vls_compute_paid_run WHERE run_id=?)",Integer.class,id));
+        assertEquals("FUNDING",runs.get(id,payer).getState());verify(original).reconcileOwned(id,payer,incomplete);
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    @Test void missingProofVerifierDoesNotFallBackToAnOrdinaryStop() {
+        String id=accepted();assertThrows(RuntimeException.class,()->runs.stop(id,payer,originalReleaseProof(id)));
+        assertEquals(0,jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=(SELECT usage_id FROM vls_compute_paid_run WHERE run_id=?)",Integer.class,id));
+        assertEquals(0,wallet.holdPosts);assertEquals(0,wallet.capturePosts);assertEquals(0,wallet.releasePosts);
+    }
+    private ComputeOriginalReleaseService.Request originalReleaseProof(String id) {
+        ComputePaidRunService.View run=runs.get(id,payer);
+        ComputeOriginalReleaseService.Request proof=new ComputeOriginalReleaseService.Request();proof.reason="OWNER_ORIGINAL_RELEASE";
+        proof.idempotencyKey="fixture-original-release-key";proof.requestBody=FundingContracts.release("vls-test","vls-release:"+run.getUsageId()+":final",payer.userId,run.getReserveQuota()).toString();
+        proof.requestHash=ModelArtifactObjectStore.hash(proof.requestBody);
+        proof.releaseReceipt=json.createObjectNode().put("hold_id","101").put("released_quota",run.getReserveQuota()).put("remaining_quota","0").put("held_quota","0").put("hold_status","RELEASED");
+        return proof;
+    }
     ComputeNode node(){return jdbc.queryForObject("SELECT * FROM vls_compute_node WHERE id=1",new BeanPropertyRowMapper<>(ComputeNode.class));}
     String accepted(){ComputePaidRunService.View quoted=runs.quote(1L,payer,config);assertEquals("QUOTED",quoted.getState());assertEquals(0,wallet.holdPosts);runs.accept(quoted.getRunId(),payer);return quoted.getRunId();}
     void start(String id){runs.tick(id);assertEquals("FUNDING",runs.get(id,payer).getState());assertNull(node().getPowerOperationId());runs.tick(id);assertEquals("STARTING",runs.get(id,payer).getState());power.poll(node(),supplier);runs.tick(id);assertEquals("RUNNING",runs.get(id,payer).getState());}

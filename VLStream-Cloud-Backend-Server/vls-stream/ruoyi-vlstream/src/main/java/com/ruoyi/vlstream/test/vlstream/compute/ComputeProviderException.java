@@ -7,20 +7,27 @@ public class ComputeProviderException extends RuntimeException {
     private final Integer httpStatus;
     private final String diagnostic;
     private final String providerRequestId;
+    private final String providerCode;
     public ComputeProviderException(Kind kind) { this(kind, null, "UNCLASSIFIED"); }
     public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic) {
         this(kind, httpStatus, diagnostic, null);
     }
     public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic, String providerRequestId) {
+        this(kind, httpStatus, diagnostic, providerRequestId, null);
+    }
+    public ComputeProviderException(Kind kind, Integer httpStatus, String diagnostic, String providerRequestId, String providerCode) {
         super(message(kind)); this.kind = kind; this.httpStatus = httpStatus;
         this.diagnostic = diagnostic != null && diagnostic.matches("(?:UNCLASSIFIED|BUSINESS_(?:BAD_REQUEST|AUTHORIZATION|NOT_FOUND|OTHER)|HTTP_ERROR|EMPTY_RESPONSE|INVALID_RESPONSE|TIMEOUT|DNS|TLS|TRANSPORT)") ? diagnostic : "UNCLASSIFIED";
         // AutoDL documents an opaque hexadecimal request_id for supplier-side tracing.
         this.providerRequestId = providerRequestId != null && providerRequestId.matches("[a-fA-F0-9]{16,64}") ? providerRequestId : null;
+        // The provider boundary must first exclude its active credential or echoed substrings.
+        this.providerCode = providerCode != null && providerCode.matches("[A-Za-z][A-Za-z0-9_]{0,63}") ? providerCode : null;
     }
     public Kind getKind() { return kind; }
     public Integer getHttpStatus() { return httpStatus; }
     public String getDiagnostic() { return diagnostic; }
     public String getProviderRequestId() { return providerRequestId; }
+    public String getProviderCode() { return providerCode; }
     public static Kind aliyunKind(String code) {
         if ("InvalidAccessKeyId.NotFound".equals(code) || "SignatureDoesNotMatch".equals(code)
             || "Forbidden.RAM".equals(code) || "Forbidden".equals(code)) return Kind.AUTHORIZATION;
