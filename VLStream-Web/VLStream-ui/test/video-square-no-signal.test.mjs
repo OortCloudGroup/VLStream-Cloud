@@ -22,6 +22,7 @@ function harness(path, values, dependencies = {}) {
     .replace(/^import\s+[\s\S]*?\s+from\s+['"][^'"]+['"];?\s*$/gm, '').replace(/import\.meta\.env/g, '__testEnv').replace('export default', 'return')
   const unmounts = [], mounts = [], events = [], routes = []
   const deps = { computed, reactive, ref, watch, nextTick, __testEnv: {}, location: { protocol: 'http:' }, ...components,
+    useDeviceRecording: () => ref(false),
     usePreviewReconnect: () => {}, // Timer lifecycle is covered by reconnect.test.mjs.
     getMqttSquareStatus() {}, getMqttSquareStreams() {}, createMqttSquarePreview() {},
     CAMERA_RTC_SOCKET_URL: 'wss://fixture.invalid', squareCameraRtcConfig: value => value,

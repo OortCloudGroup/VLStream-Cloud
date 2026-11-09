@@ -29,7 +29,6 @@
           </template>
           <!--  -->
           <CollapseToggle
-            v-if="showSidebar"
             class="sidebar-toggle"
             :is-expanded="!sidebarCollapsed"
             @toggle="toggleSidebar"
@@ -590,6 +589,13 @@ const menuRoutesMap = {
       meta: { title: '端侧智能', icon: '端侧智能' },
       children: [
         { path: '/algorithm-arrangement', meta: { title: '算法配置', icon: '算法配置' } }
+      ]
+    },
+    {
+      path: 'cloud-device-intelligence-menu',
+      meta: { title: '云端智能', icon: '云端智能' },
+      children: [
+        { path: '/cloud-algorithm-config', meta: { title: '算法配置', icon: '算法配置' } }
       ]
     },
     {
@@ -1358,7 +1364,21 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 /* 设备统计条：固定在侧栏底部，菜单滚动时不动 */
-.app-sidebar-stats { flex: 0 0 auto; margin: 8px 12px 16px; padding: 0 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; box-sizing: border-box; }
+.app-sidebar-stats {
+  flex: 0 0 auto;
+  margin: 8px 12px 16px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(237, 244, 255, 0.58));
+  backdrop-filter: blur(20px) saturate(145%);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 6px 20px rgba(45, 65, 110, 0.07);
+  box-sizing: border-box;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .app-sidebar-stats { background: #f5f8fd; }
+}
 .app-sidebar-stats:empty { display: none; }
 .app-sidebar-stats .device-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 36px; gap: 10px; text-align: left; }

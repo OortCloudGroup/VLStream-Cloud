@@ -94,9 +94,7 @@
         </div>
       </el-button>
       <span class="toolbar-divider" aria-hidden="true"></span>
-      <el-button class="layout-btn" :aria-label="$tp(panelSide === 'left' && panelCollapsed ? '展开左侧设备栏' : '收起左侧设备栏')" :title="$tp(panelSide === 'left' && panelCollapsed ? '展开左侧设备栏' : '收起左侧设备栏')" :aria-expanded="panelSide === 'left' && !panelCollapsed" aria-controls="square-device-catalog" @click="$emit('collapse-panel', 'left')"><img :src="panelLeftIcon" alt="" class="layout-mode-icon" /></el-button>
-      <span class="layout-btn panel-decoration" aria-hidden="true"><img :src="panelBottomIcon" alt="" class="layout-mode-icon" /></span>
-      <el-button class="layout-btn" :aria-label="$tp(panelSide === 'right' && panelCollapsed ? '展开右侧设备栏' : '收起右侧设备栏')" :title="$tp(panelSide === 'right' && panelCollapsed ? '展开右侧设备栏' : '收起右侧设备栏')" :aria-expanded="panelSide === 'right' && !panelCollapsed" aria-controls="square-device-catalog" @click="$emit('collapse-panel', 'right')"><img :src="panelRightIcon" alt="" class="layout-mode-icon" /></el-button>
+      <el-button class="layout-btn" :aria-label="$tp(panelCollapsed ? '展开设备栏' : '收起设备栏')" :title="$tp(panelCollapsed ? '展开设备栏' : '收起设备栏')" :aria-expanded="!panelCollapsed" aria-controls="square-device-catalog" @click="$emit('collapse-panel', 'right')"><img :src="panelRightIcon" alt="" class="layout-mode-icon" /></el-button>
       <el-button
         size="small"
         @click="$emit('toggle-fullscreen')"
@@ -132,8 +130,6 @@ import fourLayoutIcon from '@/assets/mastergo/video-square/layout-four.svg'
 import toolbarFullscreenIcon from '@/assets/mastergo/video-square/toolbar-fullscreen.svg'
 import chevronDownIcon from '@/assets/mastergo/video-square/chevron-down.svg'
 import videoBadgeIcon from '@/assets/mastergo/video-square/video-badge.svg'
-import panelLeftIcon from '@/assets/mastergo/video-square/panel-left.svg'
-import panelBottomIcon from '@/assets/mastergo/video-square/panel-bottom.svg'
 import panelRightIcon from '@/assets/mastergo/video-square/panel-right.svg'
 
 // Import PNG
@@ -193,7 +189,6 @@ const handleLayoutSelect = (count) => {
 <style scoped>
 .design-toolbar-icon { display: block; width: 24px; height: 24px; background: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
 .default-presentation-icon { width: 18px; height: 18px; }
-.panel-decoration { display: inline-flex; align-items: center; justify-content: center; }
 .close-all-videos-btn :deep(span) { gap: 2px; }
 /* MasterGo 309:32968 — 绿色「视频」徽标：高 24、r4、padding 0 8、gap 4、文字 12px 白 */
 .video-badge {
