@@ -9,6 +9,7 @@
 package com.ruoyi.web.controller.workflow;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.annotation.RepeatSubmit;
 import com.ruoyi.common.core.controller.BaseController;
@@ -64,7 +65,7 @@ public class WorkOrderController extends BaseController {
      * @return
      */
     @GetMapping("/ownWorkOrderList")
-    @SaCheckPermission("workflow:workorder:selectPageOwnWorkOrderList")
+    @SaCheckPermission(value = {"active-safety:workorder:my", "workflow:workorder:selectPageOwnWorkOrderList"}, mode = SaMode.OR)
     public TableDataInfo<WorkOrderVo> selectPageOwnWorkOrderList(ProcessQuery processQuery, WorkOrderBo workOrderBo,
                                                                  PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
@@ -80,7 +81,7 @@ public class WorkOrderController extends BaseController {
      * @return
      */
     @GetMapping("/todoWorkOrderList")
-    @SaCheckPermission("workflow:workorder:selectPageTodoWorkOrderList")
+    @SaCheckPermission(value = {"active-safety:workorder:pending", "workflow:workorder:selectPageTodoWorkOrderList"}, mode = SaMode.OR)
     public TableDataInfo<WorkOrderVo> selectPageTodoWorkOrderList(ProcessQuery processQuery, WorkOrderBo workOrderBo,
                                                                   PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
@@ -96,7 +97,7 @@ public class WorkOrderController extends BaseController {
      * @return
      */
     @GetMapping("/finishedWorkOrderList")
-    @SaCheckPermission("workflow:workorder:selectPageFinishedWorkOrderList")
+    @SaCheckPermission(value = {"active-safety:workorder:completed", "workflow:workorder:selectPageFinishedWorkOrderList"}, mode = SaMode.OR)
     public TableDataInfo<WorkOrderVo> selectPageFinishedWorkOrderList(ProcessQuery processQuery,
                                                                       WorkOrderBo workOrderBo,
                                                                       PageQuery pageQuery) {
@@ -110,7 +111,7 @@ public class WorkOrderController extends BaseController {
      * @param processQuery workflow object
      * @param pageQuery parameter
      */
-    @SaCheckPermission("workflow:workorder:claimWorkOrderList")
+    @SaCheckPermission(value = {"active-safety:workorder:claimable", "workflow:workorder:claimWorkOrderList"}, mode = SaMode.OR)
     @GetMapping(value = "/claimWorkOrderList")
     public TableDataInfo<WorkOrderVo> claimWorkOrderList(ProcessQuery processQuery, WorkOrderBo workOrderBo,
                                                          PageQuery pageQuery) {

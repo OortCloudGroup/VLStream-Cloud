@@ -9,6 +9,8 @@
 package com.ruoyi.web.controller.workflow;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.annotation.RepeatSubmit;
@@ -31,6 +33,7 @@ import com.ruoyi.workflow.domain.vo.WfModelVo;
 import com.ruoyi.workflow.service.IReModeJsonService;
 import com.ruoyi.workflow.service.IWfCategoryService;
 import com.ruoyi.workflow.service.IWfModelService;
+import com.ruoyi.workflow.service.WorkOrderPageQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.repository.Model;
@@ -60,6 +63,7 @@ public class WfModelController extends BaseController {
     private final IWfModelService modelService;
     private final IWfCategoryService categoryService;
     private final IReModeJsonService reModeJsonService;
+    private final WorkOrderPageQueryService pageQueries;
 
 
     /**
@@ -105,10 +109,15 @@ public class WfModelController extends BaseController {
      * @param modelBo workflowmodelobject
      * @param pageQuery parameter
      */
-    @SaCheckPermission("workflow:model:list")
+    @SaCheckPermission(value = {"workflow:model:list", "active-safety:events:list",
+        "active-safety:workorder:my", "active-safety:workorder:pending", "active-safety:workorder:completed",
+        "active-safety:workorder:claimable", "active-safety:settings:secure", "active-safety:settings:workorder",
+        "workflow:workorder:selectPageOwnWorkOrderList", "workflow:workorder:selectPageTodoWorkOrderList",
+        "workflow:workorder:selectPageFinishedWorkOrderList", "workflow:workorder:claimWorkOrderList"}, mode = SaMode.OR)
     @GetMapping("/list")
     public TableDataInfo<WfModelVo> list(WfModelBo modelBo, PageQuery pageQuery) {
-        return modelService.list(modelBo, pageQuery);
+        return StpUtil.hasPermission("workflow:model:list")
+            ? modelService.list(modelBo, pageQuery) : pageQueries.modelOptions(modelBo, pageQuery);
     }
 
     /**

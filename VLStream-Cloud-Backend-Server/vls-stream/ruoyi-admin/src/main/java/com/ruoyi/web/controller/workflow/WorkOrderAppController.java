@@ -9,6 +9,8 @@
 package com.ruoyi.web.controller.workflow;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
+import cn.dev33.satoken.stp.StpUtil;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.annotation.RepeatSubmit;
 import com.ruoyi.common.core.controller.BaseController;
@@ -21,6 +23,7 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.workflow.domain.bo.WorkOrderAppBo;
 import com.ruoyi.workflow.domain.vo.WorkOrderAppVo;
 import com.ruoyi.workflow.service.IWorkOrderAppService;
+import com.ruoyi.workflow.service.WorkOrderPageQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -44,14 +47,20 @@ import java.util.List;
 public class WorkOrderAppController extends BaseController {
 
     private final IWorkOrderAppService iWorkOrderAppService;
+    private final WorkOrderPageQueryService pageQueries;
 
     /**
      * Query work order list
      */
-    @SaCheckPermission("WorkOrder:app:list")
+    @SaCheckPermission(value = {"WorkOrder:app:list", "active-safety:events:list",
+        "active-safety:workorder:my", "active-safety:workorder:pending", "active-safety:workorder:completed",
+        "active-safety:workorder:claimable", "active-safety:settings:secure", "active-safety:settings:workorder",
+        "workflow:workorder:selectPageOwnWorkOrderList", "workflow:workorder:selectPageTodoWorkOrderList",
+        "workflow:workorder:selectPageFinishedWorkOrderList", "workflow:workorder:claimWorkOrderList"}, mode = SaMode.OR)
     @GetMapping("/list")
     public R<List<WorkOrderAppVo>> list(WorkOrderAppBo bo, PageQuery pageQuery) {
-        return R.ok(iWorkOrderAppService.queryPageList(bo, pageQuery));
+        return R.ok(StpUtil.hasPermission("WorkOrder:app:list")
+            ? iWorkOrderAppService.queryPageList(bo, pageQuery) : pageQueries.appOptions(bo, pageQuery));
     }
 
     /**
