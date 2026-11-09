@@ -36,7 +36,9 @@ export function getPlatformOrigin(fallback = 'https://workup.oortcloudsmart.com:
 const PLATFORM_BASE_URL = getPlatformOrigin()
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || `${PLATFORM_BASE_URL}/bus/apaas-web/loginPage/index.html`
 const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/dashboard'
-const OORTCODEX_PRICING_URL = import.meta.env.VITE_OORTCODEX_PRICING_URL || 'https://oortcodex.oortcloudsmart.com/pricing.html'
+// 企业版订阅页。地址可被 VITE_OORTCODEX_PRICING_URL 覆盖；部署环境如配置了该变量需同步更新，
+// 否则运行时仍会跳旧地址。accessToken 由 searchParams 追加，会自动排在 #hash 之前。
+const OORTCODEX_PRICING_URL = import.meta.env.VITE_OORTCODEX_PRICING_URL || 'https://workup.oortcloudsmart.com:2443/bus/apaas-web/oortcodexweb/pricing/index.html#enterprise-subscription'
 const APP_NAME = import.meta.env.VITE_PLATFORM_APP_NAME || 'VLStream'
 /**
  * need to ?query:

@@ -5,7 +5,7 @@
       <div class="hub-toolbar">
         <el-input v-model="keyword" :placeholder="$tp('搜索 Model Hub 模型')" clearable :prefix-icon="Search" @input="scheduleSearch" @keyup.enter="search" />
         <el-select v-if="categories.length" v-model="category" clearable :placeholder="$tp('全部分类')" class="hub-categories" @change="search">
-          <el-option v-for="item in categories" :key="item.category" :value="item.category" :label="`${item.category} (${item.count})`" />
+          <el-option v-for="item in categories" :key="item.category" :value="item.category" :label="`${categoryText(item.category)} (${item.count})`" />
         </el-select>
       </div>
     </div>
@@ -16,13 +16,13 @@
       <el-empty v-if="!loading && !error && !models.length" :description="keyword ? $tp('没有匹配的 Model Hub 模型') : $tp('暂无公开模型')" />
       <div class="hub-grid">
         <article v-for="model in models" :key="model.uid" class="hub-card">
-          <ModelHubCover class="hub-cover" :resource="model" :alt="model.name || model.alias || 'Model Hub'" />
+          <ModelHubCover class="hub-cover" :resource="model" :alt="modelName(model)" />
           <div class="hub-card-body">
-            <h3 :title="model.name || model.alias">{{ model.name || model.alias }}</h3>
-            <p class="hub-meta" :title="[model.category, model.author_name].filter(Boolean).join(' · ')">{{ model.category || $tp('未分类') }}<span v-if="model.author_name"> · {{ model.author_name }}</span></p>
+            <h3 :title="modelName(model)">{{ modelName(model) }}</h3>
+            <p class="hub-meta" :title="[categoryText(model.category), model.author_name].filter(Boolean).join(' · ')">{{ categoryText(model.category) }}<span v-if="model.author_name"> · {{ model.author_name }}</span></p>
             <div class="hub-description-area">
-              <p class="hub-description">{{ model.description || $tp('暂无模型描述') }}</p>
-              <el-button v-if="model.description" class="description-toggle" link type="primary" @click="descriptionModel = model">{{ $tp('查看详情') }}</el-button>
+              <p class="hub-description">{{ modelText(model.description) || $tp('暂无模型描述') }}</p>
+              <el-button v-if="modelText(model.description)" class="description-toggle" link type="primary" @click="descriptionModel = model">{{ $tp('查看详情') }}</el-button>
             </div>
             <div class="hub-file-summary">
               <p class="hub-file-type">{{ fileType(model.file_path) }}<span v-if="model.file_size"> · {{ formatSize(model.file_size) }}</span></p>
@@ -37,11 +37,11 @@
     <div v-if="total > 12" class="hub-footer">
       <el-pagination v-model:current-page="page" :page-size="12" :total="total" :pager-count="5" :disabled="loading" layout="total, prev, pager, next" background @current-change="load" />
     </div>
-    <el-dialog :model-value="Boolean(descriptionModel)" class="model-description-dialog" :title="descriptionModel?.name || descriptionModel?.alias" width="min(560px, 92vw)" append-to-body @update:model-value="descriptionModel = null">
-      <p class="full-model-description">{{ descriptionModel?.description }}</p>
+    <el-dialog :model-value="Boolean(descriptionModel)" class="model-description-dialog" :title="modelName(descriptionModel)" width="min(560px, 92vw)" append-to-body @update:model-value="descriptionModel = null">
+      <p class="full-model-description">{{ modelText(descriptionModel?.description) }}</p>
       <template #footer><el-button @click="descriptionModel = null">{{ $tp('关闭') }}</el-button></template>
     </el-dialog>
-    <el-dialog v-model="filesVisible" class="locale-dialog locale-dialog--wide" :title="$tp('{value0} · 文件', { value0: activeModel?.name || $tp('模型') })" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
+    <el-dialog v-model="filesVisible" class="locale-dialog locale-dialog--wide" :title="$tp('{value0} · 文件', { value0: modelName(activeModel) })" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
       <div class="file-toolbar"><el-button :disabled="!filePath || fileLoading || downloading" @click="parentDirectory">{{ $tp('上一级') }}</el-button><span>{{ filePath || '/' }}</span></div>
       <div v-if="fileError" class="hub-error"><el-alert :title="fileError" type="error" :closable="false" /><el-button v-if="/登录|身份|401|4004/.test(fileError)" @click="login">{{ $tp('重新登录') }}</el-button></div>
       <el-table v-loading="fileLoading" :data="files" scrollbar-always-on :empty-text="$tp('当前目录没有文件')">
@@ -55,9 +55,9 @@
 </template>
 
 <script setup>
-import { translatePhrase as uiText } from '@/i18n'
+import { currentLocale, translatePhrase as uiText } from '@/i18n'
 
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import ModelHubCover from './ModelHubCover.vue'
@@ -65,6 +65,26 @@ import { getPublicHubModels, getHubCategories, getHubFiles, downloadHubFile } fr
 import { getOortCloudSession } from '@/utils/oortCloudSession'
 import { isMultiTenantMode, redirectToPlatformLogin } from '@/utils/platformSession'
 import { startModelHubLogin } from '@/utils/modelHubAuth'
+import englishModels from '@/i18n/modelHub/en.json'
+import { translateModelHubText } from '@/utils/modelHubTranslation.mjs'
+
+const translationLoaders = import.meta.glob('../../../i18n/modelHub/*.json', { import: 'default' })
+const translations = shallowRef(englishModels)
+let translationSequence = 0
+watch(currentLocale, async locale => {
+  const id = ++translationSequence
+  translations.value = englishModels
+  const language = locale.split('-')[0]
+  const loader = translationLoaders[`../../../i18n/modelHub/${language}.json`]
+  if (language === 'zh' || language === 'en' || !loader) return
+  try {
+    const dictionary = await loader()
+    if (id === translationSequence) translations.value = dictionary
+  } catch { /* Keep the bundled English fallback when a locale chunk is unavailable. */ }
+}, { immediate: true, flush: 'sync' })
+const modelText = (value, fallback = '') => translateModelHubText(value, currentLocale.value, translations.value, englishModels, fallback)
+const modelName = model => modelText(model?.name, modelText(model?.alias, uiText('未命名模型')))
+const categoryText = value => modelText(value, uiText('未分类'))
 
 const emit = defineEmits(['count', 'busy'])
 const keyword = ref(''), page = ref(1), total = ref(0), models = ref([]), loading = ref(false), error = ref('')
@@ -143,7 +163,7 @@ async function loadCategories() {
   } catch (e) { categoryError.value = e.message || '分类暂不可用，仍可浏览公开模型' }
 }
 onMounted(() => { load(); loadCategories() })
-onBeforeUnmount(() => { sequence++; fileSequence++; clearTimeout(timer) })
+onBeforeUnmount(() => { sequence++; fileSequence++; translationSequence++; clearTimeout(timer) })
 </script>
 
 <style scoped>

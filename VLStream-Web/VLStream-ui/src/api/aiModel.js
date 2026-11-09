@@ -65,6 +65,8 @@ export function getAiModelList(data = {}) {
     pageSize: data.pageSize || data.pagesize || 12,
     pagesize: data.pagesize || data.pageSize || 12,
     status: data.status !== undefined ? data.status : 0,
+    // 仅查询当前用户自己添加的模型。
+    me_only: true,
     keyword: data.keyword || data.name || ''
   }))
 }

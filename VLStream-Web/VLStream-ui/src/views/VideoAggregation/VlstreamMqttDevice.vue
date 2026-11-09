@@ -118,30 +118,31 @@
           <el-descriptions-item :label="$tp('位置坐标')" :span="2">{{ deviceLocationText(detailDevice) }}</el-descriptions-item>
           <el-descriptions-item :label="$tp('设备管理后台')" :span="2">
             <div class="remote-management-entry">
-              <template v-if="remoteManagementVisible">
-                <el-tag v-if="!remoteManagementStatus?.featureEnabled" type="info">{{ $tp('功能未启用') }}</el-tag>
-                <el-tag v-else-if="remoteManagementStatus?.configured"
-                  :type="remoteManagementReady ? 'success' : 'warning'">
+              <div class="remote-management-toolbar">
+                <span v-if="remoteManagementVisible" class="remote-management-status"
+                  :class="{ 'is-ready': remoteManagementReady, 'is-warning': remoteManagementStatus?.featureEnabled && remoteManagementStatus?.configured && !remoteManagementReady }">
+                  <span class="remote-management-status-dot" aria-hidden="true" />
                   {{ remoteManagementReady ? $tp('远程管理可用') : remoteManagementBlockReason }}
-                </el-tag>
-                <el-tag v-else type="info">{{ $tp('尚未激活') }}</el-tag>
-              </template>
-              <el-button v-if="remoteManagementStatus?.featureEnabled" type="primary"
-                :loading="remoteManagementOpening" :disabled="!remoteManagementReady"
-                @click="openRemoteManagement"> {{ $tp('打开管理后台') }} </el-button>
-              <el-button v-if="remoteManagementStatus?.featureEnabled" :loading="remoteManagementActionBusy"
-                @click="issueRemoteManagementEnrollment">
-                {{ remoteManagementStatus?.configured ? $tp('重新生成激活码') : $tp('生成激活码') }}
-              </el-button>
-              <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
-                :loading="remoteManagementActionBusy"
-                @click="changeRemoteManagementState(remoteManagementStatus?.desiredState === 'DISABLED' ? 'ENABLED' : 'DISABLED')">
-                {{ remoteManagementStatus?.desiredState === 'DISABLED' ? $tp('启用') : $tp('停用') }}
-              </el-button>
-              <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
-                type="danger" plain :loading="remoteManagementActionBusy"
-                @click="changeRemoteManagementState('REVOKED')"> {{ $tp('吊销') }} </el-button>
-              <span class="snapshot-note">{{ $tp('通过短期安全会话访问，登录仍使用 IPC 自身账号。') }}</span>
+                </span>
+                <div v-if="remoteManagementStatus?.featureEnabled" class="remote-management-actions">
+                  <el-button type="primary" link
+                    :loading="remoteManagementOpening" :disabled="!remoteManagementReady"
+                    @click="openRemoteManagement"> {{ $tp('打开管理后台') }} </el-button>
+                  <el-button type="primary" link :loading="remoteManagementActionBusy"
+                    @click="issueRemoteManagementEnrollment">
+                    {{ remoteManagementStatus?.configured ? $tp('重新生成激活码') : $tp('生成激活码') }}
+                  </el-button>
+                  <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
+                    type="primary" link :loading="remoteManagementActionBusy"
+                    @click="changeRemoteManagementState(remoteManagementStatus?.desiredState === 'DISABLED' ? 'ENABLED' : 'DISABLED')">
+                    {{ remoteManagementStatus?.desiredState === 'DISABLED' ? $tp('启用') : $tp('停用') }}
+                  </el-button>
+                  <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
+                    type="danger" link :loading="remoteManagementActionBusy"
+                    @click="changeRemoteManagementState('REVOKED')"> {{ $tp('吊销') }} </el-button>
+                </div>
+              </div>
+              <span class="remote-management-note" :title="$tp('通过短期安全会话访问，登录仍使用 IPC 自身账号。')">{{ $tp('通过短期安全会话访问，登录仍使用 IPC 自身账号。') }}</span>
             </div>
           </el-descriptions-item>
         </el-descriptions>
@@ -156,8 +157,8 @@
             <span class="snapshot-note">{{ $tp('每 5 秒自动刷新') }}</span>
           </div>
           <div>
-            <el-button size="small" type="primary" :disabled="Boolean(modelBusy)" @click="openModelDeploy">{{ detailDevice?.online ? $tp('模型下发') : $tp('查看模型') }}</el-button>
-            <el-button size="small" :loading="modelBusy === 'query'" :disabled="Boolean(modelBusy)" @click="refreshModelSection(true)">{{ $tp('刷新') }}</el-button>
+            <el-button type="primary" :disabled="Boolean(modelBusy)" @click="openModelDeploy">{{ detailDevice?.online ? $tp('模型下发') : $tp('查看模型') }}</el-button>
+            <el-button :loading="modelBusy === 'query'" :disabled="Boolean(modelBusy)" @click="refreshModelSection(true)">{{ $tp('刷新') }}</el-button>
           </div>
         </div>
         <el-alert v-if="modelTasksError" :title="modelTasksError" type="warning" :closable="false" show-icon />
@@ -751,7 +752,18 @@ onBeforeUnmount(() => { modelSession++; clearInterval(modelPollTimer) })
 .device-deployment-status { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; color: #e6a23c; font-size: 12px; }
 .device-deployment-row { overflow-wrap: anywhere; }
 .firmware-version-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.remote-management-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.remote-management-entry { display: flex; align-items: center; gap: 16px; width: 100%; }
+.remote-management-toolbar { display: flex; flex-shrink: 0; align-items: center; gap: 16px; }
+.remote-management-status { display: inline-flex; align-items: center; gap: 6px; color: var(--el-text-color-secondary); font-size: 13px; line-height: 22px; }
+.remote-management-status.is-ready { color: var(--el-color-success); }
+.remote-management-status.is-warning { color: var(--el-color-warning-dark-2); }
+.remote-management-status-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.remote-management-actions { display: flex; align-items: center; gap: 20px; }
+.remote-management-status + .remote-management-actions { padding-inline-start: 16px; border-inline-start: 1px solid var(--el-border-color-lighter); }
+/* Global dialog hover rules add button chrome even to links; keep these actions text-only. */
+.remote-management-entry .remote-management-actions > .el-button.is-link { margin: 0; padding: 2px 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-weight: 400; }
+.remote-management-actions > .el-button.is-link:not(.is-disabled):hover { text-decoration: underline; text-underline-offset: 3px; }
+.remote-management-note { flex: 1; width: 0; min-width: 0; color: var(--el-text-color-secondary); font-size: 12px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .enrollment-details { margin-top: 16px; }
 .snapshot-note { color: #909399; font-size: 12px; }
 h4 { margin: 18px 0 10px; }

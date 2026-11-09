@@ -159,7 +159,18 @@ watch(activeTab, (tab) => {
 }
 
 .cloud-tabs :deep(.el-tabs__active-bar) {
+  background-color: transparent;
+}
+
+.cloud-tabs :deep(.el-tabs__active-bar)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 30px;
+  height: 100%;
+  border-radius: 2px;
   background-color: #1a53ff;
+  transform: translateX(-50%);
 }
 
 .placeholder-panel {
