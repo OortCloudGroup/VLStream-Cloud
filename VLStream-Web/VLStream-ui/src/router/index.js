@@ -336,6 +336,12 @@ const routes = [
         meta: { title: '编辑场景', icon: '编辑场景' }
       },
       {
+        path: '/cloud-algorithm-config',
+        name: 'CloudAlgorithmConfig',
+        component: () => import('@/views/DecisionAI/CloudAlgorithmConfig.vue'),
+        meta: { title: '算法配置', icon: '算法配置' }
+      },
+      {
         path: '/algorithm-arrangement',
         name: 'AlgorithmArrangement',
         component: () => import('@/views/DecisionAI/AlgorithmArrangement.vue'),

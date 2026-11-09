@@ -18,6 +18,7 @@ const existingPermissions = {
 }
 
 export const pagePaths = [
+  '/cloud-algorithm-config',
   '/video-square', '/video-playback', '/device-management', '/vlstream/device',
   '/isup/isupDevice', '/ehome/device', '/rtsp/rtspDevice', '/onvif/cameraManage',
   '/gbmanger/device', '/gbmanger/cloudRecord', '/gbmanger/streamPush', '/gbmanger/streamProxy',
