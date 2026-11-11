@@ -30,6 +30,33 @@ class OpenAiVisionClientTest {
 	private final OpenAiVisionClient client = new OpenAiVisionClient(apiKeyCipher);
 
 	@Test
+	void readsRealCataloguePathWithStoredKeyAndDeduplicatesModels() throws Exception {
+		com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(
+			new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+		java.util.concurrent.atomic.AtomicReference<String> authorization = new java.util.concurrent.atomic.AtomicReference<>();
+		server.createContext("/v1/models", exchange -> {
+			authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
+			byte[] body = "{\"data\":[{\"id\":\"vision-a\"},{\"id\":\"vision-b\"},{\"id\":\"vision-a\"}]}".getBytes(StandardCharsets.UTF_8);
+			exchange.sendResponseHeaders(200, body.length);
+			try (java.io.OutputStream output = exchange.getResponseBody()) { output.write(body); }
+		});
+		server.start();
+		try {
+			LlmProvider provider = new LlmProvider();
+			provider.setEnabled(true);
+			provider.setApiKeyCiphertext("ciphertext");
+			when(apiKeyCipher.decrypt("ciphertext")).thenReturn("fixture-key");
+			for (String suffix : new String[] {"/v1", "/v1/chat/completions"}) {
+				provider.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + suffix);
+				assertEquals(java.util.Arrays.asList("vision-a", "vision-b"), client.listModels(provider));
+				assertEquals("Bearer fixture-key", authorization.get());
+			}
+			provider.setEnabled(false);
+			assertThrows(ServiceException.class, () -> client.listModels(provider));
+		} finally { server.stop(0); }
+	}
+
+	@Test
 	void defaultsToCompanyRelayAndVisionModel() {
 		assertEquals("https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1/chat/completions",
 			properties.getBaseUrl());

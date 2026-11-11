@@ -182,6 +182,7 @@ import {
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
+import { syncLlmAuthorization } from '@/utils/llmAuthorization'
 import PlatformHeaderRight from './PlatformHeaderRight.vue'
 import RightInfoBar from './RightInfoBar.vue'
 import PlatformAppsEntry from './platform-header/PlatformAppsEntry.vue'
@@ -246,6 +247,20 @@ const currentTenant = ref({
 
 const tenantList = ref([])
 const tenantMode = ref('loading')
+
+let llmSyncGeneration = 0
+let layoutActive = true
+const llmSessionEvents = ['modelHubAuthChanged', 'tokenUpdated', 'userTokenUpdated', 'crossSystemTokenUpdated', 'autoCrossSystemTokenUpdated']
+const syncDefaultLlmAuthorization = () => {
+  const generation = ++llmSyncGeneration
+  const mode = tenantMode.value
+  if (localEventRoute.value || !['single', 'multi'].includes(mode)) return
+  void syncLlmAuthorization(mode, {
+    isCurrent: () => layoutActive && generation === llmSyncGeneration
+      && tenantMode.value === mode && !localEventRoute.value
+  }).catch(() => { /* Model management displays the saved state and offers an explicit retry. */ })
+}
+watch(localEventRoute, syncDefaultLlmAuthorization)
 
 // SpringBlade current userinterface new user and info.
 const loadBladeUserInfo = async () => {
@@ -1003,6 +1018,9 @@ onMounted(async () => {
   window.addEventListener('userTokenUpdated', handleUserTokenUpdated)
   window.addEventListener('platform-logo-changed', loadPlatformLogo)
 
+  llmSessionEvents.forEach(name => window.addEventListener(name, syncDefaultLlmAuthorization))
+  syncDefaultLlmAuthorization()
+
   console.log('🎬 组件挂载完成')
 
   // windowobject,
@@ -1012,6 +1030,9 @@ onMounted(async () => {
 
 // component eventlistener
 onUnmounted(() => {
+  layoutActive = false
+  llmSyncGeneration++
+  llmSessionEvents.forEach(name => window.removeEventListener(name, syncDefaultLlmAuthorization))
   window.removeEventListener('tokenUpdated', handleTokenUpdate)
   window.removeEventListener('tokenInvalid', handleTokenInvalid)
   window.removeEventListener('crossSystemTokenUpdated', handleCrossSystemTokenUpdate)
@@ -1367,7 +1388,7 @@ const handleUserTokenUpdated = async (event) => {
 .app-sidebar-stats {
   flex: 0 0 auto;
   margin: 8px 12px 16px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: 0;
   border-radius: 18px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(237, 244, 255, 0.58));
@@ -1380,9 +1401,9 @@ const handleUserTokenUpdated = async (event) => {
   .app-sidebar-stats { background: #f5f8fd; }
 }
 .app-sidebar-stats:empty { display: none; }
-.app-sidebar-stats .device-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
-.app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 36px; gap: 10px; text-align: left; }
-.app-sidebar-stats .stat-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.app-sidebar-stats .device-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 30px; gap: 8px; text-align: left; }
+.app-sidebar-stats .stat-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
 .app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }
 .app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: #7a8399; white-space: nowrap; }

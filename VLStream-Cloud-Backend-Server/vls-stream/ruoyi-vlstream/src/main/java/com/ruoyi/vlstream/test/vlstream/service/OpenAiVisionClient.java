@@ -37,6 +37,40 @@ public class OpenAiVisionClient {
 
 	private final LlmApiKeyCipher apiKeyCipher;
 
+	/** Read the provider's actual model catalogue without exposing its stored key. */
+	public List<String> listModels(LlmProvider provider) {
+		if (provider == null || !Boolean.TRUE.equals(provider.getEnabled())) {
+			throw new ServiceException("大模型配置不存在或已禁用");
+		}
+		HttpURLConnection connection = null;
+		try {
+			String key = resolveApiKey(provider);
+			if (StringUtils.isBlank(key)) throw new ServiceException("大模型 API Key 未配置");
+			String base = StringUtils.removeEnd(StringUtils.trim(provider.getBaseUrl()), "/");
+			base = StringUtils.removeEnd(base, "/chat/completions");
+			connection = (HttpURLConnection) new URL(base + "/models").openConnection();
+			connection.setConnectTimeout(15000);
+			connection.setReadTimeout(15000);
+			connection.setRequestProperty("Authorization", "Bearer " + key);
+			int status = connection.getResponseCode();
+			if (status < 200 || status >= 300) throw new ServiceException("加载模型列表失败，HTTP " + status);
+			JSONArray models = JSONUtil.parseObj(read(connection.getInputStream())).getJSONArray("data");
+			if (models == null) throw new ServiceException("模型列表响应格式不正确");
+			List<String> names = new ArrayList<String>();
+			for (int i = 0; i < models.size(); i++) {
+				String name = models.getJSONObject(i).getStr("id");
+				if (StringUtils.isNotBlank(name) && !names.contains(name)) names.add(name);
+			}
+			return names;
+		} catch (ServiceException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new ServiceException("加载模型列表失败，请检查模型服务连接");
+		} finally {
+			if (connection != null) connection.disconnect();
+		}
+	}
+
 	public VisionDecision review(LlmProvider provider, String prompt, List<byte[]> images) {
 		if (provider == null || !Boolean.TRUE.equals(provider.getEnabled())) {
 			throw new ServiceException("大模型配置不存在或已禁用");

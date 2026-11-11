@@ -8,10 +8,26 @@ export function getLlmProviders() {
 }
 
 export function getOortCloudLlmAuthorization() {
-  return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'get' })
+  return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'get', silentError: true })
+}
+
+export function revokeOortCloudLlm() {
+  return requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'delete' }, authManager.getIdentitySnapshot())
+}
+
+export function selectOortCloudLlmModel(modelName) {
+  return requestForIdentity({ url: '/vlsLlmReview/oortcloud-model', method: 'put', data: { modelName } }, authManager.getIdentitySnapshot())
+}
+
+export function getLlmProviderModels(id) {
+  return request({ url: `/vlsLlmReview/providers/${id}/models`, method: 'get', silentError: true })
 }
 
 export function authorizeOortCloudLlm(data, identity, isCurrent = () => true) {
+  return requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data }, identity, isCurrent)
+}
+
+function requestForIdentity(config, identity, isCurrent = () => true) {
   const snapshot = { ...identity }
   const requireCurrentIdentity = () => {
     if (!snapshot.token || !authManager.isIdentityCurrent(snapshot) || !isCurrent()) {
@@ -20,7 +36,7 @@ export function authorizeOortCloudLlm(data, identity, isCurrent = () => true) {
   }
   requireCurrentIdentity()
   return request({
-    url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data,
+    ...config,
     silentError: true,
     localAuthToken: snapshot.token,
     platformAuthToken: snapshot.platformToken || '',

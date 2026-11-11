@@ -9,22 +9,31 @@
       <el-alert class="authorization-alert" :title="authorizationTitle" :type="authorized ? 'success' : 'warning'" :closable="false" show-icon>
         <template #default>
           <span v-if="authorized">{{ $tp('平台登录令牌过期后，已保存的模型授权仍可供后台复核使用。') }}</span>
-          <span v-else>{{ $tp('点击页面顶部“登录 OortCloud”，系统会自动选择账户中第一个启用的 API 令牌完成授权。') }}</span>
+          <span v-else-if="authorization.revoked">{{ $tp('已取消授权，重新登录不会自动恢复；可在下方重新授权。') }}</span>
+          <span v-else>{{ $tp('登录 OortCloud 后默认授权，也可在下方点击授权。') }}</span>
         </template>
       </el-alert>
       <el-table v-loading="loading" :data="providers" border>
         <el-table-column :label="$tp('名称')" min-width="170"><template #default="scope"><span>{{ scope.row.name }}</span><el-tag v-if="scope.row.systemProvider" class="provider-tag" type="primary" size="small">{{ $tp('内置') }}</el-tag></template></el-table-column>
         <el-table-column prop="baseUrl" :label="$tp('接口地址')" min-width="260" show-overflow-tooltip />
-        <el-table-column prop="modelName" :label="$tp('模型')" min-width="160" />
+        <el-table-column :label="$tp('模型')" min-width="220">
+          <template #default="{ row }">
+            <el-select v-if="row.systemProvider" :model-value="row.modelName" filterable :disabled="!row.authorized || modelSaving" :loading="modelsLoading" :aria-label="$tp('选择模型')" @visible-change="visible => visible && loadModels(row)" @change="value => changeSystemModel(row, value)">
+              <el-option v-for="name in modelOptions(row)" :key="name" :label="name" :value="name" />
+            </el-select>
+            <span v-else>{{ row.modelName }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="API Key" width="110"><template #default="scope"><el-tag :type="scope.row.apiKeyConfigured ? 'success' : 'danger'">{{ scope.row.apiKeyConfigured ? $tp('已配置') : $tp('未配置') }}</el-tag></template></el-table-column>
         <el-table-column prop="timeoutSeconds" :label="$tp('超时（秒）')" width="110" />
         <el-table-column :label="$tp('状态')" width="90"><template #default="scope"><el-tag :type="scope.row.enabled ? 'success' : 'info'">{{ scope.row.enabled ? $tp('启用') : $tp('停用') }}</el-tag></template></el-table-column>
-        <el-table-column :label="$tp('操作')" width="210" fixed="right">
+        <el-table-column :label="$tp('操作')" width="240" fixed="right">
           <template #default="scope">
             <template v-if="scope.row.systemProvider">
               <el-button link type="primary" disabled>{{ $tp('编辑') }}</el-button>
               <el-button link type="success" :disabled="!scope.row.authorized" @click="openTest(scope.row)">{{ $tp('测试') }}</el-button>
               <el-button link type="danger" disabled>{{ $tp('删除') }}</el-button>
+              <el-button link :type="scope.row.authorized ? 'warning' : 'primary'" :loading="authorizationSaving" @click="changeAuthorization(scope.row)">{{ scope.row.authorized ? $tp('取消授权') : $tp('授权') }}</el-button>
             </template>
             <template v-else>
               <el-button link type="primary" @click="openEditor(scope.row)">{{ $tp('编辑') }}</el-button>
@@ -40,7 +49,7 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
         <el-form-item :label="$tp('名称')" prop="name"><el-input v-model="form.name" /></el-form-item>
         <el-form-item :label="$tp('接口地址')" prop="baseUrl"><el-input v-model="form.baseUrl" placeholder="https://api.example.com/v1" /></el-form-item>
-        <el-form-item :label="$tp('模型名称')" prop="modelName"><el-input v-model="form.modelName" /></el-form-item>
+        <el-form-item :label="$tp('模型名称')" prop="modelName"><el-select v-model="form.modelName" filterable allow-create default-first-option :loading="modelsLoading" @visible-change="visible => visible && form.id && loadModels(form)"><el-option v-for="name in modelOptions(form)" :key="name" :label="name" :value="name" /></el-select></el-form-item>
         <el-form-item label="API Key" :prop="form.id ? '' : 'apiKey'"><el-input v-model="form.apiKey" type="password" show-password :placeholder="form.id ? $tp('留空表示保持原 Key') : $tp('请输入 API Key')" /></el-form-item>
         <el-form-item :label="$tp('超时（秒）')"><el-input-number v-model="form.timeoutSeconds" :min="5" :max="600" /></el-form-item>
         <el-form-item :label="$tp('是否启用')"><el-switch v-model="form.enabled" /></el-form-item>
@@ -63,11 +72,71 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { createLlmProvider, deleteLlmProvider, getLlmProviders, getOortCloudLlmAuthorization, testLlmProvider, updateLlmProvider } from '@/api/llmReview'
+import { createLlmProvider, deleteLlmProvider, getLlmProviders, getOortCloudLlmAuthorization, testLlmProvider, updateLlmProvider, getLlmProviderModels, revokeOortCloudLlm, selectOortCloudLlmModel } from '@/api/llmReview'
+
+import { syncLlmAuthorization } from '@/utils/llmAuthorization'
+import { authManager } from '@/utils/auth'
 
 const providers = ref([])
+const authorizationSaving = ref(false)
+const modelSaving = ref(false)
+const modelsLoading = ref(false)
+const modelCatalogues = ref({})
+let active = true
+let loadVersion = 0
+const modelOptions = row => [...new Set([row.modelName, ...(modelCatalogues.value[row.id] || [])].filter(Boolean))]
+
+async function loadModels(row) {
+  if (modelsLoading.value) return
+  const identity = authManager.getIdentitySnapshot()
+  modelsLoading.value = true
+  try {
+    const response = await getLlmProviderModels(row.id)
+    if (!active || !authManager.isIdentityCurrent(identity)) return
+    if (Number(response.code) !== 200) throw new Error('Model catalogue unavailable')
+    modelCatalogues.value[row.id] = response.data || []
+  } catch {
+    if (active && authManager.isIdentityCurrent(identity)) ElMessage.warning(uiText('模型列表加载失败，已保留当前模型，请稍后重试'))
+  } finally { modelsLoading.value = false }
+}
+
+async function changeSystemModel(row, modelName) {
+  const identity = authManager.getIdentitySnapshot()
+  modelSaving.value = true
+  try {
+    const response = await selectOortCloudLlmModel(modelName)
+    if (!active || !authManager.isIdentityCurrent(identity)) return
+    if (Number(response.code) !== 200) throw new Error('Model save failed')
+    await load()
+    ElMessage.success(uiText('保存成功'))
+  } catch { if (active && authManager.isIdentityCurrent(identity)) ElMessage.error(uiText('保存失败')) } finally { modelSaving.value = false }
+}
+
+async function changeAuthorization(row) {
+  if (authorizationSaving.value) return
+  const identity = authManager.getIdentitySnapshot()
+  const current = () => active && authManager.isIdentityCurrent(identity)
+  authorizationSaving.value = true
+  try {
+    if (row.authorized) {
+      const response = await revokeOortCloudLlm()
+      if (!current()) return
+      if (Number(response.code) !== 200) throw new Error('Revoke failed')
+      modelCatalogues.value = {}
+    } else {
+      const mode = await authManager.getTenantMode()
+      if (!current()) return
+      const state = await syncLlmAuthorization(mode, { automatic: false, isCurrent: current })
+      if (!current()) return
+      if (!state?.authorized) throw new Error('Authorization unavailable')
+    }
+    await load()
+  } catch { if (current()) ElMessage.error(uiText('授权状态更新失败，请确认已登录 OortCloud 后重试')) }
+  finally { authorizationSaving.value = false }
+}
+
 const authorization = ref({ authorized: false, platformUserName: '', authorizedAt: null })
 const loading = ref(false)
 const saving = ref(false)
@@ -93,17 +162,21 @@ const responseMessage = (response, fallback) => response?.msg || response?.messa
 const errorMessage = (error, fallback) => error?.response?.data?.msg || error?.data?.msg || error?.message || fallback
 
 async function load() {
+  const version = ++loadVersion
+  const identity = authManager.getIdentitySnapshot()
   loading.value = true
   try {
     const [providersResponse, authorizationResponse] = await Promise.all([getLlmProviders(), getOortCloudLlmAuthorization()])
+    if (!active || version !== loadVersion || !authManager.isIdentityCurrent(identity)) return
     if (providersResponse.code !== 200) throw new Error(responseMessage(providersResponse, '加载大模型配置失败'))
     if (authorizationResponse.code !== 200) throw new Error(responseMessage(authorizationResponse, '加载 OortCloud 授权失败'))
     providers.value = providersResponse.data || []
     authorization.value = authorizationResponse.data || { authorized: false }
   } catch (error) {
+    if (!active || version !== loadVersion || !authManager.isIdentityCurrent(identity)) return
     providers.value = []
     ElMessage.error(errorMessage(error, uiText('加载大模型配置失败')))
-  } finally { loading.value = false }
+  } finally { if (version === loadVersion) loading.value = false }
 }
 
 function openEditor(row) {
@@ -138,7 +211,7 @@ async function remove(row) {
 }
 
 function openTest(row) {
-  if (row.systemProvider && !row.authorized) return ElMessage.warning(uiText('请在页面顶部 OortCloud 账户中点击“授权视觉复核”，确认后再使用'))
+  if (row.systemProvider && !row.authorized) return ElMessage.warning(uiText('请在大模型管理中授权 OortCloud 后再使用'))
   testingProvider.value = row
   Object.assign(testForm, { prompt: '', imageBase64: '' })
   testResult.value = null
@@ -163,7 +236,14 @@ async function runTest() {
   } catch (error) { ElMessage.error(errorMessage(error, uiText('测试失败'))) } finally { testing.value = false }
 }
 
-onMounted(load)
+onMounted(() => {
+  window.addEventListener('llmAuthorizationChanged', load)
+  load()
+})
+onBeforeUnmount(() => {
+  active = false
+  window.removeEventListener('llmAuthorizationChanged', load)
+})
 </script>
 
 <style scoped>

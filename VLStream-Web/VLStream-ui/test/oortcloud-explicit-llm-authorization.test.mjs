@@ -1,248 +1,91 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { parse, compileScript } from 'vue/compiler-sfc'
 
-// Run the actual SFC setup with synthetic sessions and API stubs only.
-// This test never reads browser storage, real credentials, or the network.
-const source = readFileSync(new URL('../src/layout/OortCloudPopover.vue', import.meta.url), 'utf8')
-const compiled = compileScript(parse(source).descriptor, { id: 'explicit-llm-authorization-test' }).content
-const executable = compiled.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '').replace('export default', 'return')
-const makeComponent = new Function('__deps', `
-  const {uiText,computed,onBeforeUnmount,onMounted,reactive,ref,watch,Link,Refresh,SwitchButton,
-    ElMessage,ElMessageBox,getModelHubUserInfo,logoutModelHubSession,authorizeOortCloudLlm,
-    getPlatformAccessToken,getOortCloudAccountStats,getOortCloudQuotaConfig,
-    getOortCloudSubscriptionPlans,getOortCloudSubscriptions,getOortCloudTokenKey,
-    getOortCloudTokenList,getOortCloudUsageLogs,clearModelHubAuth,getModelHubAccessToken,
-    openOortCloudModelHub,openOortCodexPricing,startModelHubLogin,getOortCloudSession,
-    redirectToPlatformLogin,getOortCloudTopupInfo,PLATFORM_ORIGIN,authManager,window}=__deps;
-  ${executable}
+const source = readFileSync(new URL('../src/utils/llmAuthorization.js', import.meta.url), 'utf8')
+const factory = new Function('deps', `
+  const { authorizeOortCloudLlm, getOortCloudLlmAuthorization, getOortCloudTokenKey,
+    getOortCloudTokenList, getModelHubUserInfo, getOortCloudSession, authManager, window, CustomEvent } = deps;
+  ${source.replace(/^import .*$/gm, '').replace('export async function', 'async function')}
+  return syncLlmAuthorization;
 `)
 const deferred = () => {
-  let resolve, reject
-  const promise = new Promise((yes, no) => { resolve = yes; reject = no })
-  return { promise, resolve, reject }
+  let resolve
+  const promise = new Promise(r => { resolve = r })
+  return { promise, resolve }
 }
-const flush = () => new Promise(resolve => setImmediate(resolve))
-
 function harness(options = {}) {
-  const calls = { list: 0, key: 0, post: 0, account: 0, usage: 0, confirm: 0 }
-  const mounts = [], unmounts = [], watchers = [], messages = [], listeners = new Map(), posted = []
-  const props = { tenantMode: options.mode || 'single' }
-  let token = options.loggedOut ? '' : 'fixture-session-a'
-  let tenantId = 'fixture-tenant'
-  let localIdentity = { token: 'fixture-local-session', platformToken: '', tenantId: 'fixture-local-tenant', revision: 1 }
-  const session = () => ({ accessToken: token, tenantId, usesPlatformSession: props.tenantMode === 'multi' })
-  const deps = {
-    uiText: value => value,
-    computed: getter => ({ get value() { return getter() } }),
-    ref: value => ({ value }), reactive: value => value,
-    onMounted: fn => mounts.push(fn), onBeforeUnmount: fn => unmounts.push(fn), watch: (_, fn) => watchers.push(fn),
-    Link: {}, Refresh: {}, SwitchButton: {},
-    ElMessage: Object.fromEntries(['success', 'warning', 'error'].map(type => [type, value => messages.push({ type, value })])),
-    ElMessageBox: { confirm: (...args) => { calls.confirm++; return options.confirm ? options.confirm(...args) : Promise.resolve('confirm') } },
-    getOortCloudSession: session,
-    authManager: {
-      getIdentitySnapshot: () => ({ ...localIdentity }),
-      isIdentityCurrent: identity => Object.keys(localIdentity).every(key => identity[key] === localIdentity[key])
-    },
-    getModelHubUserInfo: async (_, current) => ({ code: 200, data: { userId: current.accessToken, userName: 'Fixture account' } }),
-    getOortCloudAccountStats: async () => { calls.account++; return { total_credits: 120, used_credits: 20, remaining_credits: 100 } },
-    getOortCloudSubscriptions: async () => ({ subscriptions: [] }),
-    getOortCloudSubscriptionPlans: async () => [], getOortCloudQuotaConfig: async () => ({ credits_per_cny: 25 }),
-    getOortCloudUsageLogs: async () => { calls.usage++; return { items: [], total: 0 } },
-    getOortCloudTokenList: async () => { calls.list++; return options.list ? options.list() : [{ id: 'fixture-disabled', status: 0 }, { id: 'fixture-enabled', status: 1 }] },
-    getOortCloudTokenKey: async id => { calls.key++; assert.equal(id, 'fixture-enabled'); return options.key ? options.key() : 'fixture-api-identity' },
+  const calls = { list: 0, key: 0, post: 0, events: 0 }
+  let revision = 1
+  const session = { accessToken: options.loggedOut ? '' : 'fixture-session', tenantId: 'fixture-tenant', usesPlatformSession: options.multi || false }
+  const sync = factory({
+    authManager: { getIdentitySnapshot: () => ({ token: 'fixture-local', revision }), isIdentityCurrent: i => i.revision === revision },
+    getOortCloudSession: () => ({ ...session }),
+    getOortCloudLlmAuthorization: async () => ({ code: 200, data: options.state || { authorized: false, revoked: false } }),
+    getModelHubUserInfo: async () => ({ code: 200, data: { userId: 'fixture-user', userName: 'Fixture' } }),
+    getOortCloudTokenList: async () => { calls.list++; return options.list ? options.list() : [{ id: 1, status: 0 }, { id: 2, status: 1 }] },
+    getOortCloudTokenKey: async id => { calls.key++; assert.equal(id, 2); return options.key ? options.key() : 'fixture-key' },
     authorizeOortCloudLlm: async (data, identity, guard) => {
-      assert.equal(deps.authManager.isIdentityCurrent(identity), true)
-      assert.equal(guard(), true)
-      calls.post++; posted.push(data); return options.post ? options.post(data) : { code: 200 }
+      assert.equal(identity.revision, revision); assert.equal(guard(), true)
+      calls.post++; calls.data = data
+      return { code: 200, data: { authorized: true, revoked: false } }
     },
-    logoutModelHubSession: async () => { token = '' }, clearModelHubAuth: () => { token = '' },
-    getModelHubAccessToken: () => token, getPlatformAccessToken: () => '',
-    openOortCloudModelHub() {}, openOortCodexPricing() {}, startModelHubLogin() {}, redirectToPlatformLogin() {},
-    getOortCloudTopupInfo: async () => ({}), PLATFORM_ORIGIN: 'https://fixture.invalid',
-    window: { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) }
-  }
-  const instance = makeComponent(deps).setup(props, { expose() {} })
-  return { instance, calls, posted, messages, mounts, unmounts, watchers, props,
-    switchSession: value => { token = value }, switchTenant: value => { tenantId = value },
-    switchLocalIdentity: () => { localIdentity = { ...localIdentity, token: 'fixture-new-local-session', revision: 2 } },
-    authChanged: () => listeners.get('modelHubAuthChanged')(),
-    mount: () => mounts[0]() }
-}
-
-function noAuthorization(h) {
-  assert.equal(h.calls.list, 0)
-  assert.equal(h.calls.key, 0)
-  assert.equal(h.calls.post, 0)
-}
-
-test('mount, account opening, and SSO authChanged retain account reads without implicit LLM authorization', async () => {
-  const h = harness()
-  await h.mount()
-  await h.instance.handlePopoverShow()
-  await h.authChanged()
-  assert.equal(h.calls.account, 3)
-  assert.equal(h.calls.usage, 3)
-  assert.equal(h.instance.account.remainingCredits, 100)
-  assert.equal(h.instance.isLoggedIn.value, true)
-  noAuthorization(h)
-  assert.equal(h.calls.confirm, 0)
-})
-
-test('template offers the explicit action only in the logged-in single-tenant account', () => {
-  assert.match(source, /v-if="!usesPlatformSession"[^>]+@click="handleAuthorizeLlm"/)
-  assert.match(source, /确认授权/)
-  assert.match(source, /已有视觉复核身份会被替换/)
-})
-
-test('no key or token-list read occurs until confirmation; confirmed action uses the captured account once', async () => {
-  const confirmation = deferred()
-  const h = harness({ confirm: () => confirmation.promise })
-  await h.mount()
-  const action = h.instance.handleAuthorizeLlm()
-  await flush()
-  noAuthorization(h)
-  confirmation.resolve('confirm')
-  await action
-  assert.deepEqual([h.calls.list, h.calls.key, h.calls.post], [1, 1, 1])
-  assert.deepEqual(h.posted[0], { platformUserId: 'fixture-session-a', platformUserName: 'Fixture account', apiKey: 'fixture-api-identity' })
-  assert.equal(h.instance.llmAuthorizationSynced.value, true)
-  assert.equal(h.instance.llmAuthorizationLoading.value, false)
-})
-
-test('cancel or closing the confirmation performs no credential reads or POST', async () => {
-  for (const reason of ['cancel', 'close']) {
-    const h = harness({ confirm: () => Promise.reject(reason) })
-    await h.mount()
-    await h.instance.handleAuthorizeLlm()
-    noAuthorization(h)
-    assert.equal(h.messages.length, 0)
-    assert.equal(h.instance.llmAuthorizationLoading.value, false)
-  }
-})
-
-test('logged-out and multi-tenant sessions cannot trigger this single-tenant authorization', async () => {
-  for (const options of [{ loggedOut: true }, { mode: 'multi' }]) {
-    const h = harness(options)
-    await h.mount()
-    await h.instance.handleAuthorizeLlm()
-    noAuthorization(h)
-    assert.equal(h.calls.confirm, 0)
-  }
-})
-
-test('duplicate clicks while confirming or posting create only one request', async () => {
-  const confirmation = deferred(), post = deferred()
-  const h = harness({ confirm: () => confirmation.promise, post: () => post.promise })
-  await h.mount()
-  const first = h.instance.handleAuthorizeLlm()
-  await h.instance.handleAuthorizeLlm()
-  assert.equal(h.calls.confirm, 1)
-  confirmation.resolve('confirm')
-  await flush()
-  assert.equal(h.calls.post, 1)
-  await h.instance.handleAuthorizeLlm()
-  post.resolve({ code: 200 })
-  await first
-  await h.instance.handleAuthorizeLlm()
-  await h.instance.loadAccount()
-  assert.equal(h.calls.post, 1)
-  assert.equal(h.calls.confirm, 1)
-})
-
-for (const phase of ['confirm', 'list', 'key']) {
-  test(`account switch during ${phase} stops the pending flow before authorization POST`, async () => {
-    const pending = deferred()
-    const h = harness({ [phase]: () => pending.promise })
-    await h.mount()
-    const action = h.instance.handleAuthorizeLlm()
-    await flush()
-    h.switchSession('fixture-session-b')
-    await h.authChanged()
-    pending.resolve(phase === 'list' ? [{ id: 'fixture-enabled', status: 1 }] : 'fixture-result')
-    await action
-    assert.equal(h.calls.post, 0)
-    assert.equal(h.instance.llmAuthorizationSynced.value, false)
-    assert.equal(h.instance.account.userId, 'fixture-session-b')
-    if (phase !== 'key') assert.equal(h.calls.key, 0)
+    window: { dispatchEvent: () => { calls.events++ } }, CustomEvent: class {}
   })
+  return { sync, calls, session, switchIdentity: () => { revision++ } }
 }
-
-test('tenant or mode change invalidates confirmation even when the token is unchanged', async () => {
-  for (const change of [h => h.switchTenant('fixture-other-tenant'), h => { h.props.tenantMode = 'multi' }, h => h.switchLocalIdentity()]) {
-    const confirmation = deferred()
-    const h = harness({ confirm: () => confirmation.promise })
-    await h.mount()
-    const action = h.instance.handleAuthorizeLlm()
-    change(h)
-    confirmation.resolve('confirm')
-    await action
-    noAuthorization(h)
+test('default authorization works in single and multi modes without a confirmation', async () => {
+  for (const multi of [false, true]) {
+    const h = harness({ multi })
+    assert.equal((await h.sync(multi ? 'multi' : 'single')).authorized, true)
+    assert.deepEqual([h.calls.list, h.calls.key, h.calls.post], [1, 1, 1])
+    assert.equal(h.calls.data.automatic, 'true')
+    assert.equal(h.calls.data.platformUserId, 'fixture-user')
   }
 })
-
-test('auth reset or unmount invalidates a pending request, including switching away and back', async () => {
-  for (const unmount of [false, true]) {
-    const key = deferred()
-    const h = harness({ key: () => key.promise })
-    await h.mount()
-    const action = h.instance.handleAuthorizeLlm()
-    await flush()
-    if (unmount) h.unmounts[0]()
-    else {
-      h.switchSession('fixture-session-b'); await h.authChanged()
-      h.switchSession('fixture-session-a'); await h.authChanged()
-    }
-    key.resolve('fixture-api-identity')
-    await action
-    assert.equal(h.calls.post, 0)
-    assert.equal(h.instance.llmAuthorizationSynced.value, false)
+test('existing authorization and cancellation survive repeated account loads and new sessions', async () => {
+  for (const state of [{ authorized: true }, { authorized: false, revoked: true }]) {
+    const h = harness({ state })
+    await h.sync('single'); h.session.accessToken = 'new-session'; await h.sync('single')
+    assert.deepEqual([h.calls.list, h.calls.key, h.calls.post], [0, 0, 0])
   }
 })
-
-test('late POST completion cannot mark a different account authorized or show success', async () => {
-  const post = deferred()
-  const h = harness({ post: () => post.promise })
-  await h.mount()
-  const action = h.instance.handleAuthorizeLlm()
-  await flush()
-  assert.equal(h.calls.post, 1)
-  h.switchSession('fixture-session-b')
-  await h.authChanged()
-  post.resolve({ code: 200 })
-  await action
-  assert.equal(h.instance.llmAuthorizationSynced.value, false)
-  assert.equal(h.messages.length, 0)
+test('explicit management action can restore a cancelled authorization', async () => {
+  const h = harness({ state: { authorized: false, revoked: true } })
+  assert.equal((await h.sync('single', { automatic: false })).authorized, true)
+  assert.equal(h.calls.data.automatic, 'false')
 })
-
-test('missing enabled identity or empty key never sends an authorization POST', async () => {
+test('logged-out sessions cannot read or submit credentials', async () => {
+  const h = harness({ loggedOut: true })
+  assert.equal(await h.sync('single'), null)
+  await assert.rejects(h.sync('single', { automatic: false }))
+  assert.equal(h.calls.post, 0); assert.equal(h.calls.key, 0)
+})
+for (const phase of ['list', 'key']) {
+  for (const change of ['cloud', 'tenant', 'local', 'unmount']) {
+    test(`${change} change during ${phase} stops authorization`, async () => {
+      const pending = deferred(), h = harness({ [phase]: () => pending.promise })
+      let active = true
+      const action = h.sync('single', { isCurrent: () => active })
+      await new Promise(r => setImmediate(r))
+      if (change === 'cloud') h.session.accessToken = 'new-session'
+      if (change === 'tenant') h.session.tenantId = 'new-tenant'
+      if (change === 'local') h.switchIdentity()
+      if (change === 'unmount') active = false
+      pending.resolve(phase === 'list' ? [{ id: 2, status: 1 }] : 'fixture-key')
+      assert.equal(await action, null)
+      assert.equal(h.calls.post, 0)
+    })
+  }
+}
+test('missing enabled token or empty key cannot produce successful authorization', async () => {
   for (const options of [{ list: () => [] }, { key: () => '' }]) {
     const h = harness(options)
-    await h.mount()
-    await h.instance.handleAuthorizeLlm()
+    await assert.rejects(h.sync('single'))
     assert.equal(h.calls.post, 0)
-    assert.equal(h.instance.llmAuthorizationSynced.value, false)
   }
 })
-
-test('authorization failures never echo a remote payload or automatically retry', async () => {
-  for (const options of [
-    { post: () => Promise.reject({ response: { data: { msg: 'fixture-sensitive-payload' } } }) },
-    { post: () => ({ code: 500, msg: 'fixture-sensitive-payload' }) },
-    { key: () => Promise.reject(Error('fixture-sensitive-payload')) }
-  ]) {
-    const h = harness(options)
-    await h.mount()
-    await h.instance.handleAuthorizeLlm()
-    assert.equal(h.instance.llmAuthorizationSynced.value, false)
-    assert.equal(h.instance.llmAuthorizationLoading.value, false)
-    assert.equal(h.messages.length, 1)
-    assert.equal(h.messages[0].type, 'error')
-    assert.doesNotMatch(h.messages[0].value, /fixture-sensitive-payload/)
-    const posts = h.calls.post
-    await h.authChanged()
-    assert.equal(h.calls.post, posts)
-  }
+test('account popover removes the second authorization action', () => {
+  const popover = readFileSync(new URL('../src/layout/OortCloudPopover.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(popover, /handleAuthorizeLlm|授权当前账号用于视觉复核|ElMessageBox/)
 })

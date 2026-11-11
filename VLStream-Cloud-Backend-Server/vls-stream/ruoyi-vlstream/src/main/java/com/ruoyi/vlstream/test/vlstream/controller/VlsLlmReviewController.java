@@ -39,6 +39,7 @@ public class VlsLlmReviewController {
 
 	private final LlmReviewManagementService managementService;
 	private final LlmReviewTaskService taskService;
+	private final OpenAiVisionClient visionClient;
 
 	@SaCheckPermission(value = {"vls:menu:llm-provider-management", "vls:menu:algorithm-management"}, mode = SaMode.OR)
 	@GetMapping("/providers")
@@ -54,11 +55,30 @@ public class VlsLlmReviewController {
 		return R.data(managementService.getOortCloudAuthorization());
 	}
 
+	@SaCheckPermission("vls:menu:llm-provider-management")
 	@PostMapping("/oortcloud-authorization")
 	@Operation(summary = "在平台登录校验成功后授权当前租户使用 OortCloud 大模型")
 	public R<Map<String, Object>> authorizeOortCloud(@RequestBody Map<String, String> body) {
 		return R.data(managementService.authorizeOortCloud(body.get("platformUserId"),
-			body.get("platformUserName"), body.get("apiKey")));
+			body.get("platformUserName"), body.get("apiKey"), "true".equals(body.get("automatic"))));
+	}
+
+	@SaCheckPermission("vls:menu:llm-provider-management")
+	@DeleteMapping("/oortcloud-authorization")
+	public R<Map<String, Object>> revokeOortCloud() {
+		return R.data(managementService.revokeOortCloud());
+	}
+
+	@SaCheckPermission("vls:menu:llm-provider-management")
+	@PutMapping("/oortcloud-model")
+	public R<LlmProvider> selectOortCloudModel(@RequestBody Map<String, String> body) {
+		return R.data(managementService.selectOortCloudModel(body.get("modelName")));
+	}
+
+	@SaCheckPermission("vls:menu:llm-provider-management")
+	@GetMapping("/providers/{id}/models")
+	public R<List<String>> providerModels(@PathVariable Long id) {
+		return R.data(visionClient.listModels(managementService.getProvider(id)));
 	}
 
 	@SaCheckPermission("vls:menu:llm-provider-management")

@@ -8,7 +8,7 @@ import axios, { CanceledError } from 'axios'
 const apiSource = readFileSync(new URL('../src/api/llmReview.js', import.meta.url), 'utf8')
 const requestSource = readFileSync(new URL('../src/utils/request.js', import.meta.url), 'utf8')
 const apiFactory = new Function('request', 'authManager', 'CanceledError',
-  apiSource.replace(/^import .*$/gm, '').replace(/^export /gm, '') + '\nreturn { authorizeOortCloudLlm, getLlmProviders };')
+  apiSource.replace(/^import .*$/gm, '').replace(/^export /gm, '') + '\nreturn { authorizeOortCloudLlm, getLlmProviders, revokeOortCloudLlm, selectOortCloudLlmModel };')
 const headerFunction = requestSource.slice(requestSource.indexOf('export const applyAuthHeaders ='), requestSource.indexOf('\n}', requestSource.indexOf('export const applyAuthHeaders =')) + 2)
 const headersFactory = new Function('__deps', `
   const {isTrustedApiRequest,clearIdentityHeaders,captureRequestIdentity,isSessionRedirecting,
@@ -122,4 +122,14 @@ test('other LLM API calls retain their existing request behavior', async () => {
   assert.equal(h.sent[0].method, 'get')
   assert.equal(h.sent[0].url, '/vlsLlmReview/providers')
   assert.equal(h.sent[0].localAuthToken, undefined)
+})
+
+test('cancellation and model updates cannot follow a delayed request into another tenant', async () => {
+  for (const action of ['revokeOortCloudLlm', 'selectOortCloudLlmModel']) {
+    const h = harness()
+    const pending = h.api[action]('vision-a')
+    h.changeIdentity()
+    await assert.rejects(pending, error => axios.isCancel(error))
+    assert.equal(h.sent.length, 0)
+  }
 })

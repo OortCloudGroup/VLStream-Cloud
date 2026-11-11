@@ -34,6 +34,36 @@ class LlmSystemProviderServiceTest {
 	private LlmApiKeyCipher apiKeyCipher;
 
 	@Test
+	void cancelledAuthorizationAndSelectedModelSurviveAccountReload() {
+		VlsLlmReviewProperties properties = new VlsLlmReviewProperties();
+		LlmProvider provider = new LlmProvider();
+		provider.setId(1L);
+		provider.setBaseUrl(properties.getBaseUrl());
+		provider.setTimeoutSeconds(properties.getTimeoutSeconds());
+		provider.setModelName("selected-vision-model");
+		provider.setEnabled(false);
+		when(providerMapper.selectOne(any())).thenReturn(provider);
+		LlmSystemProviderService service = new LlmSystemProviderService(providerMapper, properties, apiKeyCipher);
+		assertFalse(service.getOrCreate().getEnabled());
+		assertEquals("selected-vision-model", service.getOrCreate().getModelName());
+		assertFalse(service.isAuthorized(service.authorize("new-account", "New", "new-key", true)));
+		org.mockito.Mockito.verifyNoInteractions(apiKeyCipher);
+		org.mockito.Mockito.verify(providerMapper, org.mockito.Mockito.never()).updateById(any());
+		org.mockito.Mockito.verify(providerMapper, org.mockito.Mockito.never()).update(any(), any());
+	}
+
+	@Test
+	void disabledProviderCannotUseRetainedCredential() {
+		LlmProvider provider = new LlmProvider();
+		provider.setEnabled(false);
+		provider.setPlatformUserId("account");
+		provider.setAuthorizedAt(new java.util.Date());
+		provider.setApiKeyCiphertext("ciphertext");
+		assertFalse(new LlmSystemProviderService(providerMapper, new VlsLlmReviewProperties(), apiKeyCipher)
+			.isAuthorized(provider));
+	}
+
+	@Test
 	void createsProviderWithExplicitPersistedEmptyApiKey() throws Exception {
 		when(providerMapper.selectOne(any())).thenReturn(null);
 		LlmSystemProviderService service = new LlmSystemProviderService(providerMapper,

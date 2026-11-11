@@ -113,6 +113,19 @@ public class LlmReviewManagementService {
 		return authorizationStatus(systemProviderService.getOrCreate());
 	}
 
+	public Map<String, Object> authorizeOortCloud(String platformUserId, String platformUserName,
+			String apiKey, boolean automatic) {
+		return authorizationStatus(systemProviderService.authorize(platformUserId, platformUserName, apiKey, automatic));
+	}
+
+	public Map<String, Object> revokeOortCloud() {
+		return authorizationStatus(systemProviderService.revoke());
+	}
+
+	public LlmProvider selectOortCloudModel(String modelName) {
+		return systemProviderService.selectModel(modelName);
+	}
+
 	public AlgorithmLlmReviewConfig getAlgorithmConfig(Long algorithmId) {
 		AlgorithmLlmReviewConfig config = configMapper.selectOne(
 			new LambdaQueryWrapper<AlgorithmLlmReviewConfig>()
@@ -209,7 +222,7 @@ public class LlmReviewManagementService {
 			}
 			if (systemProviderService.isSystemProvider(provider)
 				&& !systemProviderService.isAuthorized(provider)) {
-				throw new ServiceException("请先点击页面顶部“登录 OortCloud”完成授权");
+				throw new ServiceException("请在大模型管理中授权 OortCloud 后再使用");
 			}
 		}
 	}
@@ -225,6 +238,7 @@ public class LlmReviewManagementService {
 	private Map<String, Object> authorizationStatus(LlmProvider provider) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		result.put("authorized", systemProviderService.isAuthorized(provider));
+		result.put("revoked", Boolean.FALSE.equals(provider.getEnabled()));
 		result.put("platformUserName", provider.getPlatformUserName());
 		result.put("authorizedAt", provider.getAuthorizedAt());
 		result.put("apiKeyConfigured", StringUtils.isNotBlank(provider.getApiKeyCiphertext()));

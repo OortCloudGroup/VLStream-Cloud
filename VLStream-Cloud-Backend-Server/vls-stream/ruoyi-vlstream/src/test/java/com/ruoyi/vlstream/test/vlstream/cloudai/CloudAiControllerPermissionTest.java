@@ -187,7 +187,7 @@ class CloudAiControllerPermissionTest {
         SaInterceptor guard = new SaInterceptor();
         mvc = MockMvcBuilders.standaloneSetup(new CloudAiController(service, sources, events, models), new PlatformRecordingController(recordings),
                 new VlsAlgorithmController(algorithms), new AlgorithmCatalogController(catalog),
-                new VlsLlmReviewController(llmManagement, llmTasks),
+                new VlsLlmReviewController(llmManagement, llmTasks, mock(com.ruoyi.vlstream.test.vlstream.service.OpenAiVisionClient.class)),
                 new VlsDataManagementController(data, mock(DataTransferService.class)),
                 new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class)),
                 new VlsDatasetAnnotationController(editor), trainingController,
@@ -333,6 +333,21 @@ class CloudAiControllerPermissionTest {
         mvc.perform(logged(post("/vlsLlmReview/tasks/1/manual-decision").contentType(MediaType.APPLICATION_JSON)
             .content("{\"decision\":\"confirmed\"}"))).andExpect(status().isOk());
         verify(llmTasks).manualDecision(1L, "confirmed");
+    }
+
+    @Test void authorizationAndModelChangesRequireManagementPermission() throws Exception {
+        permissions.add("vls:menu:algorithm-management");
+        mvc.perform(logged(delete("/vlsLlmReview/oortcloud-authorization"))).andExpect(status().isForbidden());
+        mvc.perform(logged(post("/vlsLlmReview/oortcloud-authorization").contentType(MediaType.APPLICATION_JSON)
+            .content("{}"))).andExpect(status().isForbidden());
+        mvc.perform(logged(put("/vlsLlmReview/oortcloud-model").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"modelName\":\"vision-a\"}"))).andExpect(status().isForbidden());
+        permissions.clear(); permissions.add("vls:menu:llm-provider-management");
+        mvc.perform(logged(delete("/vlsLlmReview/oortcloud-authorization"))).andExpect(status().isOk());
+        mvc.perform(logged(put("/vlsLlmReview/oortcloud-model").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"modelName\":\"vision-a\"}"))).andExpect(status().isOk());
+        verify(llmManagement).revokeOortCloud();
+        verify(llmManagement).selectOortCloudModel("vision-a");
     }
 
     @Test void smartAnnotationCanListDatasetsButCannotEditThem() throws Exception {
