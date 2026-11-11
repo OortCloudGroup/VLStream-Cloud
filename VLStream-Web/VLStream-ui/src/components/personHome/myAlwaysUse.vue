@@ -83,7 +83,6 @@ import { addressList, addressUserList } from '@/api/system/directory'
 import { useUserStore } from '@/store/modules/useraPaas'
 import { ElCheckbox, ElCheckboxGroup } from 'element-plus'
 
-const store = useUserStore()
 export default {
   name: 'MyAlwaysUse',
   components: {
@@ -148,7 +147,7 @@ export default {
     },
     getTagList() {
       const params = {
-        accessToken: store.token
+        accessToken: useUserStore().token
       }
       if (this.publicP === 1) {
         params.is_open = 1
@@ -164,7 +163,7 @@ export default {
     },
     getTagPersonList() {
       const params = {
-        accessToken: store.token,
+        accessToken: useUserStore().token,
         page: 1,
         pagesize: 999,
         tid: this.currentTag.tid
