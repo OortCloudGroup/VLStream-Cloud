@@ -417,6 +417,19 @@ const handleDeviceSelect = device => {
   active.cameras[0] = catalogVideoCamera(device)
   active.activeWindowIndex = 0
 }
+// 地图信息卡的「实时画面」固定进入单窗口布局：与点击 1x1 布局按钮一致，只保留所选设备。
+const openDeviceInSingleWindow = device => {
+  closedPreviewIds.value.delete(device.id)
+  devicePickerTarget.value = null
+  presentationMode.value = 'grid'
+  layoutChoice.value = {count:1, variant:'grid'}
+  layoutMode.value = '1x1'
+  const dialog = ensureLayoutDialog()
+  resizeVideoLayout(dialog, 1, 'grid')
+  dialog.cameras[0] = catalogVideoCamera(device)
+  dialog.activeWindowIndex = 0
+  layoutClosed.value = false
+}
 const showDevicePicker = ref(false)
 const presentationMode = ref('default')
 const defaultAutoPreview = ref(false)
@@ -1027,8 +1040,7 @@ const updateMapMarkers = () => {
     play.className = 'map-device-play'
     play.textContent = uiText('实时画面')
     play.addEventListener('click', () => {
-      handleCameraClick(markerData)
-      if (!openWindowCount.value) restoreLayoutWindows(undefined, 1)
+      openDeviceInSingleWindow(markerData.deviceData)
       marker.closePopup()
     })
     const recordingHost = document.createElement('div')

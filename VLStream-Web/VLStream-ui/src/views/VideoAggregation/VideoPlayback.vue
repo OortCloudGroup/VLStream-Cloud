@@ -25,14 +25,17 @@
       </el-table>
       <el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[10, 20, 50]" :total="tableDevices.length" layout="total, prev, pager, next, sizes" />
     </main>
-    <el-dialog v-model="playerOpen" :fullscreen="playerFullscreen" width="min(1360px, 94vw)" top="5vh" class="playback-dialog" :show-close="false" append-to-body @closed="closePlayer">
-      <template #header><div class="dialog-heading"><span>{{ $tp('播放视频') }}<small>{{ device?.deviceName }}</small></span><div><el-button text :icon="FullScreen" :aria-label="$tp('全屏')" @click="playerFullscreen = !playerFullscreen" /><el-button text :icon="Close" :aria-label="$tp('关闭')" @click="playerOpen = false" /></div></div></template>
+    <el-dialog v-model="playerOpen" width="min(1360px, 94vw)" top="5vh" class="playback-dialog" append-to-body @closed="closePlayer">
+      <template #header>
+        <div class="dialog-heading">
+          <span>{{ $tp('播放视频') }}<small>{{ device?.deviceName }}</small></span>
+        </div>
+      </template>
       <div v-loading="loading" class="playback-content">
         <div class="source-toolbar">
           <el-select v-if="device?.sources?.length > 1" v-model="sourceKey" :aria-label="$tp('设备来源')" @change="loadSources"><el-option v-for="item in device.sources" :key="key(item)" :value="key(item)" :label="`${item.protocol} · ${item.deviceName || item.rowId}`" /></el-select>
           <el-select v-model="sourceId" :placeholder="$tp('选择录像通道')" @change="loadSegments"><el-option v-for="item in sources" :key="item.id" :value="item.id" :label="item.source?.channelName || item.source?.name || $tp('设备主码流')" /></el-select>
           <el-tag v-if="recordSource" :type="recordSource.state === 'RECORDING' ? 'success' : 'info'">{{ $tp(recordingState(recordSource)) }}</el-tag>
-          <PlatformRecordingActions v-if="source" :protocol="source.protocol" :row-id="source.rowId" :online="source.state === 'ONLINE'" @changed="loadSources" />
         </div>
         <div class="date-panels">
           <section class="date-panel years"><label>{{ $tp('年份') }}</label><div class="date-grid"><button v-for="year in years" :key="year" :class="{ chosen: selectedYear === year }" @click="chooseDate(year, selectedMonth, selectedDay)">{{ year }}</button></div></section>
@@ -62,22 +65,21 @@
 </template>
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Search, Refresh, VideoPlay, FullScreen, Close } from '@element-plus/icons-vue'
+import { Search, Refresh, VideoPlay } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
 import { translatePhrase as t } from '@/i18n'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
 import { matchesVideoDevice } from '@/utils/videoSquareCatalog'
 import { platformRecording as api, recordingError, recordingState } from '@/api/platformRecording'
 import VideoSquareClassificationTree from './components/VideoSquareClassificationTree.vue'
-import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 const route = useRoute()
-const playerOpen = ref(false), playerFullscreen = ref(false), listSearch = ref(''), focusedDeviceId = ref(null)
+const playerOpen = ref(false), listSearch = ref(''), focusedDeviceId = ref(null)
 const page = ref(1), pageSize = ref(10), posters = ref({})
 const tableDevices = computed(() => visibleDevices.value.filter(item => (!focusedDeviceId.value || item.id === focusedDeviceId.value) && matchesVideoDevice(item, listSearch.value)))
 const pageDevices = computed(() => tableDevices.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
 function filterDevice(value) { focusedDeviceId.value = value.id; device.value = value; page.value = 1 }
 function changeCategory(ids) { categoryIds.value = ids; focusedDeviceId.value = null; page.value = 1 }
-function closePlayer() { generation++; clearMedia(); posters.value = {}; playerFullscreen.value = false }
+function closePlayer() { generation++; clearMedia(); posters.value = {} }
 
 const devices = ref([]), device = ref(null), search = ref(''), categoryIds = ref(null)
 const catalogError = ref(''), error = ref(''), loading = ref(false), loadingMedia = ref(false)
@@ -242,13 +244,11 @@ small { color:#8792a5; }
 .device-list :deep(.selected-device td.el-table__cell) { background:#e8f0ff; }
 .device-list .el-pagination { justify-content:flex-end; }
 .protocol-tag { margin-inline-end:4px; }
-.dialog-heading { display:flex; align-items:center; justify-content:space-between; color:#333; width:100%; flex:1; }
+.dialog-heading { display:flex; align-items:center; justify-content:space-between; color:#333; width:100%; flex:1; padding-inline-end:32px; }
 .dialog-heading small { margin-inline-start:18px; }
-.dialog-heading .el-button + .el-button { margin-left:0; }
 .playback-content { display:flex; flex-direction:column; gap:20px; }
 .source-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .source-toolbar .el-select { width:220px; }
-.source-toolbar .recording-actions { margin-inline-start:auto; }
 .date-panels { display:grid; grid-template-columns:220px 200px minmax(300px,1fr); gap:28px; max-width:1120px; }
 .date-panel label { display:block; margin-bottom:12px; font-size:14px; color:#333; }
 .date-panel label small { margin-inline-start:8px; }
