@@ -44,7 +44,7 @@ class ExternalBillingModeTest {
         ExternalBillingProperties noRuntime=configured();noRuntime.setVerifiedProviderStopSeconds(null);noRuntime.setMaximumRunSeconds(0);
         assertPolicyUnavailable(noRuntime,"maximum-run-seconds");
         ExternalBillingProperties noMoney=configured();noMoney.setVerifiedProviderStopSeconds(null);noMoney.setMaximumHoldQuota(null);
-        assertPolicyUnavailable(noMoney,"maximum-hold-quota");
+        assertTrue(noMoney.paidConfigured());assertNull(noMoney.unavailableReason());
         ExternalBillingProperties noSettlement=configured();noSettlement.setVerifiedProviderStopSeconds(null);noSettlement.setSettlementIntervalSeconds(0);
         assertPolicyUnavailable(noSettlement,"settlement-interval-seconds");
     }
@@ -98,10 +98,13 @@ class ExternalBillingModeTest {
         }
     }
     @Test void eachRequiredMoneyRuntimeAndStopBoundRejectsOnlyPaidAdmission() {
-        for(int invalid:new int[]{0,-1,86401}) {
+        for(int invalid:new int[]{0,-1,2592001}) {
             ExternalBillingProperties p=configured();p.setMaximumRunSeconds(invalid);assertPolicyUnavailable(p,"maximum-run-seconds");
         }
-        for(String invalid:new String[]{null,"0","-1","1.5","9223372036854775808"}) {
+        for(String optional:new String[]{null,"","0"}) {
+            ExternalBillingProperties p=configured();p.setMaximumHoldQuota(optional);assertTrue(p.paidConfigured());
+        }
+        for(String invalid:new String[]{"-1","1.5","9223372036854775808"}) {
             ExternalBillingProperties p=configured();p.setMaximumHoldQuota(invalid);assertPolicyUnavailable(p,"maximum-hold-quota");
         }
         for(Integer invalid:new Integer[]{0,-1}) {

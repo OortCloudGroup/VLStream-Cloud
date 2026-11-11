@@ -97,6 +97,8 @@ const checkAccount = () => execute('account', async (proof, valid) => {
 })
 const start = item => execute(String(item.id), async (proof, valid) => {
   if (!capabilities.value.paidAdmissionEnabled || !item.paidAdmissionEnabled) throw new Error(item.paidUnavailableReason || capabilities.value.unavailableReason || '当前实例计费配置尚未确认，请刷新后重试')
+  const acceptedPermissions = await ElMessageBox.confirm(uiText('允许 VLS 查询平台余额并按本次确认的 GPU 用量冻结与扣费。统一平台可能保存此计费授权，可在平台撤销。'), uiText('平台余额'), { confirmButtonText: uiText('同意并继续'), cancelButtonText: uiText('取消') }).then(() => true).catch(() => false)
+  if (!acceptedPermissions || !valid()) return
   const quote = (await quoteComputePaidRun(item.id)).data
   if (!valid()) return
   const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认本次付费开机'), { confirmButtonText: uiText('确认报价并开机'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)

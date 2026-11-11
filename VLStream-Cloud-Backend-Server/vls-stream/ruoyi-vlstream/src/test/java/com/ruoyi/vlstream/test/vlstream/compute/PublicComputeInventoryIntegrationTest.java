@@ -26,6 +26,7 @@ class PublicComputeInventoryIntegrationTest {
     private ComputeMarketService market;
     private final ThreadLocal<String> platformUser=ThreadLocal.withInitial(()->"platform-a");
     private ComputePlatformAuthorization auth;
+    private ComputeWorkspaceCleanupService cleaner;
     @BeforeAll static void database() throws Exception { CloudComputeIntegrationTest.database(); }
     @BeforeEach void setup() throws Exception {
         fixture=new CloudComputeIntegrationTest();fixture.setup();
@@ -33,6 +34,8 @@ class PublicComputeInventoryIntegrationTest {
         auth=mock(ComputePlatformAuthorization.class);
         when(auth.requireIdentity()).thenAnswer(call->{ComputePlatformAuthorization.Context p=new ComputePlatformAuthorization.Context();p.setAuthorized(true);p.setPlatformUserId(platformUser.get());p.setVlsTenantId(ComputeNodeService.tenant());p.setVlsUserId("vls-user");return p;});
         ReflectionTestUtils.setField(inventory,"authorization",auth);
+        cleaner=mock(ComputeWorkspaceCleanupService.class);
+        ReflectionTestUtils.setField(inventory,"workspaceCleanup",cleaner);
         ReflectionTestUtils.setField(fixture.nodes,"publicInventory",inventory);
         market=new ComputeMarketService(CloudComputeIntegrationTest.jdbc,fixture.nodes);
         ReflectionTestUtils.setField(market,"publicInventory",inventory);
@@ -104,12 +107,14 @@ class PublicComputeInventoryIntegrationTest {
         assertEquals("FREE",market.list(false).get(0).getClaimState());verifyNoInteractions(fixture.ssh);
         platformUser.set("platform-b");assertDoesNotThrow(()->tx(()->market.claim(fixture.nodeId)));
     }
-    @Test void usedWorkspaceRemainsIsolatedAfterCompletionInsteadOfPretendingCleanup() {
+    @Test void usedWorkspaceIsCleanedThenReleasedToFreeInsteadOfBeingIsolated() throws Exception {
         bind(fixture.nodeId,"account-a","instance-a");tx(()->market.claim(fixture.nodeId));
         tx(()->inventory.training(fixture.nodes.lockServer(fixture.nodeId)));
-        assertTrue(tx(()->market.release(fixture.nodeId)).contains("隔离"));
-        assertEquals("ISOLATED",market.list(false).get(0).getClaimState());
-        platformUser.set("platform-b");assertThrows(ServiceException.class,()->tx(()->market.claim(fixture.nodeId)));verifyNoInteractions(fixture.ssh);
+        assertTrue(tx(()->market.release(fixture.nodeId)).contains("工作空间已清理"));
+        assertEquals("FREE",market.list(false).get(0).getClaimState());
+        assertFalse(CloudComputeIntegrationTest.jdbc.queryForObject("SELECT workspace_dirty FROM vls_compute_public_instance",Boolean.class));
+        verify(cleaner).clean(any(),anyString());
+        platformUser.set("platform-b");assertDoesNotThrow(()->tx(()->market.claim(fixture.nodeId)));verifyNoInteractions(fixture.ssh);
     }
     @Test void activeAndArchivingJobsPreventReleaseAcrossAllGpus() {
         Long second=secondGpu();bind(fixture.nodeId,"account-a","instance-a");tx(()->market.claim(fixture.nodeId));
@@ -286,7 +291,7 @@ class PublicComputeInventoryIntegrationTest {
             }
             ComputeRequests.PublicIdentity identity=new ComputeRequests.PublicIdentity();identity.setAccountScope("account-b");identity.setInstanceId("source");
             assertThrows(ServiceException.class,()->tx(()->{market.publicIdentity(fixture.nodeId,identity);return null;}));
-            if("MINE".equals(expected)){tx(()->inventory.training(fixture.nodes.lockServer(fixture.nodeId)));tx(()->market.release(fixture.nodeId));}
+            if("MINE".equals(expected)){CloudComputeIntegrationTest.jdbc.update("UPDATE vls_compute_public_instance SET public_state='ISOLATED' WHERE instance_key=?",key);}
         }
         assertEquals(key,fixture.nodes.get(fixture.nodeId).getPublicInstanceKey());assertEquals("source",fixture.nodes.get(fixture.nodeId).getProviderInstanceId());verifyNoInteractions(fixture.ssh);
     }

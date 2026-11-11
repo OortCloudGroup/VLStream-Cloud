@@ -122,9 +122,18 @@ class ComputeBillingProductControllerTest {
         assertThrows(ServiceException.class,()->controller.accept("run-test",new ComputeBillingBindingController.AccountCheck()));
         verifyNoInteractions(client,authorization,accounts,paid);
     }
-    @Test void quoteUsesBackendSelfAndConfigurationWithoutAnImplicitBalanceCall() throws Exception {
-        com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture\"}");when(client.config()).thenReturn(config);
-        controller.quote(1L);verify(paid).quote(1L,payer,config);verify(client,never()).balance(anyString());verifyNoInteractions(accounts);
+    @Test void quoteUsesCurrentWalletBalanceAndBackendConfiguration() throws Exception {
+        com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture\",\"quota_unit\":\"quota\",\"settlement_currency\":\"CNY\",\"quota_per_currency_unit\":{\"numerator\":\"500000\",\"denominator\":\"1\"}}");
+        when(client.config()).thenReturn(config);
+        ExternalBillingGateway fixture=mock(ExternalBillingGateway.class);
+        com.fasterxml.jackson.databind.JsonNode balance=json.readTree("{\"user_id\":\""+payer.userId+"\",\"balance_quota\":\"500000\",\"held_quota\":\"0\",\"available_quota\":\"500000\",\"balance_version\":\"0\"}");
+        when(fixture.balance(payer.userId)).thenReturn(new ExternalBillingGateway.Result(ExternalBillingGateway.Status.SUCCEEDED,"fixture",balance));
+        ComputeBillingAccountService.Account account=new ComputeBillingAccountService().check(payer,fixture,config,true);
+        when(accounts.check(payer,client,config,true)).thenReturn(account);
+        controller.quote(1L);
+        verify(accounts).check(payer,client,config,true);
+        verify(paid).quote(1L,payer,config,"500000");
+        verify(client,never()).balance(anyString());
     }
     @Test void originalRunQueriesAndStopUseTheCurrentVerifiedPayer() {
         controller.run("original-run");controller.stop("original-run");
@@ -170,13 +179,18 @@ class ComputeBillingProductControllerTest {
         verify(authorization).billingPayer(client);verifyNoInteractions(client,accounts,settlements,lifecycle);
     }
     @Test void archiveRecoveryQuoteUsesOnlyCurrentSelfAndTheOriginalRunWithoutFunding() throws Exception {
-        com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture-recovery\"}");
+        com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture-recovery\",\"quota_unit\":\"quota\",\"settlement_currency\":\"CNY\",\"quota_per_currency_unit\":{\"numerator\":\"500000\",\"denominator\":\"1\"}}");
         when(client.config()).thenReturn(config);
+        ExternalBillingGateway fixture=mock(ExternalBillingGateway.class);
+        com.fasterxml.jackson.databind.JsonNode balance=json.readTree("{\"user_id\":\""+payer.userId+"\",\"balance_quota\":\"5\",\"held_quota\":\"0\",\"available_quota\":\"5\",\"balance_version\":\"0\"}");
+        when(fixture.balance(payer.userId)).thenReturn(new ExternalBillingGateway.Result(ExternalBillingGateway.Status.SUCCEEDED,"fixture",balance));
+        ComputeBillingAccountService.Account account=new ComputeBillingAccountService().check(payer,fixture,config,true);
+        when(accounts.check(payer,client,config,true)).thenReturn(account);
         controller.archiveRecoveryQuote("original-run");
-        verify(paid).quoteArchiveRecovery("original-run",payer,config);
+        verify(accounts).check(payer,client,config,true);
+        verify(paid).quoteArchiveRecovery("original-run",payer,config,"5");
         verify(paid,never()).accept(anyString(),any());
         verify(client,never()).balance(anyString());
-        verifyNoInteractions(accounts);
         org.springframework.web.bind.annotation.PostMapping route=ComputeBillingBindingController.class
             .getMethod("archiveRecoveryQuote",String.class).getAnnotation(org.springframework.web.bind.annotation.PostMapping.class);
         assertArrayEquals(new String[]{"/runs/{sourceRunId}/archive-recovery-quote"},route.value());
@@ -290,8 +304,8 @@ class ComputeBillingProductControllerTest {
         controller.account(consent());controller.quote(1L);controller.archiveRecoveryQuote("original-run");
         controller.accept("quoted-run",consent());controller.bind("usage-test");
         verify(authorization,times(5)).billingPayer(client);
-        verify(accounts,times(2)).check(payer,client,config,true);
-        verify(paid).quote(1L,payer,config);verify(paid).quoteArchiveRecovery("original-run",payer,config);
+        verify(accounts,times(4)).check(payer,client,config,true);
+        verify(paid).quote(1L,payer,config,"5");verify(paid).quoteArchiveRecovery("original-run",payer,config,"5");
         verify(paid).accept("quoted-run",payer);verify(settlements).bindAcceptedUsage("usage-test",payer,config);
         verify(lifecycle).arm("usage-test",payer);
         verify(client,never()).balance(anyString());

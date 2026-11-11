@@ -135,14 +135,15 @@ test('explicit identity unavailability prevents original run polling even if an 
 })
 
 test('configured billing starts only after current platform authorization and explicit quote confirmation', async () => {
-  const confirmation = defer(), h = harness({ confirm: () => confirmation.promise })
+  const confirmation = defer(), h = harness({ confirm: (_message, title) => title === '平台余额' ? 'confirm' : confirmation.promise })
   await h.mount()
   const action = h.instance.start({ id: '-6000', paidAdmissionEnabled: true })
   await flush()
   assert.equal(h.calls.proof, 1)
   assert.equal(h.calls.normalQuote, 1)
   assert.deepEqual(h.calls.accept, [])
-  assert.match(h.calls.confirmations[0][0], /13.00 CNY/)
+  assert.equal(h.calls.confirmations[0][1], '平台余额')
+  assert.match(h.calls.confirmations[1][0], /13.00 CNY/)
   confirmation.resolve('confirm')
   await action
   assert.deepEqual(h.calls.accept, ['recovery-1'])

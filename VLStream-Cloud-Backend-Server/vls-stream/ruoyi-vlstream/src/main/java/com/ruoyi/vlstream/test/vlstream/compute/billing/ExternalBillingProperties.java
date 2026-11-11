@@ -67,7 +67,7 @@ public class ExternalBillingProperties {
     public String unavailableReason() {
         String merchant = merchantConfigurationReason();
         if (merchant != null) return merchant;
-        if (maximumRunSeconds < 1 || maximumRunSeconds > 86400) return "平台计费缺少有效配置：maximum-run-seconds 运行时限";
+        if (maximumRunSeconds < 1 || maximumRunSeconds > 2592000) return "平台计费缺少有效配置：maximum-run-seconds 运行时限";
         if (holdStopLeadSeconds < 1 || holdStopLeadSeconds > 3600)
             return "平台计费配置无效：hold-stop-lead-seconds 停机提前量必须在 1 到 3600 秒之间";
         if (verifiedProviderStopSeconds != null) {
@@ -78,9 +78,19 @@ public class ExternalBillingProperties {
         }
         if (settlementIntervalSeconds < 1 || settlementIntervalSeconds > 3600)
             return "平台计费配置无效：settlement-interval-seconds 结算周期必须在 1 到 3600 秒之间";
-        try { ExactQuota.integer(maximumHoldQuota, true); }
-        catch (RuntimeException invalid) { return "平台计费缺少有效配置：maximum-hold-quota 资金上限"; }
+        if (!maximumHoldQuotaValid()) return "平台计费缺少有效配置：maximum-hold-quota 资金上限";
         return null;
+    }
+
+    /** Optional absolute ceiling for one order. Blank or zero means no fixed cap. */
+    public java.math.BigInteger maximumHoldQuotaValue() {
+        if (maximumHoldQuota == null || maximumHoldQuota.trim().isEmpty() || "0".equals(maximumHoldQuota.trim())) return null;
+        return ExactQuota.integer(maximumHoldQuota, true);
+    }
+
+    private boolean maximumHoldQuotaValid() {
+        try { maximumHoldQuotaValue(); return true; }
+        catch (RuntimeException invalid) { return false; }
     }
 
     @javax.annotation.PostConstruct

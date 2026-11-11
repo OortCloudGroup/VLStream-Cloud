@@ -88,6 +88,7 @@ public class ComputeMarketService {
         private String providerChargeType;
         private boolean paidAdmissionEnabled;
         private String paidUnavailableReason;
+        private boolean workspaceDirty;
     }
 
     public List<Resource> list(boolean selection) {
@@ -109,6 +110,7 @@ public class ComputeMarketService {
             boolean shared="PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null;
             String claim=shared ? publicInventory==null ? "ISOLATED" : publicInventory.state(node,viewer) : null;
             resource.setRequiresClaim(shared); resource.setClaimState(claim);
+            resource.setWorkspaceDirty(shared&&publicInventory!=null&&publicInventory.workspaceDirty(node));
             resource.setSchedulingMode(node.getSchedulingMode());
             resource.setCanClaim(shared && "FREE".equals(claim) && "FREE".equals(node.getBillingType()) && node.isEnabled());
             resource.setCanOperate(shared ? "MINE".equals(claim) : ComputeNodeService.tenant().equals(node.getTenantId()));

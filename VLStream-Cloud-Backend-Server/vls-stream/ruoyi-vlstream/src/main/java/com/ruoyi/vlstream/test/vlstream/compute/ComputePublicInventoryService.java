@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class ComputePublicInventoryService {
     private final JdbcTemplate jdbc;
     @Autowired(required = false) private ComputePlatformAuthorization authorization;
+    @Autowired(required = false) private ComputeWorkspaceCleanupService workspaceCleanup;
 
     @Data
     public static class Instance {
@@ -170,12 +171,33 @@ public class ComputePublicInventoryService {
             throw new ServiceException("实例仍有启停或环境检查操作，不能解除占用");
         List<String> active = jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j LEFT JOIN vls_compute_node n ON n.id=j.node_id WHERE (j.public_instance_key=? OR n.public_instance_key=?) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",String.class,row.getInstanceKey(),row.getInstanceKey());
         if (!active.isEmpty()) throw new ServiceException("实例仍有排队、运行或归档任务，不能解除占用");
-        if (row.isWorkspaceDirty()) {
-            jdbc.update("UPDATE vls_compute_public_instance SET public_state='ISOLATED' WHERE instance_key=?",row.getInstanceKey());
-            return "工作空间已使用但安全清理未验证，实例已隔离；未删除文件，不会分配下一用户";
+        boolean used = row.isWorkspaceDirty();
+        if (used) {
+            if (workspaceCleanup == null) throw new ServiceException("工作空间清理服务未就绪，不能解除占用");
+            try {
+                workspaceCleanup.clean(node, row.getInstanceKey());
+            } catch (java.io.IOException failure) {
+                throw new ServiceException("工作空间清理未完成，占用未解除；请确认实例已运行且连接正常后重试");
+            }
         }
-        jdbc.update("UPDATE vls_compute_public_instance SET public_state='FREE',owner_subject=NULL,claim_id=NULL,generation=generation+1 WHERE instance_key=?",row.getInstanceKey());
-        return "未使用工作空间的占用已撤销，未执行删除、停机或扣款";
+        jdbc.update("UPDATE vls_compute_public_instance SET public_state='FREE',owner_subject=NULL,claim_id=NULL,workspace_dirty=0,generation=generation+1 WHERE instance_key=?",row.getInstanceKey());
+        return used ? "工作空间已清理，占用已解除，实例回到空闲" : "未使用工作空间的占用已撤销，未执行删除、停机或扣款";
+    }
+
+    boolean workspaceDirty(ComputeNode node) {
+        Instance row = read(node, false);
+        return row != null && row.isWorkspaceDirty();
+    }
+
+    /** System release after a fully settled paid run. Cleanup must already be confirmed. */
+    void releaseCompleted(ComputeNode node, String instanceKey) {
+        Instance row = read(node, true);
+        if (row == null || instanceKey == null || !instanceKey.equals(row.getInstanceKey())
+            || !"OCCUPIED".equals(row.getPublicState()) || row.isWorkspaceDirty()) return;
+        if (!jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=? FOR UPDATE", instanceKey).isEmpty()) return;
+        List<String> active = jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j LEFT JOIN vls_compute_node n ON n.id=j.node_id WHERE (j.public_instance_key=? OR n.public_instance_key=?) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE", String.class, instanceKey, instanceKey);
+        if (!active.isEmpty()) return;
+        jdbc.update("UPDATE vls_compute_public_instance SET public_state='FREE',owner_subject=NULL,claim_id=NULL,generation=generation+1 WHERE instance_key=? AND public_state='OCCUPIED' AND claim_id=?", instanceKey, row.getClaimId());
     }
 
     void requireEditable(ComputeNode node) {

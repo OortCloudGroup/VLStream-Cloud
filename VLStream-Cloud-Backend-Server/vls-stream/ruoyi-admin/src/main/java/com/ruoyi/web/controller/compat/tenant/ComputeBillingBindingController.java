@@ -77,7 +77,8 @@ public class ComputeBillingBindingController {
     public R<ComputePaidRunService.View> quote(@PathVariable Long nodeId){
         NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
-        return R.data(paidRuns.quote(nodeId,payer,client.config()));
+        com.fasterxml.jackson.databind.JsonNode config=client.config();
+        return R.data(paidRuns.quote(nodeId,payer,config,availableQuota(payer,client,config)));
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @GetMapping("/runs")
@@ -92,7 +93,17 @@ public class ComputeBillingBindingController {
     public R<ComputePaidRunService.View> archiveRecoveryQuote(@PathVariable String sourceRunId){
         NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
-        return R.data(paidRuns.quoteArchiveRecovery(sourceRunId,payer,client.config()));
+        com.fasterxml.jackson.databind.JsonNode config=client.config();
+        return R.data(paidRuns.quoteArchiveRecovery(sourceRunId,payer,config,availableQuota(payer,client,config)));
+    }
+
+    /** Explicit paid-start action: the current wallet balance determines this order's funding window. */
+    private String availableQuota(BillingPayer payer,NewApiBillingClient client,com.fasterxml.jackson.databind.JsonNode config){
+        try{return accounts.check(payer,client,config,true).getAvailableQuota();}
+        catch(IllegalStateException unavailable){
+            throw new ServiceException("BILLING_NOT_AUTHORIZED".equals(unavailable.getMessage())
+                ?"平台尚未接受当前账户的计费授权，请先同意计费权限后重试":"平台余额暂未确认，请稍后重试");
+        }
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/accept")

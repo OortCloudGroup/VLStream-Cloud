@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -128,20 +129,29 @@ public class ComputePaidRunService {
 
     /** No balance call here: trusted auto-grant must follow explicit account/paid-use acceptance. */
     public View quote(Long nodeId,BillingPayer payer,JsonNode config) {
-        return quote(nodeId,payer,config,null);
+        return quote(nodeId,payer,config,null,null);
+    }
+
+    /** Current-user quote: the funding window is derived from the wallet's available quota. */
+    public View quote(Long nodeId,BillingPayer payer,JsonNode config,String availableQuota) {
+        return quote(nodeId,payer,config,null,availableQuota);
     }
 
     /** Explicitly quoted new paid run for the original retained artifacts; never a restart of an old hold. */
     public View quoteArchiveRecovery(String sourceRunId,BillingPayer payer,JsonNode config) {
+        return quoteArchiveRecovery(sourceRunId,payer,config,null);
+    }
+
+    public View quoteArchiveRecovery(String sourceRunId,BillingPayer payer,JsonNode config,String availableQuota) {
         Map<String,Object> context=owned(sourceRunId,payer,false);
         if(!terminal(text(context,"state")))throw new ServiceException("请先等待原开机订单停止并完成结算");
         String source=recoverySource(context);
         Map<String,Object> original=owned(source==null?sourceRunId:source,payer,false);
         if(!"COMPLETED".equals(text(original,"state")))throw new ServiceException("原归档任务的开机订单尚未结清");
-        return quote(Long.valueOf(text(original,"node_id")),payer,config,text(original,"run_id"));
+        return quote(Long.valueOf(text(original,"node_id")),payer,config,text(original,"run_id"),availableQuota);
     }
 
-    private View quote(Long nodeId,BillingPayer payer,JsonNode config,String recoverySource) {
+    private View quote(Long nodeId,BillingPayer payer,JsonNode config,String recoverySource,String availableQuota) {
         requirePaidConfiguration();
         trial().requirePayer(payer);
         ComputeNode before=nodes.get(nodeId);
@@ -184,13 +194,17 @@ public class ComputePaidRunService {
             if(rate.fixedUserPrice()&&(!node.isConfigurationManaged()||!java.util.Objects.equals(node.getConfigurationCode(),rate.getFixedPriceConfigurationId())))
                 throw new ServiceException("官方固定价格必须绑定同一部署配置供给");
             long now=System.currentTimeMillis();
-            long until=Math.addExact(now,Math.multiplyExact((long)properties.getMaximumRunSeconds()+policy.getStopBudgetSeconds()+policy.getPollingSafetySeconds(),1000L));
-            rate.validate(Instant.ofEpochMilli(until));
             BillingSnapshot snapshot=BillingSnapshot.fromExistingRate(rate,actual,Instant.ofEpochMilli(now),json);
+            long runSeconds=availableQuota==null?properties.getMaximumRunSeconds()
+                :affordableRunSeconds(snapshot,availableQuota,properties.maximumHoldQuotaValue(),
+                    properties.getMaximumRunSeconds(),policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
+            long until=Math.addExact(now,Math.multiplyExact(Math.addExact(runSeconds,(long)policy.getStopBudgetSeconds()+policy.getPollingSafetySeconds()),1000L));
+            rate.validate(Instant.ofEpochMilli(until));
             snapshot.requireInterval(now,Math.addExact(until,1));
             ExactQuota estimate=ExactQuota.compute(snapshot.approvedHourlyPrice,until-now,snapshot.numerator,snapshot.denominator);
             BigInteger quota=estimate.numerator.add(estimate.denominator).subtract(BigInteger.ONE).divide(estimate.denominator);
-            if(quota.signum()<=0||quota.compareTo(ExactQuota.integer(properties.getMaximumHoldQuota(),true))>0)
+            BigInteger holdCap=properties.maximumHoldQuotaValue();
+            if(quota.signum()<=0||(holdCap!=null&&quota.compareTo(holdCap)>0))
                 throw new ServiceException("所需预冻结超出当前实例的已配置消费上限");
             ObjectNode acceptedSnapshot=(ObjectNode)parse(snapshot.json);
             BillingLedgerOrigin.bind(acceptedSnapshot,properties);
@@ -207,11 +221,11 @@ public class ComputePaidRunService {
                 // No accepted usage or money intent exists. Refresh only this same order's quote;
                 // retain its original power idempotency key and rerun every price/permit check above.
                 jdbc.update("UPDATE vls_compute_paid_run SET quote_snapshot=?,reserve_quota=?,quote_until_ms=?,hold_until_ms=?,maximum_run_seconds=?,update_time=NOW() WHERE run_id=?",
-                    write(acceptedSnapshot),quota.toString(),now+120000,until,properties.getMaximumRunSeconds(),run);
+                    write(acceptedSnapshot),quota.toString(),now+120000,until,runSeconds,run);
                 return view(row(run,false));
             }
             jdbc.update("INSERT INTO vls_compute_paid_run(run_id,node_id,instance_key,tenant_id,opening_user_id,platform_subject,payer_user_id,merchant_id,quote_snapshot,reserve_quota,quote_until_ms,hold_until_ms,maximum_run_seconds,start_operation_id,state) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'QUOTED')",
-                run,node.getId(),node.getPublicInstanceKey(),payer.tenantId,payer.actorId,payer.platformSubject,payer.userId,properties.getMerchantId(),write(acceptedSnapshot),quota.toString(),now+120000,until,properties.getMaximumRunSeconds(),UUID.randomUUID().toString());
+                run,node.getId(),node.getPublicInstanceKey(),payer.tenantId,payer.actorId,payer.platformSubject,payer.userId,properties.getMerchantId(),write(acceptedSnapshot),quota.toString(),now+120000,until,runSeconds,UUID.randomUUID().toString());
             return view(row(run,false));
         });}catch(DuplicateKeyException duplicate) {
             // A racing quote may have won the fixed primary key. Never allocate a replacement.
@@ -553,6 +567,14 @@ public class ComputePaidRunService {
             jdbc.update("UPDATE vls_compute_usage SET active_server_key=NULL,state=CASE WHEN billing_start_at IS NULL THEN 'START_FAILED' ELSE state END WHERE id=?",usage);
             return null;
         });
+        String completedInstanceKey=text(run,"instance_key");
+        long completedNodeId=Long.valueOf(text(run,"node_id"));
+        try {
+            ComputeNode completedNode=nodes.get(completedNodeId);
+            tx.execute(status->{nodes.publicInventory().releaseCompleted(completedNode,completedInstanceKey);return null;});
+        } catch (RuntimeException ignored) {
+            // The order is settled; an unverified claim stays owned for the explicit release path.
+        }
     }
     private Map<String,Object> usage(String id) {
         return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=?",(rs,index)-> {
@@ -667,13 +689,35 @@ public class ComputePaidRunService {
         if(!trial().protectedUsage(usage))return null;
         JsonNode current=freshConfig();trial().requireNewUsage(usage,current);return current;
     }
+    /** Converts the wallet's available quota into a run window. The freeze stays within the balance. */
+    static long affordableRunSeconds(BillingSnapshot snapshot,String availableQuota,BigInteger holdCap,int technicalMax,int stopBudget,int pollingSafety) {
+        BigInteger available=ExactQuota.integer(availableQuota,false);
+        if(holdCap!=null)available=available.min(holdCap);
+        if(available.signum()<=0)throw new ServiceException("平台可用余额不足，无法支付本次开机");
+        BigDecimal price=snapshot.approvedHourlyPrice;
+        if(price==null||price.signum()<=0)throw new ServiceException("当前实例的有效计费价格尚未配置");
+        BigInteger conversionNumerator=ExactQuota.integer(snapshot.numerator,true);
+        BigInteger conversionDenominator=ExactQuota.integer(snapshot.denominator,true);
+        BigInteger numerator=price.unscaledValue().multiply(conversionNumerator);
+        BigInteger denominator=BigInteger.valueOf(3600000L).multiply(conversionDenominator);
+        if(price.scale()>=0)denominator=denominator.multiply(BigInteger.TEN.pow(price.scale()));
+        else numerator=numerator.multiply(BigInteger.TEN.pow(-price.scale()));
+        BigInteger maxMillis=available.multiply(denominator).divide(numerator);
+        long safetyMillis=Math.multiplyExact((long)Math.addExact(stopBudget,pollingSafety),1000L);
+        BigInteger runMillis=maxMillis.subtract(BigInteger.valueOf(safetyMillis));
+        if(runMillis.signum()<=0)throw new ServiceException("平台可用余额不足以支付本次开机的最低运行时长");
+        long seconds=runMillis.divide(BigInteger.valueOf(1000L)).longValueExact();
+        if(seconds<60)throw new ServiceException("平台可用余额不足以支付本次开机的最低运行时长");
+        return Math.min(seconds,technicalMax);
+    }
+
     private void requirePaidConfiguration(){
         if(!properties.paidConfigured())throw new ServiceException(properties.unavailableReason());
         if(policy==null)throw new ServiceException("平台计费缺配置：billing-policy 停机预算");
         policy.checkedStopBudgetSeconds(properties.getVerifiedProviderStopSeconds());
         if(properties.getHoldStopLeadSeconds()<policy.getStopBudgetSeconds())throw new ServiceException("余额到期停机提前量未覆盖配置的停机预算");
-        if(properties.getMaximumRunSeconds()<1||properties.getMaximumRunSeconds()>86400)throw new ServiceException("当前环境尚未配置单次运行时限");
-        ExactQuota.integer(properties.getMaximumHoldQuota(),true);
+        if(properties.getMaximumRunSeconds()<1||properties.getMaximumRunSeconds()>2592000)throw new ServiceException("当前环境尚未配置单次运行时限");
+        properties.maximumHoldQuotaValue();
     }
     private ComputePlatformAuthorization.Context actor(BillingPayer payer) {
         ComputePlatformAuthorization.Context actor=nodes.publicInventory().identity();

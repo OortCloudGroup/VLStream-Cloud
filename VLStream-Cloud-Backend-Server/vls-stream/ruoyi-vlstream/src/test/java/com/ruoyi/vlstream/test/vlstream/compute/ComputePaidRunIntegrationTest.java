@@ -290,7 +290,7 @@ class ComputePaidRunIntegrationTest {
         assertEquals(0,wallet.capturePosts);
     }
     @Test void disabledUnpricedAndForeignPayerCannotTriggerTransport() throws Exception {
-        properties.setMaximumHoldQuota(null);assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));properties.setMaximumHoldQuota("1000");
+        properties.setMaximumHoldQuota("-1");assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));properties.setMaximumHoldQuota("1000");
         properties.getRates().clear();assertThrows(RuntimeException.class,()->runs.quote(1L,payer,config));assertEquals(0,wallet.holdPosts);
         setup();String id=accepted();BillingPayer other=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":14}"));
         assertThrows(RuntimeException.class,()->runs.get(id,other));assertThrows(RuntimeException.class,()->runs.stop(id,other));assertThrows(RuntimeException.class,()->runs.accept(id,other));assertEquals(0,wallet.holdPosts);

@@ -26,6 +26,8 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
     private ConfiguredPaidPowerService configuredPower;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private ComputePaidArchiveRecoveryService paidArchives;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ComputeWorkspaceCleanupService workspaceCleanup;
     private final JdbcTemplate jdbc;
     private final ComputeNodeService nodes;
     private final ObjectProvider<ComputePowerProvider> providers;
@@ -92,6 +94,15 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
                         jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,message='计费安全停止请求，等待实例进程确认',update_time=NOW() WHERE id=? AND tenant_id=? AND public_claim_id=? AND public_owner_subject=?",job.get("id"),session.get("tenant_id"),claim.getClaimId(),claim.getOwnerSubject());
                 }
                 if(blocked){phase(usageId,"CANCEL_REQUESTED");return null;}
+            }
+            if(workspaceCleanup!=null&&claim!=null&&claim.isWorkspaceDirty()) {
+                try {
+                    workspaceCleanup.clean(node,claim.getInstanceKey());
+                    jdbc.update("UPDATE vls_compute_public_instance SET workspace_dirty=0 WHERE instance_key=? AND claim_id=?",claim.getInstanceKey(),claim.getClaimId());
+                } catch (java.io.IOException cleanupFailed) {
+                    // Billing safety still wins: stop and keep the claim so a later release can retry.
+                    phase(usageId,"CLEANUP_PENDING");
+                }
             }
             String operation=session.get("stop_operation_id")==null?UUID.randomUUID().toString():String.valueOf(session.get("stop_operation_id"));
             if(aliases.stream().anyMatch(n->n.getPowerOperationId()!=null)) {

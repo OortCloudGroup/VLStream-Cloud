@@ -36,7 +36,7 @@
           <el-button v-if="item.canQueryProvider && item.operationPending && item.apiControl" link type="primary" :loading="operating === item.id" @click="refresh(item, true)">{{ marketText('恢复挂起记录') }}</el-button>
         </div>
         <div v-if="item.claimState === 'MINE' || item.canOperate || item.canRefreshEnvironment || item.canManage" class="card-actions">
-          <el-button v-if="item.claimState === 'MINE'" :loading="operating === item.id" @click="release(item)">{{ marketText('释放占用') }}</el-button>
+          <el-button v-if="item.claimState === 'MINE' && (item.billingType !== 'POINTS' || item.workspaceDirty)" :loading="operating === item.id" @click="release(item)">{{ marketText('释放占用') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" type="primary" :loading="operating === item.id" :disabled="item.operationPending || item.capacityState === 'UNAVAILABLE' || item.provider === 'self' || item.powerState === 'RUNNING'" @click="power(item, 'start')">{{ marketText(item.apiControl ? '启动实例' : '开机指引') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" :disabled="item.operationPending || item.taskCount > 0 || item.provider === 'self' || item.powerState === 'STOPPED'" :loading="operating === item.id" @click="power(item, 'stop')">{{ marketText(item.apiControl ? '停止实例' : '关机指引') }}</el-button>
           <el-button v-if="item.canRefreshEnvironment || item.canOperate" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
@@ -133,9 +133,9 @@ const release = async item => {
   const request = beginOperation(item)
   const proof = await requireComputePlatformAuthorization()
   if (!currentOperation(request) || !proof || !isComputeAuthorizationCurrent(proof)) return
-  if (!await ElMessageBox.confirm(uiText('未使用的工作空间可撤销占用；已训练而安全清理未验证的实例将隔离，不会删除现存文件或交给下一用户。'), uiText('安全复用'), { type: 'warning' }).then(() => true).catch(() => false)) return
+  if (!await ElMessageBox.confirm(uiText('释放前会删除该实例上的历史训练工作目录；已归档到 MinIO 的模型不受影响。随后实例回到空闲，确认释放？'), uiText('释放占用'), { type: 'warning' }).then(() => true).catch(() => false)) return
   if (!currentOperation(request) || !isComputeAuthorizationCurrent(proof)) return
-  await runOperation(request, () => releaseComputeClaim(item.id, proof.platformToken), '安全复用', '撤销未完成，请确认任务与回存状态后重试', true)
+  await runOperation(request, () => releaseComputeClaim(item.id, proof.platformToken), '释放占用', '释放未完成，请确认任务已结束且实例可连接后重试', true)
 }
 const refresh = async (item, recover = false) => {
   const request = beginOperation(item)
