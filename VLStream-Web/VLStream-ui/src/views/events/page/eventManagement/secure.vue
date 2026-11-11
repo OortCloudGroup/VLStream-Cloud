@@ -59,7 +59,7 @@
             <div class="searchHeight_out flexRowAC">
               <search-height-box keyword="keyword" :placeholder="$tp('搜索')" :data="searchData" @handle="searchResetFn" />
               <EventColumnSettings v-model="eventColumns" @reset="resetEventColumns" />
-              <export-excel-pdf />
+              <export-excel-pdf :item="exportOptions" :busy="listLoading || deleting" @handle="format => eventExportRef.open(format)" />
             </div>
           </div>
           <el-table
@@ -170,6 +170,8 @@
           </div>
       </div>
     </DeviceClassificationLayout>
+    <EventExportDialog ref="eventExportRef" :rows="tableData" :selected-rows="selectedRows"
+      :columns="visibleEventColumns" :query="buildEventQuery()" :page-offset="(page - 1) * pagesize" :total="Number(count)" />
     <!-- event/ event -->
     <!-- <ConfirmAlertDialog
       v-model:visible="confirmAlertVis"
@@ -205,6 +207,7 @@
 
 <script setup lang="ts">
 import EventLocation from './components/EventLocation.vue'
+import EventExportDialog from './components/EventExportDialog.vue'
 import { translatePhrase as uiText } from '@/i18n'
 import EventRecordedVideos from './components/EventRecordedVideos.vue'
 import { hasEventVideoReferences } from './components/eventVideos.mjs'
@@ -266,6 +269,8 @@ const videoDialogVisible = ref(false)
 const currentVideo = ref<any>({})
 const selectedRows = ref<any[]>([])
 const eventTableRef = ref()
+const eventExportRef = ref()
+const exportOptions = Object.fromEntries(['Excel', 'PDF', 'HTML', 'XML', 'JSON', 'CSV'].map(format => [`isDisabled${format}`, false]))
 const deleting = ref(false)
 const listLoading = ref(false)
 let listRequestId = 0
@@ -367,23 +372,27 @@ const handleClassificationFilter = async(filter: { categoryType?: string, catego
   }
 }
 
+const buildEventQuery = () => {
+  const data: Record<string, any> = {
+    ...params,
+    item: itemTemp.value,
+    device_filter_active: classificationFilter.active,
+    device_ids: classificationFilter.active ? [...classificationFilter.deviceIds] : undefined
+  }
+  if (datePickerTime.value?.length) {
+    data.start_at = dayjs(datePickerTime.value[0]).format('YYYY-MM-DD HH:mm:ss')
+    data.end_at = dayjs(datePickerTime.value[1]).format('YYYY-MM-DD 23:59:59')
+  }
+  return data
+}
+
 const getList = async() => {
   const requestId = ++listRequestId
   listLoading.value = true
   selectedRows.value = []
   eventTableRef.value?.clearSelection()
   try {
-    let data = {
-      ...params,
-      item: itemTemp.value,
-      device_filter_active: classificationFilter.active,
-      device_ids: classificationFilter.active ? classificationFilter.deviceIds : undefined
-    }
-    if (datePickerTime.value && datePickerTime.value?.length !== 0) {
-      data['start_at'] = dayjs(datePickerTime.value[0]).format('YYYY-MM-DD HH:mm:ss')
-      data['end_at'] = dayjs(datePickerTime.value[1]).format('YYYY-MM-DD 23:59:59')
-    }
-    const res:any = await eventList(data)
+    const res:any = await eventList(buildEventQuery())
     if (requestId !== listRequestId) return
     if (res.code === 200) {
       tableData.value = res.data.list

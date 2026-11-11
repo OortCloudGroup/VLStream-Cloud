@@ -16,7 +16,7 @@
 <template>
   <div class="exportExcelPDF flexRowAC">
     <el-dropdown trigger="hover">
-      <el-button class="exportBtn Btn2 flexRowAC" :title="$tp('导出')">
+      <el-button class="exportBtn Btn2 flexRowAC" :title="$tp('导出')" :aria-label="$tp('导出')" :disabled="busy" :loading="busy">
         <oort-svg-icon class="BtnImg export" name="export" width="14" height="14" />
         <div class="line" />
         <el-icon>
@@ -62,6 +62,10 @@ const props = defineProps({
   item: {
     type: Object,
     default: () => ({})
+  },
+  busy: {
+    type: Boolean,
+    default: false
   }
 })
 const emits = defineEmits(['handle'])
@@ -74,7 +78,7 @@ const exportItem = computed(() => ({
   isDisabledXML: props.item.isDisabledXML !== false,
   isDisabledJSON: props.item.isDisabledJSON !== false,
   isDisabledCSV: props.item.isDisabledCSV !== false
-})).value
+}))
 </script>
 
 <style lang="scss" scoped>
