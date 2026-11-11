@@ -14,6 +14,8 @@ export const cloudDevice = {
   nodes: () => call(request, { url: '/cloud-device/nodes' }),
   models: nodeId => call(request, { url: '/cloud-device/models', params: { nodeId } }),
   list: params => call(request, { url: '/cloud-device/bindings', params }),
+  events: params => call(request, { url: '/cloud-device/events', params }),
+  event: id => call(request, { url: `/cloud-device/events/${encodeURIComponent(id)}` }),
   save: data => call(request, { url: '/cloud-device/bindings', method: 'post', data }),
   toggle: row => call(request, { url: `/cloud-device/bindings/${encodeURIComponent(row.id)}/enabled`, method: 'put', data: { revision: row.revision, enabled: !row.enabled } }),
   async bind(selection) {

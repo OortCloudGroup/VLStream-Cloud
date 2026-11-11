@@ -275,6 +275,19 @@ public class ComputeNodeService {
         return getManaged(id);
     }
 
+    /** A durable cloud run has already verified its resource fingerprint and owner. */
+    public ComputeNode restoreSharedRuntimeProof(ComputeNode node) {
+        if (sharedQueue == null || !sharedQueue.isShared(node)) return node;
+        sharedQueue.requireTarget(node);
+        try { sharedQueue.proof(node); return node; }
+        catch (ServiceException missingProof) {
+            if (!probeSnapshot(node)) throw new ServiceException("共享GPU环境重新检查未能保存，请稍后重试");
+            ComputeNode refreshed = get(node.getId());
+            sharedQueue.requireTarget(refreshed);
+            sharedQueue.proof(refreshed);
+            return refreshed;
+        }
+    }
     /** Fixed environment check; callers must first authorize and reserve the immutable snapshot. */
     boolean probeSnapshot(ComputeNode node) {
         String details; String state = "ERROR"; String key = node.getHostKey();

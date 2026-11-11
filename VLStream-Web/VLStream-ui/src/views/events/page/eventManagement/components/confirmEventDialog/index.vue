@@ -107,9 +107,10 @@
         </div>
       </template>
     </div>
-    <el-collapse v-if="eventDetailData.cloudAiEventId" v-model="cloudEvidenceOpen" class="cloud-evidence-fold">
+    <el-collapse v-if="eventDetailData.cloudAiEventId || eventDetailData.cloudDeviceEventId" v-model="cloudEvidenceOpen" class="cloud-evidence-fold">
       <el-collapse-item title="云端检测证据与算法结果" name="evidence">
-        <CloudEventEvidence v-if="cloudEvidenceOpen.includes('evidence')" :event-id="eventDetailData.cloudAiEventId" />
+        <CloudDeviceEvidence v-if="cloudEvidenceOpen.includes('evidence') && eventDetailData.cloudDeviceEventId" :event-id="eventDetailData.cloudDeviceEventId" />
+        <CloudEventEvidence v-else-if="cloudEvidenceOpen.includes('evidence') && eventDetailData.cloudAiEventId" :event-id="eventDetailData.cloudAiEventId" />
       </el-collapse-item>
     </el-collapse>
     <div v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0">
@@ -230,6 +231,7 @@
 </template>
 <script setup lang="ts">
 import CloudEventEvidence from '@/views/DecisionAI/cloudAi/CloudEventEvidence.vue'
+import CloudDeviceEvidence from '@/views/DecisionAI/cloudAi/CloudDeviceEvidence.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import { ref, computed, watch } from 'vue'
@@ -253,6 +255,7 @@ interface Props {
 
 interface EventDetailData {
   cloudAiEventId?: string
+  cloudDeviceEventId?: string
   client?: string
   created_at?: string
   describe?: string

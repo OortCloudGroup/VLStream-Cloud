@@ -2,7 +2,7 @@
   <main class="cloud-config">
     <header><div><span class="eyebrow">{{ $tp('云端智能') }}</span><h1>{{ $tp('算法配置') }}</h1><p>{{ $tp('批量选择摄像机与算法，由云端 GPU 持续检测。') }}</p></div><el-button type="primary" :disabled="!selection.length || selection.length > 20" @click="openPicker(selection)">{{ $tp('批量配置') }} · {{ selection.length }}/20</el-button></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-tabs v-model="tab"><el-tab-pane :label="$tp('摄像机')" name="devices" /><el-tab-pane :label="$tp('已配置算法')" name="bindings" /></el-tabs>
+    <el-tabs v-model="tab"><el-tab-pane :label="$tp('摄像机')" name="devices" /><el-tab-pane :label="$tp('已配置算法')" name="bindings" /><el-tab-pane :label="$tp('检测事件')" name="events" /></el-tabs>
     <template v-if="tab === 'devices'">
       <div class="toolbar"><el-select v-model="protocol" aria-label="设备协议" @change="search"><el-option v-for="(label,key) in protocols" :key="key" :value="key" :label="label" /></el-select><el-input v-model="keyword" :placeholder="$tp('设备名称')" clearable @keyup.enter="search" /><el-button @click="search">{{ $tp('搜索') }}</el-button><el-button @click="reset">{{ $tp('重置') }}</el-button></div>
       <el-table :data="devices" v-loading="loading" stripe row-key="id" @selection-change="selection = $event">
@@ -13,11 +13,24 @@
         <el-table-column :label="$tp('操作')" width="100"><template #default="{row}"><el-button link type="primary" :disabled="!selectable(row)" @click="openPicker([row])">{{ $tp('配置') }}</el-button></template></el-table-column>
       </el-table><footer><span>{{ $tp('翻页或筛选会清空选择') }}</span><el-pagination v-model:current-page="page" :total="total" :page-size="10" layout="total, prev, pager, next" @current-change="loadDevices" /></footer>
     </template>
-    <template v-else>
+    <template v-else-if="tab === 'bindings'">
       <div class="toolbar"><span>{{ $tp('同一 GPU 的配置合并运行，变更时短暂重连。') }}</span><el-button @click="loadBindings">{{ $tp('刷新') }}</el-button><el-button @click="router.push('/event-management')">{{ $tp('前往主动安全') }}</el-button></div>
-      <el-table :data="bindings" stripe><el-table-column :label="$tp('摄像机')" min-width="150"><template #default="{row}">{{ row.camera.name }}<small>{{ row.camera.protocol }}</small></template></el-table-column><el-table-column :label="$tp('算法模型')" min-width="160"><template #default="{row}">{{ row.rule.name }}<small>PT · v{{ row.rule.version }}</small></template></el-table-column><el-table-column prop="nodeName" label="GPU" min-width="180" /><el-table-column :label="$tp('运行状态')" min-width="220"><template #default="{row}"><el-tag>{{ row.enabled ? (states[row.state] || '等待应用') : '已停用配置' }}</el-tag><small>{{ row.message }}</small></template></el-table-column><el-table-column :label="$tp('操作')" width="100"><template #default="{row}"><el-button link type="primary" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template></el-table-column></el-table>
+      <el-table :data="bindings" stripe><el-table-column :label="$tp('摄像机')" min-width="150"><template #default="{row}">{{ row.camera.name }}<small>{{ row.camera.protocol }}</small></template></el-table-column><el-table-column :label="$tp('算法模型')" min-width="160"><template #default="{row}">{{ row.rule.name }}<small>PT · v{{ row.rule.version }}</small></template></el-table-column><el-table-column prop="nodeName" label="GPU" min-width="180" /><el-table-column :label="$tp('运行状态')" min-width="220"><template #default="{row}"><el-tag>{{ states[row.state] || '等待应用' }}</el-tag><small>{{ row.message }}</small></template></el-table-column><el-table-column :label="$tp('操作')" width="100"><template #default="{row}"><el-button link type="primary" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template></el-table-column></el-table>
       <footer><el-pagination v-model:current-page="bindingPage" :total="bindingTotal" :page-size="20" layout="total, prev, pager, next" @current-change="loadBindings" /></footer>
     </template>
+    <template v-else>
+      <div class="toolbar"><span>与主动安全共用事件及处置状态</span><el-button @click="loadEvents">刷新事件</el-button></div>
+      <el-table :data="eventRows" stripe>
+        <el-table-column label="告警画面" width="150"><template #default="{row}"><el-image v-if="row.media?.annotated" :src="row.media.annotated" fit="contain" style="width:120px;height:70px" :preview-src-list="[row.media.annotated]" preview-teleported /></template></el-table-column>
+        <el-table-column label="事件 / 摄像机" min-width="200"><template #default="{row}">{{ row.event_type }}<small>{{ row.detail.cameraName }} · {{ row.detail.modelName }}</small></template></el-table-column>
+        <el-table-column label="时间" min-width="170"><template #default="{row}">{{ formatTime(row.detected_at) }}</template></el-table-column>
+        <el-table-column label="处置状态" width="120"><template #default="{row}">{{ ({pending:'待处理',processing:'正在处理',completed:'已完成',closed:'已关闭'})[row.event_status] || row.event_status }}</template></el-table-column>
+        <el-table-column label="操作" width="180"><template #default="{row}"><el-button link type="primary" @click="evidenceId=row.eventId">查看证据</el-button><el-button link type="primary" @click="handleEvent(row)">前往处置</el-button></template></el-table-column>
+        <template #empty><el-empty description="暂无检测事件，启用算法后将在此显示真实告警" /></template>
+      </el-table>
+      <footer><el-pagination v-model:current-page="eventPage" :total="eventTotal" :page-size="20" layout="total, prev, pager, next" @current-change="loadEvents" /></footer>
+    </template>
+    <el-dialog :model-value="!!evidenceId" title="云端检测证据" width="min(900px,96vw)" destroy-on-close @close="evidenceId=null"><CloudDeviceEvidence v-if="evidenceId" :event-id="evidenceId" /></el-dialog>
     <el-drawer v-model="opened" :title="$tp('配置云端算法')" size="min(1100px, 96vw)" :close-on-click-modal="false" :close-on-press-escape="!saving" :show-close="!saving">
       <el-alert v-if="formError" :title="formError" type="error" :closable="false" />
       <div class="toolbar"><el-select v-model="nodeId" :placeholder="$tp('选择免费 GPU')" :disabled="saving" @change="loadModels"><el-option v-for="node in nodes" :key="node.id" :label="node.name" :value="node.id" :disabled="!node.enabled" /></el-select><el-button :loading="checking" :disabled="!nodeId || saving" @click="checkNode">{{ $tp('检查运行环境') }}</el-button><span>{{ targets.length }} {{ $tp('台摄像机') }}</span></div>
@@ -35,30 +48,56 @@
   </main>
 </template>
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { cloudAi, cloudError } from '@/api/cloudAi'
 import { cloudDevice } from '@/api/cloudDevice'
+import CloudDeviceEvidence from './cloudAi/CloudDeviceEvidence.vue'
+import { formatTime } from './cloudAi/presentation'
 const router=useRouter(), protocols={VLSTREAM:'VLStream',ONVIF:'ONVIF',RTSP:'RTSP',CUSTOM:'自定义',GB28181:'GB28181',ISUP:'ISUP',EHOME:'EHome',DAHUA:'大华'}
-const states={QUEUED:'排队中',PREPARING:'准备中',RUNNING:'检测中',DEGRADED:'部分异常',UNKNOWN:'状态待确认',STOPPING:'停止中',CANCELLED:'已停止',FAILED:'异常，等待重试'}
+const eventRows=ref([]),eventPage=ref(1),eventTotal=ref(0),evidenceId=ref(null)
+const states={DISABLED:'已停用',QUEUED:'排队中',PREPARING:'准备中',RUNNING:'检测中',DEGRADED:'部分异常',UNKNOWN:'状态待确认',STOPPING:'停止中',CANCELLED:'已停止',FAILED:'异常，等待重试'}
 const tab=ref('devices'),protocol=ref('VLSTREAM'),keyword=ref(''),devices=ref([]),selection=ref([]),page=ref(1),total=ref(0),loading=ref(false),error=ref(''),bindings=ref([]),bindingPage=ref(1),bindingTotal=ref(0)
 const opened=ref(false),targets=ref([]),nodes=ref([]),nodeId=ref(null),models=ref([]),chosen=ref([]),modelSearch=ref(''),formError=ref(''),saving=ref(false),preparing=ref(false),checking=ref(false),sampleFps=ref(2),preSeconds=ref(5),postSeconds=ref(10)
 const filteredModels=computed(()=>models.value.filter(m=>m.available && String(m.name).toLowerCase().includes(modelSearch.value.toLowerCase())))
-let generation=0,modelGeneration=0,timer
+let generation=0,modelGeneration=0,timer,pendingSubmission=null,pendingSignature=null
 const selectable=row=>protocol.value!=='VLSTREAM' || row.state==='ONLINE'
-async function loadDevices(){const seq=++generation;selection.value=[];loading.value=true;error.value='';try{const result=await cloudAi.devices(protocol.value,{pageNum:page.value,pageSize:10,name:keyword.value});if(seq===generation){devices.value=result.rows||result.records||result.list||[];total.value=Number(result.total||0)}}catch(e){if(seq===generation)error.value=cloudError(e)}finally{if(seq===generation)loading.value=false}}
+async function loadDevices(){const seq=++generation;selection.value=[];devices.value=[];total.value=0;loading.value=true;error.value='';try{const result=await cloudAi.devices(protocol.value,{pageNum:page.value,pageSize:10,name:keyword.value});if(seq===generation){devices.value=result.rows||result.records||result.list||[];total.value=Number(result.total||0)}}catch(e){if(seq===generation)error.value=cloudError(e)}finally{if(seq===generation)loading.value=false}}
 function search(){page.value=1;loadDevices()}
 function reset(){keyword.value='';search()}
-async function loadBindings(){try{const result=await cloudDevice.list({page:bindingPage.value,size:20});bindings.value=result.records;bindingTotal.value=Number(result.total)}catch(e){error.value=cloudError(e)}}
+async function loadBindings(){try{error.value='';const result=await cloudDevice.list({page:bindingPage.value,size:20});bindings.value=result.records;bindingTotal.value=Number(result.total)}catch(e){error.value=cloudError(e)}}
+let eventGeneration=0
+async function loadEvents(){const seq=++eventGeneration;try{const data=await cloudDevice.events({page:eventPage.value,size:20});if(seq===eventGeneration){eventRows.value=data.records;eventTotal.value=Number(data.total);error.value=''}}catch(e){if(seq===eventGeneration)error.value=cloudError(e)}}
+const handleEvent=row=>router.push({path:'/event-management',query:{eventId:row.eventId,from:'cloud-device'}})
+watch(tab,value=>{if(value==='events')loadEvents();else if(value==='bindings')loadBindings()})
 async function openPicker(rows){opened.value=true;preparing.value=true;formError.value='';chosen.value=[];models.value=[];nodeId.value=null;targets.value=rows.map(row=>({...row,protocol:protocol.value,streams:[],stream:null}));try{nodes.value=await cloudDevice.nodes();await Promise.all(targets.value.map(async target=>{target.streams=await cloudAi.streams(target.protocol,target.id);const first=target.streams.find(s=>s.supported);target.stream=first?(first.streamId||'main'):null}))}catch(e){formError.value=cloudError(e)}finally{preparing.value=false}}
 async function loadModels(){const seq=++modelGeneration;chosen.value=[];models.value=[];try{const data=await cloudDevice.models(nodeId.value);if(seq===modelGeneration)models.value=data}catch(e){if(seq===modelGeneration)formError.value=cloudError(e)}}
 async function checkNode(){checking.value=true;formError.value='';try{await cloudAi.checkNode(nodes.value.find(n=>n.id===nodeId.value));nodes.value=await cloudDevice.nodes();if(nodes.value.find(n=>n.id===nodeId.value)?.state!=='READY')throw new Error('GPU运行环境检查未通过');ElMessage.success('GPU运行环境检查通过');await loadModels()}catch(e){formError.value=cloudError(e)}finally{checking.value=false}}
 function choose(model){const index=chosen.value.findIndex(m=>m.modelId===model.modelId);if(index>=0)chosen.value.splice(index,1);else chosen.value.push({...model,classes:[],confidence:0.5,reportInterval:30})}
-async function save(){saving.value=true;formError.value='';try{const cameras=await Promise.all(targets.value.map(t=>cloudDevice.bind({protocol:t.protocol,deviceRowId:String(t.id),streamId:t.stream==='main'?null:t.stream})));const body={operationId:crypto.randomUUID(),updates:{},config:{nodeId:nodeId.value,enabled:true,cameras:cameras.map(c=>c.grantId),models:chosen.value.map(({modelId,classes,confidence,reportInterval})=>({modelId,classes,confidence,reportInterval})),sampleFps:sampleFps.value,preSeconds:preSeconds.value,postSeconds:postSeconds.value}};let result=await cloudDevice.save(body);if(result.conflicts?.length){await ElMessageBox.confirm(result.conflicts.map(c=>`${c.camera} · ${c.model}`).join('；')+' 已配置。是否明确更新这些项？其他算法保留。','配置冲突',{confirmButtonText:'更新冲突项',cancelButtonText:'取消',type:'warning'});body.updates=Object.fromEntries(result.conflicts.map(c=>[c.id,c.revision]));result=await cloudDevice.save(body)}if(!result.accepted)throw new Error('配置已被其他操作更新，请重新加载');opened.value=false;tab.value='bindings';await loadBindings();ElMessage.success('配置已保存，正在应用')}catch(e){if(!['cancel','close'].includes(e))formError.value=cloudError(e)}finally{saving.value=false}}
+async function save(){
+  saving.value=true;formError.value=''
+  try{
+    const desired={nodeId:nodeId.value,targets:targets.value.map(t=>({protocol:t.protocol,id:t.id,stream:t.stream})),models:chosen.value.map(({modelId,classes,confidence,reportInterval})=>({modelId,classes,confidence,reportInterval})),sampleFps:sampleFps.value,preSeconds:preSeconds.value,postSeconds:postSeconds.value}
+    const signature=JSON.stringify(desired)
+    if(!pendingSubmission || pendingSignature!==signature){
+      const cameras=await Promise.all(desired.targets.map(t=>cloudDevice.bind({protocol:t.protocol,deviceRowId:String(t.id),streamId:t.stream==='main'?null:t.stream})))
+      pendingSubmission={operationId:crypto.randomUUID(),updates:{},config:{nodeId:desired.nodeId,enabled:true,cameras:cameras.map(c=>c.grantId),models:desired.models,sampleFps:desired.sampleFps,preSeconds:desired.preSeconds,postSeconds:desired.postSeconds}}
+      pendingSignature=signature
+    }
+    let result=await cloudDevice.save(pendingSubmission)
+    if(result.conflicts?.length){
+      await ElMessageBox.confirm(result.conflicts.map(c=>`${c.camera} · ${c.model}`).join('；')+' 已配置。是否明确更新这些项？其他算法保留。','配置冲突',{confirmButtonText:'更新冲突项',cancelButtonText:'取消',type:'warning'})
+      pendingSubmission.updates=Object.fromEntries(result.conflicts.map(c=>[c.id,c.revision]))
+      result=await cloudDevice.save(pendingSubmission)
+    }
+    if(!result.accepted)throw new Error('配置已被其他操作更新，请重新加载')
+    pendingSubmission=null;pendingSignature=null;opened.value=false;tab.value='bindings';await loadBindings();ElMessage.success('配置已保存，正在应用')
+  }catch(e){if(!['cancel','close'].includes(e))formError.value=cloudError(e)}finally{saving.value=false}
+}
 async function toggle(row){try{await ElMessageBox.confirm(row.enabled?'停用此算法？同一GPU的其他配置将有序重连继续检测。':'启用此算法并合并到GPU检测？','确认配置',{confirmButtonText:'确认',cancelButtonText:'取消'});await cloudDevice.toggle(row);await loadBindings()}catch(e){if(!['cancel','close'].includes(e))error.value=cloudError(e)}}
-onMounted(()=>{loadDevices();loadBindings();timer=setInterval(()=>{if(tab.value==='bindings')loadBindings()},10000)})
-onUnmounted(()=>{generation++;modelGeneration++;clearInterval(timer)})
+onMounted(()=>{loadDevices();loadBindings();timer=setInterval(()=>{if(tab.value==='bindings')loadBindings();else if(tab.value==='events' && !evidenceId.value)loadEvents()},10000)})
+onUnmounted(()=>{generation++;modelGeneration++;eventGeneration++;clearInterval(timer)})
 </script>
 <style scoped>
 .cloud-config{padding:28px;background:#fff;border-radius:16px;min-height:calc(100vh - 130px);color:#152540}header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}h1{font-size:24px;margin:8px 0}p,.eyebrow,small,footer{color:#7b8ba5;font-size:13px}small{display:block;margin-top:5px}.toolbar{display:flex;align-items:center;gap:12px;margin:18px 0}.toolbar>.el-select{width:260px}.toolbar>.el-input{max-width:290px}footer{display:flex;justify-content:space-between;margin-top:24px}.picker{display:grid;grid-template-columns:1fr 340px;gap:28px}.picker aside{background:#f7f9fd;padding:20px;border-radius:10px}.source{display:flex;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid #eef1f6}.source>span{flex:1}.source>.el-select{width:190px}.model{padding:14px 4px;border-bottom:1px solid #edf0f7}.rule{padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid #e3e8f1}.rule>.el-button{float:right}.drawer-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px}.drawer-footer>span{margin-right:auto;font-size:13px;color:#7485a0}@media(max-width:900px){.picker{grid-template-columns:1fr}.toolbar{flex-wrap:wrap}.cloud-config{padding:16px}header{align-items:flex-start;gap:10px}.drawer-footer{flex-wrap:wrap}}

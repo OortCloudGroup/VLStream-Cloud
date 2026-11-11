@@ -2291,6 +2291,11 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         value.put("name", name.isEmpty() ? item : name);
         Map<String, Object> data = jsonMap(row.get("data"));
         appendIfNotEmpty(value, "cloudAiEventId", data.get("cloud_ai_event_id"));
+        Object cloudPayload = data.get("mqtt_payload");
+        if (cloudPayload instanceof Map && "CLOUD_DEVICE".equals(((Map<?, ?>) cloudPayload).get("source"))) {
+            value.remove("cloudAiEventId");
+            appendIfNotEmpty(value, "cloudDeviceEventId", data.get("cloud_ai_event_id"));
+        }
         value.put("describe", string(data.get("describe")));
         value.put("point", pointValue(data.get("point")));
         List<String> pictures = distinctStrings(data.get("pics"), true);

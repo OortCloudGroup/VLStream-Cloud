@@ -33,7 +33,7 @@ public class CloudAiModels {
     public List<ObjectNode> choices(ComputeNode node) {
         QueryWrapper<AlgorithmModel> query = new QueryWrapper<>();
         query.eq("tenant_id", CloudAiService.tenant()).eq("is_deleted", 0).orderByDesc("create_time").last("LIMIT 500");
-        access.filter(query, "training_id");
+        access.filter(query, "vls_algorithm_model.training_id");
         List<ObjectNode> result = new ArrayList<>();
         for (AlgorithmModel model : models.list(query)) {
             ObjectNode item = summary(model);

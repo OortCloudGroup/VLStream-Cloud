@@ -126,7 +126,8 @@
             <div class="detail-content-wrapper">
               <span class="detail-label">{{ $tp('事件数据') }}</span>
               <div class="detail-value event-data-block">
-                <CloudEventEvidence v-if="isCloudEvent" :event-id="String(selectedEvent.id)" />
+                <CloudDeviceEvidence v-if="isCloudDeviceEvent" :event-id="String(selectedEvent.id)" />
+                <CloudEventEvidence v-else-if="isCloudEvent" :event-id="String(selectedEvent.id)" />
                 <pre v-else-if="selectedEvent?.eventData" class="event-data">{{ selectedEvent.eventData }}</pre>
                 <span v-else>--</span>
               </div>
@@ -340,6 +341,7 @@ import { translatePhrase as uiText } from '@/i18n'
 import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import CloudEventEvidence from './cloudAi/CloudEventEvidence.vue'
+import CloudDeviceEvidence from './cloudAi/CloudDeviceEvidence.vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Document, Monitor, Location, Clock, User, Picture, Plus, CircleCheck} from '@element-plus/icons-vue'
 import {
@@ -371,6 +373,12 @@ const isCloudEvent = computed(() => {
   try {
     const value = selectedEvent.value?.eventData
     return (typeof value === 'string' ? JSON.parse(value) : value)?.source === 'CLOUD_AI'
+  } catch { return false }
+})
+const isCloudDeviceEvent = computed(() => {
+  try {
+    const value = selectedEvent.value?.eventData
+    return (typeof value === 'string' ? JSON.parse(value) : value)?.source === 'CLOUD_DEVICE'
   } catch { return false }
 })
 

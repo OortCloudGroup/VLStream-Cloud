@@ -82,7 +82,7 @@ public class CloudDeviceWorker {
             try (ComputeSsh.Connection connection = ssh.open(node)) {
                 String python = python(connection, node);
                 if (dispatched < 2) {
-                    if (snapshot.path("shared").asBoolean()) queue.requireTarget(node);
+                    if (snapshot.path("shared").asBoolean()) node = nodes.restoreSharedRuntimeProof(node);
                     jdbc.update("UPDATE vls_cloud_device_run SET dispatched=1,run_dir=?,state='PREPARING',message='准备固定模型与视频源' WHERE id=? AND lease_owner=?", root, id, worker);
                     phase = "PREPARING";
                     prepare(connection, node, python, root, run, snapshot);
@@ -127,7 +127,8 @@ public class CloudDeviceWorker {
             else terminal(id, "FAILED", "RESOURCE".equals(phase) ? "执行资源校验失败，请核对当前后台的YAML资源绑定与运行快照"
                 : "GPU_CONNECT".equals(phase) ? "GPU连接失败，请核对后台SSH身份与网络"
                 : "准备失败，请核对检测运行环境、模型归档和摄像机授权", System.currentTimeMillis());
-            log.warn("Cloud AI reconciliation {} at {}: {}", id, phase, error.getClass().getSimpleName());
+            log.warn("Cloud AI reconciliation {} at {}: {} origin={}", id, phase, error.getClass().getSimpleName(),
+                error.getStackTrace().length == 0 ? "unknown" : error.getStackTrace()[0].toString());
         } finally {
             if (previous == null) TenantContextHolder.clear(); else TenantContextHolder.setTenantId(previous);
             jdbc.update("UPDATE vls_cloud_device_run SET lease_owner=NULL,lease_until=? WHERE id=? AND lease_owner=?", System.currentTimeMillis()+5000, id, worker);

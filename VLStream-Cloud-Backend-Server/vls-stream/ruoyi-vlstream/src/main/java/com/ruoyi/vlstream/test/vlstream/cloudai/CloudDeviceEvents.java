@@ -30,6 +30,9 @@ public class CloudDeviceEvents {
         JsonNode snapshot = service.read(String.valueOf(run.get("snapshot_json")));
         JsonNode camera = member(snapshot.path("cameras"), "grantId", report.path("cameraKey").asText());
         JsonNode model = member(snapshot.path("models"), "modelId", report.path("modelId").asText());
+        JsonNode binding = member(snapshot.path("rules"), "bindingId", report.path("bindingId").asText());
+        if (!binding.path("cameraKey").equals(report.path("cameraKey")) || !binding.path("modelId").equals(report.path("modelId")))
+            throw new ServiceException("告警不属于该摄像机的算法配置");
         long detectedAt = report.path("detectedAt").asLong();
         if (detectedAt < ((Number) run.get("planned_start")).longValue() - 60000 || detectedAt > System.currentTimeMillis() + 60000
                 || !report.path("detections").isArray() || report.path("detections").isEmpty() || report.path("detections").size() > 300) throw new ServiceException("检测事件时间或目标数据无效");
@@ -87,7 +90,7 @@ public class CloudDeviceEvents {
 
     public Map<String,Object> page(int page, int size, String search, String status, String sceneId, String runId) {
         CloudAiService.actor(); size = Math.max(1, Math.min(100,size));
-        List<Object> args = new ArrayList<>(); args.add(CloudAiService.tenant());
+        List<Object> args = new ArrayList<>(); args.add(CloudAiService.tenant()); args.add(CloudAiService.actor());
         String where = visibleWhere();
         if (status != null && !status.isEmpty()) { where += " AND " + statusExpression() + "=?"; args.add(status); }
         if (sceneId != null && !sceneId.isEmpty()) { where += " AND c.scene_id=?"; args.add(sceneId); }
@@ -101,7 +104,7 @@ public class CloudDeviceEvents {
     }
     public Map<String,Object> detail(Long eventId) {
         CloudAiService.actor();
-        List<Map<String,Object>> rows = jdbc.queryForList(select() + visibleWhere() + " AND c.event_id=?", CloudAiService.tenant(), eventId);
+        List<Map<String,Object>> rows = jdbc.queryForList(select() + visibleWhere() + " AND c.event_id=?", CloudAiService.tenant(), CloudAiService.actor(), eventId);
         if (rows.isEmpty()) throw new ServiceException("云端事件不存在或无权访问", 403);
         return decorate(rows.get(0), true);
     }
@@ -111,7 +114,7 @@ public class CloudDeviceEvents {
             + " LEFT JOIN oort_task_event l ON c.event_sink='LOCAL' AND l.id=CAST(c.event_id AS CHAR) COLLATE utf8mb4_general_ci AND l.no=0 AND l.tenant_id=c.tenant_id";
     }
     private String visibleWhere() {
-        return " WHERE c.tenant_id=? AND c.event_sink='" + (application.isMultiTenant() ? "VLS" : "LOCAL")
+        return " WHERE c.tenant_id=? AND EXISTS (SELECT 1 FROM vls_cloud_device_run owner_run WHERE owner_run.id=c.run_id AND owner_run.tenant_id=c.tenant_id AND owner_run.actor_id=?) AND c.event_sink='" + (application.isMultiTenant() ? "VLS" : "LOCAL")
             + "' AND ((c.event_sink='VLS' AND e.is_deleted=0) OR (c.event_sink='LOCAL' AND l.deleted_at=0))";
     }
     private String statusExpression() { return "CASE WHEN c.event_sink='LOCAL' THEN IF(l.status=1,'completed','processing') ELSE e.event_status END"; }

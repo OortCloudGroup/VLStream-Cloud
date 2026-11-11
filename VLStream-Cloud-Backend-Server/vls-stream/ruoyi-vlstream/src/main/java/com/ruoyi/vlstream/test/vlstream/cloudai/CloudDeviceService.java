@@ -40,10 +40,11 @@ public class CloudDeviceService {
     }
 
     private static boolean freeSelf(ComputeNode node) {
-        return !"POINTS".equals(node.getBillingType()) && "self".equalsIgnoreCase(node.getProvider());
+        return "FREE".equals(node.getBillingType()) && "self".equalsIgnoreCase(node.getProvider());
     }
     private ComputeNode usable(Long nodeId, boolean ready) {
         if (nodeId == null) throw new ServiceException("请选择自有GPU");
+        nodeId = configured.canonicalId(nodeId);
         ComputeNode node = nodes.get(nodeId);
         if (!freeSelf(node)) throw new ServiceException("本期云端检测仅使用自有／公司GPU");
         if (!queue.isShared(node) && !nodes.canUsePrivate(node)) throw new ServiceException("无权使用此GPU", 403);
@@ -158,14 +159,29 @@ public class CloudDeviceService {
         List<Map<String,Object>> rows=jdbc.queryForList("SELECT * FROM vls_cloud_device_binding WHERE id=? AND tenant_id=? AND actor_id=? AND scope=? FOR UPDATE",id,tenant,actor,scope);
         if(rows.isEmpty()) throw new ServiceException("配置不存在或无权操作",403);
         Map<String,Object> row=rows.get(0);if(((Number)row.get("revision")).intValue()!=revision) throw new ServiceException("配置已变更，请刷新后操作",409);
-        jdbc.update("UPDATE vls_cloud_device_binding SET enabled=?,revision=revision+1 WHERE id=?",enabled,id); changed(String.valueOf(row.get("group_id")));
+        jdbc.update("UPDATE vls_cloud_device_binding SET enabled=?,revision=revision+1 WHERE id=?",enabled,id);
+        aggregate(String.valueOf(row.get("group_id")));
+        changed(String.valueOf(row.get("group_id")));
     }
     public Map<String,Object> page(int page,int size) {
         size=Math.min(100,Math.max(1,size));String tenant=tenant(),actor=actor(),scope=executionScope();
-        List<Map<String,Object>> rows=jdbc.queryForList("SELECT b.*,g.node_id,g.resource_json,r.state,r.message,r.detail_json FROM vls_cloud_device_binding b JOIN vls_cloud_device_group g ON g.id=b.group_id LEFT JOIN vls_cloud_device_run r ON r.id=g.run_id WHERE b.tenant_id=? AND b.actor_id=? AND b.scope=? ORDER BY b.create_time DESC,b.id LIMIT ? OFFSET ?",tenant,actor,scope,size,(Math.max(1,page)-1L)*size);
+        List<Map<String,Object>> rows=jdbc.queryForList("SELECT b.*,g.node_id,g.resource_json,g.revision AS desired_revision,r.snapshot_json,r.cancel_requested,r.state,r.message,r.detail_json FROM vls_cloud_device_binding b JOIN vls_cloud_device_group g ON g.id=b.group_id LEFT JOIN vls_cloud_device_run r ON r.id=g.run_id WHERE b.tenant_id=? AND b.actor_id=? AND b.scope=? ORDER BY b.create_time DESC,b.id LIMIT ? OFFSET ?",tenant,actor,scope,size,(Math.max(1,page)-1L)*size);
         for(Map<String,Object> row:rows) {
             row.put("camera",read(String.valueOf(row.remove("camera_json"))));ObjectNode rule=(ObjectNode)read(String.valueOf(row.remove("rule_json")));rule.remove(Arrays.asList("path","sha256","size"));row.put("rule",rule);
             row.put("nodeName",read(String.valueOf(row.remove("resource_json"))).path("nodeName").asText());
+            boolean enabled = Boolean.TRUE.equals(row.get("enabled")) || "1".equals(String.valueOf(row.get("enabled")));
+            row.put("enabled",enabled);
+            JsonNode running = row.get("snapshot_json") == null ? json.createObjectNode() : read(String.valueOf(row.get("snapshot_json")));
+            boolean active = row.get("state") != null && !TERMINAL.contains(String.valueOf(row.get("state")));
+            boolean current = running.path("sceneRevision").asInt(-1) == ((Number)row.get("desired_revision")).intValue();
+            boolean included = false;
+            for (JsonNode binding : running.path("rules")) if (String.valueOf(row.get("id")).equals(binding.path("bindingId").asText())) included = true;
+            if (!enabled) active = active && included;
+            if(!current || !enabled) {
+                row.put("state",active ? "STOPPING" : enabled ? "QUEUED" : "DISABLED");
+                row.put("message",active ? "正在收尾旧配置，确认退出后应用最新配置" : enabled ? "等待应用最新配置" : "配置已停用");
+            }
+            row.remove("snapshot_json");row.remove("cancel_requested");row.remove("desired_revision");
             row.remove("tenant_id");row.remove("actor_id");row.remove("camera_key");row.remove("scope");row.remove("detail_json");
         }
         Map<String,Object> result=new LinkedHashMap<>();result.put("records",rows);result.put("total",jdbc.queryForObject("SELECT COUNT(*) FROM vls_cloud_device_binding WHERE tenant_id=? AND actor_id=? AND scope=?",Long.class,tenant,actor,scope));return result;
