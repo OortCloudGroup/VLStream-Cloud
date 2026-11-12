@@ -40,6 +40,21 @@ class LlmReviewManagementServiceTest {
 	private LlmSystemProviderService systemProviderService;
 
 	@Test
+	void authorizationStatusIncludesAccountIdentityWithoutExposingCredential() {
+		LlmProvider provider = provider(1L, "OortCloud", null);
+		provider.setPlatformUserId("current-account");
+		provider.setPlatformUserName("Current");
+		provider.setApiKeyCiphertext("encrypted-secret");
+		when(systemProviderService.getOrCreate()).thenReturn(provider);
+		when(systemProviderService.isAuthorized(provider)).thenReturn(true);
+		java.util.Map<String, Object> status = service().getOortCloudAuthorization();
+		assertEquals("current-account", status.get("platformUserId"));
+		assertEquals("Current", status.get("platformUserName"));
+		assertEquals(true, status.get("authorized"));
+		org.junit.jupiter.api.Assertions.assertFalse(status.containsValue("encrypted-secret"));
+	}
+
+	@Test
 	void createsCustomProviderWithEncryptedApiKey() {
 		when(apiKeyCipher.encrypt("external-secret")).thenReturn("encrypted-secret");
 		LlmProvider input = provider(null, "External Relay", "external-secret");

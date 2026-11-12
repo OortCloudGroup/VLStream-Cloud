@@ -1,11 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import * as login from '../src/utils/oortCloudLoginIntent.mjs'
 
 const source = readFileSync(new URL('../src/utils/llmAuthorization.js', import.meta.url), 'utf8')
 const factory = new Function('deps', `
   const { authorizeOortCloudLlm, getOortCloudLlmAuthorization, getOortCloudTokenKey,
-    getOortCloudTokenList, getModelHubUserInfo, getOortCloudSession, authManager, window, CustomEvent } = deps;
+    getOortCloudTokenList, getModelHubUserInfo, getOortCloudSession, authManager, window, CustomEvent,
+    getOortCloudLoginIntent, finishOortCloudLoginIntent, getOortCloudAuthorizationRevision } = deps;
   ${source.replace(/^import .*$/gm, '').replace('export async function', 'async function')}
   return syncLlmAuthorization;
 `)
@@ -19,6 +21,7 @@ function harness(options = {}) {
   let revision = 1
   const session = { accessToken: options.loggedOut ? '' : 'fixture-session', tenantId: 'fixture-tenant', usesPlatformSession: options.multi || false }
   const sync = factory({
+    ...login,
     authManager: { getIdentitySnapshot: () => ({ token: 'fixture-local', revision }), isIdentityCurrent: i => i.revision === revision },
     getOortCloudSession: () => ({ ...session }),
     getOortCloudLlmAuthorization: async () => ({ code: 200, data: options.state || { authorized: false, revoked: false } }),
@@ -43,17 +46,65 @@ test('default authorization works in single and multi modes without a confirmati
     assert.equal(h.calls.data.platformUserId, 'fixture-user')
   }
 })
-test('existing authorization and cancellation survive repeated account loads and new sessions', async () => {
-  for (const state of [{ authorized: true }, { authorized: false, revoked: true }]) {
+test('matching account authorization and cancellation survive repeated loads and sessions', async () => {
+  for (const state of [{ authorized: true, platformUserId: 'fixture-user', platformUserName: 'Fixture' }, { authorized: false, revoked: true }]) {
     const h = harness({ state })
     await h.sync('single'); h.session.accessToken = 'new-session'; await h.sync('single')
     assert.deepEqual([h.calls.list, h.calls.key, h.calls.post], [0, 0, 0])
+  }
+})
+test('login replaces another account authorization in single and multi modes', async () => {
+  for (const multi of [false, true]) {
+    const h = harness({ multi, state: { authorized: true, platformUserId: 'previous-user', platformUserName: 'Previous' } })
+    await h.sync(multi ? 'multi' : 'single')
+    assert.equal(h.calls.post, 1)
+    assert.equal(h.calls.data.platformUserId, 'fixture-user')
+    assert.equal(h.calls.data.platformUserName, 'Fixture')
+    assert.equal(h.calls.data.apiKey, 'fixture-key')
+    assert.equal(h.calls.data.automatic, 'true')
+  }
+})
+test('account ids distinguish identical names and renamed accounts refresh their label', async () => {
+  for (const state of [
+    { authorized: true, platformUserId: 'different-user', platformUserName: 'Fixture' },
+    { authorized: true, platformUserId: 'fixture-user', platformUserName: 'Previous name' },
+    { authorized: true, platformUserName: 'Fixture' }
+  ]) {
+    const h = harness({ state })
+    await h.sync('single')
+    assert.equal(h.calls.post, 1)
+    assert.equal(h.calls.data.platformUserId, 'fixture-user')
+    assert.equal(h.calls.data.platformUserName, 'Fixture')
   }
 })
 test('explicit management action can restore a cancelled authorization', async () => {
   const h = harness({ state: { authorized: false, revoked: true } })
   assert.equal((await h.sync('single', { automatic: false })).authorized, true)
   assert.equal(h.calls.data.automatic, 'false')
+})
+
+test('successful login restores cancellation once; subsequent refresh keeps cancellation', async () => {
+  for (const multi of [false, true]) {
+    const h = harness({ multi, state: { authorized: false, revoked: true } })
+    login.markOortCloudLogin(h.session)
+    assert.equal((await h.sync(multi ? 'multi' : 'single')).authorized, true)
+    assert.equal(h.calls.data.automatic, 'false')
+    assert.equal(login.getOortCloudLoginIntent(h.session), null)
+    await h.sync(multi ? 'multi' : 'single')
+    assert.equal(h.calls.post, 1)
+  }
+})
+
+test('cancelling while login credentials are loading prevents restoration', async () => {
+  const pending = deferred()
+  const h = harness({ state: { revoked: true }, key: () => pending.promise })
+  login.markOortCloudLogin(h.session)
+  const action = h.sync('single')
+  await new Promise(r => setImmediate(r))
+  login.cancelOortCloudLoginIntent()
+  pending.resolve('fixture-key')
+  assert.equal(await action, null)
+  assert.equal(h.calls.post, 0)
 })
 test('logged-out sessions cannot read or submit credentials', async () => {
   const h = harness({ loggedOut: true })

@@ -11,6 +11,7 @@ import { verifyToken } from '@/api/auth'
 import { sessionValue } from '@/utils/requestIdentity.mjs'
 import { exchangePlatformToken, getTenantMode, switchTenant, validatePlatformSession } from '@/api/system/localAuth'
 import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { markOortCloudLogin } from '@/utils/oortCloudLoginIntent.mjs'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 import {
   clearPlatformAccessToken,
@@ -106,6 +107,7 @@ export class AuthManager {
     // single 仅禁止租户切换，不应禁止平台账号授权登录。
     const userInfo = await this.exchangePlatformToken(token, tenantId || undefined)
     if (!userInfo) return null
+    markOortCloudLogin({ accessToken: userInfo.platformAccessToken, tenantId: userInfo.tenantId, usesPlatformSession: true })
     this.cleanUrlToken()
     return userInfo
   }

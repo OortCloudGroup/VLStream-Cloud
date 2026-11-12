@@ -21,6 +21,7 @@
  */
 
 import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { markOortCloudLogin, cancelOortCloudLoginIntent } from '@/utils/oortCloudLoginIntent.mjs'
 export function getPlatformOrigin(fallback = 'https://workup.oortcloudsmart.com:2443') {
   const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
   if (loginUrl) {
@@ -166,11 +167,12 @@ export function capturePendingModelHubCallback() {
   clearPendingModelHubAuth()
   window.history.replaceState({}, '', returnLocation)
   if (!accessToken || new URL(href).searchParams.get('error')) return null // Includes canceled/failed callbacks.
-  saveModelHubAccessToken(accessToken)
   if (tenantId) {
     sessionStorage.setItem('modelHubTenantId', tenantId)
     localStorage.setItem('modelHubTenantId', tenantId)
   }
+  markOortCloudLogin({ accessToken, tenantId: tenantId || sessionStorage.getItem('modelHubTenantId') || localStorage.getItem('modelHubTenantId') || '', usesPlatformSession: false })
+  saveModelHubAccessToken(accessToken)
   return accessToken
 }
 
@@ -227,6 +229,7 @@ export function getModelHubAccessToken() {
 
 /* * only OortCloud , VLStream main will . */
 export function clearModelHubAuth() {
+  cancelOortCloudLoginIntent()
   ;[sessionStorage, localStorage].forEach((storage) => {
     storage.removeItem(ACCESS_TOKEN_KEY)
     storage.removeItem('modelHubTenantId')

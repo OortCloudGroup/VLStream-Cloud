@@ -2,6 +2,14 @@
 import request from '@/utils/request'
 import { CanceledError } from 'axios'
 import { authManager } from '@/utils/auth'
+import { cancelOortCloudLoginIntent, getOortCloudAuthorizationRevision } from '@/utils/oortCloudLoginIntent.mjs'
+
+let authorizationMutation = Promise.resolve()
+function enqueueAuthorization(action) {
+  const pending = authorizationMutation.then(action, action)
+  authorizationMutation = pending.catch(() => {})
+  return pending
+}
 
 export function getLlmProviders() {
   return request({ url: '/vlsLlmReview/providers', method: 'get' })
@@ -12,7 +20,10 @@ export function getOortCloudLlmAuthorization() {
 }
 
 export function revokeOortCloudLlm() {
-  return requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'delete' }, authManager.getIdentitySnapshot())
+  cancelOortCloudLoginIntent()
+  const identity = authManager.getIdentitySnapshot()
+  // If a login request already reached the server, cancel after it completes.
+  return enqueueAuthorization(() => requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'delete' }, identity))
 }
 
 export function selectOortCloudLlmModel(modelName) {
@@ -24,7 +35,12 @@ export function getLlmProviderModels(id) {
 }
 
 export function authorizeOortCloudLlm(data, identity, isCurrent = () => true) {
-  return requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data }, identity, isCurrent)
+  if (!identity?.token || !authManager.isIdentityCurrent(identity) || !isCurrent()) {
+    throw new CanceledError('视觉复核授权账户已变化，请重新确认')
+  }
+  const revision = getOortCloudAuthorizationRevision()
+  return enqueueAuthorization(() => requestForIdentity({ url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data }, identity,
+    () => revision === getOortCloudAuthorizationRevision() && isCurrent()))
 }
 
 function requestForIdentity(config, identity, isCurrent = () => true) {

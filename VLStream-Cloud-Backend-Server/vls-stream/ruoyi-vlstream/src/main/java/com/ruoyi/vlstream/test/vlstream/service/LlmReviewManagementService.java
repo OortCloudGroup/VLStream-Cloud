@@ -239,6 +239,7 @@ public class LlmReviewManagementService {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		result.put("authorized", systemProviderService.isAuthorized(provider));
 		result.put("revoked", Boolean.FALSE.equals(provider.getEnabled()));
+		result.put("platformUserId", provider.getPlatformUserId());
 		result.put("platformUserName", provider.getPlatformUserName());
 		result.put("authorizedAt", provider.getAuthorizedAt());
 		result.put("apiKeyConfigured", StringUtils.isNotBlank(provider.getApiKeyCiphertext()));

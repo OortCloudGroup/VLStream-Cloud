@@ -2,13 +2,15 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import axios, { CanceledError } from 'axios'
+import { cancelOortCloudLoginIntent, getOortCloudAuthorizationRevision } from '../src/utils/oortCloudLoginIntent.mjs'
 
 // Exercise the real API function, Axios transforms, and production auth-header
 // function against synthetic adapters. No browser credentials or network access.
 const apiSource = readFileSync(new URL('../src/api/llmReview.js', import.meta.url), 'utf8')
 const requestSource = readFileSync(new URL('../src/utils/request.js', import.meta.url), 'utf8')
-const apiFactory = new Function('request', 'authManager', 'CanceledError',
+const createApi = new Function('request', 'authManager', 'CanceledError', 'cancelOortCloudLoginIntent', 'getOortCloudAuthorizationRevision',
   apiSource.replace(/^import .*$/gm, '').replace(/^export /gm, '') + '\nreturn { authorizeOortCloudLlm, getLlmProviders, revokeOortCloudLlm, selectOortCloudLlmModel };')
+const apiFactory = (request, manager, error) => createApi(request, manager, error, cancelOortCloudLoginIntent, getOortCloudAuthorizationRevision)
 const headerFunction = requestSource.slice(requestSource.indexOf('export const applyAuthHeaders ='), requestSource.indexOf('\n}', requestSource.indexOf('export const applyAuthHeaders =')) + 2)
 const headersFactory = new Function('__deps', `
   const {isTrustedApiRequest,clearIdentityHeaders,captureRequestIdentity,isSessionRedirecting,
@@ -132,4 +134,25 @@ test('cancellation and model updates cannot follow a delayed request into anothe
     await assert.rejects(pending, error => axios.isCancel(error))
     assert.equal(h.sent.length, 0)
   }
+})
+
+test('cancellation is applied after an already dispatched login authorization', async () => {
+  const h = harness()
+  let release, started
+  const arrived = new Promise(resolve => { started = resolve })
+  const held = new Promise(resolve => { release = resolve })
+  const methods = []
+  h.request.defaults.adapter = async config => {
+    methods.push(config.method)
+    if (config.method === 'post') { started(); await held }
+    return { data: { code: 200 }, status: 200, statusText: 'OK', headers: {}, config }
+  }
+  const saving = h.api.authorizeOortCloudLlm(payload, h.identity)
+  await arrived
+  const cancelling = h.api.revokeOortCloudLlm()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(methods, ['post'])
+  release()
+  await Promise.all([saving, cancelling])
+  assert.deepEqual(methods, ['post', 'delete'])
 })

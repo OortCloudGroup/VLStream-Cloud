@@ -98,7 +98,7 @@
           router
           class="sidebar-menu"
           background-color="transparent"
-          text-color="rgba(0, 0, 0, 0.65)"
+          text-color="var(--el-text-color-regular)"
           active-text-color="var(--el-color-primary)"
           :collapse="sidebarCollapsed"
           style="--el-menu-bg-color: transparent; background: transparent;"
@@ -183,6 +183,8 @@ import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
 import { syncLlmAuthorization } from '@/utils/llmAuthorization'
+import { getOortCloudLoginIntent } from '@/utils/oortCloudLoginIntent.mjs'
+import { getOortCloudSession } from '@/utils/oortCloudSession'
 import PlatformHeaderRight from './PlatformHeaderRight.vue'
 import RightInfoBar from './RightInfoBar.vue'
 import PlatformAppsEntry from './platform-header/PlatformAppsEntry.vue'
@@ -255,10 +257,15 @@ const syncDefaultLlmAuthorization = () => {
   const generation = ++llmSyncGeneration
   const mode = tenantMode.value
   if (localEventRoute.value || !['single', 'multi'].includes(mode)) return
+  const loginIntent = getOortCloudLoginIntent(getOortCloudSession(mode))
   void syncLlmAuthorization(mode, {
     isCurrent: () => layoutActive && generation === llmSyncGeneration
       && tenantMode.value === mode && !localEventRoute.value
-  }).catch(() => { /* Model management displays the saved state and offers an explicit retry. */ })
+  }).catch(() => {
+    if (loginIntent && layoutActive && generation === llmSyncGeneration) {
+      ElMessage.warning(uiText('OortCloud 登录后的模型授权未完成，请在大模型管理中重试。'))
+    }
+  })
 }
 watch(localEventRoute, syncDefaultLlmAuthorization)
 
@@ -1113,16 +1120,7 @@ const handleUserTokenUpdated = async (event) => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(1200px 360px at 12% -120px, rgba(26, 83, 255, 0.07), transparent 70%),
-    var(--vls-page-bg, #f3f5f9);
-}
-
-.layout-header {
-  background: transparent !important;
-  background-color: transparent !important;
-  border-bottom: none;
-  box-shadow: none;
+  background: var(--vls-page-bg, #f5f7fa);
 }
 
 .header-content {
@@ -1201,7 +1199,7 @@ const handleUserTokenUpdated = async (event) => {
   align-items: center;
   justify-content: center;
   gap: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
 }
@@ -1212,7 +1210,7 @@ const handleUserTokenUpdated = async (event) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   cursor: pointer;
   font-size: clamp(13px, 0.85vw, 16px);
@@ -1222,7 +1220,7 @@ const handleUserTokenUpdated = async (event) => {
   word-break: normal;
   hyphens: auto;
   font-weight: 500;
-  color: #6B7489;
+  color: var(--el-text-color-regular);
   position: relative;
   transition: color 0.2s ease;
   background-color: transparent;
@@ -1230,8 +1228,8 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .menu-item:hover {
-  color: #1F2533;
-  background-color: transparent;
+  color: var(--el-color-primary);
+  background-color: var(--el-fill-color-light);
 }
 
 .menu-item.active {
@@ -1262,7 +1260,7 @@ const handleUserTokenUpdated = async (event) => {
   padding: 6px 12px;
   border-radius: 999px;
   transition: background-color 0.2s ease, color 0.2s ease;
-  color: #475066;
+  color: var(--el-text-color-regular);
   font-size: 14px;
   font-weight: 500;
 }
@@ -1276,7 +1274,15 @@ const handleUserTokenUpdated = async (event) => {
 .header-right {
   display: flex;
   align-items: center;
+  justify-content: safe flex-end;
   gap: 8px;
+  /* Route-specific account controls must not resize the navigation. */
+  flex: 0 0 clamp(280px, 24vw, 460px);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.header-right > * {
   flex-shrink: 0;
 }
 
@@ -1368,19 +1374,16 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .layout-sidebar {
-  background: transparent !important;
-  border-right: none;
   box-shadow: none;
   transition: width 0.3s ease;
-  height: calc(100% - 12px);
-  margin-top: 12px;
+  padding-top: 12px;
   flex-shrink: 0;
   resize: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: #ffffff;
+  --el-menu-hover-bg-color: var(--el-fill-color-light);
   --el-menu-active-color: var(--el-color-primary);
 }
 
@@ -1406,7 +1409,7 @@ const handleUserTokenUpdated = async (event) => {
 .app-sidebar-stats .stat-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
 .app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }
-.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: #7a8399; white-space: nowrap; }
+.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: var(--el-text-color-secondary); white-space: nowrap; }
 .app-sidebar-stats .stat-value { font-size: 13px; line-height: 18px; font-weight: 600; color: #1f2533; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* 折叠成 64px 图标条时隐藏统计，避免压住菜单图标 */
 .layout-sidebar.is-collapsed .app-sidebar-stats { display: none; }
@@ -1449,7 +1452,7 @@ const handleUserTokenUpdated = async (event) => {
   background: transparent !important;
   background-color: transparent !important;
   border-right: 0 !important;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--el-text-color-regular);
 }
 
 .layout-sidebar :deep(.el-menu-item),
@@ -1458,7 +1461,7 @@ const handleUserTokenUpdated = async (event) => {
   line-height: 36px !important;
   border-radius: 10px;
   margin-bottom: 2px;
-  color: #475066;
+  color: var(--el-text-color-regular);
   font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease;
   background: transparent !important;
@@ -1472,16 +1475,14 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-sidebar :deep(.el-menu-item:hover),
 .layout-sidebar :deep(.el-sub-menu > .el-sub-menu__title:hover) {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  color: #1f2533 !important;
-  box-shadow: 0 1px 2px rgba(23, 34, 64, 0.06);
+  background-color: var(--el-fill-color-light) !important;
+  color: var(--el-text-color-primary) !important;
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active) {
-  background-color: #ffffff !important;
+  background-color: var(--el-color-primary-hb) !important;
   color: var(--el-color-primary) !important;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(23, 34, 64, 0.06), 0 4px 12px -4px rgba(26, 83, 255, 0.22);
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active)::before {
@@ -1505,7 +1506,7 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active:hover) {
-  background-color: #ffffff !important;
+  background-color: var(--el-color-primary-hb) !important;
   color: var(--el-color-primary) !important;
 }
 
@@ -1513,12 +1514,12 @@ const handleUserTokenUpdated = async (event) => {
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-icon-box) {
   background-color: transparent !important;
-  color: #1f2533 !important;
+  color: var(--el-text-color-primary) !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title:hover) {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  color: #1f2533 !important;
+  background-color: var(--el-fill-color-light) !important;
+  color: var(--el-text-color-primary) !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-svg-icon) {
@@ -1578,7 +1579,7 @@ const handleUserTokenUpdated = async (event) => {
 .layout-content {
   background: #ffffff;
   border-radius: 16px 16px 0 0;
-  border: 1px solid rgba(227, 231, 239, 0.9);
+  border: 1px solid var(--el-border-color);
   border-bottom: none;
   box-shadow: 0 1px 2px rgba(23, 34, 64, 0.04), 0 12px 32px -20px rgba(23, 34, 64, 0.16);
   overflow-y: auto;
@@ -1606,32 +1607,6 @@ const handleUserTokenUpdated = async (event) => {
 </style>
 
 <style lang="scss">
-/* full : menu ( null / empty ) */
-.layout-sidebar,
-.layout-sidebar .el-menu,
-.layout-sidebar .sidebar-menu,
-.layout-sidebar .el-menu--vertical {
-  background: transparent !important;
-  background-color: transparent !important;
-  --el-menu-bg-color: transparent !important;
-}
-
-/* full : 、 */
-.layout-header,
-.layout-header.el-header {
-  background: transparent !important;
-  background-color: transparent !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
-
-/* full : menu , 20px */
-.layout-sidebar {
-  border-right: none !important;
-  margin-top: 12px !important;
-  height: calc(100% - 12px) !important;
-}
-
 /* menu item / and Manage */
 .layout-sidebar .el-menu-item,
 .layout-sidebar .el-sub-menu__title {

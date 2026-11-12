@@ -9,7 +9,7 @@
       <el-alert class="authorization-alert" :title="authorizationTitle" :type="authorized ? 'success' : 'warning'" :closable="false" show-icon>
         <template #default>
           <span v-if="authorized">{{ $tp('平台登录令牌过期后，已保存的模型授权仍可供后台复核使用。') }}</span>
-          <span v-else-if="authorization.revoked">{{ $tp('已取消授权，重新登录不会自动恢复；可在下方重新授权。') }}</span>
+          <span v-else-if="authorization.revoked">{{ $tp('已取消授权，刷新页面不会恢复；主动登录 OortCloud 或点击下方授权可恢复。') }}</span>
           <span v-else>{{ $tp('登录 OortCloud 后默认授权，也可在下方点击授权。') }}</span>
         </template>
       </el-alert>

@@ -60,7 +60,7 @@ public class LlmSystemProviderService {
 	@Transactional(rollbackFor = Exception.class)
 	public LlmProvider authorize(String platformUserId, String platformUserName, String apiKey, boolean automatic) {
 		LlmProvider provider = getOrCreate();
-		if (automatic && (!Boolean.TRUE.equals(provider.getEnabled()) || isAuthorized(provider))) {
+		if (automatic && !Boolean.TRUE.equals(provider.getEnabled())) {
 			return provider;
 		}
 		if (StringUtils.isBlank(platformUserId)) {
@@ -77,8 +77,7 @@ public class LlmSystemProviderService {
 			.eq(LlmProvider::getId, provider.getId());
 		if (automatic) {
 			// A concurrent cancellation must win over an in-flight default authorization.
-			update.eq(LlmProvider::getEnabled, true)
-				.and(q -> q.isNull(LlmProvider::getApiKeyCiphertext).or().eq(LlmProvider::getApiKeyCiphertext, ""));
+			update.eq(LlmProvider::getEnabled, true);
 		}
 		update.set(LlmProvider::getEnabled, true)
 			.set(LlmProvider::getPlatformUserId, StringUtils.abbreviate(StringUtils.trim(platformUserId), 128))

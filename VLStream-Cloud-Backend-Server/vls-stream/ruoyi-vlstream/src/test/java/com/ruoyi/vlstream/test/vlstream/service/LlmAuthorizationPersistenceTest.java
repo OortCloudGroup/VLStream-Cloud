@@ -76,6 +76,8 @@ class LlmAuthorizationPersistenceTest {
     }
 
     @Test void cancellationWinsAgainstAlreadyStartedAutomaticAuthorization() {
+        when(cipher.encrypt("sk-first")).thenReturn("cipher-first");
+        service.authorize("first-user", "First", "first", true);
         when(cipher.encrypt("sk-late")).thenAnswer(invocation -> {
             // A second transaction cancels after the default flow's initial status read.
             jdbc.update("UPDATE vls_llm_provider SET enabled=0,api_key_ciphertext='' WHERE id=1");
@@ -87,10 +89,19 @@ class LlmAuthorizationPersistenceTest {
         assertEquals("", jdbc.queryForObject("SELECT api_key_ciphertext FROM vls_llm_provider WHERE id=1", String.class));
     }
 
-    @Test void defaultLoginDoesNotReplaceExistingTenantAccount() {
+    @Test void defaultLoginReplacesExistingTenantAccountAndCredential() {
         when(cipher.encrypt("sk-first")).thenReturn("cipher-first");
         service.authorize("first-user", "First", "first", true);
-        assertEquals("first-user", service.authorize("other-user", "Other", "other", true).getPlatformUserId());
-        verify(cipher, never()).encrypt("sk-other");
+        service.selectModel("chosen-vision");
+        when(cipher.encrypt("sk-other")).thenReturn("cipher-other");
+        LlmProvider updated = service.authorize("other-user", "Other", "other", true);
+        assertTrue(service.isAuthorized(updated));
+        assertEquals("other-user", updated.getPlatformUserId());
+        assertEquals("Other", updated.getPlatformUserName());
+        assertEquals("cipher-other", updated.getApiKeyCiphertext());
+        assertEquals("chosen-vision", updated.getModelName());
+        session.clearCache();
+        assertEquals("other-user", service.getOrCreate().getPlatformUserId());
+        assertEquals("cipher-other", service.getOrCreate().getApiKeyCiphertext());
     }
 }
