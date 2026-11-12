@@ -22,44 +22,43 @@
 
 body {
   font-family: 'Microsoft YaHei', '微软雅黑', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif;
-  background-color: #f5f7fa;
-  color: #303133;
+  background-color: var(--vls-page-bg, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
 }
 
 #app {
   height: 100vh;
   overflow: hidden;
-  background-color: #f5f7fa;
+  background-color: var(--vls-page-bg, #f5f7fa);
 }
 
 .layout-container {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f7fa;
+  background-color: var(--vls-page-bg, #f5f7fa);
 }
 
 .layout-header {
-  background: transparent !important;
-  background-color: transparent !important;
-  border-bottom: none;
+  flex-shrink: 0;
+  background: var(--vls-surface, #fff);
+  border-bottom: 1px solid var(--el-border-color, #dcdfe6);
   box-shadow: none;
 }
 
 .layout-main {
   flex: 1;
+  min-height: 0;
   display: flex;
   overflow: hidden;
-  background-color: #f5f7fa;
+  background-color: var(--vls-page-bg, #f5f7fa);
 }
 
 .layout-sidebar {
   width: 200px;
-  background: transparent !important;
-  background-color: transparent !important;
-  border-right: none;
-  margin-top: 20px;
-  height: calc(100% - 20px);
+  background: var(--vls-surface, #fff);
+  border-inline-end: 1px solid var(--el-border-color, #dcdfe6);
+  height: 100%;
   overflow-y: auto;
   --el-menu-bg-color: transparent;
 }
@@ -75,7 +74,7 @@ body {
   flex: 1;
   padding: 20px 0 0;
   overflow-y: auto;
-  background: #f5f7fa;
+  background: var(--vls-page-bg, #f5f7fa);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

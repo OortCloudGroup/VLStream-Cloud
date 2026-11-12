@@ -29,7 +29,7 @@ html {
 }
 
 :root {
-  --el-border-color: #E7EAEF !important;
+  --el-border-color: #DCDFE6 !important;
   /* 全局背景色 */
   --common-bg-color: #F0F2F500;
   // 统一的圆角
@@ -47,21 +47,10 @@ html {
   --widget-background-color_2: #027Aff;
   --nth-child_2_span: #027Aff;
 
-  // 改变弹框的背景 透明
-  --el-overlay-color-lighter: rgba(255, 255, 255, 0.02) !important;
+  // 半透明暗色遮罩突出弹窗，背景保持清晰。
+  --el-overlay-color-lighter: rgba(15, 23, 42, 0.35) !important;
 
 
-}
-
-// 在遮罩上虚化背景，保持弹窗内容清晰；覆盖对话框、确认框、抽屉及自定义视频弹窗。
-.el-overlay,
-.el-image-viewer__mask,
-.video-dialog-overlay,
-.layout-dialog-overlay,
-.extended-layout-overlay,
-.algorithm-panel-overlay {
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 
 /* 这里配置 element 的主题颜色 */
@@ -289,7 +278,7 @@ a {
   .el-table__header .el-table__cell .cell {
     background: #F8F8F9 !important;
     font-size: 14px !important;
-    color: #878E98 !important;
+    color: var(--el-text-color-secondary, #606266) !important;
     line-height: 23px !important;
     font-weight: 400 !important;
     min-height: 14px !important;

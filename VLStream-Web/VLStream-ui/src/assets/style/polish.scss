@@ -36,20 +36,20 @@
   --el-color-danger-light-9: #FDECEC;
   --el-color-error: #EF4444;
 
-  /* Neutrals: cool slate instead of mixed greys. */
-  --el-text-color-primary: #1F2533;
-  --el-text-color-regular: #475066;
-  --el-text-color-secondary: #7A8399;
-  --el-text-color-placeholder: #A6AEBF;
-  --el-border-color: #E3E7EF !important;
-  --el-border-color-light: #E8EBF2;
-  --el-border-color-lighter: #EEF1F6;
-  --el-border-color-extra-light: #F3F5F9;
+  /* Shared light-theme contrast for navigation, forms and data views. */
+  --el-text-color-primary: #1F2329;
+  --el-text-color-regular: #303133;
+  --el-text-color-secondary: #606266;
+  --el-text-color-placeholder: #8A8F99;
+  --el-border-color: #DCDFE6 !important;
+  --el-border-color-light: #E4E7ED;
+  --el-border-color-lighter: #EBEEF5;
+  --el-border-color-extra-light: #F2F3F5;
   --el-fill-color: #F2F4F8;
   --el-fill-color-light: #F6F8FB;
   --el-fill-color-lighter: #F9FAFC;
   --el-fill-color-blank: #FFFFFF;
-  --el-bg-color-page: #F3F5F9;
+  --el-bg-color-page: #F5F7FA;
 
   --el-border-radius-base: 8px;
   --el-border-radius-small: 6px;
@@ -61,10 +61,10 @@
   --el-box-shadow-lighter: 0 2px 8px rgba(23, 34, 64, 0.06);
   --el-box-shadow-dark: 0 20px 48px -12px rgba(23, 34, 64, 0.28);
 
-  --el-overlay-color-lighter: rgba(17, 24, 39, 0.18) !important;
+  --el-overlay-color-lighter: rgba(15, 23, 42, 0.35) !important;
   --el-transition-duration: 0.22s;
 
-  --vls-page-bg: #F3F5F9;
+  --vls-page-bg: #F5F7FA;
   --vls-surface: #FFFFFF;
   --vls-ring: 0 0 0 3px rgba(26, 83, 255, 0.14);
   --vls-shadow-sm: 0 1px 2px rgba(23, 34, 64, 0.04), 0 1px 3px rgba(23, 34, 64, 0.04);
@@ -224,7 +224,7 @@ body,
   .el-table__header .el-table__cell,
   .el-table__header .el-table__cell .cell {
     background: #F7F8FB !important;
-    color: #5D6679 !important;
+    color: var(--el-text-color-secondary) !important;
     font-size: 13px !important;
     font-weight: 600 !important;
   }
@@ -546,7 +546,7 @@ body,
 
 .el-descriptions__label.el-descriptions__cell.is-bordered-label {
   background-color: #F7F8FB;
-  color: #5D6679;
+  color: var(--el-text-color-secondary);
   font-weight: 500;
 }
 
