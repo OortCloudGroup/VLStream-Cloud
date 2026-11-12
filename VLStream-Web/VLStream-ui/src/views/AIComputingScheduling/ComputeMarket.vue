@@ -35,11 +35,11 @@
           <el-button v-if="item.canQueryProvider && item.apiControl" link type="primary" :loading="operating === item.id" @click="refresh(item)">{{ marketText('查询厂商状态') }}</el-button>
           <el-button v-if="item.canQueryProvider && item.operationPending && item.apiControl" link type="primary" :loading="operating === item.id" @click="refresh(item, true)">{{ marketText('恢复挂起记录') }}</el-button>
         </div>
-        <div v-if="item.claimState === 'MINE' || item.canOperate || item.canRefreshEnvironment || item.canManage" class="card-actions">
+        <div v-if="item.claimState === 'MINE' || item.canOperate || (item.canRefreshEnvironment && item.schedulingMode !== 'SHARED_GPU_QUEUE') || item.canManage" class="card-actions">
           <el-button v-if="item.claimState === 'MINE' && (item.billingType !== 'POINTS' || item.workspaceDirty)" :loading="operating === item.id" @click="release(item)">{{ marketText('释放占用') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" type="primary" :loading="operating === item.id" :disabled="item.operationPending || item.capacityState === 'UNAVAILABLE' || item.provider === 'self' || item.powerState === 'RUNNING'" @click="power(item, 'start')">{{ marketText(item.apiControl ? '启动实例' : '开机指引') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" :disabled="item.operationPending || item.taskCount > 0 || item.provider === 'self' || item.powerState === 'STOPPED'" :loading="operating === item.id" @click="power(item, 'stop')">{{ marketText(item.apiControl ? '停止实例' : '关机指引') }}</el-button>
-          <el-button v-if="item.canRefreshEnvironment || item.canOperate" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
+          <el-button v-if="(item.canRefreshEnvironment || item.canOperate) && item.schedulingMode !== 'SHARED_GPU_QUEUE'" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
           <el-button v-if="item.canManage" class="manage-action" link @click="router.push({ path: '/compute-management', query: { ...route.query, nodeId: item.id } })">{{ marketText('管理') }}<el-icon><ArrowRight /></el-icon></el-button>
         </div>
       </article>

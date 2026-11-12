@@ -36,8 +36,7 @@ const canReadRuns = () => capabilities.value.identityAvailable ?? capabilities.v
 const account = ref(null), runs = ref([]), busy = ref(''), error = ref('')
 const recoveryAttempts = ref({})
 const accountCheckedAt = ref('')
-const visibleRuns = computed(() => runs.value.filter(run => run.state !== 'QUOTED')
-  .filter((run, index) => index < 5 || showArchiveRecovery(run) || (run.archiveRecovery && paidRunActive(run))))
+const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run) || showArchiveRecovery(run)))
 const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || uiText('付费实例')
 const currency = quota => billingCurrency(quota, account.value.numerator, account.value.denominator)
 let active = true, polling = false, timer, revision = 0

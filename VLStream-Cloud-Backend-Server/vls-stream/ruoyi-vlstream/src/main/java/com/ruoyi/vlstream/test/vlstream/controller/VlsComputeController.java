@@ -31,7 +31,7 @@ public class VlsComputeController {
     @PostMapping("/nodes/{id}/provider-inventory/{key}/refresh") public R<String> refreshInventory(@PathVariable Long id,@PathVariable String key){return R.data(providerInventory.refresh(id,key));}
     @SaCheckPermission(value = {"vls:menu:compute-market", "vls:menu:algorithm-training"}, mode = SaMode.OR)
     @GetMapping("/platform-authorization") public R<ComputePlatformAuthorization.Context> platformAuthorization() { return R.data(nodes.platformAuthorization()); }
-    @SaCheckPermission(value = {"vls:menu:compute-market", "vls:menu:scene-governance", "vls:menu:algorithm-task"}, mode = SaMode.OR)
+    @SaCheckPermission(value = {"vls:menu:compute-market", "vls:menu:algorithm-training", "vls:menu:scene-governance", "vls:menu:algorithm-task"}, mode = SaMode.OR)
     @cn.dev33.satoken.annotation.SaCheckLogin
     @PostMapping("/nodes/{id}/health-refresh") public R<String> refreshHealth(@PathVariable Long id) { return R.data(healthRefresh.refresh(id)); }
     @cn.dev33.satoken.annotation.SaCheckPermission(value = {"vls:compute:configure", "vls:menu:compute-management"})

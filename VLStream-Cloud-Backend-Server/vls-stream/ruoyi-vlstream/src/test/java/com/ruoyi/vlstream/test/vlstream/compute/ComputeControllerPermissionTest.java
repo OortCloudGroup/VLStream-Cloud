@@ -41,6 +41,12 @@ class ComputeControllerPermissionTest {
     private ComputeProviderStateService providerState;
     private MockMvc mvc;
     private String token;
+    @Test void trainingMenuCanPrepareEnvironmentButUnrelatedMenuCannot() throws Exception {
+        permissions.clear(); permissions.add("vls:menu:algorithm-training");
+        mvc.perform(logged(post("/vlsCompute/nodes/1/health-refresh"))).andExpect(status().isOk());
+        permissions.clear(); permissions.add("vls:menu:algorithm-model");
+        mvc.perform(logged(post("/vlsCompute/nodes/1/health-refresh"))).andExpect(status().isForbidden());
+    }
     private static final String BODY="{\"name\":\"fixture\",\"host\":\"fixture.invalid\"}";
     @BeforeEach void setup() {
         previousContext=SaManager.getSaTokenContext();previousDao=SaManager.getSaTokenDao();previousPermissions=SaManager.getStpInterface();

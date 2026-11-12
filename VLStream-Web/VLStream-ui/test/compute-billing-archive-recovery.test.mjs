@@ -168,7 +168,7 @@ test('unavailable target reports its specific configuration reason without quoti
   assert.deepEqual(h.calls.accept, [])
 })
 
-test('the actual panel template renders the retained start cause and current reconciliation warning', async () => {
+test('the panel keeps active reconciliation warnings and hides completed releases', async () => {
   const h = harness()
   h.setRows([{ ...original(), state: 'RELEASING', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: 'RELEASE_RECEIPT_PENDING' }])
   await h.mount()
@@ -179,8 +179,7 @@ test('the actual panel template renders the retained start cause and current rec
   h.setRows([{ ...original(), state: 'CANCELLED', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: null }])
   await h.instance.refreshRuns()
   const cancelled = await renderPanel(h.instance)
-  assert.match(cancelled, /data-alert-type="warning"[^>]*>当前资源被占用.*已完成释放/)
-  assert.doesNotMatch(cancelled, /停止并结算|状态确认暂未完成/)
+  assert.doesNotMatch(cancelled, /<aside|停止并结算|状态确认暂未完成/)
   assert.deepEqual(h.calls.accept, [])
   assert.deepEqual(h.calls.stop, [])
 })
@@ -203,13 +202,13 @@ test('the panel template distinguishes an explicit rejected start from an unknow
   assert.doesNotMatch(await renderPanel(h.instance), /<aside/)
 })
 
-test('older pending artifacts and an active recovery stay visible beyond the recent five runs', async () => {
+test('completed history without recovery is hidden while active recovery stays visible', async () => {
   const h = harness()
   const recent = Array.from({ length: 5 }, (_, index) => ({ ...original(), runId: `recent-${index}`, archiveRecoveryAvailable: false }))
   const active = { ...quote(), state: 'RUNNING' }
   h.setRows([...recent, { ...original(), runId: 'old-complete', archiveRecoveryAvailable: false }, original(), active])
   await h.mount()
-  assert.deepEqual(h.instance.visibleRuns.value.map(run => run.runId), [...recent.map(run => run.runId), 'source-1', 'recovery-1'])
+  assert.deepEqual(h.instance.visibleRuns.value.map(run => run.runId), ['source-1', 'recovery-1'])
   assert.deepEqual(h.calls.recoveryQuote, [])
   assert.deepEqual(h.calls.accept, [])
 })
