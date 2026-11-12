@@ -25,6 +25,9 @@ __pycache__/
 .env
 .env.*
 !.env.example
+# Local runtime secrets (never commit)
+/config/application.yml
+/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/config/application.yml
 .DS_Store
 Thumbs.db
 /VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md
