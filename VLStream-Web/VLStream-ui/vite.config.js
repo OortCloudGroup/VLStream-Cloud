@@ -159,6 +159,8 @@ export default defineConfig(async ({ mode }) => {
         '/blade-job': backendProxy,
         '/vls': backendProxy,
         '/cloud-ai': backendProxy,
+        '/cloud-device': backendProxy,
+        '/platform-recordings': backendProxy,
         '/vlsTagManagement': backendProxy,
         '/vlsAlgorithmTraining': backendProxy,
         '/vlsAlgorithmModel': backendProxy,

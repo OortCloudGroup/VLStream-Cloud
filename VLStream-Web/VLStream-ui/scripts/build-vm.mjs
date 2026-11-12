@@ -1,11 +1,15 @@
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-// VM builds use the existing production.local routes/LAN settings, but must not
-// inherit a different deployment's explicit RTC address or NAT port.
+// The established VM has its own gateway routes and published RTC ports.
+// Supply these before Vite loads another deployment's production defaults.
 export function vmBuildEnvironment(environment) {
   return {
     ...environment,
+    VITE_API_BASE_URL: '/bus/vls-server',
+    VITE_WVP_API_BASE_URL: '/bus/apaas-wvp-server',
+    VITE_ZLM_API_BASE_URL: '/bus/zlm-server',
+    VITE_ZLM_RTC_LAN_HOST: '192.168.50.200',
     VITE_ZLM_RTC_CAND_TCP: '',
     VITE_ZLM_RTC_CAND_UDP: ''
   }
