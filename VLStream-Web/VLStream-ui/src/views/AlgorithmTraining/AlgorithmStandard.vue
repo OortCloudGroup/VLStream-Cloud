@@ -130,14 +130,17 @@
 
     <!-- ( layer ) -->
     <div v-if="showAnnotationView && !showDetailAnnotation" class="annotation-view-container">
-      <div v-if="annotationDataLoading" role="status">{{ $tp('正在加载图片和标注数据，请稍候…') }}</div>
-      <el-alert v-else-if="annotationLoadError" type="error" :closable="false" :title="annotationLoadError">
-        <el-button @click="loadAllAnnotationData">{{ $tp('重新加载') }}</el-button>
+      <el-alert v-if="annotationLoadError" type="error" :closable="false" :title="annotationLoadError">
+        <el-button @click="loadAnnotationPage">{{ $tp('重新加载') }}</el-button>
         <el-button @click="handleBackToList">{{ $tp('返回列表') }}</el-button>
       </el-alert>
       <!-- component -->
       <AnnotationGridView
         v-else
+        v-loading="annotationDataLoading"
+        :loading="annotationDataLoading"
+        :query="annotationImageQuery"
+        :total="annotationImageTotal"
         :annotation-data="{
           ...currentAnnotationData,
           uploadedImages: uploadedImages,
@@ -152,6 +155,8 @@
         @batch-upload-images="handleBatchUploadFromGrid"
         @import-annotation-zip="handleImportAnnotationZipFromGrid"
         @delete-image-and-data="handleDeleteImageAndDataFromGrid"
+        @page-change="handleAnnotationPageChange"
+        @filter-change="handleAnnotationFilterChange"
       />
     </div>
 
@@ -270,17 +275,17 @@
               <div class="image-canvas-wrapper">
                 <!-- button -->
                 <div class="image-nav-button image-nav-left"
-                     v-if="uploadedImages.length > 1"
+                     v-if="annotationImageTotal > 1"
                      @click="previousImage"
-                     :class="{ disabled: currentImageIndex === 0 }">
+                     :class="{ disabled: annotationDataLoading || (currentImageIndex === 0 && annotationImageQuery.page === 1) }">
                   <el-icon><ArrowLeft /></el-icon>
                 </div>
 
                 <!-- button -->
                 <div class="image-nav-button image-nav-right"
-                     v-if="uploadedImages.length > 1"
+                     v-if="annotationImageTotal > 1"
                      @click="nextImage"
-                     :class="{ disabled: currentImageIndex === uploadedImages.length - 1 }">
+                     :class="{ disabled: annotationDataLoading || (currentImageIndex === uploadedImages.length - 1 && annotationImageQuery.page * annotationImageQuery.size >= annotationImageTotal) }">
                   <el-icon><ArrowRight /></el-icon>
                 </div>
 
@@ -770,10 +775,10 @@ import {
   batchSaveAnnotationInstances,
   deleteAnnotationInstance,
   deleteAnnotationInstancesByImage,
-  getAllAnnotationInstances,
+  getAnnotationInstances,
 } from '@/api/annotationInstances'
 import request, {getBaseURL} from '@/utils/request'
-import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} from '@/api/annotationImage'
+import {batchSaveAnnotationImages, getAnnotationImagePage, uploadAnnotationImages} from '@/api/annotationImage'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
@@ -782,7 +787,10 @@ const showAnnotationView = ref(false)
 const currentAnnotationData = ref(null)
 const annotationDataLoading = ref(false)
 const annotationLoadError = ref('')
+const annotationImageQuery = ref({ page: 1, size: 10, annotationStatus: 'all', labelId: null })
+const annotationImageTotal = ref(0)
 let annotationLoadSequence = 0
+onUnmounted(() => { annotationLoadSequence++ })
 const showDetailAnnotation = ref(false) // whether annotationpage
 const currentAnnotationImage = ref(null) // current annotation
 
@@ -1303,12 +1311,14 @@ const handleView = async (row) => {
 
   // annotation
   currentAnnotationData.value = row
+  annotationImageQuery.value = { page: 1, size: 10, annotationStatus: 'all', labelId: null }
+  annotationImageTotal.value = 0
   showAnnotationView.value = true
 
-  // annotationpage, Get all annotationdata
-  console.log('进入标注页面，获取所有标注数据')
+  // Load the first page of images and annotations.
+  console.log('进入标注页面，按页获取图片和标注数据')
   try {
-    await loadAllAnnotationData()
+    await loadAnnotationPage()
   } catch (error) {
     console.error('加载标注数据失败，尝试单独加载标签:', error)
     // if Load failed, to Load
@@ -1356,6 +1366,8 @@ const repairGenerationImage = async (imageId) => {
     return
   }
   if (String(currentAnnotationData.value?.id) !== String(generationTarget.value.id)) await handleView(generationTarget.value)
+  annotationImageQuery.value = { ...annotationImageQuery.value, annotationStatus: 'all', labelId: null }
+  if (!await loadAnnotationPage({ imageId: String(imageId) })) return
   const image = uploadedImages.value.find(item => String(item.id) === String(imageId))
   if (image) { selectedAnnotation.value = null; handleStartAnnotation(image) }
   else ElMessage.warning(uiText('图片已变更或删除，请刷新后重试'))
@@ -1720,7 +1732,7 @@ const handleConfirmImport = async () => {
       importTargetId.value = null
       await loadData()
       if (showAnnotationView.value) {
-        await loadAllAnnotationData()
+        await loadAnnotationPage()
       }
       ElMessage.success('Import succeeded.')
       return
@@ -1780,6 +1792,7 @@ const saveImagesToDatabase = async (images, annotationId) => {
 
 // method
 const showTableView = () => {
+  annotationLoadSequence++
   showAnnotationView.value = false
   showDetailAnnotation.value = false  // annotationpage also
   currentAnnotationData.value = null
@@ -1801,8 +1814,6 @@ const handleStartAnnotation = (data) => {
     console.log('开始批量标注:', data.images)
 
     // all annotation
-    uploadedImages.value = [...uploadedImages.value, ...data.images]
-
     // Set to current
     if (data.images.length > 0) {
       const firstImageIndex = uploadedImages.value.findIndex(img => img.id === data.images[0].id)
@@ -1869,7 +1880,7 @@ const handleDeleteLabelFromGrid = async (labelId) => {
 }
 
 // Process from Delete relateddata
-const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
+const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds, resolve, reject }) => {
   console.log('=== 父组件收到删除图片及相关数据的请求 ===')
 
   try {
@@ -1881,6 +1892,8 @@ const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
 
     if (response && response.code === 200) {
       console.log('删除图片及相关数据成功:', imageIds)
+      await loadAnnotationPage()
+      resolve()
       // in successfully , sub componentProcess
       // ElMessage.success(' relatedannotationdataDelete successfully')
     } else {
@@ -1890,7 +1903,7 @@ const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
   } catch (error) {
     console.error('从网格视图删除图片及相关数据失败:', error)
     ElMessage.error(uiText('删除图片及相关数据失败: ') + error.message)
-    throw error
+    reject(error)
   }
 }
 
@@ -1908,7 +1921,7 @@ const handleBatchUploadFromGrid = async (files, uploadResp) => {
       throw new Error(response?.message || 'Batch upload images failed')
     }
 
-    await loadAllAnnotationData()
+    await loadAnnotationPage()
     ElMessage.success('Batch upload succeeded. Refreshed image list.')
   } catch (error) {
     console.error('Grid batch upload failed:', error)
@@ -1917,7 +1930,7 @@ const handleBatchUploadFromGrid = async (files, uploadResp) => {
 }
 const handleImportAnnotationZipFromGrid = async () => {
   try {
-    await loadAllAnnotationData()
+    await loadAnnotationPage()
   } catch (error) {
     console.error('Refresh after zip import failed:', error)
   }
@@ -1947,9 +1960,10 @@ const handleAutoSaveToDatabase = async () => {
   }
 }
 
-const handleBackToGrid = () => {
+const handleBackToGrid = async () => {
   showDetailAnnotation.value = false
   currentAnnotationImage.value = null
+  await loadAnnotationPage()
 }
 
 // annotation related method
@@ -2127,264 +2141,97 @@ const deleteLabelAPI = async (labelId) => {
   }
 }
 
-// : Get info and annotationdata
-const loadAllAnnotationData = async () => {
+// Only the requested page and its annotation instances are loaded.
+const loadAnnotationPage = async ({ imageId } = {}) => {
   const sequence = ++annotationLoadSequence
+  const query = { ...annotationImageQuery.value }
   annotationDataLoading.value = true
   annotationLoadError.value = ''
   try {
     const annotationId = getCurrentAnnotationId()
-    console.log('=== 加载所有标注数据（带真实标签名称） ===')
-    console.log('标注项目ID:', annotationId)
-
-    // API: Get info、 and annotationinstance
-    const [labelsResponse, imagesResponse, instancesResponse] = await Promise.all([
+    const [labelsResponse, page] = await Promise.all([
       getAnnotationLabels(annotationId),
-      getAnnotationImages(annotationId),
-      getAllAnnotationInstances(annotationId)
+      getAnnotationImagePage(annotationId, { ...query, imageId })
     ])
-    if (sequence !== annotationLoadSequence) return
-    if (!imagesResponse?.success || !Array.isArray(imagesResponse.data)) {
-      throw new Error('图片列表加载失败，请检查对象存储连接后重试')
-    }
-    if (labelsResponse?.code !== 200 || instancesResponse?.code !== 200) {
+    if (sequence !== annotationLoadSequence) return false
+    if (labelsResponse?.code !== 200 || !Array.isArray(page?.records)) {
       throw new Error('标注数据加载失败，请重试')
     }
-    // record info, imageId /URL
-    const imageMetaMap = new Map()
-
-    console.log('标签API响应:', labelsResponse)
-    console.log('图片列表API响应:', imagesResponse)
-    console.log('标注实例API响应:', instancesResponse)
-
-    // API
-    if (imagesResponse.success && imagesResponse.data) {
-      console.log('图片列表数据结构分析:')
-      console.log('- 响应状态:', imagesResponse.success)
-      console.log('- 数据长度:', imagesResponse.data.length)
-      console.log('- 第一条数据示例:', imagesResponse.data[0])
-      console.log('- 所有图片名称:', imagesResponse.data.map(img => img.originalName))
+    if (page.records.some(image => image.previewError)) {
+      throw new Error('图片列表加载失败，请检查对象存储连接后重试')
     }
-
-    // Process data ( instanceAPIfailed also need to )
-    if (labelsResponse.code === 200) {
-      const labelsList = labelsResponse.data || []
-      const instances = instancesResponse.code === 200 ? instancesResponse.data || [] : []
-
-      console.log('标签数量:', labelsList.length)
-      console.log('标注实例数量:', instances.length)
-
-      // 1. all , new
-      labelsList.forEach(label => {
-        label.usageCount = instances.filter(instance => instance.labelId === label.id).length
-      })
-
-      annotationLabels.value = labelsList.sort((a, b) => a.sortOrder - b.sortOrder)
-      console.log('所有标签列表:', annotationLabels.value)
-
-      // if , in
-      if (annotationLabels.value.length > 0 && !selectedAnnotationLabel.value) {
-        selectedAnnotationLabel.value = annotationLabels.value[0].id
-      }
-    } else {
-      console.error('加载标签失败:', labelsResponse.message)
-      ElMessage.error(uiText('加载标签失败: ') + labelsResponse.message)
+    const lastPage = Math.max(1, Math.ceil(page.total / query.size))
+    if (!imageId && query.page > lastPage) {
+      annotationImageQuery.value.page = lastPage
+      return await loadAnnotationPage()
     }
-
-    // Process data (from annotation_image )
-    if (imagesResponse.success && imagesResponse.data) {
-      const allImages = imagesResponse.data
-      console.log('从数据库加载的图片数量:', allImages.length)
-      console.log('图片数据详情:', allImages)
-
-      // to each before object
-      allImages.forEach((dbImage, index) => {
-        console.log(`处理第${index + 1}张图片:`, dbImage)
-
-        // whether in - imageNamefield ( )
-        if (!dbImage.imageName || typeof dbImage.imageName !== 'string') {
-          console.warn('跳过无效的图片数据:', dbImage)
-          return
-        }
-        const metaName = dbImage.imageName || dbImage.originalName
-        const metaUrl = dbImage.localPath
-        imageMetaMap.set(dbImage.id, { name: metaName, originalName: dbImage.originalName, url: metaUrl })
-
-
-        // whether already in
-        const existingImageIndex = uploadedImages.value.findIndex(
-          img => dbImage.id != null && String(img.id) === String(dbImage.id)
-        )
-
-        if (existingImageIndex === -1) {
-          // new object
-          const imageObj = {
-            id: dbImage.id,
-            name: dbImage.imageName,  // ( before )
-            originalName: dbImage.originalName,  //
-            url: metaUrl,
-            annotations: [],
-            isFromDatabase: true,
-            dbData: dbImage,
-            //
-            needsImageCheck: false,
-            imageExists: true
-          }
-          uploadedImages.value.push(imageObj)
-          console.log('添加数据库图片:', imageObj.name, 'URL:', imageObj.url)
-        } else {
-          console.log('图片已存在，跳过:', dbImage.imageName)
-        }
-      })
-
-      //
-      uploadedImages.value = uploadedImages.value.filter(isValidImage)
-      console.log('图片列表过滤后的有效图片数量:', uploadedImages.value.length)
-
-      console.log('=== 图片URL设置完成 ===')
-      uploadedImages.value.forEach((img, index) => {
-        console.log(`图片${index + 1}:`, {
-          name: img.name,
-          originalName: img.originalName,
-          url: img.url,
-          isValid: isValidImage(img),
-          imageExists: img.imageExists
-        })
-      })
-      console.log('=== 图片列表处理完成 ===')
-    } else {
-      console.warn('图片列表API响应无效:', imagesResponse)
+    annotationLabels.value = (labelsResponse.data || []).sort((a, b) => a.sortOrder - b.sortOrder)
+    if (!annotationLabels.value.some(label => String(label.id) === String(selectedAnnotationLabel.value))) {
+      selectedAnnotationLabel.value = annotationLabels.value[0]?.id ?? null
     }
-
-    // Process annotationinstancedata
-    if (instancesResponse.code === 200) {
-      const instances = instancesResponse.data || []
-
-      // 2. groupannotationdata
-      const imageGroups = {}
-      instances.forEach((instance, index) => {
-        console.log(`处理标注实例 ${index + 1}:`, instance)
-
-        // annotationinstance field - can is imageName originalName
-        const meta = imageMetaMap.get(instance.imageId) || {}
-        const instanceImageName = meta.name || instance.imageName || instance.originalName
-        if (!instanceImageName || typeof instanceImageName !== 'string') {
-          console.warn('跳过无效的标注实例（缺少图片名称）:', instance)
-          return
-        }
-
-        const imageKey = instance.imageId != null ? `id:${instance.imageId}` : `name:${instanceImageName}`
-        if (!imageGroups[imageKey]) {
-          imageGroups[imageKey] = []
-        }
-        imageGroups[imageKey].push(instance)
-      })
-
-      console.log('按图片分组的标注数据:', imageGroups)
-
-      // 3. to each object
-      Object.keys(imageGroups).forEach(imageKey => {
-        const imageInstances = imageGroups[imageKey]
-        const imageId = imageInstances[0]?.imageId
-        const metaForImage = imageMetaMap.get(imageId) || {}
-        const imageName = metaForImage.name || imageInstances[0]?.imageName || imageInstances[0]?.originalName
-        // whether
-        if (!imageName || typeof imageName !== 'string') {
-          console.warn('跳过无效的图片名称:', imageName)
-          return
-        }
-
-        // whether already in ( originalName data)
-        const existingImageIndex = uploadedImages.value.findIndex(
-          img => imageId != null ? String(img.id) === String(imageId)
-            : img.name === imageName || img.originalName === imageName
-        )
-
-        // Convert annotationdata
-        const annotations = imageInstances.map(instance => {
-          let data
-          try {
-            data = JSON.parse(instance.annotationData)
-          } catch (parseError) {
-            console.error('解析标注数据失败:', parseError)
-            return null
-          }
-
-          const label = annotationLabels.value.find(l => l.id === instance.labelId)
-
-          return {
-            id: instance.id,
-            labelId: instance.labelId,
-            labelName: label?.name || `标签${instance.labelId}`,
-            labelColor: label?.color || '#999999',
-            type: instance.annotationType,
-            ...data
-          }
-        }).filter(Boolean)
-
-        if (existingImageIndex >= 0) {
-          // if already in , new annotationdata
-          uploadedImages.value[existingImageIndex].annotations = annotations
-          console.log(`更新现有图片 ${imageName} 的标注数据，数量:`, annotations.length)
-        } else {
-          // if in , new object ( imageId data)
-          const meta = imageMetaMap.get(imageInstances?.[0]?.imageId) || {}
-          const imageUrl = meta.url
-          const newImage = {
-            id: imageInstances?.[0]?.imageId || Date.now() + Math.random(),
-            name: imageName,
-            originalName: meta.originalName || imageName,
-            url: imageUrl,
-            annotations: annotations,
-            isFromDatabase: true, // is from data Load
-            needsImageCheck: true // need to whether in
-          }
-          uploadedImages.value.push(newImage)
-          console.log(`添加数据库图片 ${imageName}，URL: ${imageUrl}，标注数量:`, annotations.length)
-        }
-      })
-
-      // 4. , only
-      uploadedImages.value = uploadedImages.value.filter(isValidImage)
-      console.log('过滤后的有效图片数量:', uploadedImages.value.length)
-
-      // if current in data, in
-      if (currentImageIndex.value < 0 && uploadedImages.value.length > 0) {
-        currentImageIndex.value = 0
-        imageAnnotations.value = uploadedImages.value[0].annotations || []
-      }
-
-      console.log('标注实例数据加载完成')
-      console.log('- 图片数量:', uploadedImages.value.length)
-      console.log('- 当前图片索引:', currentImageIndex.value)
-    } else {
-      console.error('加载标注实例失败:', instancesResponse.message)
-      // annotationinstanceLoad failed
+    if (query.labelId != null && !annotationLabels.value.some(label => String(label.id) === String(query.labelId))) {
+      annotationImageQuery.value.labelId = null
+      annotationImageQuery.value.page = 1
+      return await loadAnnotationPage()
     }
-
-    console.log('所有标注数据加载完成（含真实标签名称）')
-    console.log('- 标签数量:', annotationLabels.value.length)
-    console.log('- 图片数量:', uploadedImages.value.length)
-    console.log('- 当前图片索引:', currentImageIndex.value)
-    console.log('- 图片列表详情:', uploadedImages.value.map(img => ({ name: img.name, url: img.url, isFromDatabase: img.isFromDatabase })))
+    uploadedImages.value = page.records.map(image => ({
+      id: String(image.id),
+      name: image.imageName,
+      originalName: image.originalName,
+      url: image.previewUrl,
+      annotations: (image.instances || []).map(instance => {
+        let data
+        try {
+          data = JSON.parse(instance.annotationData)
+        } catch (error) {
+          console.error('解析标注数据失败:', error)
+          return null
+        }
+        const label = annotationLabels.value.find(item => String(item.id) === String(instance.labelId))
+        return {
+          ...data,
+          id: instance.id,
+          labelId: instance.labelId,
+          labelName: label?.name || `标签${instance.labelId}`,
+          labelColor: label?.color || '#999999',
+          type: instance.annotationType
+        }
+      }).filter(Boolean),
+      isFromDatabase: true,
+      dbData: image,
+      imageExists: true
+    }))
+    annotationImageTotal.value = Number(page.total)
+    annotationImageQuery.value.page = Number(page.current)
+    currentImageIndex.value = uploadedImages.value.length ? 0 : -1
+    imageAnnotations.value = uploadedImages.value[0]?.annotations || []
+    selectedAnnotation.value = null
+    return true
   } catch (error) {
-    if (sequence !== annotationLoadSequence) return
-    annotationLoadError.value = '图片或标注数据加载失败，请检查服务及对象存储连接后重试。'
-    // if Load failed, to Load
-    try {
-      await loadAnnotationLabels()
-    } catch (labelError) {
-      console.error('单独加载标签也失败:', labelError)
-      ElMessage.error(uiText('加载标签失败'))
+    if (sequence === annotationLoadSequence) {
+      annotationLoadError.value = uiText('图片或标注数据加载失败，请检查服务及对象存储连接后重试。')
     }
+    return false
   } finally {
     if (sequence === annotationLoadSequence) annotationDataLoading.value = false
   }
 }
 
+const handleAnnotationPageChange = ({ page, size }) => {
+  if (annotationDataLoading.value) return
+  annotationImageQuery.value = { ...annotationImageQuery.value, page, size }
+  loadAnnotationPage()
+}
+
+const handleAnnotationFilterChange = (filter) => {
+  if (annotationDataLoading.value) return
+  annotationImageQuery.value = { ...annotationImageQuery.value, ...filter, page: 1 }
+  loadAnnotationPage()
+}
+
 // annotationinstance
 const reloadSavedImageAnnotations = async (image, annotationId) => {
-  const response = await getAllAnnotationInstances(annotationId)
+  const response = await getAnnotationInstances(annotationId, String(image.id))
   if (response.code !== 200 || !Array.isArray(response.data)) {
     throw new Error('同步已保存标注失败，请重试')
   }
@@ -2809,16 +2656,46 @@ const switchImage = async (index) => {
 
 //
 const previousImage = () => {
+  if (annotationDataLoading.value) return
   if (currentImageIndex.value > 0) {
     switchImage(currentImageIndex.value - 1)
+  } else if (annotationImageQuery.value.page > 1) {
+    changeAnnotationEditorPage(-1)
   }
 }
 
 //
 const nextImage = () => {
+  if (annotationDataLoading.value) return
   if (currentImageIndex.value < uploadedImages.value.length - 1) {
     switchImage(currentImageIndex.value + 1)
+  } else if (annotationImageQuery.value.page * annotationImageQuery.value.size < annotationImageTotal.value) {
+    changeAnnotationEditorPage(1)
   }
+}
+
+const changeAnnotationEditorPage = async (direction) => {
+  if (isSavingAnnotations.value || annotationDataLoading.value) return
+  if (pendingAnnotation.value || isDrawing.value) {
+    ElMessage.warning(uiText('请先为当前图形选择标签，再切换图片'))
+    return
+  }
+  if (currentImage.value?.annotations?.length > 0) {
+    if (!await saveImageAnnotations(currentImage.value.id, currentImage.value.annotations)) return
+  }
+  const query = annotationImageQuery.value
+  const previousPage = query.page
+  query.page += direction
+  const loaded = await loadAnnotationPage()
+  if (annotationImageQuery.value !== query || !showDetailAnnotation.value) return
+  if (!loaded) {
+    query.page = previousPage
+    ElMessage.error(annotationLoadError.value || uiText('操作失败'))
+    return
+  }
+  currentImageIndex.value = -1
+  await switchImage(direction < 0 ? uploadedImages.value.length - 1 : 0)
+  currentAnnotationImage.value = currentImage.value
 }
 
 // all annotation

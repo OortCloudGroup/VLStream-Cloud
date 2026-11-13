@@ -44,6 +44,8 @@ public final class DataRequests {
         private String qualityStatus;
         private String annotationStatus;
         private String datasetSplit;
+        private Long labelId;
+        private boolean excludeExcluded;
     }
 
     @Data

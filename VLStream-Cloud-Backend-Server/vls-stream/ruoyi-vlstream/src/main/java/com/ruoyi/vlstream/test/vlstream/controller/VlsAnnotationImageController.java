@@ -16,7 +16,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import lombok.AllArgsConstructor;
+import javax.annotation.Resource;
+import com.ruoyi.vlstream.test.vlstream.data.DataManagementService;
+import com.ruoyi.vlstream.test.vlstream.data.DataRequests;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.core.boot.ctrl.BladeController;
 import org.springblade.core.excel.util.ExcelUtil;
@@ -47,13 +50,23 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/vlsAnnotationImage")
 @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:algorithm-standard")
 @Tag(name = "标注图片信息表", description = "标注图片信息表接口")
 public class VlsAnnotationImageController extends BladeController {
 
 	private final IVlsAnnotationImageService vlsAnnotationImageService;
+	@Resource
+	private DataManagementService dataManagementService;
+
+	/** Return only this page's images and annotation instances in the trusted tenant. */
+	@GetMapping("/dataset/{annotationId}/page")
+	public R<IPage<Map<String, Object>>> getImagesPage(@PathVariable Long annotationId,
+		@Valid DataRequests.SampleQuery query,
+		@RequestParam(required = false) Long imageId) {
+		return R.data(dataManagementService.annotationImages(annotationId, query, imageId));
+	}
 
 	/**
 	 * annotation info

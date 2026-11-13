@@ -9,7 +9,7 @@
   <div class="annotation-grid-view">
     <!--  -->
     <el-tabs
-      v-model="activeFilter"
+      :model-value="query.annotationStatus"
       class="tenanat-tabs"
       @tab-change="handleFilterChange"
     >
@@ -45,10 +45,10 @@
         </div>
 
         <!--  -->
-        <div class="images-grid-wrapper" @scroll="handleGridScroll">
+        <div ref="gridWrapper" class="images-grid-wrapper">
           <div class="images-grid">
             <div
-              v-for="image in displayedImages"
+              v-for="image in uploadedImages"
               :key="image.id"
               class="image-card"
               :class="{ selected: selectedImages.includes(image.id) }"
@@ -80,7 +80,7 @@
             </div>
 
             <!-- null / empty -->
-            <div v-if="filteredImages.length === 0" class="empty-state">
+            <div v-if="!loading && uploadedImages.length === 0" class="empty-state">
               <el-icon class="empty-icon"><Picture /></el-icon>
               <p class="empty-text">{{ $tp('暂无图片') }}</p>
               <button type="button" class="exportBtn newBtn flexRowAC" @click="handleImportImages">
@@ -88,7 +88,19 @@
             </div>
           </div>
         </div>
-        <div class="grid-load-status" aria-live="polite"> {{ $tp('已显示') }} {{ displayedImages.length }} / {{ filteredImages.length }} {{ $tp('张') }} <el-button v-if="displayedImages.length < filteredImages.length" type="text" @click="loadMoreImages"> {{ $tp('加载更多') }} </el-button>
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="query.page"
+            :page-size="query.size"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="total"
+            :disabled="loading"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            @current-change="changePage"
+            @size-change="changePageSize"
+          />
         </div>
       </div>
     </div>
@@ -245,16 +257,18 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, onMounted, reactive, ref, watch} from 'vue'
+import {computed, reactive, ref, watch} from 'vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 import {ArrowDown, Crop, Delete, Edit, Folder, FullScreen, InfoFilled, Picture, Upload} from '@element-plus/icons-vue'
-import {getAllAnnotationInstances} from '@/api/annotationInstances'
 import {uploadAnnotationImages} from '@/api/annotationImage'
 import {importAnnotationData} from '@/api/algorithmAnnotation'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
 
 // props
 const props = defineProps({
+  query: { type: Object, required: true },
+  total: { type: Number, default: 0 },
+  loading: { type: Boolean, default: false },
   annotationData: {
     type: Object,
     default: () => ({})
@@ -262,7 +276,7 @@ const props = defineProps({
 })
 
 // emit
-const emit = defineEmits(['back-to-list', 'start-annotation', 'images-imported', 'add-label', 'update-label', 'delete-label', 'batch-upload-images', 'import-annotation-zip', 'delete-image-and-data'])
+const emit = defineEmits(['back-to-list', 'start-annotation', 'images-imported', 'add-label', 'update-label', 'delete-label', 'batch-upload-images', 'import-annotation-zip', 'delete-image-and-data', 'page-change', 'filter-change'])
 
 // from component data
 const annotationLabels = computed(() => {
@@ -293,35 +307,8 @@ const annotationFilters = ref([
   { key: 'unannotated', label: '无标注信息', count: 0 }
 ])
 
-// annotationinstancecollection ( imageId / name )
-const buildAnnotatedSets = (labelId = null) => {
-  const ids = new Set()
-  const names = new Set()
-
-  annotationInstances.value.forEach(instance => {
-    if (labelId != null && String(instance.labelId) !== String(labelId)) return
-    if (instance.imageId != null) ids.add(String(instance.imageId))
-    else {
-      if (instance.imageName) names.add(instance.imageName)
-      if (instance.originalName) names.add(instance.originalName)
-    }
-  })
-
-  return { ids, names }
-}
-
-const isImageAnnotated = (image, annotatedSets) => {
-  const { ids, names } = annotatedSets
-  if (image?.id != null) return ids.has(String(image.id))
-  const hitByName =
-    (image?.name && names.has(image.name)) ||
-    (image?.originalName && names.has(image.originalName))
-  return !!hitByName
-}
-
-const activeFilter = ref('all')
-
-const selectedLabelId = ref(null)
+const selectedLabelId = computed(() => props.query.labelId)
+const gridWrapper = ref(null)
 const selectedImages = ref([])
 const showLabelDialog = ref(false)
 const showUploadDialog = ref(false)
@@ -366,107 +353,29 @@ const labelRules = {
   name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
 }
 
-// annotationinstancedata
-const annotationInstances = ref([])
-
-// property - after
-const filteredImages = computed(() => {
-  const annotatedSets = buildAnnotatedSets()
-  const labelSets = selectedLabelId.value != null ? buildAnnotatedSets(selectedLabelId.value) : null
-  return uploadedImages.value.filter(image => {
-    if (labelSets && !isImageAnnotated(image, labelSets)) return false
-    const annotated = isImageAnnotated(image, annotatedSets)
-    if (activeFilter.value === 'annotated') return annotated
-    if (activeFilter.value === 'unannotated') return !annotated
-    return true
-  })
-})
-
-// , ,
-const INITIAL_RENDER_COUNT = 40
-const RENDER_INCREMENT = 20
-const renderCount = ref(INITIAL_RENDER_COUNT)
-const displayedImages = computed(() =>
-  filteredImages.value.slice(0, renderCount.value)
-)
-
-const resetRenderCount = () => {
-  renderCount.value = Math.min(filteredImages.value.length, INITIAL_RENDER_COUNT)
+const changePage = (page) => {
+  if (props.loading || page === props.query.page) return
+  selectedImages.value = []
+  emit('page-change', { page, size: props.query.size })
 }
 
-// new
-const updateFilterCounts = async () => {
-  const total = uploadedImages.value.length
-
-  try {
-    // Get all annotationinstancedata
-    if (props.annotationData && props.annotationData.id) {
-      const response = await getAllAnnotationInstances(props.annotationData.id)
-
-      if (response.code === 200) {
-        const instances = response.data || []
-
-        // new annotationinstancedata
-        annotationInstances.value = instances
-
-        // annotation ( )
-        const annotatedSets = buildAnnotatedSets()
-        const annotated = uploadedImages.value.filter(image => isImageAnnotated(image, annotatedSets)).length
-        const unannotated = total - annotated
-
-        annotationFilters.value[0].count = total
-        annotationFilters.value[1].count = annotated
-        annotationFilters.value[2].count = unannotated
-
-        console.log('统计结果:', { total, annotated, unannotated })
-      } else {
-        // API failed,
-        console.warn('获取标注实例失败，使用默认统计')
-        annotationFilters.value[0].count = total
-        annotationFilters.value[1].count = 0
-        annotationFilters.value[2].count = total
-      }
-    } else {
-      // annotationdata, all is annotation
-      annotationFilters.value[0].count = total
-      annotationFilters.value[1].count = 0
-      annotationFilters.value[2].count = total
-    }
-  } catch (error) {
-    console.error('更新筛选器统计失败:', error)
-    //
-    annotationFilters.value[0].count = total
-    annotationFilters.value[1].count = 0
-    annotationFilters.value[2].count = total
-  }
+const changePageSize = (size) => {
+  if (props.loading || size === props.query.size) return
+  selectedImages.value = []
+  emit('page-change', { page: 1, size })
 }
 
-// method
 const selectLabel = (labelId) => {
-  selectedLabelId.value = selectedLabelId.value != null && String(selectedLabelId.value) === String(labelId)
-    ? null : labelId
+  if (props.loading) return
+  const selected = String(selectedLabelId.value) === String(labelId) ? null : labelId
+  selectedImages.value = []
+  emit('filter-change', { labelId: selected })
 }
 
-const handleFilterChange = (filterKey) => {
-  activeFilter.value = filterKey
-  console.log('切换筛选器:', filterKey)
-}
-
-const handleGridScroll = (event) => {
-  const target = event?.target
-  if (!target) return
-
-  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight <= 2
-  if (isNearBottom) loadMoreImages()
-}
-
-const loadMoreImages = () => {
-  if (renderCount.value < filteredImages.value.length) {
-    renderCount.value = Math.min(
-      filteredImages.value.length,
-      renderCount.value + RENDER_INCREMENT
-    )
-  }
+const handleFilterChange = (annotationStatus) => {
+  if (props.loading) return
+  selectedImages.value = []
+  emit('filter-change', { annotationStatus })
 }
 
 const handleBackToList = () => {
@@ -597,13 +506,6 @@ const handleDeleteSelected = async () => {
         await deleteImageAndRelatedData(props.annotationData.id, imageIds)
       }
 
-      // from before array in Delete ( IDDelete )
-      for (const imageId of selectedImages.value) {
-        const index = uploadedImages.value.findIndex(img => img.id === imageId)
-        if (index > -1) {
-          uploadedImages.value.splice(index, 1)
-        }
-      }
       selectedImages.value = []
 
       console.log('=== 图片删除流程完成 ===')
@@ -625,9 +527,8 @@ const deleteImageAndRelatedData = async (annotationId, imageIds) => {
   console.log('deleteImageAndRelatedData :', { annotationId, imageIds: imageIds })
 
   // is sub component, emitnotification componentProcess
-  return new Promise((resolve) => {
-    emit('delete-image-and-data', { annotationId, imageIds: imageIds })
-    setTimeout(resolve, 50)
+  return new Promise((resolve, reject) => {
+    emit('delete-image-and-data', { annotationId, imageIds, resolve, reject })
   })
 }
 
@@ -648,7 +549,7 @@ const handleImageCardClick = (imageId, event) => {
 
 const handleAnnotateImage = (imageId) => {
   //
-  const image = filteredImages.value.find(img => img.id === imageId)
+  const image = uploadedImages.value.find(img => img.id === imageId)
   if (image) {
     console.log(`开始标注图片: ${image.name}`)
     // component annotation
@@ -804,32 +705,9 @@ const handleImageError = (event) => {
   event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjEwMCIgeT0iNzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+S4jeWtmOWcqDwvdGV4dD48L3N2Zz4='
 }
 
-watch(filteredImages, () => {
-  resetRenderCount()
-  const visibleIds = new Set(filteredImages.value.map(image => String(image.id)))
-  selectedImages.value = selectedImages.value.filter(id => visibleIds.has(String(id)))
-}, { deep: true, immediate: true })
-
-watch(annotationLabels, (labels) => {
-  if (selectedLabelId.value != null && !labels.some(label => String(label.id) === String(selectedLabelId.value))) {
-    selectedLabelId.value = null
-  }
-}, { deep: true })
-
-// data , new
 watch(() => uploadedImages.value, () => {
-  updateFilterCounts()
-}, { deep: true })
-
-// annotationdata , new
-watch(() => props.annotationData, () => {
-  updateFilterCounts()
-}, { deep: true })
-
-onMounted(() => {
-  console.log('网格标注视图已加载')
-  resetRenderCount()
-  updateFilterCounts()
+  selectedImages.value = []
+  if (gridWrapper.value) gridWrapper.value.scrollTop = 0
 })
 </script>
 

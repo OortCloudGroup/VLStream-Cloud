@@ -7,6 +7,19 @@
 
 import request from '@/utils/request'
 
+export async function getAnnotationImagePage(annotationId, params) {
+  const response = await request({
+    url: `/vlsAnnotationImage/dataset/${annotationId}/page`,
+    method: 'get',
+    timeout: 20000,
+    params
+  })
+  if (response.code !== 200 || response.success === false) {
+    throw new Error(response.msg || '图片列表加载失败')
+  }
+  return response.data
+}
+
 /**
  * Get annotation item
  * @param {number} annotationId - annotation item ID

@@ -105,10 +105,23 @@ public class DataManagementService {
         return project;
     }
 
+    public IPage<Map<String, Object>> annotationImages(Long projectId, DataRequests.SampleQuery request, Long imageId) {
+        request.setMediaType("image");
+        request.setExcludeExcluded(true);
+        if (imageId != null) {
+            sample(projectId, imageId);
+            long preceding = samples.selectCount(sampleQuery(projectId, request).gt("id", imageId));
+            request.setPage((int) (preceding / request.getSize()) + 1);
+        }
+        return samples(projectId, request);
+    }
+
     public IPage<Map<String, Object>> samples(Long projectId, DataRequests.SampleQuery request) {
         project(projectId);
         IPage<AnnotationImage> page = samples.selectPage(new Page<>(request.getPage(), request.getSize()), sampleQuery(projectId, request).orderByDesc("id"));
-        List<AnnotationInstance> annotations = instances.selectList(scope(projectId));
+        List<Long> imageIds = page.getRecords().stream().map(AnnotationImage::getId).collect(Collectors.toList());
+        List<AnnotationInstance> annotations = imageIds.isEmpty() ? Collections.emptyList()
+            : instances.selectList(this.<AnnotationInstance>scope(projectId).in("image_id", imageIds));
         List<AnnotationLabel> projectLabels = labels.selectList(scope(projectId));
         IPage<Map<String, Object>> result = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         result.setRecords(page.getRecords().stream().map(s -> sampleView(s, annotations, projectLabels)).collect(Collectors.toList()));
@@ -122,6 +135,10 @@ public class DataManagementService {
         query.eq(hasText(request.getMediaType()), "media_type", request.getMediaType());
         query.eq(hasText(request.getQualityStatus()), "quality_status", request.getQualityStatus());
         query.eq(hasText(request.getDatasetSplit()), "dataset_split", request.getDatasetSplit());
+        query.ne(request.isExcludeExcluded(), "quality_status", "excluded");
+        if (request.getLabelId() != null) query.apply("EXISTS (SELECT 1 FROM vls_annotation_instance li "
+            + "WHERE li.image_id = vls_annotation_image.id AND li.annotation_id = vls_annotation_image.annotation_id "
+            + "AND li.tenant_id = {0} AND li.is_deleted = 0 AND li.label_id = {1})", tenant(), request.getLabelId());
         String annotated = "EXISTS (SELECT 1 FROM vls_annotation_instance ai WHERE ai.image_id = vls_annotation_image.id "
             + "AND ai.annotation_id = vls_annotation_image.annotation_id AND ai.tenant_id = {0} AND ai.is_deleted = 0)";
         if ("annotated".equals(request.getAnnotationStatus())) query.apply(annotated, tenant());
