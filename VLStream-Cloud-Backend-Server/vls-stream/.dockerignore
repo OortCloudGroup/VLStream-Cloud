@@ -1,0 +1,4 @@
+.git
+**/target
+ruoyi-admin/config/application.yml
+**/config/application.yml

@@ -32,7 +32,7 @@ class ComputeExternalBillingIntegrationTest {
         Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         assertNotNull(root);
-        Path migrations = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        Path migrations = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline");
         try (java.sql.Connection connection = fixture.jdbc.getDataSource().getConnection()) {
             for (String name : new String[]{"V1_2_0_049__compute_billing_coordination.sql",
                 "V1_2_0_052__compute_funding_intents.sql", "V1_2_0_053__compute_funding_hold_recovery.sql"})

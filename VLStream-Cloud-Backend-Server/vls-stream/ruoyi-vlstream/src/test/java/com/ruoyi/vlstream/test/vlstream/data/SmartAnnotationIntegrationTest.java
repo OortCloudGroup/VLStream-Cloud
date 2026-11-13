@@ -51,7 +51,7 @@ class SmartAnnotationIntegrationTest {
         jdbc.execute("DROP TABLE IF EXISTS vls_training_dataset_artifact");
         jdbc.execute("CREATE TABLE vls_training_dataset_artifact(tenant_id VARCHAR(64),dataset_id BIGINT,storage_state VARCHAR(20))");
         for (String table : Arrays.asList("vls_smart_annotation_candidate", "vls_smart_annotation_round", "vls_smart_annotation_task")) jdbc.execute("DROP TABLE IF EXISTS " + table);
-        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
+        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
         applyFourTypeMigration(jdbc);
         TenantContextHolder.setTenantId("tenant-a");
@@ -64,7 +64,7 @@ class SmartAnnotationIntegrationTest {
     @AfterEach void clear() { TenantContextHolder.clear(); }
 
     static void applyFourTypeMigration(JdbcTemplate jdbc) throws Exception {
-        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_022__four_type_annotation_payloads.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
+        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_022__four_type_annotation_payloads.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
     }
 

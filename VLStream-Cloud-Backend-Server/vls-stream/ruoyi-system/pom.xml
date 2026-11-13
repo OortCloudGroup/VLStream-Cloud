@@ -5,7 +5,7 @@
     <parent>
         <artifactId>vls-stream</artifactId>
         <groupId>com.ruoyi</groupId>
-        <version>0.8.3</version>
+        <version>1.2.11</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -89,7 +89,7 @@
         <!--        <dependency>-->
 <!--            <groupId>com.ruoyi</groupId>-->
 <!--            <artifactId>ruoyi-xxl-job-admin</artifactId>-->
-<!--            <version>0.8.3</version>-->
+<!--            <version>1.2.11</version>-->
 <!--            <scope>compile</scope>-->
 <!--        </dependency>-->
     </dependencies>

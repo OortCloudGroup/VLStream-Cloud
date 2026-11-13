@@ -115,7 +115,7 @@ class ComputeSharedQueueIntegrationTest {
         jdbc.execute("CREATE TABLE IF NOT EXISTS vls_compute_node(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),name VARCHAR(100),resource_scope VARCHAR(32),public_instance_key VARCHAR(64),scheduling_mode VARCHAR(32),username VARCHAR(64),password_cipher TEXT NOT NULL)");
         if(jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='vls_compute_node' AND column_name='auth_mode'",Integer.class,SCHEMA)==0) {
             Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-            String migrationPath="ruoyi-admin/src/main/resources/db/migration/V1_2_0_043__compute_deployment_ssh_identity.sql";
+            String migrationPath="ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_043__compute_deployment_ssh_identity.sql";
             while(root!=null && !Files.exists(root.resolve(migrationPath)))root=root.getParent();
             assertNotNull(root);
             byte[] migration=Files.readAllBytes(root.resolve(migrationPath));

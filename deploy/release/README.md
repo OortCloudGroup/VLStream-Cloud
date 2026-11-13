@@ -19,12 +19,18 @@ docker compose up -d
 Change every password in `.env` before startup and change the application
 password immediately after the first sign-in.
 
-WVP is a required dependency and the sole video-device center. This package
-does not bundle a second WVP copy; deploy `apaas-wvp-server` first and set
-`VLSTREAM_WVP_INTERNAL_BASE_URL` to an address reachable from the backend
-container, such as `http://host.docker.internal:9080` for a separate service on
-the same host. The read-only device lookup uses no additional shared secret;
-keep the internal path reachable only through the backend service network.
+The public images do not embed private compute billing credentials. Paid supplier integration requires protected runtime configuration; see docs/COMPUTE_BILLING.md in the release archive.
+
+WVP is a required dependency and the sole video-device center. Deploy
+[VLStream WVP Lite v1.0.12](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.12)
+first; its public image is `ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.12`.
+This package does not bundle a second WVP copy. On the same host, configure
+WVP's HTTP host port as `9080`. The backend uses `VLSTREAM_WVP_DEVICE_BASE_URL`
+for WVP device and tenant APIs. The frontend proxy destinations are configured
+separately with `WVP_UPSTREAM` and `ZLM_UPSTREAM`; their defaults target host
+ports 9080 and 8081. For a multi-host deployment, set addresses reachable from
+the backend and frontend containers. WVP remains the owner of ZLMediaKit.
+WVP v1.0.12 scopes federated access to page grants verified by VLStream, restricts raw-address ONVIF and federated device operations, and gates video-square endpoints. Keep the WVP device directory authoritative. Assign vlstream:device:share:manage and vlstream:device:share:approve only to intended roles; WVP upgrades do not grant these permissions automatically.
 
 The default Compose file starts MySQL, Redis, MinIO, WebRTC-streamer, the
 backend, and the frontend. To use existing MySQL and Redis services, provide

@@ -730,7 +730,7 @@ class ComputeExpiredTailReleaseTest {
         Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Actual Flyway source root required");
-        return root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        return root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline");
     }
 
     private class ReadOnlyGateway extends ComputeBillingSettlementTest.FakeGateway {
