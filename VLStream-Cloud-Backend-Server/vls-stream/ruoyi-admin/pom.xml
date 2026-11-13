@@ -186,6 +186,29 @@
         <finalName>vls-stream</finalName>
 <!--        <finalName>${project.artifactId}</finalName>-->
         <plugins>
+            <!-- Private deployment defaults travel with the JAR, not with Git. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>embed-compute-billing</id>
+                        <phase>process-resources</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/private/compute-billing</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/config</directory>
+                                    <filtering>false</filtering>
+                                    <includes><include>application.yml</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

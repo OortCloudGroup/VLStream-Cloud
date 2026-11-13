@@ -64,6 +64,8 @@ user:
 
 # Spring配置
 spring:
+  config:
+    import: optional:classpath:private/compute-billing/application.yml,optional:file:./ruoyi-admin/config/application.yml
   application:
     name: ${ruoyi.name}
   # 资源信息

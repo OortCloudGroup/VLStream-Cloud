@@ -55,6 +55,23 @@
 
     <profiles>
         <profile>
+            <id>idea-build</id>
+            <activation>
+                <property>
+                    <name>idea.version</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- Explicit build profiles disable activeByDefault; retain dev unless local/prod is selected. -->
+                <profiles.active>dev</profiles.active>
+                <logging.level>debug</logging.level>
+            </properties>
+            <build>
+                <!-- IDEA activates this via idea.version; CLI: mvn -Pidea-build -DskipTests install. -->
+                <directory>${maven.multiModuleProjectDirectory}/../../codex/maven-idea/${project.artifactId}</directory>
+            </build>
+        </profile>
+        <profile>
             <id>local</id>
             <properties>
                 <!-- 环境标识，需要与配置文件的名称相对应 -->
