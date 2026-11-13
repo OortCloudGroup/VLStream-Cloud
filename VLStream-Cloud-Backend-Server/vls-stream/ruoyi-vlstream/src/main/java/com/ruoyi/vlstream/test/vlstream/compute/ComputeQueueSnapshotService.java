@@ -56,6 +56,7 @@ public class ComputeQueueSnapshotService {
                 gpu.put("gpuIndex", node.getGpuIndex()); gpu.put("gpuUuid", uuid);
                 Map<String,Object> payload = new LinkedHashMap<>();
                 payload.put("gpu", gpu); payload.put("environment", properties.getEnvironmentId()); payload.put("viewer", shared.viewer());
+                if (node.isPlatformCatalogManaged()) payload.put("queueRoot", node.getCatalogDefinition().getQueueRoot());
                 String poolKey = poolKey(node, uuid); observedPoolKey = poolKey;
                 payload.put("previousTicketKey", estimator.previousKey(poolKey));
                 String encodedPayload = Base64.getEncoder().encodeToString(json.writeValueAsBytes(payload));

@@ -35,7 +35,15 @@ def workload_profile(row, gpu=None):
         bases = ('/data/work/vlstream-gpu/', '/home/oort/vlstream/')
         if not isinstance(run, str) or not re.fullmatch('/[A-Za-z0-9_./-]+', run) or '..' in run or '//' in run:
             return None
-        if not any(run.startswith(base + row['environment'] + '/') for base in bases) or not run.endswith('/' + row['jobId']):
+        if 'runRoot' in row:
+            root = row['runRoot']
+            if not isinstance(root, str) or root == '/' or not re.fullmatch('/[A-Za-z0-9_./-]+', root) or '..' in root or '//' in root:
+                return None
+            prefix = root + '/'
+            suffix = run[len(prefix):] if run.startswith(prefix) else ''
+            if not re.fullmatch('[a-f0-9]{16}/' + re.escape(row['jobId']), suffix):
+                return None
+        elif not any(run.startswith(base + row['environment'] + '/') for base in bases) or not run.endswith('/' + row['jobId']):
             return None
         config = read_json_file(Path(run) / 'job.json')
         shared = config.get('sharedQueue', {})
@@ -68,7 +76,7 @@ def workload_profile(row, gpu=None):
 def read_snapshot(gpu, environment, viewer, root=ROOT, previous_ticket_key=None):
     if not re.fullmatch('GPU-[a-fA-F0-9-]{36}', gpu.get('gpuUuid', '')) or type(gpu.get('gpuIndex')) is not int or not 0 <= gpu['gpuIndex'] <= 15:
         raise ValueError('Invalid physical GPU')
-    if environment not in ('localhost', 'vm') or not re.fullmatch('[a-f0-9]{64}', viewer):
+    if not isinstance(environment, str) or not re.fullmatch('[A-Za-z0-9_-]{1,64}', environment) or not re.fullmatch('[a-f0-9]{64}', viewer):
         raise ValueError('Missing authenticated viewer')
     path = Path(root) / gpu['gpuUuid'] / 'registry.json'
     # Registry does atomic replaces. O_RDONLY + O_NOFOLLOW reads one complete generation,
@@ -88,7 +96,11 @@ def summarize(state, gpu, environment, viewer, previous_ticket_key=None):
         if not isinstance(row, dict):
             raise ValueError('Invalid ticket')
         env, job, owner = row.get('environment'), row.get('jobId'), row.get('owner')
-        if env not in ('localhost', 'vm') or not isinstance(job, str) or str(uuid.UUID(job)) != job or not isinstance(owner, str) or not re.fullmatch('[a-f0-9]{64}', owner):
+        approved_environment = isinstance(env, str) and re.fullmatch('[A-Za-z0-9_-]{1,64}', env)
+        if (not approved_environment
+                or ('runRoot' not in row and env not in ('localhost', 'vm'))
+                or not isinstance(job, str) or str(uuid.UUID(job)) != job
+                or not isinstance(owner, str) or not re.fullmatch('[a-f0-9]{64}', owner)):
             raise ValueError('Invalid ticket identity')
         if key != hashlib.sha256((env + '\n' + job).encode()).hexdigest():
             raise ValueError('Invalid ticket key')
@@ -118,4 +130,7 @@ def summarize(state, gpu, environment, viewer, previous_ticket_key=None):
 
 if __name__ == '__main__':
     payload = json.loads(base64.b64decode(sys.argv[1]))
-    print('VLS_QUEUE_SNAPSHOT=' + json.dumps(read_snapshot(payload['gpu'], payload['environment'], payload['viewer'], previous_ticket_key=payload.get('previousTicketKey'))))
+    root = payload.get('queueRoot', str(ROOT))
+    if not isinstance(root, str) or root == '/' or not re.fullmatch('/[A-Za-z0-9_./-]+', root) or '..' in root or '//' in root:
+        raise ValueError('Invalid frozen queue root')
+    print('VLS_QUEUE_SNAPSHOT=' + json.dumps(read_snapshot(payload['gpu'], payload['environment'], payload['viewer'], root=Path(root), previous_ticket_key=payload.get('previousTicketKey'))))

@@ -1,7 +1,7 @@
 <template>
   <section class="compute-market" v-loading="loading">
     <h2 class="market-title">{{ marketText('算力市场') }}</h2>
-    <ComputeBillingPanel ref="billingPanel" :resources="resources" @changed="load" />
+    <ComputeBillingPanel ref="billingPanel" :resources="resources" :inline-actions="false" @changed="load" />
     <div v-if="route.query.returnTo === 'training'" class="return-action"><el-button type="primary" @click="router.push('/algorithm-training')">{{ marketText('返回训练配置') }}</el-button></div>
     <el-alert v-if="marketError" class="market-error" show-icon type="warning" :closable="false" :title="marketText(marketError)" />
     <el-empty v-if="!loading && !resources.length && !marketError" :description="marketText('暂无已发布算力')" />
@@ -24,22 +24,29 @@
           <div class="resource-price" :class="{ 'price-pending': item.billingType !== 'FREE' && marketPricePresentation(item) === null }">
             <div class="price-line"><strong>{{ item.billingType === 'FREE' ? marketText('免费') : marketPricePresentation(item)?.amount ?? marketText('价格待确认') }}</strong><small v-if="item.billingType !== 'FREE' && marketPricePresentation(item) !== null">{{ marketText(marketPricePresentation(item).unit) }}</small></div>
             <p v-if="!(item.billingType === 'FREE' && item.schedulingMode === 'SHARED_GPU_QUEUE')" class="price-note">{{ marketText(item.billingType === 'FREE' ? '整实例独享' : marketPricePresentation(item)?.reference ? '参考价 · 磁盘另费' : '确认报价后按用量结算') }}</p>
-            <el-button v-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
+            <template v-if="item.billingType === 'POINTS' && billingPanel?.activeRun(item.id)">
+              <p class="price-note">{{ marketText(paidRunState(billingPanel.activeRun(item.id).state)) }}</p>
+              <el-button type="danger" plain :loading="billingPanel.busy === billingPanel.activeRun(item.id).runId" :disabled="['STOPPING', 'RELEASING', 'CANCELLING'].includes(billingPanel.activeRun(item.id).state)" @click="billingPanel.stop(billingPanel.activeRun(item.id))">{{ marketText('关机') }}</el-button>
+              <el-button v-if="billingPanel.activeRun(item.id).state === 'RUNNING' && !billingPanel.activeRun(item.id).archiveRecovery" type="primary" :disabled="!!billingPanel.busy" @click="billingPanel.prepareTraining(billingPanel.activeRun(item.id))">{{ marketText('前往训练') }}</el-button>
+              <p v-if="paidRunErrorPresentation(billingPanel.activeRun(item.id))" class="price-note">{{ marketText(paidRunErrorPresentation(billingPanel.activeRun(item.id)).message) }}</p>
+            </template>
+            <el-button v-else-if="item.billingType === 'POINTS' && !['FREE', 'MINE'].includes(item.claimState)" disabled>{{ marketText(paidClaimLabel(item.claimState)) }}</el-button>
+            <el-button v-else-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
             <el-button v-else-if="item.billingType === 'POINTS'" type="primary" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || (item.powerState !== 'STOPPED' && !(item.configurationManaged && item.provider === 'autodl' && item.powerState === 'UNKNOWN'))" @click="billingPanel?.start(item)">{{ marketText('付费开机') }}</el-button>
             <p v-if="item.billingType === 'POINTS' && item.paidUnavailableReason" class="price-note">{{ marketText(item.paidUnavailableReason) }}</p>
             <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE'" type="primary" @click="router.push('/algorithm-training')">{{ marketText('前往训练') }}</el-button>
           </div>
         </div>
         <p v-if="item.operationPending" class="status-note">{{ marketText('实例操作处理中') }}</p>
-        <div v-if="item.canQueryProvider && item.apiControl" class="detail-actions">
+        <div v-if="item.billingType !== 'POINTS' && item.canQueryProvider && item.apiControl" class="detail-actions">
           <el-button v-if="item.canQueryProvider && item.apiControl" link type="primary" :loading="operating === item.id" @click="refresh(item)">{{ marketText('查询厂商状态') }}</el-button>
           <el-button v-if="item.canQueryProvider && item.operationPending && item.apiControl" link type="primary" :loading="operating === item.id" @click="refresh(item, true)">{{ marketText('恢复挂起记录') }}</el-button>
         </div>
-        <div v-if="item.claimState === 'MINE' || item.canOperate || (item.canRefreshEnvironment && item.schedulingMode !== 'SHARED_GPU_QUEUE') || item.canManage" class="card-actions">
+        <div v-if="(item.claimState === 'MINE' && (item.billingType !== 'POINTS' || item.workspaceDirty)) || (item.billingType !== 'POINTS' && (item.canOperate || (item.canRefreshEnvironment && item.schedulingMode !== 'SHARED_GPU_QUEUE'))) || item.canManage" class="card-actions">
           <el-button v-if="item.claimState === 'MINE' && (item.billingType !== 'POINTS' || item.workspaceDirty)" :loading="operating === item.id" @click="release(item)">{{ marketText('释放占用') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" type="primary" :loading="operating === item.id" :disabled="item.operationPending || item.capacityState === 'UNAVAILABLE' || item.provider === 'self' || item.powerState === 'RUNNING'" @click="power(item, 'start')">{{ marketText(item.apiControl ? '启动实例' : '开机指引') }}</el-button>
           <el-button v-if="item.canOperate && item.billingType !== 'POINTS'" :disabled="item.operationPending || item.taskCount > 0 || item.provider === 'self' || item.powerState === 'STOPPED'" :loading="operating === item.id" @click="power(item, 'stop')">{{ marketText(item.apiControl ? '停止实例' : '关机指引') }}</el-button>
-          <el-button v-if="(item.canRefreshEnvironment || item.canOperate) && item.schedulingMode !== 'SHARED_GPU_QUEUE'" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
+          <el-button v-if="item.billingType !== 'POINTS' && (item.canRefreshEnvironment || item.canOperate) && item.schedulingMode !== 'SHARED_GPU_QUEUE'" type="primary" plain :disabled="item.operationPending || (item.schedulingMode !== 'SHARED_GPU_QUEUE' && item.powerState !== 'RUNNING')" :loading="operating === item.id" @click="health(item)">{{ marketText('刷新环境') }}</el-button>
           <el-button v-if="item.canManage" class="manage-action" link @click="router.push({ path: '/compute-management', query: { ...route.query, nodeId: item.id } })">{{ marketText('管理') }}<el-icon><ArrowRight /></el-icon></el-button>
         </div>
       </article>
@@ -59,6 +66,7 @@ import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { marketResourceName, marketPricePresentation, marketDisplayResources } from '@/utils/computeMarketPresentation'
 import { getMarketSpecifications, formatMarketCpu } from '@/utils/computeMarketSpecifications'
 import ComputeBillingPanel from './components/ComputeBillingPanel.vue'
+import { paidRunState, paidRunErrorPresentation, paidClaimLabel } from '@/utils/computeBillingPresentation.mjs'
 const billingPanel = ref(null)
 const marketText = uiText
 const route = useRoute(), router = useRouter()

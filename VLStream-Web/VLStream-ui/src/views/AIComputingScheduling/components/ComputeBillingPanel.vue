@@ -1,12 +1,12 @@
 <template>
   <section class="billing-panel" :aria-label="uiText('平台余额与付费实例')">
     <div class="account-line">
-      <div><strong>{{ uiText('平台账户余额') }}</strong><span v-if="account">{{ phrase('可用 {available} {currency} · 冻结 {held} {currency}（上次查询 {time}）', { available: currency(account.availableQuota), held: currency(account.heldQuota), currency: account.currency, time: accountCheckedAt }) }}</span><span v-else>{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '平台账户配置待确认') }}</span></div>
-      <el-button :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
+      <div class="account-summary"><strong class="account-label">{{ uiText('平台账户余额') }}</strong><span v-if="account" class="account-amount">{{ currency(account.availableQuota) }}</span><span v-else class="account-placeholder">{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '平台账户配置待确认') }}</span></div>
+      <el-button class="account-query" :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
     </div>
     <el-alert v-if="capabilities.unavailableReason" type="info" :title="uiText(capabilities.unavailableReason)" :closable="false" show-icon />
     <el-alert v-if="error" type="warning" :title="uiText(error)" :closable="false" show-icon />
-    <div v-for="run in visibleRuns" :key="run.runId" class="paid-run" :data-run-id="run.runId">
+    <div v-for="run in (inlineActions ? visibleRuns : [])" :key="run.runId" class="paid-run" :data-run-id="run.runId">
       <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ uiText(paidRunState(run.state)) }}</span><small>{{ phrase('已结算 {amount} {unit}', { amount: run.chargedQuota, unit: run.quotaUnit }) }}<template v-if="run.remainingQuota !== null"> · {{ phrase('待释放/可抵扣 {amount} {unit}', { amount: run.remainingQuota, unit: run.quotaUnit }) }}</template></small><small v-if="run.archiveRecovery">{{ uiText('本次为付费归档恢复，仅取回原任务产物，不重新训练。') }}</small><small v-if="run.archiveRecoveryAvailable">{{ uiText('原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。') }}</small><el-alert v-if="run.errorCode || run.startFailureCode" :type="paidRunErrorPresentation(run).type" :title="uiText(paidRunErrorPresentation(run).message)" :closable="false" show-icon /></div>
       <div class="run-actions">
         <el-button v-if="showArchiveRecovery(run)" :disabled="!capabilities.paidAdmissionEnabled" :loading="busy === `archive:${recoverySourceId(run)}`" @click="recoverArchive(run)">{{ uiText(recoveryActionLabel(run)) }}</el-button>
@@ -28,20 +28,20 @@ import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent } from '@/utils/computePlatformAuth'
 import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '@/utils/computeBillingPresentation.mjs'
 
-const props = defineProps({ resources: { type: Array, default: () => [] } })
+const props = defineProps({ resources: { type: Array, default: () => [] }, inlineActions: { type: Boolean, default: true } })
 const emit = defineEmits(['changed'])
 const router = useRouter()
 const capabilities = ref({ accountAvailable: false, paidAdmissionEnabled: false })
 const canReadRuns = () => capabilities.value.identityAvailable ?? capabilities.value.accountAvailable
 const account = ref(null), runs = ref([]), busy = ref(''), error = ref('')
+let submittedRunId = null
 const recoveryAttempts = ref({})
-const accountCheckedAt = ref('')
-const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run) || showArchiveRecovery(run)))
+const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run)))
 const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || uiText('付费实例')
 const currency = quota => billingCurrency(quota, account.value.numerator, account.value.denominator)
 let active = true, polling = false, timer, revision = 0
 let identity = captureComputeIdentity()
-const reset = () => { revision++; account.value = null; accountCheckedAt.value = ''; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
+const reset = () => { revision++; submittedRunId = null; account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
 const current = (snapshot, epoch) => {
   if (!active || epoch !== revision) return false
   try { snapshot.assertCurrent(); return true } catch { reset(); return false }
@@ -71,9 +71,16 @@ const refreshRuns = async () => {
   polling = true
   try {
     const response = await listComputePaidRuns()
-    if (current(snapshot, epoch)) { runs.value = response.data || []; observeRecoveryAttempts(runs.value) }
+    if (current(snapshot, epoch)) {
+      runs.value = response.data || []; observeRecoveryAttempts(runs.value)
+      const submitted = runs.value.find(run => run.runId === submittedRunId)
+      if (submitted?.state === 'CANCELLED') {
+        error.value = paidRunErrorPresentation(submitted)?.message || '本次开机已取消，请重新选择可用资源。'
+        submittedRunId = null
+      }
+    }
   }
-  catch { if (current(snapshot, epoch)) error.value = '计费状态暂未确认，请稍后刷新；不要重复开机。' }
+  catch { current(snapshot, epoch) /* Background polling keeps the last known orders; explicit actions report their own errors. */ }
   finally { polling = false }
 }
 const execute = async (id, action) => {
@@ -89,19 +96,18 @@ const execute = async (id, action) => {
   finally { if (current(snapshot, epoch)) busy.value = '' }
 }
 const checkAccount = () => execute('account', async (proof, valid) => {
-  const accepted = await ElMessageBox.confirm(uiText('允许 VLS 查询平台余额并按您确认的 GPU 用量扣费。统一平台可能保存此计费授权，可在平台撤销。本次仅查询余额，不开机或扣费。'), uiText('平台余额'), { confirmButtonText: uiText('同意并查询'), cancelButtonText: uiText('取消') }).then(() => true).catch(() => false)
-  if (!accepted || !valid()) return
+  if (!valid()) return
   const response = await checkComputeBillingAccount()
-  if (valid()) { account.value = response.data; accountCheckedAt.value = new Date().toLocaleTimeString() }
+  if (valid()) account.value = response.data
 })
 const start = item => execute(String(item.id), async (proof, valid) => {
   if (!capabilities.value.paidAdmissionEnabled || !item.paidAdmissionEnabled) throw new Error(item.paidUnavailableReason || capabilities.value.unavailableReason || '当前实例计费配置尚未确认，请刷新后重试')
-  const acceptedPermissions = await ElMessageBox.confirm(uiText('允许 VLS 查询平台余额并按本次确认的 GPU 用量冻结与扣费。统一平台可能保存此计费授权，可在平台撤销。'), uiText('平台余额'), { confirmButtonText: uiText('同意并继续'), cancelButtonText: uiText('取消') }).then(() => true).catch(() => false)
-  if (!acceptedPermissions || !valid()) return
+  if (!valid()) return
   const quote = (await quoteComputePaidRun(item.id)).data
   if (!valid()) return
-  const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认本次付费开机'), { confirmButtonText: uiText('确认报价并开机'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
+  const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认开机吗？'), { confirmButtonText: uiText('确定'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
   if (!accepted || !valid()) return
+  submittedRunId = quote.runId
   await acceptComputePaidRun(quote.runId)
 })
 const archiveQuoteText = (quote, run) => {
@@ -163,7 +169,8 @@ const prepareTraining = run => execute(run.runId, async (proof, valid) => {
   await ElMessageBox.alert(uiText(typeof response.data === 'string' ? response.data : '环境检查已提交。请在训练配置中等待实例就绪后开始训练。'), uiText('训练环境'))
   if (valid()) await router.push({ path: '/algorithm-training', query: { nodeId: run.nodeId } })
 })
-defineExpose({ start })
+const activeRun = nodeId => visibleRuns.value.find(run => String(run.nodeId) === String(nodeId))
+defineExpose({ start, stop, prepareTraining, activeRun, busy })
 onMounted(async () => {
   const epoch = revision
   try {
@@ -185,8 +192,15 @@ onUnmounted(() => { active = false; clearInterval(timer); window.removeEventList
 <style scoped>
 .billing-panel { max-width: 1200px; margin: 0 auto 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
 .account-line, .paid-run { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; }
-.account-line span, .paid-run span, .paid-run small { display: block; margin-top: 5px; color: #606266; }
+.account-line { min-height: 64px; gap: 24px; padding: 8px 0 12px; }
+.account-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px 24px; min-width: 0; }
+.account-label { color: #64748b; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.account-amount { color: #172b4d; font-size: 28px; font-weight: 600; line-height: 1.25; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.account-placeholder { color: #64748b; font-size: 14px; }
+.account-query { flex-shrink: 0; min-height: 36px; padding: 0 16px; border-color: #dce3ed; border-radius: 8px; color: #2454d6; font-weight: 500; }
+.account-query:focus-visible { outline: 2px solid #2454d6; outline-offset: 3px; }
+.paid-run span, .paid-run small { display: block; margin-top: 5px; color: #606266; }
 .paid-run { border-top: 1px solid #eee; margin-top: 8px; }
 .run-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-@media (max-width: 700px) { .account-line, .paid-run { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 700px) { .paid-run { align-items: flex-start; flex-direction: column; } .account-line { gap: 16px; } .account-summary { flex-direction: column; gap: 6px; } .account-amount { font-size: 23px; } }
 </style>

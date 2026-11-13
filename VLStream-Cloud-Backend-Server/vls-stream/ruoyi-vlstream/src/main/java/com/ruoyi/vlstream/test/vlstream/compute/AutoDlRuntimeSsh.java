@@ -64,7 +64,12 @@ public class AutoDlRuntimeSsh {
         return fallback;
     }
 
-    boolean dynamic(ComputeNode node) {return configured.official(node)&&configured.definition(node).getPrivateKeyFile()==null;}
+    boolean dynamic(ComputeNode node) {
+        if (!configured.official(node)) return false;
+        String file = configured.definition(node).getPrivateKeyFile();
+        return file == null || file.trim().isEmpty();
+    }
+    private static boolean blank(String value) { return value == null || value.trim().isEmpty(); }
     void prepare(String runId,ComputeNode node) throws IOException {
         Stage stage=Stage.TRUST_CONFIGURATION;
         try {
@@ -78,10 +83,10 @@ public class AutoDlRuntimeSsh {
         JsonNode snapshot=provider.connectionSnapshot(node);
         stage=Stage.HOST_TRUST;
         ConfiguredComputeProperties.Resource resource=configured.definition(node);
-        if(resource.getHostKey()==null&&resource.getKnownHostsFile()==null) {
+        if(blank(resource.getHostKey())&&blank(resource.getKnownHostsFile())) {
             ConfiguredComputeProperties.Resource temporary=new ConfiguredComputeProperties.Resource();org.springframework.beans.BeanUtils.copyProperties(resource,temporary);
             synchronized(bindings){Binding old=bindings.get(node.getPublicInstanceKey());if(old!=null&&old.run.equals(runId))temporary.setHostKey(old.key);}
-            if(temporary.getHostKey()==null){if(hostProof==null)throw failure(stage,null);temporary.setHostKey(hostProof.read(snapshot));}
+            if(blank(temporary.getHostKey())){if(hostProof==null)throw failure(stage,null);temporary.setHostKey(hostProof.read(snapshot));}
             resource=temporary;
         }
         Binding next=parse(runId,node,snapshot,resource);

@@ -14,7 +14,23 @@ public class ConfiguredComputeProperties {
     private List<Resource> resources = new ArrayList<>();
 
     @Data
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     public static class Resource {
+        private long executionRevision;
+        private boolean deleted;
+        @com.fasterxml.jackson.annotation.JsonIgnore
+        private boolean environmentAvailable = true;
+        @com.fasterxml.jackson.annotation.JsonIgnore private boolean runtimeResolved;
+        @com.fasterxml.jackson.annotation.JsonIgnore @lombok.ToString.Exclude private String basePrivateKeyFile;
+        @com.fasterxml.jackson.annotation.JsonIgnore private String basePublicKeyFingerprint;
+        private boolean companyPool = true;
+        private String queueRoot;
+        private String authMode = "DEPLOYMENT_KEY";
+        @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+        @lombok.ToString.Exclude
+        private String password;
+        private List<EnvironmentRuntime> environmentRuntimes = new ArrayList<>();
+        private java.util.Map<String, Object> specifications;
         private String code;
         private String provider = "self";
         /** Reserved negative namespace, immutable after first use. */
@@ -43,13 +59,24 @@ public class ConfiguredComputeProperties {
         /** Existing administrator-verified host bindings; never written by first-use discovery. */
         private String knownHostsFile;
         private String publicKeyFingerprint;
-        @com.fasterxml.jackson.annotation.JsonIgnore
+        @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
         @lombok.ToString.Exclude
         private String privateKeyFile;
-        @com.fasterxml.jackson.annotation.JsonIgnore
+        @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
         @lombok.ToString.Exclude
         private String providerApiToken;
         private FixedPrice fixedPrice;
+    }
+
+    @Data
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    public static class EnvironmentRuntime {
+        private String environmentId;
+        private String pythonPath;
+        private String workDir;
+        @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+        @lombok.ToString.Exclude private String privateKeyFile;
+        private String publicKeyFingerprint;
     }
 
     @Data

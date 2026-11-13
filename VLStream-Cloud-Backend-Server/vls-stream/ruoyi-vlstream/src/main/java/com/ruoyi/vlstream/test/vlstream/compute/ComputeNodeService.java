@@ -27,6 +27,7 @@ public class ComputeNodeService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private AutoDlRuntimeSsh runtimeSsh;
     boolean configured(Long id) { return configured != null && configured.contains(id); }
+    void requireCatalogAdmission(ComputeNode node) { if (configured != null) configured.requireAdmission(node); }
     boolean officialConfigured(ComputeNode node){return configured!=null&&configured.official(node);}
     ComputeBillingRate configuredFixedRate(ComputeNode node,JsonNode config){return configured.fixedRate(node,config);}
     void requireOfficialConnection(ComputeNode node){try{ssh.requireDeploymentIdentity(node);}catch(IOException invalid){throw new ServiceException("官方算力连接身份尚未配置，请管理员核对");}}
@@ -156,6 +157,7 @@ public class ComputeNodeService {
     }
     public ComputeNode requireReady(Long id) {
         ComputeNode node = current(id);
+        requireCatalogAdmission(node);
         if(isCompanyShared(node)) {
             if(!sharedQueue.ready(node))throw new ServiceException("公司共享GPU未完成可信环境/身份检查或已撤下，请管理员核对");
             if(serverRows(node).stream().anyMatch(n->n.getPowerOperationId()!=null))throw new ServiceException("服务器仍有挂起维护操作，不能提交共享GPU任务");

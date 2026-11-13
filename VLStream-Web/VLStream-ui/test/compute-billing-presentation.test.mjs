@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidClaimLabel } from '../src/utils/computeBillingPresentation.mjs'
 const marketSource = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
 const { marketPricePresentation } = await import('data:text/javascript;base64,' + Buffer.from(marketSource).toString('base64'))
 
@@ -25,9 +25,13 @@ test('invalid money or conversion cannot become a displayed zero balance', () =>
   assert.throws(() => billingCurrency('1', '0', '1'))
   assert.throws(() => billingCurrency('1', '1', '0'))
 })
-test('quote states the accepted rate, finite hold and stop behavior', () => {
+test('quote shows a concise currency rate and actual usage billing without internal units', () => {
   const text = paidRunQuoteText({ reserveQuota: '5', maximumRunSeconds: 60, hourlyPrice: '1.20', currency: 'CNY', quotaUnit: 'quota' })
-  for (const phrase of ['1.20 CNY/小时', '60 秒', '5 quota', '训练完成后实例仍会运行并计费', '可能保存此计费授权']) assert.ok(text.includes(phrase))
+  assert.equal(text, '实例按 ￥1.20/小时计费，按实际运行时长结算。训练结束后请主动关机，关机前持续计费。')
+  assert.doesNotMatch(text, /quota|秒|预冻结|整点/)
+  for (const [price, expected] of [['13.0', '￥13.00'], ['13', '￥13.00'], ['0.125', '￥0.125']]) {
+    assert.ok(paidRunQuoteText({ reserveQuota: '5', maximumRunSeconds: 60, hourlyPrice: price, currency: 'CNY' }).includes(expected))
+  }
   assert.throws(() => paidRunQuoteText({ reserveQuota: '5', maximumRunSeconds: 0, hourlyPrice: '1' }))
   assert.throws(() => paidRunQuoteText({ reserveQuota: '5', maximumRunSeconds: 60, hourlyPrice: 1 }))
 })
@@ -37,6 +41,17 @@ test('unknown states never masquerade as reconciled or running', () => {
   assert.equal(paidRunActive({ state: 'COMPLETED' }), false)
 })
 
+test('only another platform owner is labelled occupied; unknown and isolated are distinct', () => {
+  assert.equal(paidClaimLabel('OTHER'), '占用中')
+  assert.equal(paidClaimLabel('ISOLATED'), '暂不可用')
+  for (const state of [undefined, null, '', 'UNEXPECTED', 'NO_STOCK']) {
+    assert.equal(paidClaimLabel(state), '状态待确认')
+  }
+  const noStock = paidRunErrorPresentation({ state: 'CANCELLED', startFailureCode: 'NO_STOCK' })
+  assert.match(noStock.message, /官方当前算力规格暂无库存，请稍后再试/)
+  assert.doesNotMatch(noStock.message, /占用/)
+})
+
 for (const codeField of ['errorCode', 'startFailureCode']) {
   for (const errorCode of ['NO_STOCK', 'START_REJECTED']) {
     for (const state of ['CANCELLING', 'RELEASING', 'CANCELLED']) {
@@ -44,8 +59,8 @@ for (const codeField of ['errorCode', 'startFailureCode']) {
         const run = { [codeField]: errorCode, state }
         const presentation = paidRunErrorPresentation(run)
         assert.equal(presentation.type, 'warning')
-        assert.match(presentation.message, errorCode === 'NO_STOCK' ? /当前资源被占用/ : /本次开机被供应商拒绝/)
-        if (errorCode === 'START_REJECTED') assert.doesNotMatch(presentation.message, /当前资源被占用|容量不足/)
+        assert.match(presentation.message, errorCode === 'NO_STOCK' ? /官方当前算力规格暂无库存，请稍后再试/ : /本次开机被供应商拒绝/)
+        if (errorCode === 'START_REJECTED') assert.doesNotMatch(presentation.message, /当前资源被占用|暂无库存|容量不足/)
         if (state === 'CANCELLED') {
           assert.match(presentation.message, /已完成释放/)
           assert.doesNotMatch(presentation.message, /仍待确认/)
@@ -67,7 +82,7 @@ for (const codeField of ['errorCode', 'startFailureCode']) {
       const presentation = paidRunErrorPresentation(run)
       assert.equal(presentation.type, 'warning')
       assert.match(presentation.message, /状态确认暂未完成.*查询原单.*请勿重复提交启停操作/)
-      assert.doesNotMatch(presentation.message, /当前资源被占用|容量不足|已完成释放|被供应商拒绝/)
+      assert.doesNotMatch(presentation.message, /当前资源被占用|暂无库存|容量不足|已完成释放|被供应商拒绝/)
       assert.equal(paidRunActive(run), true)
     })
   }
@@ -96,7 +111,7 @@ test('unverified ledger origin pauses funds recovery without promising an upstre
     const presentation = paidRunErrorPresentation({ state: 'RELEASING', errorCode: 'BILLING_ORIGIN_MISMATCH', startFailureCode })
     assert.match(presentation.message, /^原订单的账本来源.*资金恢复已暂停/)
     assert.doesNotMatch(presentation.message, /系统会查询原单|已完成释放/)
-    if (startFailureCode) assert.match(presentation.message, /当前资源被占用/)
+    if (startFailureCode) assert.match(presentation.message, /官方当前算力规格暂无库存，请稍后再试/)
   }
 })
 
@@ -107,7 +122,7 @@ for (const errorCode of ['FUNDING_REJECTED', 'FUNDING_REQUIRES_REVIEW', 'RECOVER
         const presentation = paidRunErrorPresentation({ state, errorCode, startFailureCode })
         assert.equal(presentation.type, 'warning')
         assert.match(presentation.message, /^状态确认暂未完成.*请勿重复提交启停操作/)
-        assert.match(presentation.message, startFailureCode === 'NO_STOCK' ? /当前资源被占用/ : /本次开机被供应商拒绝/)
+        assert.match(presentation.message, startFailureCode === 'NO_STOCK' ? /官方当前算力规格暂无库存，请稍后再试/ : /本次开机被供应商拒绝/)
         assert.doesNotMatch(presentation.message, /已完成释放/)
       }
     }
@@ -127,6 +142,6 @@ test('conflicting cause fields or a running, completed, unfunded, or unknown sta
   ]
   for (const run of conflicts) {
     assert.match(paidRunErrorPresentation(run).message, /状态确认暂未完成/)
-    assert.doesNotMatch(paidRunErrorPresentation(run).message, /当前资源被占用|被供应商拒绝|已完成释放/)
+    assert.doesNotMatch(paidRunErrorPresentation(run).message, /当前资源被占用|暂无库存|被供应商拒绝|已完成释放/)
   }
 })

@@ -24,19 +24,35 @@ RUN_BASES = ('/data/work/vlstream-gpu', '/home/oort/vlstream')
 
 
 def validate_ticket(value):
-    if not isinstance(value, dict) or set(value) != {'environment', 'jobId', 'owner', 'runDir'}:
+    fields = {'environment', 'jobId', 'owner', 'runDir'}
+    if not isinstance(value, dict) or set(value) not in (fields, fields | {'runRoot'}):
         raise ValueError('Invalid shared task fields')
-    if value['environment'] not in ENVIRONMENTS or str(uuid.UUID(value['jobId'])) != value['jobId']:
+    environment = value['environment']
+    approved_environment = isinstance(environment, str) and re.fullmatch('[A-Za-z0-9_-]{1,64}', environment)
+    if (not approved_environment
+            or ('runRoot' not in value and environment not in ENVIRONMENTS)
+            or str(uuid.UUID(value['jobId'])) != value['jobId']):
         raise ValueError('Invalid shared task identity')
     if not isinstance(value['owner'], str) or not re.fullmatch('[a-f0-9]{64}', value['owner']):
         raise ValueError('Missing authenticated task owner')
     run = value['runDir']
     if not isinstance(run, str) or not re.fullmatch('/[A-Za-z0-9_./-]+', run) or '..' in run or '//' in run:
         raise ValueError('Invalid task directory')
-    expected = tuple(base + '/' + value['environment'] + '/' for base in RUN_BASES)
-    if not run.startswith(expected) or not run.endswith('/' + value['jobId']):
+    if 'runRoot' in value:
+        root = validated_queue_root(value['runRoot'])
+        prefix = str(root) + '/'
+        suffix = run[len(prefix):] if run.startswith(prefix) else ''
+        if not re.fullmatch('[a-f0-9]{16}/' + re.escape(value['jobId']), suffix):
+            raise ValueError('Task directory does not match its frozen root and tenant namespace')
+    elif not run.startswith(tuple(base + '/' + environment + '/' for base in RUN_BASES)) or not run.endswith('/' + value['jobId']):
         raise ValueError('Task directory is outside its platform namespace')
     return hashlib.sha256((value['environment'] + '\n' + value['jobId']).encode()).hexdigest()
+
+
+def validated_queue_root(value):
+    if not isinstance(value, str) or value == '/' or not re.fullmatch('/[A-Za-z0-9_./-]+', value) or '..' in value or '//' in value:
+        raise ValueError('Invalid frozen queue or task root')
+    return Path(value)
 
 
 def validate_gpu(value):
@@ -123,7 +139,10 @@ class Registry:
                 raise ValueError('Shared queue sequence/history is invalid')
             sequences = set()
             for key, row in state['tickets'].items():
-                if not isinstance(row, dict) or key != validate_ticket({name: row.get(name) for name in ('environment', 'jobId', 'owner', 'runDir')}):
+                ticket = {name: row.get(name) for name in ('environment', 'jobId', 'owner', 'runDir')} if isinstance(row, dict) else {}
+                if isinstance(row, dict) and 'runRoot' in row:
+                    ticket['runRoot'] = row['runRoot']
+                if not isinstance(row, dict) or key != validate_ticket(ticket):
                     raise ValueError('Shared queue ticket identity is invalid')
                 sequence = row.get('sequence')
                 if type(sequence) is not int or not 0 < sequence <= state['sequence'] or sequence in sequences or row.get('state') not in ('WAITING', 'RUNNING', 'ARCHIVING', 'DONE'):
@@ -288,17 +307,21 @@ def context(config, run_dir):
         raise ValueError('Missing company shared queue configuration')
     gpu = {'gpuIndex': config['gpuIndex'], 'gpuUuid': shared['gpuUuid']}
     ticket = dict(environment=shared['environment'], jobId=shared['jobId'], owner=shared['owner'], runDir=str(run_dir))
+    if 'runRoot' in shared:
+        ticket['runRoot'] = shared['runRoot']
     validate_gpu(gpu); validate_ticket(ticket)
-    return Registry(gpu), ticket
+    root = validated_queue_root(shared['queueRoot']) if 'queueRoot' in shared else None
+    return Registry(gpu, root), ticket
 
 
 def main():
-    if str(Path.home()) != str(HOME) or os.geteuid() != HOME.stat().st_uid:
-        raise ValueError('Shared queue requires the approved existing oort account')
     action, encoded = sys.argv[1:3]
     payload = json.loads(base64.b64decode(encoded))
+    if 'queueRoot' not in payload and (str(Path.home()) != str(HOME) or os.geteuid() != HOME.stat().st_uid):
+        raise ValueError('Legacy shared queue requires the approved existing oort account')
     gpu = payload['gpu']
-    registry = Registry(gpu)
+    root = validated_queue_root(payload['queueRoot']) if 'queueRoot' in payload else None
+    registry = Registry(gpu, root)
     if action == 'register':
         verify_physical_gpu(gpu)
         value = registry.register(payload['tickets'])

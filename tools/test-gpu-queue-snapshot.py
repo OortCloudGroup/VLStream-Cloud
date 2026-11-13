@@ -86,7 +86,24 @@ class QueueSnapshotTest(unittest.TestCase):
     def test_missing_registry_does_not_create_files(self):
         # Input validation precedes any attempted filesystem access.
         with self.assertRaises(ValueError): snapshot.read_snapshot(dict(GPU, gpuIndex=True), 'localhost', OWNER)
-        with self.assertRaises(ValueError): snapshot.read_snapshot(GPU, 'unknown', OWNER)
+        with self.assertRaises(ValueError): snapshot.read_snapshot(GPU, 'invalid/environment', OWNER)
+
+    def test_catalog_environment_is_visible_only_to_its_own_owner(self):
+        state = self.registry(); row = state['tickets'].pop(state['active'])
+        row.update(environment='cluster_a', runRoot='/srv/cluster-a')
+        state['active'] = hashlib.sha256((row['environment'] + '\n' + row['jobId']).encode()).hexdigest()
+        state['tickets'][state['active']] = row
+        self.assertIsNone(self.view(state)['activeJobId'])
+        self.assertEqual(snapshot.summarize(state, GPU, 'cluster_a', OWNER)['activeJobId'], row['jobId'])
+
+    def test_catalog_profile_requires_exact_frozen_root_and_tenant_namespace(self):
+        state = self.registry(); row = state['tickets'][state['active']]
+        row['runRoot'] = '/srv/new-gpu/cluster_a'; row['environment'] = 'cluster_a'
+        row['runDir'] = row['runRoot'] + '/' + 'b' * 16 + '/' + row['jobId']
+        with patch.object(snapshot, 'read_json_file', return_value=self.config(row)):
+            self.assertIsNotNone(snapshot.workload_profile(row, GPU))
+            row['runDir'] = '/srv/other/' + 'b' * 16 + '/' + row['jobId']
+            self.assertIsNone(snapshot.workload_profile(row, GPU))
 
     def config(self, row):
         runtime = {key: 'verified' for key in ('python', 'torch', 'torchvision', 'cudaVersion', 'ultralytics')}

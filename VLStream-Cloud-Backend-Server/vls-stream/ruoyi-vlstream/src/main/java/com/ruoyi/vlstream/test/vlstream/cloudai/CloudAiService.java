@@ -229,6 +229,10 @@ public class CloudAiService {
     }
     String createRun(Map<String,Object> task, Map<String,Object> scene, String key, long start, Long end, Integer duration, String state, String message) {
         String id = UUID.randomUUID().toString(); ObjectNode snapshot = (ObjectNode) read(String.valueOf(scene.get("config_json")));
+        if (!TERMINAL.contains(state)) try {
+            ComputeNode node = configured.requireRunAdmission(snapshot.path("nodeId").asLong(), snapshot.path("resource"));
+            if (node != null && node.isPlatformCatalogManaged()) snapshot.set("resource", json.valueToTree(configured.snapshot(node)));
+        } catch (ServiceException unavailable) { state = "SKIPPED"; message = unavailable.getMessage(); }
         snapshot.put("sceneName", String.valueOf(scene.get("name"))); snapshot.put("sceneRevision", ((Number) scene.get("revision")).intValue());
         snapshot.put("taskName", String.valueOf(task.get("name")));
         snapshot.put("executionScope", executionScope());

@@ -1,7 +1,7 @@
 // Presentation snapshots only. These facts do not grant inventory, scheduling,
 // billing or machine access. Recheck after hardware or market-spec changes.
 // P100: authorized read-only hardware snapshot observed 2026-10-21.
-// Keep display facts here; service YAML supplies compute access, not specifications.
+// Legacy snapshots remain for deployments predating the unified resource catalog.
 const p10099 = Object.freeze({
   gpuLabel: 'Tesla P100 / 16 GB', shared: true,
   cpuCount: 8, cpuUnit: 'vCPU', cpuModel: 'QEMU Virtual CPU 2.5+',
@@ -36,6 +36,17 @@ const publicP100173Names = ['免费 GPU 173（P100）', 'OortCloud免费GPU服�
 
 export function getMarketSpecifications(resource) {
   if (!resource) return null
+  const specification = resource.specifications
+  if (specification && typeof specification === 'object' && !Array.isArray(specification) && !Object.keys(specification).length) return null
+  if (specification && typeof specification === 'object' && !Array.isArray(specification) && Object.keys(specification).length) {
+    return {
+      ...specification,
+      gpuLabel: specification.gpuLabel || resource.gpuModel,
+      shared: resource.schedulingMode === 'SHARED_GPU_QUEUE',
+      cudaMax: Object.prototype.hasOwnProperty.call(specification, 'cudaMax') ? specification.cudaMax : specification.cuda_max ?? specification.cuda,
+      observedDate: Object.prototype.hasOwnProperty.call(specification, 'observedDate') ? specification.observedDate : specification.observed_date ?? specification.recordedAt ?? specification.recorded_at
+    }
+  }
   const gpu = String(resource.gpuModel || '')
   const publicProjection = resource.id == null && !resource.serverGroup && !resource.configurationCode
   if (/Tesla P100-PCIE-16GB/i.test(gpu) && resource.billingType === 'FREE' && resource.schedulingMode === 'SHARED_GPU_QUEUE') {
@@ -58,6 +69,8 @@ export function getMarketSpecifications(resource) {
 }
 
 export function formatMarketCpu(specification, translate = value => value) {
+  if (typeof specification?.cpu === 'string' && specification.cpu.trim()) return specification.cpu.trim()
+  if (specification && (!specification.cpuCount || !specification.cpuModel)) return specification.cpu || specification.cpuModel || ''
   return specification
     ? `${specification.cpuCount} ${specification.cpuUnit === 'CORE' ? translate('核') : 'vCPU'}, ${specification.cpuModel}`
     : ''

@@ -36,7 +36,7 @@ public class ComputeSharedQueueService {
     protected String authenticatedUser() { try { return LoginHelper.getUserId(); } catch (Exception ignored) { return null; } }
     public String viewer() {
         String actor = authenticatedUser(); String environment = properties.getEnvironmentId();
-        if (actor == null || actor.trim().isEmpty() || !("localhost".equals(environment) || "vm".equals(environment))) return "";
+        if (actor == null || actor.trim().isEmpty() || environment == null || !environment.matches("[A-Za-z0-9_-]{1,64}")) return "";
         return ModelArtifactObjectStore.hash("company-shared-vls-user\n" + environment + "\n" + ComputeNodeService.tenant() + "\n" + actor);
     }
     public String requireCreator(String creator) {
@@ -53,6 +53,15 @@ public class ComputeSharedQueueService {
             if (!trusted.requireAsset(node).isCompanyPool()) throw new IOException("未登记为公司公共库存");
             trusted.resolve(node);
         } catch (IOException error) { throw new ServiceException("公司共享GPU未匹配已核验的部署资产身份"); }
+        if (node.isPlatformCatalogManaged()) {
+            if (!node.getCatalogDefinition().isEnvironmentAvailable()) throw new ServiceException("统一平台未配置当前执行环境的运行路径");
+            ComputeNodeService.validatePath(node.getPythonPath());
+            ComputeNodeService.validatePath(node.getWorkDir());
+            if ("/".equals(node.getWorkDir()) || properties.getEnvironmentId() == null
+                || !properties.getEnvironmentId().matches("[A-Za-z0-9_-]{1,64}"))
+                throw new ServiceException("统一平台算力运行环境或工作目录无效");
+            return;
+        }
         if (!("localhost".equals(properties.getEnvironmentId()) || "vm".equals(properties.getEnvironmentId())))
             throw new ServiceException("共享GPU缺少稳定平台环境标识");
         String prefix = "192.168.88.173".equals(node.getHost()) ? "/data/work/vlstream-gpu/" : "/home/oort/vlstream/";
@@ -85,7 +94,7 @@ public class ComputeSharedQueueService {
         } catch(IOException error) { throw new ServiceException("无法确认物理GPU及跨环境队列空闲，保留节点配置"); }
     }
     public boolean ready(ComputeNode node) {
-        if (!isShared(node) || !node.isEnabled() || !"PLATFORM".equals(node.getResourceScope()) || !"FREE".equals(node.getBillingType())
+        if (!isShared(node) || !node.isCatalogAdmissionAllowed() || !node.isEnabled() || !"PLATFORM".equals(node.getResourceScope()) || !"FREE".equals(node.getBillingType())
             || !"RUNNING".equals(node.getPowerState()) || node.getPowerOperationId() != null || node.getPublicInstanceKey() != null) return false;
         try { requireTarget(node); proof(node); return true; }
         catch (RuntimeException error) { return false; }
@@ -120,6 +129,9 @@ public class ComputeSharedQueueService {
         Map<String,Object> value = new LinkedHashMap<>(); value.put("mode",MODE); value.put("environment",properties.getEnvironmentId());
         value.put("jobId",jobId); value.put("owner",owner); value.put("gpuUuid",proof.path("gpuUuid").asText());
         value.put("gpuIndex",node.getGpuIndex());
+        if (node.isPlatformCatalogManaged()) {
+            value.put("runRoot", node.getWorkDir()); value.put("queueRoot", node.getCatalogDefinition().getQueueRoot());
+        }
         Map<String,Object> runtime = new LinkedHashMap<>();
         for (String name : new String[]{"python","torch","torchvision","cudaVersion","ultralytics"}) runtime.put(name,proof.path(name).asText());
         value.put("runtime",runtime); return value;
@@ -142,6 +154,7 @@ public class ComputeSharedQueueService {
     private Map<String,Object> ticket(CloudTrainingJob job) throws IOException {
         JsonNode shared=json.readTree(job.getOptionsJson()).path("sharedQueue");
         Map<String,Object> ticket=new LinkedHashMap<>(); ticket.put("environment",shared.path("environment").asText());
+        if (shared.has("runRoot")) ticket.put("runRoot", shared.path("runRoot").asText());
         ticket.put("jobId",job.getId());ticket.put("owner",job.getPublicOwnerSubject());ticket.put("runDir",job.getRunDir());return ticket;
     }
     private Map<String,Object> gpu(CloudTrainingJob job,ComputeNode node) throws IOException {
@@ -170,6 +183,7 @@ public class ComputeSharedQueueService {
     }
     private JsonNode command(ComputeSsh.Connection connection,ComputeNode node,String action,Map<String,Object> payload) throws IOException {
         requireTarget(node);
+        if (node.isPlatformCatalogManaged()) payload.put("queueRoot", node.getCatalogDefinition().getQueueRoot());
         String script=node.getWorkDir()+"/.vls-shared-queue-v1.py";
         try(java.io.InputStream input=new org.springframework.core.io.ClassPathResource("training/gpu_shared_queue.py").getInputStream()) {
             String source=new String(org.springframework.util.StreamUtils.copyToByteArray(input),StandardCharsets.UTF_8);

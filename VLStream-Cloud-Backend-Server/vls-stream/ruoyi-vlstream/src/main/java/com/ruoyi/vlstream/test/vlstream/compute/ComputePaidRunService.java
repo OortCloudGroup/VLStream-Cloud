@@ -207,6 +207,7 @@ public class ComputePaidRunService {
             if(quota.signum()<=0||(holdCap!=null&&quota.compareTo(holdCap)>0))
                 throw new ServiceException("所需预冻结超出当前实例的已配置消费上限");
             ObjectNode acceptedSnapshot=(ObjectNode)parse(snapshot.json);
+            if (node.isPlatformCatalogManaged()) acceptedSnapshot.set("configuredResource", json.valueToTree(nodes.configurationSnapshot(node)));
             BillingLedgerOrigin.bind(acceptedSnapshot,properties);
             acceptedSnapshot.putObject("run_budget").put("stop_budget_seconds",policy.getStopBudgetSeconds())
                 .put("polling_safety_seconds",policy.getPollingSafetySeconds());
@@ -277,6 +278,10 @@ public class ComputePaidRunService {
                 throw new ServiceException("计费账本来源已变化，请重新确认报价");
             boolean archive=!recoveryJobs(row).isEmpty();
             eligible(node,archive);
+            JsonNode quotedResource = parse(text(row,"quote_snapshot")).path("configuredResource");
+            if (node.isPlatformCatalogManaged() && !quotedResource.isMissingNode()
+                && !quotedResource.equals(json.valueToTree(nodes.configurationSnapshot(node))))
+                throw new ServiceException("算力执行配置已变化，请重新确认报价");
             if(archive)validateRecoverySnapshot(node,row);
             if(System.currentTimeMillis()>=Math.min(number(row,"quote_until_ms"),stopDeadline(row))||!node.getPublicInstanceKey().equals(text(row,"instance_key")))
                 throw new ServiceException("价格或实例状态已变化，请重新确认本次开机");
@@ -671,6 +676,7 @@ public class ComputePaidRunService {
         eligible(node,false);
     }
     private void eligible(ComputeNode node,boolean archive) {
+        nodes.requireCatalogAdmission(node);
         if(!node.isEnabled()||!"PLATFORM".equals(node.getResourceScope())||!"POINTS".equals(node.getBillingType())||node.getPublicInstanceKey()==null
             ||!"API".equals(node.getControlMode())||nodes.isCompanyShared(node))throw new ServiceException("当前资源不支持个人付费开机");
         if(!node.getId().equals(nodes.serverRows(node).get(0).getId()))throw new ServiceException("请选择实例的主资源记录");

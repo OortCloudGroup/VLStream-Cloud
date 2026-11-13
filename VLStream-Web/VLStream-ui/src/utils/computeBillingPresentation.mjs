@@ -19,6 +19,10 @@ const labels = {
 export const paidRunState = state => labels[state] || '状态待确认'
 export const paidRunActive = run => !['QUOTED', 'COMPLETED', 'CANCELLED'].includes(run.state)
 
+// Occupancy is a platform claim, not a supplier capacity observation.
+export const paidClaimLabel = claimState => claimState === 'OTHER' ? '占用中'
+  : claimState === 'ISOLATED' ? '暂不可用' : '状态待确认'
+
 export function paidRunErrorPresentation(run) {
   if (!run?.errorCode && !run?.startFailureCode) return null
   if (run.state === 'CANCELLED' && run.chargedQuota === '0' && run.remainingQuota === '0'
@@ -35,7 +39,7 @@ export function paidRunErrorPresentation(run) {
   const conflictingCodes = knownStartCodes.includes(run.errorCode) && run.errorCode !== startCode
   const failureState = ['STARTING', 'CANCELLING', 'STOPPING', 'RELEASING', 'CANCELLED'].includes(run.state)
   const rejected = !conflictingCodes && failureState
-    ? startCode === 'NO_STOCK' ? '当前资源被占用，本次开机未成功。'
+    ? startCode === 'NO_STOCK' ? '官方当前算力规格暂无库存，请稍后再试。'
       : startCode === 'START_REJECTED' ? '本次开机被供应商拒绝。' : null
     : null
   // Keep unresolved funding/release diagnostics first, including a contradictory terminal state.
@@ -47,8 +51,12 @@ export function paidRunErrorPresentation(run) {
 }
 
 export function paidRunQuoteText(quote) {
-  const amount = integer(quote.reserveQuota).toString()
+  integer(quote.reserveQuota)
   if (!Number.isSafeInteger(quote.maximumRunSeconds) || quote.maximumRunSeconds < 1 || quote.maximumRunSeconds > 2592000) throw new Error('运行时限尚未确认')
   if (typeof quote.hourlyPrice !== 'string' || !/^\d+(\.\d+)?$/.test(quote.hourlyPrice)) throw new Error('价格尚未确认')
-  return `计算价格 ${quote.hourlyPrice} ${quote.currency}/小时；本次按你的可用余额预冻结 ${amount} ${quote.quotaUnit}，最多可运行 ${quote.maximumRunSeconds} 秒（含停止安全预留）。你也可以提前停止，按实际确认的运行用量结算，未消费部分在停止与对账后释放。训练完成后实例仍会运行并计费，请主动停止；余额或冻结额度用完时会请求安全停止。允许 VLS 查询平台余额并按本次已确认的用量扣费；统一平台可能保存此计费授权，可在平台撤销。`
+  if (typeof quote.currency !== 'string' || !/^[A-Z]{3}$/.test(quote.currency)) throw new Error('价格币种尚未确认')
+  const [whole, fraction = ''] = quote.hourlyPrice.split('.')
+  const price = `${whole}.${fraction.padEnd(2, '0')}`
+  const amount = quote.currency === 'CNY' ? `￥${price}` : `${price} ${quote.currency}`
+  return `实例按 ${amount}/小时计费，按实际运行时长结算。训练结束后请主动关机，关机前持续计费。`
 }

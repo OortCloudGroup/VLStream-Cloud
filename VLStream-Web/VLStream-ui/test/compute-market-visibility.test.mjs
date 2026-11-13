@@ -8,10 +8,46 @@ import { renderToString } from '@vue/server-renderer'
 const source = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
 const { marketDisplayResources } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
 const specificationSource = await readFile(new URL('../src/utils/computeMarketSpecifications.js', import.meta.url), 'utf8')
-const { getMarketSpecifications } = await import('data:text/javascript;base64,' + Buffer.from(specificationSource).toString('base64'))
+const { getMarketSpecifications, formatMarketCpu } = await import('data:text/javascript;base64,' + Buffer.from(specificationSource).toString('base64'))
 const historical = Object.freeze({ id: '792022144331380001', provider: 'autodl', configurationManaged: false, configurationCode: null, serverGroup: 'autodl-pro-7920a22db144', billingType: 'POINTS', name: 'RTX 6000D' })
 const official = Object.freeze({ id: '-6000', provider: 'autodl', configurationManaged: true, configurationCode: 'official-autodl', billingType: 'POINTS', name: 'RTX 6000D' })
 const free = id => Object.freeze({ id, provider: 'self', billingType: 'FREE', name: 'RTX 6000D' })
+
+test('platform specifications update existing and newly managed machine cards', () => {
+  const specification = { cpuCount: 48, cpuUnit: 'CORE', cpuModel: 'Platform CPU', memory: '256 GB', cuda: '12.8', recordedAt: '2026-11-13' }
+  for (const id of ['-173', '-900']) {
+    const result = getMarketSpecifications({ id, gpuModel: 'New GPU', schedulingMode: 'SHARED_GPU_QUEUE', specifications: specification })
+    assert.equal(result.cpuCount, 48)
+    assert.equal(result.gpuLabel, 'New GPU')
+    assert.equal(result.cudaMax, '12.8')
+    assert.equal(result.observedDate, '2026-11-13')
+    assert.equal(result.shared, true)
+  }
+})
+
+test('cleared platform specifications keep legacy display facts cleared', () => {
+  assert.equal(getMarketSpecifications({ ...official, gpuModel: 'RTX 6000D', specifications: {} }), null)
+})
+
+test('platform CPU text is displayed when numeric CPU fields are absent', () => {
+  assert.equal(formatMarketCpu({ cpu: '32 vCPU' }), '32 vCPU')
+  assert.equal(formatMarketCpu({ cpu: '48 vCPU', cpuCount: 32, cpuUnit: 'CORE', cpuModel: 'Old CPU' }), '48 vCPU')
+  assert.equal(formatMarketCpu({}), '')
+})
+
+test('platform specification aliases preserve canonical values and older date formats', () => {
+  assert.equal(getMarketSpecifications({ specifications: { cuda_max: '12.8', observed_date: '2026-11-13' } }).cudaMax, '12.8')
+  assert.equal(getMarketSpecifications({ specifications: { recorded_at: '2026-11-13' } }).observedDate, '2026-11-13')
+  const result = getMarketSpecifications({ specifications: { cudaMax: '13.0', cuda: '12.8', observedDate: '2026-11-13', recordedAt: '2026-10-01' } })
+  assert.equal(result.cudaMax, '13.0')
+  assert.equal(result.observedDate, '2026-11-13')
+  const cleared = getMarketSpecifications({ specifications: { cudaMax: '', cuda: '12.8', observedDate: '', recordedAt: '2026-10-01' } })
+  assert.equal(cleared.cudaMax, '')
+  assert.equal(cleared.observedDate, '')
+  const unset = getMarketSpecifications({ specifications: { cudaMax: null, cuda: '12.8', observedDate: null, recordedAt: '2026-10-01' } })
+  assert.equal(unset.cudaMax, null)
+  assert.equal(unset.observedDate, null)
+})
 
 test('historical card remains when the configured official card is absent', () => {
   const rows = [free('-173'), historical]
@@ -120,7 +156,7 @@ test('the actual market keeps its paid startup entry and explains missing target
       loading: false, route: { query: {} }, resources: [item], pagedResources: [item], page: 1, pageSize: 20,
       marketText: text => text, marketError: '', operating: '', marketResourceName: row => row.name,
       getMarketSpecifications: () => null, marketPricePresentation: () => ({ amount: '13.00', unit: '/整实例小时' }),
-      load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, billingPanel: {}, router: { push() {} }
+      load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, billingPanel: { activeRun: () => null }, router: { push() {} }
     }), render })
     app.component('ComputeBillingPanel', { render: () => Vue.h('section') })
     for (const name of ['el-alert', 'el-empty', 'ArrowRight', 'el-icon', 'el-pagination']) app.component(name, { render: () => Vue.h('span') })

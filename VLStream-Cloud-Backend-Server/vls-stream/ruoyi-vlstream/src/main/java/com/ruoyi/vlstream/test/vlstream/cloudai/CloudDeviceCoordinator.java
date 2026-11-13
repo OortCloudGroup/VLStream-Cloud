@@ -50,6 +50,19 @@ public class CloudDeviceCoordinator {
             for(com.fasterxml.jackson.databind.JsonNode rule:service.read(String.valueOf(old.get("snapshot_json"))).path("rules"))
                 if(desired.contains(rule.path("bindingId").asText())) return;
         }
+        try { service.requireRunAdmission(snapshot); }
+        catch (com.ruoyi.common.exception.ServiceException unavailable) {
+            if (!active.isEmpty() && "SKIPPED".equals(active.get(0).get("state"))) {
+                jdbc.update("UPDATE vls_cloud_device_run SET message=? WHERE id=?", unavailable.getMessage(), group.get("run_id"));
+            } else {
+                String skipped = UUID.randomUUID().toString();
+                jdbc.update("INSERT INTO vls_cloud_device_run(id,tenant_id,actor_id,task_id,scene_id,window_key,planned_start,snapshot_json,node_id,state,message,ended_at) VALUES(?,?,?,?,?,?,?,?,?,'SKIPPED',?,?)",
+                    skipped, group.get("tenant_id"), group.get("actor_id"), group.get("id"), group.get("id"), skipped, now, snapshot.toString(), group.get("node_id"), unavailable.getMessage(), now);
+                jdbc.update("UPDATE vls_cloud_device_group SET run_id=? WHERE id=?", skipped, group.get("id"));
+            }
+            jdbc.update("UPDATE vls_cloud_device_group SET retry_at=? WHERE id=?", now + 60000, group.get("id"));
+            return;
+        }
         String id=UUID.randomUUID().toString();
         jdbc.update("INSERT INTO vls_cloud_device_run(id,tenant_id,actor_id,task_id,scene_id,window_key,planned_start,snapshot_json,node_id,state,message) VALUES(?,?,?,?,?,?,?,?,?,'QUEUED','等待GPU，持续配置已保存')",id,group.get("tenant_id"),group.get("actor_id"),group.get("id"),group.get("id"),id,now,snapshot.toString(),group.get("node_id"));
         jdbc.update("UPDATE vls_cloud_device_group SET run_id=? WHERE id=?",id,group.get("id"));

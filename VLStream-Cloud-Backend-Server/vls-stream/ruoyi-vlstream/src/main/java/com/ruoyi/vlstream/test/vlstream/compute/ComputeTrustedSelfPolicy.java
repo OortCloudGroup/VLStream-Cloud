@@ -49,6 +49,13 @@ public class ComputeTrustedSelfPolicy {
     }
 
     public Target resolve(ComputeNode node) throws IOException {
+        if (node.isPlatformCatalogManaged() && "self".equals(node.getProvider())) {
+            ComputeTrustedSelfAssetsProperties.Asset asset = requireAsset(node);
+            byte[] expected = key(asset.getHost(), asset.getHostKey());
+            try {
+                return new Target(InetAddress.getAllByName(asset.getHost()), asset.getHostKey(), new HostKey(asset.getHost(), expected).getType());
+            } catch (Exception error) { throw new IOException("统一平台算力主机身份或地址无效"); }
+        }
         if (!APPROVED_HOSTS.contains(node.getHost()))
             return new Target(PublicDatasetDownloader.publicAddresses(node.getHost()), node.getHostKey(), null);
         ComputeTrustedSelfAssetsProperties.Asset asset = requireAsset(node);
@@ -63,6 +70,20 @@ public class ComputeTrustedSelfPolicy {
     }
 
     public ComputeTrustedSelfAssetsProperties.Asset requireAsset(ComputeNode node) throws IOException {
+        if (node.isPlatformCatalogManaged()) {
+            ConfiguredComputeProperties.Resource source = node.getCatalogDefinition();
+            if (source == null || !"self".equals(source.getProvider()) || !source.isCompanyPool()
+                || !java.util.Objects.equals(source.getHost(), node.getHost()) || source.getPort() != node.getPort()
+                || !java.util.Objects.equals(source.getUsername(), node.getUsername())
+                || !java.util.Objects.equals(source.getHostKey(), node.getHostKey()) || blank(source.getTenantId()))
+                throw new IOException("节点未匹配统一平台执行目录身份");
+            key(node.getHost(), node.getHostKey());
+            ComputeTrustedSelfAssetsProperties.Asset asset = new ComputeTrustedSelfAssetsProperties.Asset();
+            asset.setAssetId(source.getAssetId()); asset.setTenantId(source.getTenantId());
+            asset.setHost(source.getHost()); asset.setPort(source.getPort()); asset.setUsername(source.getUsername());
+            asset.setHostKey(source.getHostKey()); asset.setCompanyPool(true);
+            return asset;
+        }
         List<ComputeTrustedSelfAssetsProperties.Asset> assets = properties.getAssets();
         Set<String> seen = new HashSet<>();
         ComputeTrustedSelfAssetsProperties.Asset matched = null;

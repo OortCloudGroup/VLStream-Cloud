@@ -19,6 +19,8 @@ public class ComputePublicMarketService {
     @Data
     public static class Offer {
         private String name;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private java.util.Map<String, Object> specifications;
         private String gpuModel;
         private String billingType;
         private BigDecimal price;
@@ -92,12 +94,13 @@ public class ComputePublicMarketService {
         List<Offer> configuration=new java.util.ArrayList<>();
         if(configured!=null)for(ComputeNode node:configured.published()) {
             Offer offer=new Offer();offer.setName(publicText(node.getName(),"GPU resource"));offer.setGpuModel(publicText(node.getGpuModel(),"GPU"));
+            offer.setSpecifications(node.getSpecifications());
             offer.setBillingType(oneOf(node.getBillingType(),"FREE","POINTS"));
             offer.setSchedulingMode(oneOf(node.getSchedulingMode(),ComputeSharedQueueService.MODE,"INSTANCE_EXCLUSIVE"));
             configuredPrice(offer,node);
             offer.setPowerState(ComputeAvailability.fresh(node.getPowerCheckedAt(),now)?oneOf(node.getPowerState(),"RUNNING"):"UNKNOWN");
             offer.setHealthState(ComputeAvailability.fresh(node.getProbeTime(),now)?oneOf(node.getProbeState(),"READY","ERROR"):"UNKNOWN");
-            offer.setAvailability(availability(offer,false,null,false));configuration.add(offer);
+            offer.setAvailability(node.isCatalogAdmissionAllowed() ? availability(offer,false,null,false) : "UNKNOWN");configuration.add(offer);
         }
         int offset=(int)Math.max(0,(long)(page-1)*size-databaseTotal);
         if(items.size()<size && offset<configuration.size())items.addAll(configuration.subList(offset,Math.min(configuration.size(),offset+size-items.size())));

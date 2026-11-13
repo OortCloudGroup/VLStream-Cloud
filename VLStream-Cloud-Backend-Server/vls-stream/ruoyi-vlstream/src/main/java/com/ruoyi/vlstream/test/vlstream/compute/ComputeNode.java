@@ -17,6 +17,11 @@ public class ComputeNode {
     private boolean configurationReplaced;
     private boolean configurationMigrationPending;
     private String configurationCode;
+    private long configurationRevision;
+    private java.util.Map<String, Object> specifications;
+    @JsonIgnore private boolean platformCatalogManaged;
+    @JsonIgnore private boolean catalogAdmissionAllowed = true;
+    @JsonIgnore @ToString.Exclude private ConfiguredComputeProperties.Resource catalogDefinition;
     private String schedulingMode = "INSTANCE_EXCLUSIVE";
     @JsonSerialize(using = ToStringSerializer.class) private Long id;
     @JsonIgnore private String tenantId;

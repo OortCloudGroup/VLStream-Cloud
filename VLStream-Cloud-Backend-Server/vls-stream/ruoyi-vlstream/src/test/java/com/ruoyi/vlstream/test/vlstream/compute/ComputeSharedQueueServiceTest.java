@@ -47,7 +47,8 @@ class ComputeSharedQueueServiceTest {
         assertThrows(ServiceException.class,()->shared.requireCreator("bob"));
         properties.setEnvironmentId("vm");assertNotEquals(local,shared.viewer());
         TenantContextHolder.setTenantId("100000");assertNotEquals(local,shared.viewer());
-        properties.setEnvironmentId("other");assertEquals("",shared.viewer());
+        properties.setEnvironmentId("cluster_a");assertFalse(shared.viewer().isEmpty());assertNotEquals(local,shared.viewer());
+        properties.setEnvironmentId("invalid/environment");assertEquals("",shared.viewer());
         assertThrows(ServiceException.class,()->shared.requireCreator("alice"));
     }
     @Test void sharedRecordsUseNativeSubjectOnlyWhenFrozenSharedModeIsPresent() {

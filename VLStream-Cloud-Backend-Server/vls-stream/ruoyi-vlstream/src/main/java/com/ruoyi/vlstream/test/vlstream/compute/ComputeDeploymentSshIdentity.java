@@ -40,6 +40,17 @@ public class ComputeDeploymentSshIdentity {
     public void requireConfigured(ComputeNode node) throws IOException { reference(node); }
 
     private ComputeSshIdentityProperties.Identity reference(ComputeNode node) throws IOException {
+        if (node.isPlatformCatalogManaged()) {
+            ConfiguredComputeProperties.Resource resource = node.getCatalogDefinition();
+            policy.requireAsset(node);
+            if (!KEY.equals(node.getAuthMode()) || resource == null || resource.getPrivateKeyFile() == null
+                || !Paths.get(resource.getPrivateKeyFile()).isAbsolute() || resource.getPublicKeyFingerprint() == null
+                || !resource.getPublicKeyFingerprint().matches("SHA256:[A-Za-z0-9+/]{43}"))
+                throw new IOException("统一平台算力缺少执行端SSH身份引用和公开指纹");
+            ComputeSshIdentityProperties.Identity identity = new ComputeSshIdentityProperties.Identity();
+            identity.setAssetId(resource.getAssetId()); identity.setPrivateKeyFile(resource.getPrivateKeyFile());
+            identity.setPublicKeyFingerprint(resource.getPublicKeyFingerprint()); return identity;
+        }
         if (!KEY.equals(node.getAuthMode()) || !properties.isEnabled())
             throw new IOException("后台部署SSH身份未启用");
         String environment = properties.getEnvironmentId();

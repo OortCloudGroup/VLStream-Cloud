@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class CompanyComputeOfferService {
     private final JdbcTemplate jdbc;
     private final CompanyComputeOfferAuthority authority;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConfiguredComputeRegistry configured;
     private static final String LINKED = " FROM vls_company_compute_offer c JOIN vls_compute_node n ON n.id=c.node_id"
         + " AND n.provider=c.provider AND n.provider_instance_id=c.provider_instance_id";
     private static final String PUBLISHED = LINKED + " WHERE c.published=1 AND n.resource_scope='PLATFORM'";
@@ -93,13 +95,30 @@ public class CompanyComputeOfferService {
     }
 
     public long publishedCount() {
-        Long count=jdbc.queryForObject("SELECT COUNT(*)"+PUBLISHED,Long.class);
+        List<Object> parameters = new java.util.ArrayList<>();
+        String filter = publishedFilter(parameters);
+        Long count = parameters.isEmpty() ? jdbc.queryForObject("SELECT COUNT(*)" + filter, Long.class)
+            : jdbc.queryForObject("SELECT COUNT(*)" + filter, Long.class, parameters.toArray());
         return count==null?0:count;
+    }
+
+    /** An explicit central alias and its verified provider identity supersede this historical display row. */
+    private String publishedFilter(List<Object> parameters) {
+        StringBuilder filter = new StringBuilder(PUBLISHED);
+        if (configured != null) configured.centralizedCompanyOfferBindings().forEach((id, instances) -> {
+            for (String instance : instances) {
+                filter.append(" AND NOT (n.id=? AND n.provider='autodl' AND n.provider_instance_id=?)");
+                parameters.add(id); parameters.add(instance);
+            }
+        });
+        return filter.toString();
     }
 
     public List<ComputeMarketService.Resource> marketResources(int limit,int offset) {
         if(limit<1 || limit>200 || offset<0)throw new IllegalArgumentException("Invalid company pagination");
-        return jdbc.query("SELECT n.*"+PUBLISHED+" ORDER BY c.offer_code LIMIT ? OFFSET ?",(rs,index)->{
+        List<Object> parameters = new java.util.ArrayList<>();
+        String filter = publishedFilter(parameters); parameters.add(limit); parameters.add(offset);
+        return jdbc.query("SELECT n.*"+filter+" ORDER BY c.offer_code LIMIT ? OFFSET ?",(rs,index)->{
             ComputeNode node=new BeanPropertyRowMapper<>(ComputeNode.class).mapRow(rs,index);
             ComputeMarketService.Resource resource=new ComputeMarketService.Resource();
             resource.setId(String.valueOf(node.getId()));
@@ -112,14 +131,16 @@ public class CompanyComputeOfferService {
             resource.setCanManage(canPublish(node));
             resource.setMessage(PENDING);
             return resource;
-        },limit,offset);
+        },parameters.toArray());
     }
 
     /** Anonymous display contract; internal instance identity never leaves this mapper. */
     public List<ComputePublicMarketService.Offer> publicMarketOffers(int limit, int offset) {
         if (limit < 1 || limit > 20 || offset < 0) throw new IllegalArgumentException("Invalid public pagination");
+        List<Object> parameters = new java.util.ArrayList<>();
+        String filter = publishedFilter(parameters); parameters.add(limit); parameters.add(offset);
         return jdbc.query("SELECT n.id,n.name,n.gpu_model,n.billing_type,n.points_per_hour,"
-            + "n.provider,n.server_group,n.provider_gpu_amount" + PUBLISHED + " ORDER BY c.offer_code LIMIT ? OFFSET ?", (rs, index) -> {
+            + "n.provider,n.server_group,n.provider_gpu_amount" + filter + " ORDER BY c.offer_code LIMIT ? OFFSET ?", (rs, index) -> {
                 ComputeNode node = new BeanPropertyRowMapper<>(ComputeNode.class).mapRow(rs, index);
                 ComputePublicMarketService.Offer offer = new ComputePublicMarketService.Offer();
                 offer.setName(displayText(node.getName(), "GPU resource"));
@@ -136,7 +157,7 @@ public class CompanyComputeOfferService {
                 offer.setAvailability("PAID_DISABLED");
                 ComputePublicMarketService.referencePrice(offer, node);
                 return offer;
-            }, limit, offset);
+            }, parameters.toArray());
     }
 
     static String displayText(String value,String fallback) {

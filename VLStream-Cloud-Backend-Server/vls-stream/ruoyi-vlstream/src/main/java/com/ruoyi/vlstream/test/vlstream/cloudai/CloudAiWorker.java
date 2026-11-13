@@ -121,6 +121,11 @@ public class CloudAiWorker {
             }
         } catch (Exception error) {
             // No third-party message/stack trace here: SSH / FFmpeg errors can contain credentials.
+            if (error instanceof com.ruoyi.common.exception.ServiceException
+                && Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE, ((com.ruoyi.common.exception.ServiceException) error).getCode())) {
+                jdbc.update("UPDATE vls_cloud_ai_run SET message='统一平台算力原执行目录待恢复，保留任务等待同步' WHERE id=? AND lease_owner=?", id, worker);
+                return;
+            }
             Integer admitted = jdbc.queryForObject("SELECT dispatched FROM vls_cloud_ai_run WHERE id=?", Integer.class, id);
             if (admitted != null && admitted >= 2) jdbc.update("UPDATE vls_cloud_ai_run SET state='UNKNOWN',message='执行或证据归档状态待确认，后台将重试；不会重复启动或提前释放GPU' WHERE id=? AND lease_owner=?", id, worker);
             else terminal(id, "FAILED", "RESOURCE".equals(phase) ? "执行资源校验失败，请核对当前后台的YAML资源绑定与运行快照"

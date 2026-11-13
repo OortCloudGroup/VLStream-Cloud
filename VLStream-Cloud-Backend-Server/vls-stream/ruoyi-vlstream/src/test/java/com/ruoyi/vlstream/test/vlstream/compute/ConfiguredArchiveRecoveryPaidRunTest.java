@@ -97,7 +97,7 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         f.runs.tick(recovery);f.runs.tick(recovery);official.settle(recovery);for(int i=0;i<5;i++)f.runs.tick(recovery);
         assertEquals("COMPLETED",f.runs.get(recovery,f.payer).getState());assertEquals(0,f.wallet.remaining());
         assertFalse(f.runs.get(source,f.payer).isArchiveRecoveryAvailable());
-        assertEquals("OCCUPIED",official.nodes.publicInventory().read(official.node(),false).getPublicState());
+        assertEquals("FREE",official.nodes.publicInventory().read(official.node(),false).getPublicState());
     }
 
     @Test void changedClaimOrForeignPayerCannotObtainOrAcceptRecovery() throws Exception {

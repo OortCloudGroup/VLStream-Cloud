@@ -57,6 +57,7 @@ public class ComputeMarketService {
         private String billingType;
         private boolean configurationManaged;
         private String configurationCode;
+        private java.util.Map<String, Object> specifications;
         // Official fixed-price presentation, filled only by an authoritative price projection.
         private String userHourlyPrice;
         private String priceCurrency;
@@ -118,6 +119,7 @@ public class ComputeMarketService {
             resource.setCanRefreshEnvironment(resource.isCanOperate());
             resource.setId(String.valueOf(node.getId())); resource.setName(node.getName());
             resource.setConfigurationManaged(node.isConfigurationManaged()); resource.setConfigurationCode(node.getConfigurationCode());
+            resource.setSpecifications(node.getSpecifications());
             resource.setProvider(node.getProvider()); resource.setScope(node.getResourceScope());
             resource.setServerGroup(node.getServerGroup()); resource.setGpuModel(node.getGpuModel()); resource.setGpuIndex(node.getGpuIndex());
             resource.setBillingType(node.getBillingType()); resource.setPointsPerHour(node.getPointsPerHour());
@@ -161,6 +163,7 @@ public class ComputeMarketService {
     /** Local configuration projection only. Payer verification, current price and HOLD are
      * checked again by the explicit quote/accept flow before any paid operation. */
     private String paidUnavailableReason(ComputeNode node) {
+        if (!node.isCatalogAdmissionAllowed()) return "统一平台算力目录待同步、已停用或执行变更待原任务结束";
         if(billingProperties==null)return "平台计费配置不可用";
         if(!billingProperties.paidConfigured())return billingProperties.unavailableReason();
         try {

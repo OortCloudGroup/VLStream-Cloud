@@ -63,6 +63,36 @@ class SharedQueueTest(unittest.TestCase):
         self.registry.release(local, self.result(local))
         self.assertTrue(self.registry.claim(vm))
 
+    def test_catalog_run_root_supports_new_machine_paths_and_environments(self):
+        ticket = self.ticket('cluster_a')
+        ticket['runRoot'] = str(self.root / 'new-machine')
+        ticket['runDir'] = ticket['runRoot'] + '/' + 'a' * 16 + '/' + ticket['jobId']
+        self.registry.register([ticket])
+        self.assertTrue(self.registry.claim(ticket))
+        self.registry.release(ticket, self.result(ticket))
+        self.assertFalse(self.registry.inspect()['active'])
+
+    def test_catalog_task_cannot_escape_or_rebind_its_frozen_root(self):
+        ticket = self.ticket()
+        ticket['runRoot'] = str(self.root / 'new-machine')
+        with self.assertRaises(ValueError):
+            self.registry.register([ticket])
+        ticket['runDir'] = ticket['runRoot'] + '/' + 'a' * 16 + '/' + ticket['jobId']
+        self.registry.register([ticket])
+        changed = dict(ticket, runRoot=str(self.root / 'another-root'))
+        changed['runDir'] = changed['runRoot'] + '/' + 'a' * 16 + '/' + ticket['jobId']
+        with self.assertRaises(ValueError):
+            self.registry.register([changed])
+
+    def test_catalog_context_uses_fixed_queue_root_with_legacy_default_preserved(self):
+        ticket = self.ticket()
+        fixed = self.root / 'fixed-physical-queue'
+        config = dict(gpuIndex=0, sharedQueue=dict(mode=queue.MODE, gpuUuid=self.gpu['gpuUuid'],
+            environment=ticket['environment'], jobId=ticket['jobId'], owner=ticket['owner'], queueRoot=str(fixed)))
+        registry, restored = queue.context(config, ticket['runDir'])
+        self.assertEqual(registry.base, fixed / self.gpu['gpuUuid'])
+        self.assertEqual(restored, ticket)
+
     def detection_result(self, ticket, state='COMPLETED', acknowledged=True):
         root=Path(ticket['runDir']);root.mkdir(parents=True,exist_ok=True)
         manifest=dict(events=[dict(id='event-1')])

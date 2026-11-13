@@ -18,9 +18,9 @@ export const computeEnglish = {
   '前往授权': 'Authorize',
   ...{
   "状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。": "Status confirmation is pending. The system will check the original order; do not repeat start or stop requests.",
-  "状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。当前资源被占用，本次开机未成功。": "Status confirmation is pending. The system will check the original order; do not repeat start or stop requests. The resource is currently occupied; startup failed. ",
-  "当前资源被占用，本次开机未成功。原单已取消，未消费冻结余额已完成释放。": "The resource is currently occupied; startup failed. The original order was cancelled and unused reserved funds were released.",
-  "当前资源被占用，本次开机未成功。原单取消及未消费冻结余额释放仍待确认，请勿重复开机。": "The resource is currently occupied; startup failed. Cancellation and release of unused funds remain unconfirmed. Do not start again.",
+  "状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。官方当前算力规格暂无库存，请稍后再试。": "Status confirmation is pending. The system will check the original order; do not repeat start or stop requests. This official compute configuration is currently out of stock. Please try again later. ",
+  "官方当前算力规格暂无库存，请稍后再试。原单已取消，未消费冻结余额已完成释放。": "This official compute configuration is currently out of stock. Please try again later. The original order was cancelled and unused reserved funds were released.",
+  "官方当前算力规格暂无库存，请稍后再试。原单取消及未消费冻结余额释放仍待确认，请勿重复开机。": "This official compute configuration is currently out of stock. Please try again later. Cancellation and release of unused funds remain unconfirmed. Do not start again.",
   "状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。本次开机被供应商拒绝。": "Status confirmation is pending. The system will check the original order; do not repeat start or stop requests. The provider rejected this startup. ",
   "本次开机被供应商拒绝。原单已取消，未消费冻结余额已完成释放。": "The provider rejected this startup. The original order was cancelled and unused reserved funds were released.",
   "本次开机被供应商拒绝。原单取消及未消费冻结余额释放仍待确认，请勿重复开机。": "The provider rejected this startup. Cancellation and release of unused funds remain unconfirmed. Do not start again."

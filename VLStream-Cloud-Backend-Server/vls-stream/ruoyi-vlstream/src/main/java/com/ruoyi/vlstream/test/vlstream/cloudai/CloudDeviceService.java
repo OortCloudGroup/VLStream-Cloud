@@ -42,6 +42,10 @@ public class CloudDeviceService {
     private static boolean freeSelf(ComputeNode node) {
         return "FREE".equals(node.getBillingType()) && "self".equalsIgnoreCase(node.getProvider());
     }
+    void requireRunAdmission(ObjectNode snapshot) {
+        ComputeNode node = configured.requireRunAdmission(snapshot.path("nodeId").asLong(), snapshot.path("resource"));
+        if (node != null && node.isPlatformCatalogManaged()) snapshot.set("resource", json.valueToTree(configured.snapshot(node)));
+    }
     private ComputeNode usable(Long nodeId, boolean ready) {
         if (nodeId == null) throw new ServiceException("请选择自有GPU");
         nodeId = configured.canonicalId(nodeId);
