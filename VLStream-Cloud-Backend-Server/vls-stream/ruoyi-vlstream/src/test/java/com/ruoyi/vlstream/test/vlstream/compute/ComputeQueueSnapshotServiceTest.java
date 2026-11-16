@@ -65,6 +65,13 @@ class ComputeQueueSnapshotServiceTest {
         assertNull(result.getActiveTaskName());
         assertFalse(json.writeValueAsString(result).contains("activeJobId"));
     }
+    @Test void ownedAnnotationNameUsesRoundAndCreatorProofInsteadOfFormalTrainingIdentity() throws Exception {
+        String id="12345678-1234-1234-1234-123456789abc";
+        when(jdbc.queryForList(anyString(),eq(String.class),eq(id),eq("000000"),eq("alice"),eq("owner"),eq(-99L),eq(123L)))
+            .thenReturn(Collections.emptyList(),Collections.singletonList("安全帽智能标注"));
+        assertEquals("安全帽智能标注",service.project(json.readTree(raw("\"RUNNING\"","\""+id+"\"",1)),node).getActiveTaskName());
+        verify(jdbc).queryForList(contains("r.id=j.smart_round_id"),eq(String.class),eq(id),eq("000000"),eq("alice"),eq("owner"),eq(-99L),eq(123L));
+    }
     @Test void stoppedNodeReturnsUnknownWithoutSsh() {
         node.setPowerState("STOPPED");
         assertEquals("UNKNOWN", service.snapshot(-99L).getState()); verifyNoInteractions(ssh);
@@ -122,7 +129,7 @@ class ComputeQueueSnapshotServiceTest {
         assertEquals("私人任务", service.project(json.readTree(raw("\"RUNNING\"", "\"" + id + "\"", 0)), node).getActiveTaskName());
         TenantContextHolder.setTenantId("other-tenant");
         assertNull(service.project(json.readTree(raw("\"RUNNING\"", "\"" + id + "\"", 0)), node).getActiveTaskName());
-        verify(jdbc).queryForList(anyString(), eq(String.class), eq(id), eq("other-tenant"), eq("alice"), eq("owner"), eq(-99L), eq(123L));
+        verify(jdbc,times(2)).queryForList(contains("BINARY t.tenant_id=BINARY ? AND BINARY t.create_user=BINARY ?"), eq(String.class), eq(id), eq("other-tenant"), eq("alice"), eq("owner"), eq(-99L), eq(123L));
     }
     @Test void supportedEstimateProjectsOnlyPublicTimingEvidence() throws Exception {
         when(estimator.observe(anyString(), any())).thenReturn(new ComputeQueueWaitEstimator.Estimate(3600, 3));

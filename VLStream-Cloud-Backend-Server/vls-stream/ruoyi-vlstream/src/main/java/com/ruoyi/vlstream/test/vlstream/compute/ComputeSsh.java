@@ -90,7 +90,8 @@ public class ComputeSsh {
             if (target.requiredAlgorithm() != null) session.setConfig("server_host_key", target.requiredAlgorithm());
             session.setConfig("PreferredAuthentications", keyMode ? "publickey" : "password,keyboard-interactive");
             if(runtimeReference!=null)runtimeReference.authenticate(session);
-            else if (!keyMode) session.setPassword(cipher.decrypt(node.getPasswordCipher()));
+            else if (!keyMode) session.setPassword(node.isConfigurationManaged()
+                ? node.getConfigurationPassword() : cipher.decrypt(node.getPasswordCipher()));
             session.setTimeout(30000);
             session.connect(20000);
             if(runtimeReference!=null)session.setPassword((String)null);

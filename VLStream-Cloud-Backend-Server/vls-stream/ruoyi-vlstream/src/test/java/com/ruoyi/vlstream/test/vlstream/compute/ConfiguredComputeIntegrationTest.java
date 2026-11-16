@@ -110,6 +110,39 @@ public class ConfiguredComputeIntegrationTest {
         assertFalse(market.list(true).get(0).isSchedulable());assertThrows(ServiceException.class,()->nodes.requireReady(-173L));
         ready(-173L);assertTrue(shared.ready(nodes.requireReady(-173L)));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
     }
+    @Test void explicitYamlPasswordRemainsInternalWithoutRequiringDeploymentKey() throws Exception {
+        ComputeKeyStore missingStore=mock(ComputeKeyStore.class);
+        when(missingStore.key()).thenThrow(new IllegalStateException("existing deployment key missing"));
+        ComputeCredentialCipher cipher=new ComputeCredentialCipher(missingStore);
+        ConfiguredComputeProperties.Resource resource=properties.getResources().get(0);
+        resource.setAuthMode("PASSWORD");resource.setPassword("fixture-password");
+        registry.initialize();
+        assertEquals("PASSWORD",nodes.get(-173L).getAuthMode());
+        ComputeNode node=nodes.get(-173L);
+        assertNull(node.getPasswordCipher());
+        assertEquals("fixture-password",node.getConfigurationPassword());
+        assertTrue(node.isPasswordConfigured());
+        assertFalse(json.writeValueAsString(node).contains("fixture-password"));
+        assertFalse(json.writeValueAsString(node).contains("configurationPassword"));
+        assertFalse(node.toString().contains("fixture-password"));
+        assertNull(json.readValue("{\"configurationPassword\":\"injected\"}",ComputeNode.class).getConfigurationPassword());
+        verifyNoInteractions(missingStore);
+        assertThrows(IllegalStateException.class,()->cipher.encrypt("persisted-password"));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
+        resource.setPassword("");assertThrows(IllegalStateException.class,registry::initialize);
+    }
+    @Test void aliasedHistoricalCardIsNotDuplicatedAndConflictStillBlocksConfiguredResource() {
+        jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,provider,host,port,username,python_path,work_dir,gpu_index,scheduling_mode,billing_type,resource_scope,enabled) VALUES(173,'company-tenant','historical','autodl','other.invalid',22,'root','/python','/work',0,'INSTANCE_EXCLUSIVE','POINTS','PLATFORM',true)");
+        ComputeMarketService view=new ComputeMarketService(jdbc,mock(ComputeNodeService.class));
+        ConfiguredComputeRegistry projection=mock(ConfiguredComputeRegistry.class);
+        when(projection.canonicalId(173L)).thenReturn(-173L);
+        when(projection.published()).thenReturn(Collections.emptyList());
+        ReflectionTestUtils.setField(view,"configured",projection);
+        java.util.List<ComputeMarketService.Resource> cards=view.list(false);
+        assertTrue(cards.isEmpty());
+        assertThrows(ServiceException.class,()->registry.resolve(-173L));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));
+    }
     @Test void consumerHealthUsesRealProbeServiceWithMockSshAndCachesWithoutANodeRow() throws Exception {
         ComputeNode configured=nodes.get(-173L);
         when(connection.execute(anyString(),eq(180))).thenReturn("VLS_PROBE="+proof(configured));
@@ -125,7 +158,14 @@ public class ConfiguredComputeIntegrationTest {
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
         for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
         ComputeCatalogProperties bound=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.of(ComputeCatalogProperties.class)).get();
-        assertTrue(bound.configured());assertFalse(bound.getAppId().isEmpty());assertFalse(bound.getSecretKey().isEmpty());
+        assertFalse(bound.configured());assertFalse(bound.getAppId().isEmpty());assertFalse(bound.getSecretKey().isEmpty());
+        for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("legacy-compute-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application-compute-legacy.yml").toFile())))environment.getPropertySources().addLast(source);
+        ConfiguredComputeProperties legacy=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.company-resources",org.springframework.boot.context.properties.bind.Bindable.of(ConfiguredComputeProperties.class)).get();
+        assertEquals(3,legacy.getResources().size());
+        assertEquals(Arrays.asList(-173L,-99L,-6000L),legacy.getResources().stream().map(ConfiguredComputeProperties.Resource::getNodeId).collect(java.util.stream.Collectors.toList()));
+        assertEquals(new java.math.BigDecimal("13.00"),legacy.getResources().get(2).getFixedPrice().getPerInstanceHour());
+        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("explicit-catalog",Collections.singletonMap("VLSTREAM_COMPUTE_CATALOG_BASE_URL","https://catalog.example")));
+        assertTrue(org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.of(ComputeCatalogProperties.class)).get().configured());
         assertEquals("localhost",bound.getEnvironmentId());assertTrue(bound.getSnapshotFile().endsWith("compute-catalog.snapshot"));
         assertFalse(json.writeValueAsString(new ComputeNode()).contains("catalogDefinition"));
     }

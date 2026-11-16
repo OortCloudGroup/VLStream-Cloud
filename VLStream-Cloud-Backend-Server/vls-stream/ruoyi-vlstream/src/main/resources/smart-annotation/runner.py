@@ -47,7 +47,7 @@ def run(config_path):
     if config['mode'] == 'active':
         print('VLS_STAGE=TRAINING', flush=True)
         progress('TRAINING', 0, config['epochs'])
-        model_path = train(kind, str(copied), root / 'dataset.yaml', root / 'training',
+        model_path = train(kind, str(copied), root / config.get('dataset', 'dataset.yaml'), root / 'training',
                            epochs=config['epochs'], batch=4, size=640, workers=config['workers'], device=config.get('device', '0'), progress=progress)
     model = load_model(kind, str(model_path), cache)
     print('VLS_STAGE=PREDICTING', flush=True)

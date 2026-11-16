@@ -11,7 +11,17 @@ public final class DatasetPartitioner {
 
     public static boolean usable(AnnotationImage sample) {
         return !"video".equals(sample.getMediaType())
+            && !auxiliaryFile(sample.getOriginalName()) && !auxiliaryFile(sample.getImageName())
             && !"low".equals(sample.getQualityStatus()) && !"excluded".equals(sample.getQualityStatus());
+    }
+
+    /** macOS archive sidecars carry metadata, even when their suffix looks like an image. */
+    private static boolean auxiliaryFile(String name) {
+        if (name == null) return false;
+        String path = name.replace('\\', '/');
+        String file = path.substring(path.lastIndexOf('/') + 1);
+        return file.startsWith("._") || ".DS_Store".equalsIgnoreCase(file)
+            || path.startsWith("__MACOSX/") || path.contains("/__MACOSX/");
     }
 
     public static Map<Long, String> partition(List<AnnotationImage> samples, Map<Long, String> classes,

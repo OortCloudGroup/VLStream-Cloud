@@ -188,7 +188,7 @@ public class CloudTrainingService {
         access().container(containerId);
         List<CloudTrainingJob> rows = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE BINARY tenant_id=BINARY ? AND container_record_id=?",new BeanPropertyRowMapper<>(CloudTrainingJob.class),ComputeNodeService.tenant(),containerId);
         if (rows.isEmpty()) throw new ServiceException("线上训练记录不存在或无权访问");
-        for(CloudTrainingJob job:rows)authorize(job,trainings.selectAlgorithmTrainingById(job.getTrainingId()));
+        for(CloudTrainingJob job:rows)if(!job.isAnnotation())authorize(job,trainings.selectAlgorithmTrainingById(job.getTrainingId()));
         return rows.get(0).getLogTail()==null?"":rows.get(0).getLogTail();
     }
     public RemoteTrainingService.TrainingProgress progress(AlgorithmTraining training) {

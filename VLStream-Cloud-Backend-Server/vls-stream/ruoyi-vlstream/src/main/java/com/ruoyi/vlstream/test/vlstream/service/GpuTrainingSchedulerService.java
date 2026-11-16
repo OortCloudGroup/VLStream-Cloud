@@ -82,7 +82,7 @@ public class GpuTrainingSchedulerService {
 	private boolean companyPool(String host, int port) { return trustedSelfPolicy!=null && trustedSelfPolicy.companyEndpoint(host,port); }
 	private void requireLegacyExecution() {
 		if(companyPool(sshProperties.getHost(),sshProperties.getPort()))
-			throw new IllegalStateException("公司公共GPU已接入统一任务队列，请在正式训练中选择共享节点；旧默认训练及智能标注路径尚未接入跨环境租约");
+			throw new IllegalStateException("公司公共GPU须通过所选算力节点的共享队列执行；历史未选择节点的智能标注任务请结束后重新创建并选择GPU设备");
 	}
 
 	private ScheduledExecutorService executor;
@@ -478,6 +478,7 @@ public class GpuTrainingSchedulerService {
 	private long countByStatus(String status) {
 		return containerInstanceService.count(new LambdaQueryWrapper<ContainerInstance>()
 			.in(ContainerInstance::getInstanceType, TYPE_TRAINING, TYPE_SMART_ANNOTATION)
+			.apply("NOT EXISTS (SELECT 1 FROM vls_cloud_training_job cj WHERE cj.container_record_id=vls_container_instance.id)")
 			.eq(ContainerInstance::getInstanceStatus, status));
 	}
 

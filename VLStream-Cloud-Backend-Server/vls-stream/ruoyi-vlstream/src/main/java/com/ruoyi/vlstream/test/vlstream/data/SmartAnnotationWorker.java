@@ -37,6 +37,8 @@ public class SmartAnnotationWorker {
     private final VlsSshProperties ssh;
     private final VlsTrainingContainerProperties properties;
     private final ObjectMapper json;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService compute;
 
     public String prepare(ContainerInstance instance) {
         SmartAnnotationRound round = service.round(instance.getTrainingTaskId());
@@ -106,7 +108,7 @@ public class SmartAnnotationWorker {
     }
 
     /** Respect an existing holdout; otherwise create a deterministic local split without changing the dataset. */
-    static Map<Long, String> partition(List<AnnotationImage> samples) {
+    public static Map<Long, String> partition(List<AnnotationImage> samples) {
         List<Long> validation = samples.stream().filter(s -> "val".equals(s.getDatasetSplit())).map(AnnotationImage::getId).collect(Collectors.toList());
         DataRequests.Split request = new DataRequests.Split();
         if (!validation.isEmpty()) { request.setMode("manual"); request.setValidationIds(validation); }
@@ -132,6 +134,25 @@ public class SmartAnnotationWorker {
         String modelPath = result.path("modelPath").asText(); String sha = result.path("modelSha256").asText();
         String expected = round.getWorkDirectory() + ("active".equals(task.getMode()) ? "/training/weights/best.pt" : "/source.pt");
         if (!expected.equals(modelPath) || !sha.matches("[0-9a-f]{64}")) throw new ServiceException("智能标注模型产物校验失败");
+        importResults(round, task, result, modelPath, sha, true);
+    }
+
+    /** Node jobs import only verified objects and stay non-reviewable until lease release. */
+    @Transactional(rollbackFor = Exception.class)
+    public void importComputeResults(Long roundId, JsonNode result, String modelPath, String sha) {
+        SmartAnnotationRound round = service.round(roundId);
+        SmartAnnotationTask task = service.task(round.getTaskId());
+        data.lockDatasetForTask(task.getDatasetId());
+        round = service.round(roundId); task = service.task(task.getId());
+        if (modelPath.equals(round.getModelPath())) {
+            if (!sha.equals(round.getModelSha256())) throw new ServiceException("本轮归档模型摘要已变化");
+            return;
+        }
+        if ("CANCEL_REQUESTED".equals(task.getTaskState())) return;
+        importResults(round, task, result, modelPath, sha, false);
+    }
+
+    private void importResults(SmartAnnotationRound round, SmartAnnotationTask task, JsonNode result, String modelPath, String sha, boolean ready) {
         DatasetSnapshot snapshot = service.snapshot(task, round);
         Map<Long, AnnotationImage> pending = SmartAnnotationService.unannotated(snapshot).stream().collect(Collectors.toMap(AnnotationImage::getId, s -> s));
         Map<String, Long> labelNames = new HashMap<>();
@@ -173,7 +194,7 @@ public class SmartAnnotationWorker {
             candidates.insert(parsed.get(i));
         }
         round.setModelPath(modelPath); round.setModelSha256(sha); round.setPredictedCount(parsed.size()); rounds.updateById(round);
-        state(task, round, "REVIEW", null);
+        if (ready) state(task, round, "REVIEW", null);
     }
 
     public void refreshProgress(ContainerInstance instance) {
@@ -215,7 +236,9 @@ public class SmartAnnotationWorker {
     }
 
     public String logs(Long taskId) {
-        SmartAnnotationRound round = service.current(service.task(taskId));
+        SmartAnnotationTask task = service.task(taskId);
+        SmartAnnotationRound round = service.current(task);
+        if (task.getComputeNodeId()!=null) return compute.logs(task,round.getId());
         if (round.getWorkDirectory() == null) return "等待GPU资源，尚未准备本轮文件";
         try (Connection connection = connect(); InputStream input = connection.channel.get(round.getWorkDirectory() + "/run.log")) {
             byte[] content = limited(input, 2 * 1024 * 1024);

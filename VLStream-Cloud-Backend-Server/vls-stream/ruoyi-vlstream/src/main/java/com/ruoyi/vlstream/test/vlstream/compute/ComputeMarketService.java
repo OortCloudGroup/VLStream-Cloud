@@ -99,6 +99,9 @@ public class ComputeMarketService {
         List<Resource> result = new ArrayList<>();
         rows.removeIf(node -> "self".equals(node.getProvider()));
         if(configured!=null) {
+            // The configured resource resolves and validates its explicit historical aliases.
+            // Keep one card for that identity; any conflicting legacy state remains on its card.
+            rows.removeIf(node -> !java.util.Objects.equals(node.getId(),configured.canonicalId(node.getId())));
             rows.addAll(configured.published());
         }
         long now = System.currentTimeMillis();

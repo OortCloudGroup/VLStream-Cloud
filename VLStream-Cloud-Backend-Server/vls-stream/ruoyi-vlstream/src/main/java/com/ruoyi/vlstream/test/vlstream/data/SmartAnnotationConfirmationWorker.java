@@ -63,9 +63,7 @@ public class SmartAnnotationConfirmationWorker {
                     return false;
                 }
                 selected[0] = candidate.getId();
-                List<SmartAnnotationRequests.Box> regions = service.boxes(candidate.getBoxesJson());
-                for (SmartAnnotationRequests.Box region : regions) if (region.getConfidence() == null || region.getConfidence() < task.getConfidence())
-                    throw new ServiceException("包含低置信度结果，请逐图检查后确认");
+                List<SmartAnnotationRequests.Box> regions = service.batchReviewBoxes(task, candidate);
                 SmartAnnotationRequests.Review review = new SmartAnnotationRequests.Review(); review.setBoxes(regions);
                 service.review(id, candidate.getId(), review);
                 tasks.update(null, taskUpdate(id).set("bulk_cursor", candidate.getId()).set("bulk_processed", number(task.getBulkProcessed()) + 1)

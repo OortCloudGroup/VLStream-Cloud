@@ -89,6 +89,8 @@ def status(root):
             result = dict(state='NOT_STARTED', message='准备实例训练环境')
     progress = read_json(root / 'progress.json')
     result.update(epoch=progress.get('epoch', 0), progress=progress.get('progress', 0))
+    if progress.get('stage') in ('TRAINING', 'PREDICTING'):
+        result.update(stage=progress['stage'], current=progress.get('current', 0), total=progress.get('total', 0))
     try:
         with (root / 'training.log').open('rb') as source:
             source.seek(0, 2)
@@ -219,6 +221,28 @@ def train(config_path, config):
         if model.startswith('@preset/'):
             from check_cloud_environment import cached_weights
             cached_weights(Path(config['workDir']))
+        if config.get('workload') == 'smart_annotation':
+            import shutil
+            from smart_annotation_runner import run as annotate
+            config.update(dataset='dataset/dataset.yaml', device='0', modelCache=str(Path(config['workDir']) / 'models'))
+            annotation_config = root / 'annotation.json'
+            write_json(annotation_config, config)
+            annotate(annotation_config)
+            predictions = root / 'results.json'
+            if predictions.stat().st_size > 64 * 1024 * 1024:
+                raise ValueError('预标注结果超过64MiB，请分批处理数据集')
+            result = read_json(predictions)
+            model_path = Path(result['modelPath']).resolve()
+            expected = (root / ('training/weights/best.pt' if config['mode'] == 'active' else 'source.pt')).resolve()
+            if model_path != expected or sha256(model_path) != result['modelSha256']:
+                raise ValueError('预标注模型产物校验失败')
+            target = root / 'output/weights/best.pt'
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(model_path, target)
+            write_json(root / 'result.json', dict(state='SUCCEEDED', message='预标注完成，等待结果回存',
+                sha256=sha256(target), size=target.stat().st_size,
+                predictionsSha256=sha256(predictions), predictionsSize=predictions.stat().st_size))
+            return
         if kind == 'object_detection':
             from validate_detection_dataset import validate
             validate(dataset, model)

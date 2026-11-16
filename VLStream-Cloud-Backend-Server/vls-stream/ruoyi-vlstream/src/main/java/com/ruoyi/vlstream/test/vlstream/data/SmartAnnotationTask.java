@@ -13,6 +13,7 @@ import org.springblade.core.mp.base.TenantEntity;
 @TableName("vls_smart_annotation_task")
 public class SmartAnnotationTask extends TenantEntity {
     @JsonSerialize(using = ToStringSerializer.class) private Long datasetId;
+    @JsonSerialize(using = ToStringSerializer.class) private Long computeNodeId;
     private String taskName;
     private String mode;
     private String annotationType = "object_detection";

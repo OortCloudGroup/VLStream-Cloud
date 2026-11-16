@@ -35,6 +35,10 @@ public class SmartAnnotationService {
     private final GpuTrainingSchedulerService scheduler;
     private final DataMediaStorage storage;
     private final ObjectMapper json;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService compute;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess computeAccess;
     @Value("${vlstream.smart-annotation.min-boxes-per-label:10}") private int minBoxes = 10;
     @Value("${vlstream.smart-annotation.min-unlabeled-images:101}") private int minUnlabeled = 101;
     @Value("${vlstream.smart-annotation.max-rounds:4}") private int maxRounds = 4;
@@ -45,6 +49,7 @@ public class SmartAnnotationService {
         SmartAnnotationTask task = tasks.selectOne(this.<SmartAnnotationTask>scope().eq("id", id));
         if (task == null) throw new ServiceException("智能标注任务不存在或无权访问");
         data.project(task.getDatasetId());
+        if (task.getComputeNodeId()!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null) requireCancellationCreator(task);
         return task;
     }
 
@@ -71,6 +76,8 @@ public class SmartAnnotationService {
 
     public IPage<SmartAnnotationTask> list(Long datasetId, int page) {
         QueryWrapper<SmartAnnotationTask> query = scope();
+        if (org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null)
+            query.and(q->q.isNull("compute_node_id").or().eq("create_user",com.ruoyi.common.helper.LoginHelper.getUserId()));
         if (datasetId != null) { data.project(datasetId); query.eq("dataset_id", datasetId); }
         return tasks.selectPage(new Page<>(Math.max(1, page), 20), query.orderByDesc("id"));
     }
@@ -82,6 +89,7 @@ public class SmartAnnotationService {
         List<Map<String, Object>> sources = new ArrayList<>();
         sources.add(DataManagementService.map("id", "0", "type", "system", "name", "系统基础模型 · " + type.getLabel()));
         for (AlgorithmModel model : models.selectList(this.<AlgorithmModel>scope().isNotNull("model_path").orderByDesc("id"))) {
+            if (computeAccess!=null) try { computeAccess.model(model.getId()); } catch (ServiceException denied) { continue; }
             Algorithm algorithm = model.getAlgorithmId() == null ? null : algorithms.selectOne(this.<Algorithm>scope().eq("id", model.getAlgorithmId()));
             if (pt(model.getModelPath()) && compatible(type, algorithm)) sources.add(DataManagementService.map("id", model.getId().toString(), "type", "model", "name", model.getModelName() + " · V" + model.getVersion()));
         }
@@ -111,6 +119,8 @@ public class SmartAnnotationService {
         task.setTenantId(data.tenant()); task.setDatasetId(request.getDatasetId()); task.setTaskName(request.getTaskName());
         task.setMode(request.getMode()); task.setSourceType(request.getSourceType()); task.setSourceId(request.getSourceId());
         task.setAnnotationType(snapshot.getAnnotationType());
+        task.setComputeNodeId(request.getComputeNodeId());
+        if (task.getComputeNodeId() == null) throw new ServiceException("请选择执行智能标注的 GPU 算力节点");
         resolveSource(task);
         task.setConfidence(request.getConfidence()); task.setEpochs(request.getEpochs()); task.setReviewSize(request.getReviewSize());
         task.setRoundNumber(1); task.setTaskState("QUEUED"); tasks.insert(task);
@@ -130,6 +140,7 @@ public class SmartAnnotationService {
             if (!compatible(type, source)) throw new ServiceException("基础算法与数据集标注类型不匹配");
             task.setModelName(source.getName()); task.setModelPath(source.getPtModelFilePath());
         } else if ("model".equals(task.getSourceType())) {
+            if (computeAccess!=null) computeAccess.model(task.getSourceId());
             AlgorithmModel source = models.selectOne(this.<AlgorithmModel>scope().eq("id", task.getSourceId()));
             if (source == null) throw new ServiceException("模型不存在或无权访问");
             Algorithm algorithm = source.getAlgorithmId() == null ? null : algorithms.selectOne(this.<Algorithm>scope().eq("id", source.getAlgorithmId()));
@@ -149,7 +160,7 @@ public class SmartAnnotationService {
         return algorithm == null || algorithm.getCategory() == null || type.getModelTask().equals(algorithm.getCategory().getCode());
     }
 
-    private boolean pt(String path) { return path != null && path.startsWith("/") && path.endsWith(".pt") && !path.contains("/../"); }
+    private boolean pt(String path) { return path != null && (path.startsWith("/") || path.startsWith("cloud-training/")) && path.endsWith(".pt") && !path.contains("/../"); }
 
     private void requireType(DatasetSnapshot snapshot) {
         AnnotationTaskType.of(snapshot.getAnnotationType());
@@ -196,7 +207,12 @@ public class SmartAnnotationService {
         SmartAnnotationRound round = new SmartAnnotationRound(); round.setTenantId(data.tenant());
         round.setTaskId(task.getId()); round.setRoundNumber(task.getRoundNumber()); round.setVersionId(version.getId());
         round.setRoundState("QUEUED"); round.setPredictedCount(0); rounds.insert(round);
-        scheduler.enqueueSmartAnnotation(round.getId());
+        enqueue(task, round);
+    }
+
+    private void enqueue(SmartAnnotationTask task, SmartAnnotationRound round) {
+        if (task.getComputeNodeId() == null) scheduler.enqueueSmartAnnotation(round.getId());
+        else compute.enqueue(task, round, snapshot(task, round));
     }
 
     public Map<String, Object> detail(Long id) {
@@ -205,7 +221,8 @@ public class SmartAnnotationService {
         Map<String, Long> counts = all.stream().collect(Collectors.groupingBy(SmartAnnotationCandidate::getReviewState, Collectors.counting()));
         return DataManagementService.map("task", task, "round", round, "rounds", rounds.selectList(this.<SmartAnnotationRound>scope().eq("task_id", id).orderByAsc("round_number")),
             "counts", counts, "pendingHard", all.stream().filter(c -> c.getHardExample() == 1 && "PENDING".equals(c.getReviewState())).count(),
-            "labels", data.snapshot(task.getDatasetId()).getLabels(), "maxRounds", maxRounds);
+            "labels", data.snapshot(task.getDatasetId()).getLabels(), "maxRounds", maxRounds,
+            "execution", task.getComputeNodeId()==null?Collections.emptyMap():compute.execution(task,round.getId()));
     }
 
     public Map<String, Object> predictions(Long id, int page, String state, boolean hardOnly) {
@@ -219,7 +236,8 @@ public class SmartAnnotationService {
         Map<Long, AnnotationImage> images = snapshot.getSamples().stream().collect(Collectors.toMap(AnnotationImage::getId, s -> s));
         List<Map<String, Object>> rows = result.getRecords().stream().map(c -> {
             AnnotationImage sample = images.get(c.getImageId());
-            return DataManagementService.map("candidate", c, "imageName", sample.getImageName(), "width", c.getImageWidth(), "height", c.getImageHeight(), "previewUrl", storage.preview(sample.getLocalPath()));
+            Map<String, Object> quality = predictionQuality(task, c);
+            return DataManagementService.map("candidate", c, "imageName", sample.getImageName(), "width", c.getImageWidth(), "height", c.getImageHeight(), "previewUrl", storage.preview(sample.getLocalPath()), "predictionQuality", quality);
         }).collect(Collectors.toList());
         return DataManagementService.map("records", rows, "total", result.getTotal());
     }
@@ -229,8 +247,30 @@ public class SmartAnnotationService {
         SmartAnnotationCandidate candidate = candidates.selectOne(this.<SmartAnnotationCandidate>scope().eq("id", candidateId).eq("task_id", id).eq("round_id", round.getId()));
         if (candidate == null) throw new ServiceException("预标注结果不存在或不属于当前轮次");
         AnnotationImage image = data.sample(task.getDatasetId(), candidate.getImageId());
+        Map<String, Object> quality = predictionQuality(task, candidate);
         return DataManagementService.map("candidate", candidate, "imageName", image.getImageName(), "width", candidate.getImageWidth(), "height", candidate.getImageHeight(),
-            "previewUrl", storage.preview(image.getLocalPath()), "annotationType", task.getAnnotationType());
+            "previewUrl", storage.preview(image.getLocalPath()), "annotationType", task.getAnnotationType(), "predictionQuality", quality);
+    }
+
+    private Map<String, Object> predictionQuality(SmartAnnotationTask task, SmartAnnotationCandidate candidate) {
+        if (!"object_detection".equals(task.getAnnotationType()) || !"PENDING".equals(candidate.getReviewState())) return Collections.emptyMap();
+        List<SmartAnnotationRequests.Box> original = boxes(candidate.getBoxesJson());
+        List<SmartAnnotationRequests.Box> filtered = DetectionPredictionFilter.suppressDuplicates(original);
+        candidate.setBoxesJson(data.writeJson(filtered));
+        return DataManagementService.map("suppressedCount", original.size() - filtered.size(),
+            "classConflict", DetectionPredictionFilter.hasClassConflict(filtered));
+    }
+
+    List<SmartAnnotationRequests.Box> batchReviewBoxes(SmartAnnotationTask task, SmartAnnotationCandidate candidate) {
+        List<SmartAnnotationRequests.Box> regions = boxes(candidate.getBoxesJson());
+        if ("object_detection".equals(task.getAnnotationType())) {
+            regions = DetectionPredictionFilter.suppressDuplicates(regions);
+            if (DetectionPredictionFilter.hasClassConflict(regions))
+                throw new ServiceException("不同类别的目标框高度重叠，请逐图检查后确认");
+        }
+        if (regions.stream().anyMatch(box -> box.getConfidence() == null || box.getConfidence() < task.getConfidence()))
+            throw new ServiceException("包含低置信度结果，请逐图检查后确认");
+        return regions;
     }
 
     public DatasetSnapshot snapshot(SmartAnnotationTask task, SmartAnnotationRound round) {
@@ -294,9 +334,8 @@ public class SmartAnnotationService {
         for (Long candidateId : new LinkedHashSet<>(ids)) {
             SmartAnnotationCandidate candidate = candidates.selectOne(this.<SmartAnnotationCandidate>scope().eq("id", candidateId).eq("round_id", current(task).getId()));
             if (candidate == null) throw new ServiceException("选中的结果不属于当前轮次");
-            SmartAnnotationRequests.Review request = new SmartAnnotationRequests.Review(); request.setBoxes(boxes(candidate.getBoxesJson()));
-            if (request.getBoxes().stream().anyMatch(b -> b.getConfidence() == null || b.getConfidence() < task.getConfidence()))
-                throw new ServiceException("选中结果包含低置信度框，请逐张检查");
+            if (!"PENDING".equals(candidate.getReviewState())) continue;
+            SmartAnnotationRequests.Review request = new SmartAnnotationRequests.Review(); request.setBoxes(batchReviewBoxes(task, candidate));
             review(id, candidateId, request);
         }
     }
@@ -332,7 +371,7 @@ public class SmartAnnotationService {
         SmartAnnotationRound round = current(task);
         rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant()).set("round_state", "QUEUED").set("error_message", null));
         tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", id).eq("tenant_id", data.tenant()).set("task_state", "QUEUED").set("error_message", null));
-        scheduler.enqueueSmartAnnotation(round.getId());
+        enqueue(task, round);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -342,6 +381,7 @@ public class SmartAnnotationService {
         if (Arrays.asList("COMPLETED", "CANCELLED").contains(task.getTaskState())) return;
         String state = Arrays.asList("FAILED", "REVIEW", "CONFIRMING").contains(task.getTaskState()) ? "CANCELLED" : "CANCEL_REQUESTED";
         task.setTaskState(state); tasks.updateById(task);
+        if (task.getComputeNodeId() != null) compute.cancel(task, current(task).getId());
     }
 
     private void requireCancellationCreator(SmartAnnotationTask task) {

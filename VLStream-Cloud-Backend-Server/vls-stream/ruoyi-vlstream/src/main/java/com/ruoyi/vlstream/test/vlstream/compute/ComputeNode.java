@@ -63,6 +63,8 @@ public class ComputeNode {
     private String username;
     private String authMode = "PASSWORD";
     @JsonIgnore @ToString.Exclude private String passwordCipher;
+    /** Configuration-owned credential; never serialized or written to the node table. */
+    @JsonIgnore @ToString.Exclude private transient String configurationPassword;
     @JsonIgnore @ToString.Exclude private String hostKey;
     private String pythonPath;
     private String workDir;
@@ -72,7 +74,8 @@ public class ComputeNode {
     private String probeJson;
     private java.util.Date probeTime;
     private java.util.Date probeRequestedAt;
-    public boolean isPasswordConfigured() { return passwordCipher != null && !passwordCipher.isEmpty(); }
+    public boolean isPasswordConfigured() { return configurationManaged ? configurationPassword != null && !configurationPassword.isEmpty()
+        : passwordCipher != null && !passwordCipher.isEmpty(); }
     public boolean isProviderCredentialConfigured() { return providerCredentialCipher != null && !providerCredentialCipher.isEmpty(); }
     public boolean isSelfServiceNode() {
         return "PRIVATE".equals(resourceScope) && publicInstanceKey == null && "INSTANCE_EXCLUSIVE".equals(schedulingMode);

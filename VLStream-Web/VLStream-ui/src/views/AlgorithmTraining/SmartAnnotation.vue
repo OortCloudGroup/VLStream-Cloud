@@ -16,6 +16,7 @@
     <template v-else>
       <div class="task-summary"><el-tag :type="stateType(detail.task.taskState)">{{ $tp(states[detail.task.taskState]) }}</el-tag><span>{{ modeName(detail.task.mode) }} · {{ $tp('轮次 {round}', { round: detail.task.roundNumber }) }}</span><span>{{ $tp('已预测 {count} 张', { count: detail.round.predictedCount }) }}</span><span>{{ $tp('已确认 {count} 张', { count: detail.counts.ACCEPTED || 0 }) }}</span><span>{{ $tp('待确认 {count} 张', { count: detail.counts.PENDING || 0 }) }}</span><span>{{ $tp('已跳过 {count} 张', { count: detail.counts.SKIPPED || 0 }) }}</span></div>
       <el-alert v-if="detail.task.errorMessage" :title="detail.task.errorMessage" type="error" :closable="false" />
+      <el-alert v-if="active && detail.execution?.message" :title="detail.execution.message" type="info" :closable="false" />
       <el-alert v-if="detail.task.bulkError" :title="detail.task.bulkError" type="warning" :closable="false" />
       <div v-if="detail.task.taskState === 'CONFIRMING' || detail.task.bulkTotal" class="bulk-summary"><span>{{ $tp('批量确认：{processed} / {total}，采用 {accepted} 张，{conflicts} 张需人工检查', { processed: detail.task.bulkProcessed || 0, total: detail.task.bulkTotal || 0, accepted: detail.task.bulkAccepted || 0, conflicts: detail.task.bulkConflicts || 0 }) }}</span><el-progress v-if="detail.task.taskState === 'CONFIRMING'" :percentage="Math.min(100, Math.round((detail.task.bulkProcessed || 0) * 100 / Math.max(1, detail.task.bulkTotal || 1)))" /></div>
       <div v-if="active && detail.task.taskState !== 'CONFIRMING' && detail.round.progressTotal" class="bulk-summary"><span>{{ detail.round.progressStage === 'TRAINING' ? $tp('本轮模型训练') : $tp('生成预标注') }}：{{ detail.round.progressCurrent || 0 }} / {{ detail.round.progressTotal }}</span><el-progress :percentage="Math.min(100, Math.round((detail.round.progressCurrent || 0) * 100 / detail.round.progressTotal))" /></div>
@@ -27,7 +28,19 @@
       <template v-if="['REVIEW', 'COMPLETED'].includes(detail.task.taskState)">
         <div class="filters"><el-select v-model="query.state" @change="loadPredictions"><el-option :label="$tp('待确认')" value="PENDING" /><el-option :label="$tp('已确认')" value="ACCEPTED" /><el-option :label="$tp('已跳过')" value="SKIPPED" /><el-option :label="$tp('全部结果')" value="" /></el-select><el-checkbox v-if="detail.task.mode === 'active'" v-model="query.hardOnly" @change="loadPredictions">{{ $tp('仅看本轮难例（待处理 {count}）', { count: detail.pendingHard }) }}</el-checkbox><el-button v-if="detail.task.taskState === 'REVIEW'" :disabled="busy || !confirmable.length" @click="batchConfirm">{{ $tp('确认本页可用结果（{count}）', { count: confirmable.length }) }}</el-button><el-button v-if="detail.task.taskState === 'REVIEW'" type="primary" :disabled="busy || !detail.counts.PENDING" @click="confirmAll">{{ $tp('一键确认剩余预测') }}</el-button></div>
         <p class="hint">{{ $tp('难例按预测置信度排序，优先检查漏检、低置信度和类别不匹配的图片。模型类别未匹配时，需手动选择标签。') }}</p>
-        <div class="prediction-grid"><article v-for="row in predictions" :key="row.candidate.id" class="prediction-card" @click="openReview(row)"><div class="image"><img :src="row.previewUrl" :alt="row.imageName" loading="lazy" /><el-tag v-if="row.candidate.hardExample" class="hard-tag" type="warning" size="small">{{ $tp('难例') }}</el-tag></div><div class="prediction-description"><strong>{{ row.imageName }}</strong><span>{{ boxCount(row) }} {{ $tp(countUnits[detail.task.annotationType]) }} · {{ $tp(reviewStates[row.candidate.reviewState]) }}</span><small v-if="row.candidate.reviewError">{{ row.candidate.reviewError }}</small><el-button v-if="row.candidate.reviewState === 'PENDING' && detail.task.taskState === 'REVIEW'" link type="primary">{{ $tp('检查并确认') }}</el-button></div></article></div>
+        <div class="prediction-grid">
+          <article v-for="row in predictions" :key="row.candidate.id" class="prediction-card" @click="openReview(row)">
+            <div class="image"><img :src="row.previewUrl" :alt="row.imageName" loading="lazy" /><el-tag v-if="row.candidate.hardExample" class="hard-tag" type="warning" size="small">{{ $tp('难例') }}</el-tag></div>
+            <div class="prediction-description">
+              <strong>{{ row.imageName }}</strong>
+              <span>{{ boxCount(row) }} {{ $tp(countUnits[detail.task.annotationType]) }} · {{ $tp(reviewStates[row.candidate.reviewState]) }}</span>
+              <small v-if="row.predictionQuality?.suppressedCount">{{ $tp('已合并 {count} 个同类重叠框', { count: row.predictionQuality.suppressedCount }) }}</small>
+              <small v-if="row.predictionQuality?.classConflict" role="status">{{ $tp('类别冲突，需逐图检查后确认') }}</small>
+              <small v-if="row.candidate.reviewError">{{ row.candidate.reviewError }}</small>
+              <el-button v-if="row.candidate.reviewState === 'PENDING' && detail.task.taskState === 'REVIEW'" link type="primary">{{ $tp('检查并确认') }}</el-button>
+            </div>
+          </article>
+        </div>
         <el-empty v-if="!predictions.length" :description="$tp('当前筛选下没有结果')" /><el-pagination v-model:current-page="query.page" :page-size="20" :total="predictionTotal" layout="total, prev, pager, next" @current-change="loadPredictions" />
       </template>
       <details class="round-history"><summary>{{ $tp('轮次与模型记录') }}</summary><el-table :data="detail.rounds"><el-table-column prop="roundNumber" :label="$tp('轮次')" width="70" /><el-table-column prop="versionId" :label="$tp('输入数据集版本 ID')" width="200" /><el-table-column prop="predictedCount" :label="$tp('预测图片')" width="100" /><el-table-column prop="modelSha256" :label="$tp('模型校验值')" min-width="220" /><el-table-column prop="roundState" :label="$tp('状态')" width="100" /></el-table></details>
@@ -35,6 +48,7 @@
 
     <el-dialog v-model="creating" :title="$tp('创建智能标注任务')" width="660px" :close-on-click-modal="false">
       <el-form label-width="110px"><el-form-item :label="$tp('数据集')"><el-select v-model="form.datasetId" filterable remote :remote-method="searchDatasets" :placeholder="$tp('搜索数据集')" style="width:100%" @change="loadOptions"><el-option v-for="dataset in datasets" :key="dataset.id" :label="`${dataset.annotationName} · ${$tp(typeNames[dataset.annotationType])}`" :value="String(dataset.id)" /></el-select></el-form-item>
+        <el-form-item :label="$tp('GPU 设备')"><div style="width:100%"><TrainingComputeSelector v-model="form.computeNodeId" :nodes="computeNodes" :loading="computeLoading" :disabled="busy" :node-label="node => node.name || String(node.id)" @reload="loadCompute" /><el-button link :disabled="computeLoading" @click="loadCompute">{{ $tp('刷新') }}</el-button><p v-if="form.computeNodeId && !selectedCompute?.schedulable" class="hint">{{ $tp('请先在算力市场完成开机与环境检查') }}</p></div></el-form-item>
         <el-form-item :label="$tp('任务名称')"><el-input v-model="form.taskName" maxlength="80" /></el-form-item><el-form-item :label="$tp('标注方式')"><el-radio-group v-model="form.mode" @change="sourceKey = form.mode === 'active' ? 'system:0' : ''"><el-radio value="active">{{ $tp('主动学习') }}</el-radio><el-radio value="model">{{ $tp('指定模型') }}</el-radio></el-radio-group></el-form-item>
         <el-form-item :label="$tp('模型来源')"><el-select v-model="sourceKey" :placeholder="$tp('请选择模型')" style="width:100%" filterable><el-option v-for="source in sources" :key="`${source.type}:${source.id}`" :label="sourceLabel(source)" :value="`${source.type}:${source.id}`" /></el-select></el-form-item>
         <el-form-item :label="$tp('预测阈值')"><el-slider v-model="form.confidence" :min="0.05" :max="0.95" :step="0.05" show-input /></el-form-item>
@@ -57,6 +71,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { listDataProjects } from '@/api/dataManagement'
 import { listSmartTasks, smartOptions, createSmartTask, getSmartTask, smartPredictions, getSmartPrediction, reviewSmartPrediction, confirmSmartBatch, confirmAllSmartPredictions, nextSmartRound, finishSmartTask, retrySmartTask, cancelSmartTask, smartTaskLogs } from '@/api/smartAnnotation'
 import SmartAnnotationReview from './components/SmartAnnotationReview.vue'
+import TrainingComputeSelector from './components/TrainingComputeSelector.vue'
+import { listComputeSelection } from '@/api/compute'
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 
 const route = useRoute(); const router = useRouter()
 const tasks = ref([]); const taskPage = ref(1); const taskTotal = ref(0); const detail = ref(null)
@@ -64,7 +81,17 @@ const loading = ref(false); const busy = ref(false); const creating = ref(false)
 const datasets = ref([]); const options = ref(null); const sourceKey = ref('')
 const predictions = ref([]); const predictionTotal = ref(0); const reviewItem = ref(null)
 const logsOpen = ref(false); const logs = ref('')
-const form = reactive({ datasetId: '', taskName: '', mode: 'active', confidence: 0.25, epochs: 10, reviewSize: 50 })
+const form = reactive({ datasetId: '', computeNodeId: '', taskName: '', mode: 'active', confidence: 0.25, epochs: 20, reviewSize: 50 })
+const computeNodes = ref([]); const computeLoading = ref(false)
+const selectedCompute = computed(() => computeNodes.value.find(node => String(node.id) === form.computeNodeId))
+let computeSequence = 0
+const loadCompute = async () => {
+  const sequence = ++computeSequence; const identity = captureComputeIdentity()
+  const apply = response => { identity.assertCurrent(); if (sequence === computeSequence) computeNodes.value = response.data || [] }
+  computeLoading.value = true
+  try { apply(await listComputeSelection(apply)) } catch (error) { if (sequence === computeSequence) { computeNodes.value = []; handleError(error) } }
+  finally { if (sequence === computeSequence) computeLoading.value = false }
+}
 const query = reactive({ page: 1, state: 'PENDING', hardOnly: false })
 const states = { QUEUED: '等待 GPU', PREPARING: '准备数据', RUNNING: '计算中', REVIEW: '待确认', CONFIRMING: '批量确认中', COMPLETED: '已完成', FAILED: '失败', CANCEL_REQUESTED: '正在取消', CANCELLED: '已取消' }
 const typeNames = { image_classification: '图像分类', object_detection: '物体检测', instance_segmentation: '实例分割', semantic_segmentation: '语义分割' }
@@ -80,9 +107,10 @@ const sourceLabel = source => {
   if (source.type === 'round') return source.name.replace(/ · 第(\d+)轮$/, (_, round) => ` · ${uiText('轮次 {round}', { round })}`)
   return source.name
 }
-const ready = computed(() => form.datasetId && form.taskName.trim() && sourceKey.value && options.value?.unlabeled > 0 && (form.mode !== 'active' || (options.value.unlabeled >= options.value.minUnlabeledImages && options.value.labelCounts.every(label => label.count >= options.value.minBoxesPerLabel))))
+const ready = computed(() => !computeLoading.value && selectedCompute.value?.schedulable && form.datasetId && form.taskName.trim() && sourceKey.value && options.value?.unlabeled > 0 && (form.mode !== 'active' || (options.value.unlabeled >= options.value.minUnlabeledImages && options.value.labelCounts.every(label => label.count >= options.value.minBoxesPerLabel))))
 const boxCount = row => JSON.parse(row.candidate.boxesJson || '[]').length
 const confirmable = computed(() => predictions.value.filter(row => {
+  if (row.predictionQuality?.classConflict) return false
   const boxes = JSON.parse(row.candidate.boxesJson || '[]')
   return row.candidate.reviewState === 'PENDING' && boxes.length && boxes.every(box => box.labelId && box.confidence >= detail.value.task.confidence)
 }))
@@ -105,8 +133,8 @@ const openDataset = () => router.push({ path: '/data-management', query: { datas
 const searchDatasets = async keyword => { try { const result = await listDataProjects({ keyword, size: 100 }); datasets.value = result.records.filter(dataset => typeNames[dataset.annotationType]) } catch (error) { handleError(error) } }
 let optionSequence = 0
 const loadOptions = async () => { const sequence = ++optionSequence; options.value = null; sourceKey.value = ''; try { const result = await smartOptions(form.datasetId); if (sequence === optionSequence) { options.value = result; if (form.mode === 'active') sourceKey.value = 'system:0'; if (!form.taskName) form.taskName = `${datasets.value.find(dataset => String(dataset.id) === form.datasetId)?.annotationName || uiText('数据集')} - ${uiText('智能标注')}` } } catch (error) { handleError(error) } }
-const openCreate = async () => { creating.value = true; await searchDatasets(''); if (route.query.dataset) { form.datasetId = String(route.query.dataset); await loadOptions() } }
-const create = () => run(async () => { const [sourceType, sourceId] = sourceKey.value.split(':'); const result = await createSmartTask({ ...form, taskName: form.taskName.trim(), sourceType, sourceId }); creating.value = false; detail.value = await getSmartTask(result.id); await router.replace({ query: { ...route.query, task: String(result.id) } }); ElMessage.success(uiText('智能标注任务已入队')) })
+const openCreate = async () => { creating.value = true; await loadCompute(); await searchDatasets(''); if (route.query.dataset) { form.datasetId = String(route.query.dataset); await loadOptions() } }
+const create = () => run(async () => { await loadCompute(); if (!selectedCompute.value?.schedulable) throw new Error(uiText("所选 GPU 设备尚未就绪，请刷新后重试")); const [sourceType, sourceId] = sourceKey.value.split(':'); const result = await createSmartTask({ ...form, taskName: form.taskName.trim(), sourceType, sourceId }); creating.value = false; detail.value = await getSmartTask(result.id); await router.replace({ query: { ...route.query, task: String(result.id) } }); ElMessage.success(uiText('智能标注任务已入队')) })
 const openReview = row => run(async () => {
   if (row.candidate.reviewState !== 'PENDING' || detail.value.task.taskState !== 'REVIEW') return
   const result = await getSmartPrediction(detail.value.task.id, row.candidate.id)
@@ -119,11 +147,11 @@ const confirmAll = () => run(async () => { await ElMessageBox.confirm(uiText('�
 const perform = operation => run(async () => { await operation(detail.value.task.id); await refresh() })
 const next = () => run(async () => { await ElMessageBox.confirm(uiText('使用当前已确认标注训练下一轮模型，并重新筛选剩余图片。未确认结果不会用于训练。'), uiText('继续主动学习')); await nextSmartRound(detail.value.task.id); predictions.value = []; await refresh() })
 const finish = () => run(async () => { await ElMessageBox.confirm(uiText('完成任务并保存数据集版本。未确认结果会保留在任务记录中，不会自动写入正式标注。'), uiText('完成智能标注')); await finishSmartTask(detail.value.task.id); await refresh() })
-const cancel = () => run(async () => { await ElMessageBox.confirm(uiText('取消当前智能标注任务，已确认标注保留。运行中的本任务容器将停止。'), uiText('取消智能标注'), { type: 'warning' }); await cancelSmartTask(detail.value.task.id); await refresh() })
+const cancel = () => run(async () => { await ElMessageBox.confirm(uiText('取消当前智能标注任务，已确认标注保留。运行中的本任务进程将停止，等待节点确认后释放使用权。'), uiText('取消智能标注'), { type: 'warning' }); await cancelSmartTask(detail.value.task.id); await refresh() })
 const showLogs = () => run(async () => { logsOpen.value = true; logs.value = await smartTaskLogs(detail.value.task.id) })
 let timer
 onMounted(async () => { if (route.query.task) await enter(String(route.query.task)); else await refresh(); timer = setInterval(() => { if (active.value && !busy.value && !reviewItem.value) refresh() }, 5000) })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => { computeSequence++; clearInterval(timer) })
 </script>
 
 <style scoped>

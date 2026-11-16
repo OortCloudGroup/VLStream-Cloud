@@ -133,7 +133,7 @@ public class ComputePublicTaskAccess {
             .apply("(vls_container_instance.training_task_id IS NOT NULL OR EXISTS (SELECT 1 FROM vls_cloud_training_job bc WHERE bc.container_record_id=vls_container_instance.id)"
                 +" OR (vls_container_instance.create_user IS NOT NULL AND vls_container_instance.create_user<>'' AND CAST(vls_container_instance.create_user AS BINARY)=CAST({0} AS BINARY)))",localViewer())
             .apply("(("+annotation+" AND vls_container_instance.create_user IS NOT NULL AND CAST(vls_container_instance.create_user AS BINARY)=CAST({1} AS BINARY)"
-                +" AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job ac WHERE ac.container_record_id=vls_container_instance.id)"
+                +" AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job ac WHERE ac.container_record_id=vls_container_instance.id AND (ac.smart_round_id IS NULL OR ac.smart_round_id<>vls_container_instance.training_task_id OR CAST(ac.tenant_id AS BINARY)<>CAST(vls_container_instance.tenant_id AS BINARY)))"
                 +" AND EXISTS (SELECT 1 FROM vls_smart_annotation_round ar JOIN vls_smart_annotation_task at ON at.id=ar.task_id"
                 +" WHERE ar.id=vls_container_instance.training_task_id AND CAST(ar.tenant_id AS BINARY)=CAST({0} AS BINARY)"
                 +" AND CAST(at.tenant_id AS BINARY)=CAST({0} AS BINARY) AND at.create_user IS NOT NULL AND at.create_user<>''"
@@ -156,8 +156,13 @@ public class ComputePublicTaskAccess {
             throw new ServiceException("容器的持久任务关联类型未确认");
         if("smart_annotation".equals(records.get(0).get("instance_type"))) {
             requireLegacyCreator(records,"智能标注容器归属未确认或不属于当前用户");
-            if(!jdbc.queryForList("SELECT training_id FROM vls_cloud_training_job WHERE container_record_id=?",Long.class,id).isEmpty())
-                throw new ServiceException("智能标注容器关联类型不一致");
+            List<Map<String,Object>> compute=jdbc.queryForList("SELECT pj.tenant_id,pj.public_owner_subject,pj.options_json,pj.smart_round_id,pj.training_id,pn.scheduling_mode AS node_scheduling_mode FROM vls_cloud_training_job pj LEFT JOIN vls_compute_node pn ON pn.id=pj.node_id WHERE pj.container_record_id=?",id);
+            for(Map<String,Object> job:compute) {
+                if(job.get("training_id")!=null || !Objects.equals(job.get("smart_round_id"),records.get(0).get("training_task_id"))
+                    || !Objects.equals(job.get("tenant_id"),ComputeNodeService.tenant())
+                    || job.get("public_owner_subject")!=null && !allowed(job,viewer(),sharedViewer()))
+                    throw new ServiceException("智能标注算力任务关联或操作身份不匹配");
+            }
             Object round=records.get(0).get("training_task_id");
             if(!(round instanceof Long || round instanceof Integer || round instanceof Short || round instanceof Byte))throw new ServiceException("智能标注容器缺少可信轮次关联");
             annotationRound(((Number)round).longValue());return;

@@ -62,7 +62,7 @@ public class ComputeSharedQueueService {
                 throw new ServiceException("统一平台算力运行环境或工作目录无效");
             return;
         }
-        if (!("localhost".equals(properties.getEnvironmentId()) || "vm".equals(properties.getEnvironmentId())))
+        if (!("localhost".equals(properties.getEnvironmentId()) || "vm".equals(properties.getEnvironmentId()) || "prod-multi".equals(properties.getEnvironmentId())))
             throw new ServiceException("共享GPU缺少稳定平台环境标识");
         String prefix = "192.168.88.173".equals(node.getHost()) ? "/data/work/vlstream-gpu/" : "/home/oort/vlstream/";
         String python = "192.168.88.173".equals(node.getHost()) ? "/data/work/vlstream-gpu/runtime-173/envs/vls-standard/bin/python" : "/home/oort/vlstream/envs/vls-standard/bin/python";

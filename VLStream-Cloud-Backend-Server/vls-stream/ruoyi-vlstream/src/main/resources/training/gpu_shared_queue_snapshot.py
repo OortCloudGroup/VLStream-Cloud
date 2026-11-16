@@ -98,7 +98,7 @@ def summarize(state, gpu, environment, viewer, previous_ticket_key=None):
         env, job, owner = row.get('environment'), row.get('jobId'), row.get('owner')
         approved_environment = isinstance(env, str) and re.fullmatch('[A-Za-z0-9_-]{1,64}', env)
         if (not approved_environment
-                or ('runRoot' not in row and env not in ('localhost', 'vm'))
+                or ('runRoot' not in row and env not in ('localhost', 'vm', 'prod-multi'))
                 or not isinstance(job, str) or str(uuid.UUID(job)) != job
                 or not isinstance(owner, str) or not re.fullmatch('[a-f0-9]{64}', owner)):
             raise ValueError('Invalid ticket identity')

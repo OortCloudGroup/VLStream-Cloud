@@ -787,7 +787,7 @@ const showAnnotationView = ref(false)
 const currentAnnotationData = ref(null)
 const annotationDataLoading = ref(false)
 const annotationLoadError = ref('')
-const annotationImageQuery = ref({ page: 1, size: 10, annotationStatus: 'all', labelId: null })
+const annotationImageQuery = ref({ page: 1, size: 20, annotationStatus: 'all', labelId: null })
 const annotationImageTotal = ref(0)
 let annotationLoadSequence = 0
 onUnmounted(() => { annotationLoadSequence++ })
@@ -1311,7 +1311,7 @@ const handleView = async (row) => {
 
   // annotation
   currentAnnotationData.value = row
-  annotationImageQuery.value = { page: 1, size: 10, annotationStatus: 'all', labelId: null }
+  annotationImageQuery.value = { page: 1, size: 20, annotationStatus: 'all', labelId: null }
   annotationImageTotal.value = 0
   showAnnotationView.value = true
 

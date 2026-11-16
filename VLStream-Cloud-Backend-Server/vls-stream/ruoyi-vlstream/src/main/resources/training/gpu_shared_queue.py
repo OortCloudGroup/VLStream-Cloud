@@ -17,7 +17,7 @@ import sys
 import uuid
 
 MODE = 'SHARED_GPU_QUEUE'
-ENVIRONMENTS = {'localhost', 'vm'}
+ENVIRONMENTS = {'localhost', 'vm', 'prod-multi'}
 HOME = Path('/home/oort')
 ROOT = HOME / '.local/state/vlstream-shared/v1'
 RUN_BASES = ('/data/work/vlstream-gpu', '/home/oort/vlstream')

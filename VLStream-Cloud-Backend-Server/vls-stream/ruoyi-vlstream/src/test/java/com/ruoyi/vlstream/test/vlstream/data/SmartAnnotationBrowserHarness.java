@@ -55,7 +55,7 @@ public class SmartAnnotationBrowserHarness {
             String key = "road-" + index + ".png"; javax.imageio.ImageIO.write(bitmap, "png", artifacts().resolve("test-objects").resolve(key).toFile());
             AnnotationImage image = new AnnotationImage(); image.setAnnotationId(dataset); image.setImageName(key); image.setOriginalName(key); image.setLocalPath(key); image.setMediaType("image"); image.setMediaWidth(640); image.setMediaHeight(400); image.setQualityStatus("accepted"); image.setDatasetSplit("unassigned"); image.setIsDeleted(0); image.setStatus(1); sql.getMapper(DataSampleMapper.class).insert(image);
         }
-        SmartAnnotationRequests.Create create = new SmartAnnotationRequests.Create(); create.setTaskName("道路车辆预标注验收"); create.setDatasetId(dataset); create.setMode("model"); create.setSourceType("model"); create.setSourceId(100L);
+        SmartAnnotationRequests.Create create = new SmartAnnotationRequests.Create(); create.setTaskName("道路车辆预标注验收"); create.setDatasetId(dataset); create.setComputeNodeId(10L); create.setMode("model"); create.setSourceType("model"); create.setSourceId(100L);
         SmartAnnotationTask task = smart.create(create); SmartAnnotationRound round = smart.current(task);
         jdbc.update("UPDATE vls_smart_annotation_task SET task_state='REVIEW' WHERE id=?", task.getId()); jdbc.update("UPDATE vls_smart_annotation_round SET round_state='REVIEW',predicted_count=3 WHERE id=?", round.getId());
         int index = 0;
@@ -79,7 +79,7 @@ public class SmartAnnotationBrowserHarness {
             for (int index = 1; index <= 2; index++) {
                 AnnotationImage image = new AnnotationImage(); image.setAnnotationId(dataset); image.setImageName("road-" + index + ".png"); image.setOriginalName(image.getImageName()); image.setLocalPath(image.getImageName()); image.setMediaType("image"); image.setMediaWidth(640); image.setMediaHeight(400); image.setQualityStatus("accepted"); image.setDatasetSplit("unassigned"); image.setIsDeleted(0); image.setStatus(1); sql.getMapper(DataSampleMapper.class).insert(image);
             }
-            SmartAnnotationRequests.Create create = new SmartAnnotationRequests.Create(); create.setTaskName(type.getLabel() + "智能标注验收"); create.setDatasetId(dataset); create.setMode("model"); create.setSourceType("system"); create.setSourceId(0L);
+            SmartAnnotationRequests.Create create = new SmartAnnotationRequests.Create(); create.setTaskName(type.getLabel() + "智能标注验收"); create.setDatasetId(dataset); create.setComputeNodeId(10L); create.setMode("model"); create.setSourceType("system"); create.setSourceId(0L);
             SmartAnnotationTask task = smart.create(create); SmartAnnotationRound round = smart.current(task);
             jdbc.update("UPDATE vls_smart_annotation_task SET task_state='REVIEW' WHERE id=?", task.getId()); jdbc.update("UPDATE vls_smart_annotation_round SET round_state='REVIEW',predicted_count=2 WHERE id=?", round.getId());
             for (AnnotationImage image : data.snapshot(dataset).getSamples()) {

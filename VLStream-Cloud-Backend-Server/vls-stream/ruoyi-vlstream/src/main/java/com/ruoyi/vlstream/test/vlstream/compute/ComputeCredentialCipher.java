@@ -28,8 +28,9 @@ public class ComputeCredentialCipher {
     }
     public String decrypt(String encrypted) {
         try {
-            if (encrypted == null || !encrypted.startsWith("v1:")) throw new IllegalArgumentException();
-            byte[] value = Base64.getDecoder().decode(encrypted.substring(3));
+            String prefix = "v1:";
+            if (encrypted == null || !encrypted.startsWith(prefix)) throw new IllegalArgumentException();
+            byte[] value = Base64.getDecoder().decode(encrypted.substring(prefix.length()));
             if (value.length < 29) throw new IllegalArgumentException();
             return new String(cipher(Cipher.DECRYPT_MODE, Arrays.copyOf(value, 12)).doFinal(Arrays.copyOfRange(value, 12, value.length)), StandardCharsets.UTF_8);
         } catch (Exception e) { throw new IllegalStateException("算力凭据解密失败，请核对部署密钥", e); }

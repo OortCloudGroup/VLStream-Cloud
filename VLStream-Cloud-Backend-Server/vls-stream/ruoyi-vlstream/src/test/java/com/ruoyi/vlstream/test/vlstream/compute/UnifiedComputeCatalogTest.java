@@ -52,7 +52,7 @@ public class UnifiedComputeCatalogTest {
     ConfiguredComputeRegistry registry() {
         ConfiguredComputeRegistry value = new ConfiguredComputeRegistry(new ConfiguredComputeProperties(), new ComputeTrustedSelfAssetsProperties(), json, jdbc);
         ReflectionTestUtils.setField(value, "catalogProperties", properties);
-        ReflectionTestUtils.setField(value, "credentialCipher", cipher); value.initialize(); return value;
+        value.initialize(); return value;
     }
 
     ConfiguredComputeProperties.Resource resource(long revision) throws Exception {
@@ -96,7 +96,7 @@ public class UnifiedComputeCatalogTest {
         ConfiguredComputeProperties.Resource value = resource(1);
         value.setSpecifications(new LinkedHashMap<>()); value.getSpecifications().put("cpuCount", 32); value.getSpecifications().put("password", "never-public");
         install(value, value); ComputeNode node = registry.resolve(-300L);
-        assertEquals(-300L, registry.resolve(300L).getId()); assertEquals("fixture-password", cipher.decrypt(node.getPasswordCipher()));
+        assertEquals(-300L, registry.resolve(300L).getId()); assertEquals("fixture-password", node.getConfigurationPassword());
         ComputeTrustedSelfPolicy policy = new ComputeTrustedSelfPolicy(new ComputeTrustedSelfAssetsProperties());
         assertEquals("asset-new-gpu", policy.requireAsset(node).getAssetId());
         ComputeSharedQueueProperties queue = new ComputeSharedQueueProperties(); queue.setEnvironmentId("localhost");

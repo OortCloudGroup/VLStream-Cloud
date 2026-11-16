@@ -10,6 +10,8 @@ public class CloudTrainingJob {
     private String id;
     private String tenantId;
     private Long trainingId;
+    private Long smartRoundId;
+    public boolean isAnnotation() { return smartRoundId != null; }
     private Long nodeId;
     private Long containerRecordId;
     private Long datasetId;

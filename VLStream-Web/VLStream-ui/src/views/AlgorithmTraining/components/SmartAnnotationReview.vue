@@ -2,6 +2,8 @@
   <el-dialog :model-value="Boolean(item)" :title="$tp(title)" width="94vw" top="4vh" :close-on-click-modal="false" :before-close="close">
     <template v-if="item">
       <div class="review-heading"><span>{{ item.imageName }}</span><span>{{ item.width }} × {{ item.height }} · {{ $tp(typeNames[annotationType]) }}</span></div>
+      <el-alert v-if="item.predictionQuality?.classConflict" :title="$tp('模型给出了类别不同且高度重叠的框，请核对类别及框的位置后确认。')" type="warning" :closable="false" show-icon />
+      <p v-if="item.predictionQuality?.suppressedCount">{{ $tp('已合并 {count} 个同类重叠框，保留置信度最高的预测。', { count: item.predictionQuality.suppressedCount }) }}</p>
       <PixelAnnotationEditor v-if="annotationType !== 'object_detection'" ref="pixelEditor" :kind="annotationType" :image-url="item.previewUrl" :width="item.width" :height="item.height" :regions="boxes" :labels="labels" :disabled="saving" @change="dirty = true" />
       <div v-else class="review-workspace">
         <div class="review-canvas">

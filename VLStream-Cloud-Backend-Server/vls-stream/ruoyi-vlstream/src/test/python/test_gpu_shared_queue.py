@@ -63,6 +63,15 @@ class SharedQueueTest(unittest.TestCase):
         self.registry.release(local, self.result(local))
         self.assertTrue(self.registry.claim(vm))
 
+    def test_production_uses_same_fifo_but_cannot_use_local_task_path(self):
+        local, production = self.ticket(), self.ticket('prod-multi', 'd')
+        self.registry.register([local, production])
+        self.assertFalse(self.registry.claim(production))
+        self.assertTrue(self.registry.claim(local))
+        invalid = dict(production, runDir=local['runDir'])
+        with self.assertRaises(ValueError):
+            queue.validate_ticket(invalid)
+
     def test_catalog_run_root_supports_new_machine_paths_and_environments(self):
         ticket = self.ticket('cluster_a')
         ticket['runRoot'] = str(self.root / 'new-machine')

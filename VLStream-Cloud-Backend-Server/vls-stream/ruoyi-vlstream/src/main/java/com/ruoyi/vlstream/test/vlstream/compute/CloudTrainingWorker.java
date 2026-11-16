@@ -53,6 +53,12 @@ public class CloudTrainingWorker {
     private ComputeSharedQueueService sharedQueue;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePaidArchiveRecoveryService paidArchives;
+    @org.springframework.beans.factory.annotation.Autowired
+    private SmartAnnotationComputeService annotations;
+    @org.springframework.beans.factory.annotation.Autowired
+    private SmartAnnotationComputeDatasetWriter annotationDatasets;
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker> annotationWorker;
 
     @Scheduled(fixedDelay = 5000, initialDelay = 20000)
     public void scan() {
@@ -92,7 +98,11 @@ public class CloudTrainingWorker {
                 }
                 catch (ServiceException e) {
                     if(java.util.Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE,e.getCode())) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",limited(e.getMessage()),job.getTenantId(),job.getId());
-                    else if(sharedQueue!=null && sharedQueue.isSharedJob(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待节点确认，租约未释放；请管理员核对配置/队列",job.getTenantId(),job.getId());
+                    else if(sharedQueue!=null && sharedQueue.isSharedJob(job)) {
+                        String reason=limited(e.getMessage());
+                        jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待处理，使用权未释放："+reason,job.getTenantId(),job.getId());
+                        log.warn("Shared compute awaiting confirmation: job={}, reason={}",job.getId(),reason);
+                    }
                     else if(paidArchives!=null && paidArchives.hasCheckpoint(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","原任务归档待恢复，退出证据及原盘产物保留",job.getTenantId(),job.getId());
                     else finish(job, "FAILED", limited(e.getMessage()), null);
                 }
@@ -130,7 +140,7 @@ public class CloudTrainingWorker {
         }
         if (!node.isEnabled() && (!node.isConfigurationManaged() || "QUEUED".equals(job.getJobState()) && !cancelled(job))) return;
         if ("QUEUED".equals(job.getJobState())) phase(job, "PREPARING", "正在上传固定版本的数据集", 0, 0);
-        if ("PREPARING".equals(job.getJobState()) && !cancelled(job)) persistDatasetReference(job, datasets.ensureArtifact(job));
+        if (!job.isAnnotation() && "PREPARING".equals(job.getJobState()) && !cancelled(job)) persistDatasetReference(job, datasets.ensureArtifact(job));
         try (ComputeSsh.Connection connection = ssh.open(node)) {
             String configPath = job.getRunDir() + "/job.json";
             String prepared = connection.execute("test -s " + quote(configPath) + " && echo READY || echo MISSING", 20).trim();
@@ -142,8 +152,11 @@ public class CloudTrainingWorker {
                 }
                 if (!"PREPARING".equals(job.getJobState())) throw new ServiceException("实例中的本轮任务文件已缺失，无法恢复运行状态");
                 connection.mkdir(job.getRunDir());
-                datasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection);
+                List<Map<String,Object>> predictionImages = job.isAnnotation()
+                    ? annotationDatasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection) : null;
+                if (!job.isAnnotation()) datasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection);
                 Map<String, Object> config = json.readValue(job.getOptionsJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
+                if (predictionImages != null) config.put("images", predictionImages);
                 config.put("annotationType", job.getAnnotationType()); config.put("datasetId", String.valueOf(job.getDatasetId()));
                 config.put("workDir", node.getWorkDir()); config.put("gpuIndex", company ? json.readTree(job.getOptionsJson()).path("sharedQueue").path("gpuIndex").asInt(-1) : node.getGpuIndex());
                 config.put("model", prepareBaseModel(job, connection));
@@ -153,6 +166,10 @@ public class CloudTrainingWorker {
             String command = (company?sharedQueue.pythonCommand(node):quote(node.getPythonPath())) + " " + quote(job.getRunDir() + "/cloud_training_runner.py");
             JsonNode result = remoteStatus(connection.execute(command + (cancelled(job) ? " cancel " : " status ") + quote(configPath), 45));
             jdbc.update("UPDATE vls_cloud_training_job SET log_tail=? WHERE tenant_id=? AND id=?", result.path("logs").asText(""), job.getTenantId(), job.getId());
+            if (job.isAnnotation() && Arrays.asList("TRAINING","PREDICTING").contains(result.path("stage").asText())
+                && result.path("total").asInt()>0 && result.path("current").asInt()>=0 && result.path("current").asInt()<=result.path("total").asInt())
+                jdbc.update("UPDATE vls_smart_annotation_round SET progress_stage=?,progress_current=?,progress_total=? WHERE tenant_id=? AND id=?",
+                    result.path("stage").asText(),result.path("current").asInt(),result.path("total").asInt(),job.getTenantId(),job.getSmartRoundId());
             String state = result.path("state").asText();
             if(archiveOnly && !"SUCCEEDED".equals(state))throw new IOException("原归档任务终态已变化，不能重新训练或覆盖证据");
             if ("SUCCEEDED".equals(state)) {
@@ -167,6 +184,7 @@ public class CloudTrainingWorker {
                     if(paidArchives.hasCheckpoint(job) && !paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
                 }
                 archive(job, connection, result);
+                if (job.isAnnotation()) importAnnotationResults(job, connection, result);
                 if(company) {
                     String classes=new TrainingDatasetLayout(job.getAnnotationType(),data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir()+"/dataset");
                     sharedQueue.release(connection,node,job,result,ModelArtifactObjectStore.hash(classes));
@@ -180,7 +198,7 @@ public class CloudTrainingWorker {
                 if (!cancelled(job)) connection.execute("nohup " + command + " run " + quote(configPath)
                     + " </dev/null >>" + quote(job.getRunDir() + "/launcher.log") + " 2>&1 &", 20);
             } else if ("RUNNING".equals(state)) {
-                phase(job, "RUNNING", cancelled(job) ? "等待训练进程确认停止" : "所选 AutoDL 实例训练中", Math.min(98, result.path("progress").asInt()), result.path("epoch").asInt());
+                phase(job, "RUNNING", cancelled(job) ? "等待任务进程确认停止" : "所选 GPU 节点执行中", Math.min(98, result.path("progress").asInt()), result.path("epoch").asInt());
             } else throw new IOException("实例返回了未知任务状态");
         }
     }
@@ -243,7 +261,7 @@ public class CloudTrainingWorker {
         String sha = result.path("sha256").asText(); long size = result.path("size").asLong();
         if (!sha.matches("[a-f0-9]{64}") || size < 1) throw new IOException("实例产物缺少校验信息");
         String yaml = new TrainingDatasetLayout(job.getAnnotationType(), data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir() + "/dataset");
-        if(paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+        if(job.isAnnotation() || paidArchives!=null && paidArchives.hasCheckpoint(job)) {
             requireOriginalStoredArtifact(job.modelKey(),sha,size,false);
             requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,false);
         }
@@ -254,7 +272,7 @@ public class CloudTrainingWorker {
         })) throw new IOException("PT 归档等待重试");
         // archive() may observe a concurrent READY row after the preflight. Completion must
         // still match this original result and classes, including that short-circuit path.
-        if(paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+        if(job.isAnnotation() || paidArchives!=null && paidArchives.hasCheckpoint(job)) {
             requireOriginalStoredArtifact(job.modelKey(),sha,size,true);
             requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,true);
         }
@@ -269,11 +287,25 @@ public class CloudTrainingWorker {
     private boolean cancelled(CloudTrainingJob job) {
         return jdbc.queryForObject("SELECT cancel_requested FROM vls_cloud_training_job WHERE tenant_id=? AND id=?", Boolean.class, job.getTenantId(), job.getId());
     }
+    private void importAnnotationResults(CloudTrainingJob job, ComputeSsh.Connection connection, JsonNode result) throws IOException {
+        String sha=result.path("predictionsSha256").asText(); long size=result.path("predictionsSize").asLong();
+        if(!sha.matches("[a-f0-9]{64}") || size<1 || size>64*1024*1024)throw new IOException("预标注结果缺少有效摘要或超过限制");
+        Path root=Paths.get(tempDir);Files.createDirectories(root);
+        Path local=Files.createTempFile(root,"annotation-result-",".json");
+        try {
+            connection.downloadBounded(job.getRunDir()+"/results.json",local,64*1024*1024);
+            if(Files.size(local)!=size || !digest(local).equals(sha))throw new IOException("预标注结果传输校验失败");
+            JsonNode predictions=json.readTree(local.toFile());
+            if(!result.path("sha256").asText().equals(predictions.path("modelSha256").asText()) || !job.getAnnotationType().equals(predictions.path("annotationType").asText()))throw new IOException("预标注结果与模型或任务类型不匹配");
+            annotationWorker.getObject().importComputeResults(job.getSmartRoundId(),predictions,job.modelKey(),result.path("sha256").asText());
+        } finally { Files.deleteIfExists(local); }
+    }
     private void phase(CloudTrainingJob job, String state, String message, int progress, int epoch) {
         new TransactionTemplate(transactions).execute(tx -> {
             jdbc.update("UPDATE vls_cloud_training_job SET job_state=?,message=?,progress=?,epoch_current=?,update_time=NOW() WHERE tenant_id=? AND id=?", state, message, progress, epoch, job.getTenantId(), job.getId());
             jdbc.update("UPDATE vls_container_instance SET instance_status=?,error_message=NULL WHERE tenant_id=? AND id=?", "PREPARING".equals(state) ? "starting" : "running", job.getTenantId(), job.getContainerRecordId());
-            jdbc.update("UPDATE vls_algorithm_training SET train_status=?,progress=?,epoch_current=?,start_time=COALESCE(start_time,NOW()),error_message=NULL WHERE tenant_id=? AND id=?", "PREPARING".equals(state) ? "pending" : "training", progress, epoch, job.getTenantId(), job.getTrainingId());
+            if (job.isAnnotation()) annotations.phase(job,state,message);
+            else jdbc.update("UPDATE vls_algorithm_training SET train_status=?,progress=?,epoch_current=?,start_time=COALESCE(start_time,NOW()),error_message=NULL WHERE tenant_id=? AND id=?", "PREPARING".equals(state) ? "pending" : "training", progress, epoch, job.getTenantId(), job.getTrainingId());
             return null;
         });
         job.setJobState(state);
@@ -285,7 +317,8 @@ public class CloudTrainingWorker {
             String trainingState = success ? "completed" : "CANCELLED".equals(state) ? "stop" : "failed";
             jdbc.update("UPDATE vls_cloud_training_job SET job_state=?,message=?,progress=CASE WHEN ?='COMPLETED' THEN 100 ELSE progress END,update_time=NOW() WHERE tenant_id=? AND id=?", state, message, state, job.getTenantId(), job.getId());
             jdbc.update("UPDATE vls_container_instance SET instance_status=?,stop_time=NOW(),error_message=? WHERE tenant_id=? AND id=?", success ? "completed" : "CANCELLED".equals(state) ? "cancelled" : "error", success ? null : message, job.getTenantId(), job.getContainerRecordId());
-            jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=CASE WHEN ?='completed' THEN 100 ELSE progress END,error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
+            if (job.isAnnotation()) annotations.finished(job,state,message);
+            else jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=CASE WHEN ?='completed' THEN 100 ELSE progress END,error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
             return null;
         });
     }

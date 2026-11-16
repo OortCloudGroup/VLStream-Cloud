@@ -28,8 +28,6 @@ public class ConfiguredComputeRegistry {
     private final Map<Long, Object> monitors = new ConcurrentHashMap<>();
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputeCatalogProperties catalogProperties;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private ComputeCredentialCipher credentialCipher;
     private boolean catalogFresh;
     private long catalogCheckedAt;
     private final java.util.concurrent.locks.ReentrantReadWriteLock admissionLock = new java.util.concurrent.locks.ReentrantReadWriteLock(true);
@@ -81,11 +79,11 @@ public class ConfiguredComputeRegistry {
                 node.setUsername(asset.getUsername()); node.setHostKey(asset.getHostKey());
                 if (!targets.add(node.getHost() + ":" + node.getPort() + "/" + node.getGpuIndex())) throw invalid();
             }
-            if (resource.getExecutionRevision() > 0) {
+            if (resource.getExecutionRevision() > 0 || ComputeDeploymentSshIdentity.PASSWORD.equals(resource.getAuthMode())) {
                 node.setAuthMode(resource.getAuthMode());
                 if (ComputeDeploymentSshIdentity.PASSWORD.equals(resource.getAuthMode())) {
-                    if (resource.getPassword() == null || resource.getPassword().isEmpty() || credentialCipher == null) throw invalid();
-                    node.setPasswordCipher(credentialCipher.encrypt(resource.getPassword()));
+                    if (resource.getPassword() == null || resource.getPassword().isEmpty()) throw invalid();
+                    node.setConfigurationPassword(resource.getPassword());
                 } else if (!ComputeDeploymentSshIdentity.KEY.equals(resource.getAuthMode())) throw invalid();
             }
             register(resource,node);
@@ -281,7 +279,7 @@ public class ConfiguredComputeRegistry {
         }
         trusted.setAssets(new ArrayList<>(unique.values()));
         ConfiguredComputeRegistry candidate = new ConfiguredComputeRegistry(source, trusted, json, jdbc);
-        candidate.credentialCipher = credentialCipher; candidate.initialize();
+        candidate.initialize();
         ComputeTrustedSelfPolicy policy = new ComputeTrustedSelfPolicy(trusted);
         for (ComputeNode node : candidate.resources.values()) if ("self".equals(node.getProvider())) try { policy.requireAsset(node); }
         catch (IOException invalid) { throw invalid(); }

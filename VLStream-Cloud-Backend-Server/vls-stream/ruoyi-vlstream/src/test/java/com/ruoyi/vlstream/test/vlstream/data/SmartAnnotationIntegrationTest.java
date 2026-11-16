@@ -66,6 +66,7 @@ class SmartAnnotationIntegrationTest {
     static void applyFourTypeMigration(JdbcTemplate jdbc) throws Exception {
         String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_022__four_type_annotation_payloads.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+        jdbc.execute("ALTER TABLE vls_smart_annotation_task ADD COLUMN compute_node_id BIGINT NULL");
     }
 
     Long image(int number) {
@@ -76,7 +77,7 @@ class SmartAnnotationIntegrationTest {
     }
 
     SmartAnnotationTask create(String mode) {
-        SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create(); request.setDatasetId(dataset); request.setTaskName("Integration round"); request.setMode(mode); request.setSourceType("model"); request.setSourceId(100L);
+        SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create(); request.setDatasetId(dataset); request.setComputeNodeId(10L); request.setTaskName("Integration round"); request.setMode(mode); request.setSourceType("model"); request.setSourceId(100L);
         return smart.create(request);
     }
 
@@ -176,7 +177,7 @@ class SmartAnnotationIntegrationTest {
         }
         DatasetAnnotationEditor.Edit edit = new DatasetAnnotationEditor.Edit(); edit.setRevision(String.valueOf(editor.read(dataset, first).get("revision"))); edit.setBoxes(Collections.singletonList(region)); editor.save(dataset, first, edit);
         assertThrows(ServiceException.class, () -> editor.save(dataset, first, edit));
-        SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create(); request.setDatasetId(dataset); request.setTaskName(type); request.setMode("model"); request.setSourceType("system"); request.setSourceId(0L);
+        SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create(); request.setDatasetId(dataset); request.setComputeNodeId(10L); request.setTaskName(type); request.setMode("model"); request.setSourceType("system"); request.setSourceId(0L);
         SmartAnnotationTask task = smart.create(request);
         SmartAnnotationCandidate candidate = prediction(task, second, label); region.setConfidence(.9);
         candidate.setBoxesJson(data.writeJson(Collections.singletonList(region))); candidate.setSummaryJson(data.writeJson(AnnotationPayloads.summary(Collections.singletonList(region)))); sql.getMapper(SmartAnnotationCandidateMapper.class).updateById(candidate);
@@ -232,6 +233,7 @@ class SmartAnnotationIntegrationTest {
             ReflectionTestUtils.setField(result, "annotationLabelService", mock(IVlsAnnotationLabelService.class));
             return result;
         }
+        @Bean com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService compute() { return mock(com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService.class); }
         @Bean SmartAnnotationService smart(SqlSessionTemplate sql, DataManagementService data, DataMediaStorage storage, IVlsAnnotationInstanceService annotations, ObjectMapper json) {
             VlsAlgorithmModelMapper models = mock(VlsAlgorithmModelMapper.class); AlgorithmModel model = new AlgorithmModel(); model.setId(100L); model.setVersion(1); model.setModelName("Test detector"); model.setModelPath("/data/work/model.pt");
             when(models.selectOne(any())).thenReturn(model);

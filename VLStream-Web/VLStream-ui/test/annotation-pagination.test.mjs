@@ -10,6 +10,12 @@ const loader = source.slice(start, end)
 const image = id => ({ id, imageName: 'same-name.jpg', previewUrl: `/image/${id}`, instances: [] })
 const page = (current, records, total = 330) => ({ current, records, total })
 
+test('initial and newly opened annotation projects default to twenty images', () => {
+  assert.match(source, /const annotationImageQuery = ref\(\{ page: 1, size: 20,/)
+  const openProject = source.slice(source.indexOf('const handleView ='), source.indexOf('// Generate dataset'))
+  assert.match(openProject, /annotationImageQuery\.value = \{ page: 1, size: 20,/)
+})
+
 function harness(load) {
   const ref = value => ({ value })
   const state = {
