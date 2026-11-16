@@ -5,6 +5,13 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingJob;
+import com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService;
+import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO;
+import org.springblade.core.mp.support.Query;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmCategoryEnum;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
@@ -27,6 +34,8 @@ import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -69,13 +78,21 @@ class VlsAlgorithmTrainingControllerTest {
 		com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO empty = new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO();
 		com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO valid = new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO();
 		valid.setAlgorithmId(50L);
+        AlgorithmTrainingVO duplicate = new AlgorithmTrainingVO();
+        duplicate.setAlgorithmId(50L);
+        missing.setTrainType(AlgorithmCategoryEnum.detect);
+        missing.setTargetModel("stale.pt");
+        empty.setTrainType(AlgorithmCategoryEnum.detect);
+        empty.setTargetModel("stale.pt");
 		Algorithm algorithm = new Algorithm();
+        algorithm.setId(50L);
 		algorithm.setName("安全绳");
 		algorithm.setCategory(AlgorithmCategoryEnum.detect);
 		algorithm.setPtModelFilePath("/models/yolov8m.pt");
-		when(algorithms.getById(50L)).thenReturn(algorithm);
-		com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO> page = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 5, 3);
-		page.setRecords(Arrays.asList(missing, empty, valid));
+        when(algorithms.listByIds(new LinkedHashSet<>(Arrays.asList(missing.getAlgorithmId(), 50L))))
+            .thenReturn(Collections.singletonList(algorithm));
+        Page<AlgorithmTrainingVO> page = new Page<>(2, 5, 9);
+        page.setRecords(Arrays.asList(missing, empty, valid, duplicate));
 		when(service.selectVlsAlgorithmTrainingPage(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(page);
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
         setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
@@ -84,12 +101,95 @@ class VlsAlgorithmTrainingControllerTest {
 		setField(controller, "algorithmService", algorithms);
 		R<com.baomidou.mybatisplus.core.metadata.IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO>> response = controller.page(new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO(), new org.springblade.core.mp.support.Query());
 		assertTrue(response.isSuccess());
-		assertEquals(3, response.getData().getTotal());
+        org.junit.jupiter.api.Assertions.assertSame(page, response.getData());
+        assertEquals(9, response.getData().getTotal());
+        assertEquals(2, response.getData().getCurrent());
+        assertEquals(5, response.getData().getSize());
+        assertEquals(Arrays.asList(missing, empty, valid, duplicate), response.getData().getRecords());
+        verify(algorithms).listByIds(new LinkedHashSet<>(Arrays.asList(missing.getAlgorithmId(), 50L)));
+        org.mockito.Mockito.verifyNoMoreInteractions(algorithms);
+        org.junit.jupiter.api.Assertions.assertNull(missing.getTrainType());
+        org.junit.jupiter.api.Assertions.assertNull(missing.getTargetModel());
+        org.junit.jupiter.api.Assertions.assertNull(empty.getTrainType());
+        org.junit.jupiter.api.Assertions.assertNull(empty.getTargetModel());
+        assertEquals(AlgorithmCategoryEnum.detect, valid.getTrainType());
+        assertEquals("安全绳", duplicate.getAlgorithmName());
+        assertEquals(AlgorithmCategoryEnum.detect, duplicate.getTrainType());
+        assertEquals("/models/yolov8m.pt", duplicate.getTargetModel());
 		assertEquals("关联算法不存在", missing.getAlgorithmName());
 		assertEquals("关联算法不存在", empty.getAlgorithmName());
 		assertEquals("安全绳", valid.getAlgorithmName());
 		assertEquals("/models/yolov8m.pt", valid.getTargetModel());
 	}
+
+    @Test
+    void pageSkipsAlgorithmLookupForEmptyPageAndNullAlgorithmIds() throws Exception {
+        IVlsAlgorithmTrainingService service = mock(IVlsAlgorithmTrainingService.class);
+        IVlsAlgorithmService algorithms = mock(IVlsAlgorithmService.class);
+        CloudTrainingService cloud = mock(CloudTrainingService.class);
+        VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "vlsAlgorithmTrainingService", service);
+        setField(controller, "algorithmService", algorithms);
+        setField(controller, "cloudTrainingService", cloud);
+        Page<AlgorithmTrainingVO> page = new Page<>(1, 5, 0);
+        when(service.selectVlsAlgorithmTrainingPage(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+            .thenReturn(page);
+
+        assertTrue(controller.page(new AlgorithmTrainingVO(), new Query()).getData().getRecords().isEmpty());
+        AlgorithmTrainingVO missing = new AlgorithmTrainingVO();
+        page.setRecords(Collections.singletonList(missing));
+        controller.page(new AlgorithmTrainingVO(), new Query());
+        assertEquals("关联算法不存在", missing.getAlgorithmName());
+        org.mockito.Mockito.verifyNoInteractions(algorithms, cloud);
+    }
+
+    @Test
+    void pageStillReadsEachCloudJobAndPropagatesAuthorizationFailure() throws Exception {
+        IVlsAlgorithmTrainingService service = mock(IVlsAlgorithmTrainingService.class);
+        IVlsAlgorithmService algorithms = mock(IVlsAlgorithmService.class);
+        CloudTrainingService cloud = mock(CloudTrainingService.class);
+        AlgorithmTrainingVO first = new AlgorithmTrainingVO();
+        first.setId(1L);
+        first.setConfigParams("{\"cloudJobId\":\"first\"}");
+        AlgorithmTrainingVO second = new AlgorithmTrainingVO();
+        second.setId(2L);
+        second.setConfigParams("{\"cloudJobId\":\"second\"}");
+        Page<AlgorithmTrainingVO> page = new Page<>(1, 5, 2);
+        page.setRecords(Arrays.asList(first, second));
+        when(service.selectVlsAlgorithmTrainingPage(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+            .thenReturn(page);
+        CloudTrainingJob firstJob = new CloudTrainingJob();
+        firstJob.setJobState("RUNNING");
+        firstJob.setMessage("training");
+        CloudTrainingJob secondJob = new CloudTrainingJob();
+        secondJob.setJobState("QUEUED");
+        secondJob.setMessage("waiting");
+        when(cloud.current(first)).thenReturn(firstJob);
+        when(cloud.current(second)).thenReturn(secondJob);
+        VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "vlsAlgorithmTrainingService", service);
+        setField(controller, "algorithmService", algorithms);
+        setField(controller, "cloudTrainingService", cloud);
+
+        R<IPage<AlgorithmTrainingVO>> response = controller.page(new AlgorithmTrainingVO(), new Query());
+        assertTrue(response.isSuccess());
+        assertEquals("RUNNING", first.getExecutionStage());
+        assertEquals("training", first.getExecutionMessage());
+        assertEquals("QUEUED", second.getExecutionStage());
+        assertEquals("waiting", second.getExecutionMessage());
+        verify(cloud).current(first);
+        verify(cloud).current(second);
+        org.mockito.Mockito.verifyNoMoreInteractions(cloud);
+
+        ServiceException denied = new ServiceException("线上训练记录不存在或无权访问");
+        when(cloud.current(second)).thenThrow(denied);
+        org.junit.jupiter.api.Assertions.assertSame(denied,
+            org.junit.jupiter.api.Assertions.assertThrows(ServiceException.class,
+                () -> controller.page(new AlgorithmTrainingVO(), new Query())));
+        verify(cloud, org.mockito.Mockito.times(2)).current(first);
+        verify(cloud, org.mockito.Mockito.times(2)).current(second);
+        org.mockito.Mockito.verifyNoInteractions(algorithms);
+    }
 
 	@Test
 	void completedStatusWaitsUntilPtPathHasBeenPersisted() throws Exception {

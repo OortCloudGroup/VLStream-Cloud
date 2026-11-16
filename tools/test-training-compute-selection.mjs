@@ -72,7 +72,9 @@ test('configured company GPU IDs survive refresh and submit without a database n
 test('saved configured GPU IDs restore as strings from historical training configuration', async () => {
   const device = { ...gpu, id: '-99' }
   const f = fixture([device]); await f.api.restoreTrainingConfig({ configParams: JSON.stringify({ computeNodeId: '-99', modelSource: 'preset' }) })
-  assert.equal(f.api.computeNodeId.value, '-99'); assert.equal(f.api.selectedCompute.value.id, '-99')
+  assert.equal(f.api.computeNodeId.value, '-99')
+  await f.api.loadComputeNodes()
+  assert.equal(f.api.selectedCompute.value.id, '-99')
   assert.equal(f.calls.starts.length, 0)
 })
 test('selector contains no virtual default resource or legacy submission', () => {
@@ -230,6 +232,49 @@ test('unmounted view discards pending inventory', async () => {
   const f = fixture(); const response = deferred(); f.context.listComputeSelection = () => response.promise
   const pending = f.api.loadComputeNodes(); f.api.invalidate(); response.resolve({ data: [gpu] }); await pending
   assert.equal(f.api.computeNodes.value.length, 0)
+})
+test('background snapshots do not hold list loading and obsolete callbacks cannot replace inventory', async () => {
+  const f = fixture(); const callbacks = []
+  f.context.listComputeSelection = async callback => { callbacks.push(callback); return { data: [gpu] } }
+  await f.api.loadComputeNodes()
+  assert.equal(f.api.computeNodesLoading.value, false)
+  callbacks[0]({ data: [otherGpu] })
+  assert.equal(f.api.computeNodes.value[0].id, otherGpu.id)
+  await f.api.loadComputeNodes()
+  callbacks[0]({ data: [] })
+  assert.equal(f.api.computeNodes.value[0].id, gpu.id)
+  f.api.invalidate()
+  callbacks[1]({ data: [] })
+  assert.equal(f.api.computeNodes.value[0].id, gpu.id)
+})
+test('a callback arriving before the initial promise resolves cannot be overwritten by its old snapshot', async () => {
+  const f = fixture()
+  f.context.listComputeSelection = async update => {
+    update({ data: [otherGpu] })
+    return { data: [gpu] }
+  }
+  await f.api.loadComputeNodes()
+  assert.equal(f.api.computeNodes.value[0].id, otherGpu.id)
+  assert.equal(f.api.computeNodesLoading.value, false)
+})
+test('identity change suppresses callback even without a component generation change', async () => {
+  const f = fixture(); let callback
+  f.context.listComputeSelection = async update => { callback = update; return { data: [gpu] } }
+  await f.api.loadComputeNodes()
+  f.context.identityChanged = true
+  callback({ data: [otherGpu] })
+  assert.equal(f.api.computeNodes.value[0].id, gpu.id)
+})
+test('history restores local fields before remote datasets and does not await inventory', async () => {
+  const f = fixture(); const datasets = deferred(); const inventory = deferred()
+  f.context.listComputeSelection = () => inventory.promise
+  f.context.loadDatasetOptions = () => datasets.promise
+  const pending = f.api.restoreTrainingConfig({ datasetId: '1', configParams: { computeNodeId: '-99', mode: 'advanced', epochs: 42, batchSize: 8, imgSize: 320 } })
+  assert.equal(f.api.computeNodeId.value, '-99')
+  assert.equal(f.context.epochTotal.value, 42)
+  assert.equal(f.context.batchSize.value, 8)
+  assert.equal(f.context.trainImgSize.value, 320)
+  datasets.resolve(); await pending
 })
 for (const [name, run] of tests) { await run(); console.log(`PASS ${name}`) }
 console.log(`${tests.length} training GPU selection checks passed; no external requests or jobs.`)

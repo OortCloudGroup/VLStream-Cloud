@@ -46,8 +46,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * algorithmtrainingtask control
@@ -155,13 +158,25 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@Operation(summary = "分页", description = "传入vlsAlgorithmTraining")
 	public R<IPage<AlgorithmTrainingVO>> page(AlgorithmTrainingVO vlsAlgorithmTraining, Query query) {
 		IPage<AlgorithmTrainingVO> pages = vlsAlgorithmTrainingService.selectVlsAlgorithmTrainingPage(Condition.getPage(query), vlsAlgorithmTraining);
+        Set<Long> algorithmIds = new LinkedHashSet<>();
+        for (AlgorithmTrainingVO training : pages.getRecords()) {
+            if (training.getAlgorithmId() != null) {
+                algorithmIds.add(training.getAlgorithmId());
+            }
+        }
+        Map<Long, Algorithm> algorithmsById = new HashMap<>();
+        if (!algorithmIds.isEmpty()) {
+            for (Algorithm algorithm : algorithmService.listByIds(algorithmIds)) {
+                algorithmsById.put(algorithm.getId(), algorithm);
+            }
+        }
 		for (AlgorithmTrainingVO training : pages.getRecords()) {
 			if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
 				com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingJob job = cloudTrainingService.current(training);
 				training.setExecutionStage(job.getJobState());
 				training.setExecutionMessage(job.getMessage());
 			}
-			Algorithm algorithm = training.getAlgorithmId() == null ? null : algorithmService.getById(training.getAlgorithmId());
+            Algorithm algorithm = algorithmsById.get(training.getAlgorithmId());
 			if (algorithm == null) {
 				training.setAlgorithmName("关联算法不存在");
 				training.setTrainType(null);

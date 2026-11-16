@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import { currentIdentityRequest, computePathPart, captureComputeIdentity } from '@/utils/computeIdentityRequest'
-import { prepareSharedCompute } from '@/utils/prepareSharedCompute.mjs'
+import { createComputeSelectionLoader } from '@/utils/computeSelectionLoader.mjs'
 
 export const listComputeNodes = () => currentIdentityRequest({ url: '/vlsCompute/nodes', method: 'get' })
 export const getComputeNode = id => currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}`, method: 'get' })
@@ -13,18 +13,11 @@ export const refreshComputeHealth = (id, platformToken) => platformToken === und
   : request({ url: `/vlsCompute/nodes/${computePathPart(id)}/health-refresh`, method: 'post', timeout: 240000, ...platformProof(platformToken) })
 export const listMyTrainingTasks = params => currentIdentityRequest({ url: '/vlsCompute/my-trainings', method: 'get', params })
 export const recordComputeObservation = (id, data) => currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/observation`, method: 'put', data })
-export const listComputeSelection = async () => {
-  const identity = captureComputeIdentity()
-  const read = () => currentIdentityRequest({ url: '/vlsCompute/selection', method: 'get' })
-  const response = await read()
-  identity.assertCurrent()
-  const prepared = await prepareSharedCompute(response.data, async id => {
-    identity.assertCurrent()
-    return refreshComputeHealth(id)
-  })
-  identity.assertCurrent()
-  return prepared ? read() : response
-}
+export const listComputeSelection = createComputeSelectionLoader({
+  captureIdentity: captureComputeIdentity,
+  read: () => currentIdentityRequest({ url: '/vlsCompute/selection', method: 'get' }),
+  refresh: id => refreshComputeHealth(id)
+})
 export const getComputeQueueSnapshot = id => currentIdentityRequest({ url: `/vlsCompute/selection/${computePathPart(id)}/queue`, method: 'get', timeout: 35000, silentError: true })
 export const publishComputeOffer = (id, data) => currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/offer`, method: 'put', data })
 export const requestComputePower = (id, action, platformToken) => platformToken === undefined ? currentIdentityRequest({ url: `/vlsCompute/nodes/${computePathPart(id)}/power/${computePathPart(action)}`, method: 'post' }) : request({ url: `/vlsCompute/nodes/${computePathPart(id)}/power/${computePathPart(action)}`, method: 'post', ...platformProof(platformToken) })

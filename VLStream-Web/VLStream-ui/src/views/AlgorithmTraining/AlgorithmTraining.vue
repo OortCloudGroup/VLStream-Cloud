@@ -1162,21 +1162,35 @@ const isCloudTrainingRow = row => {
 }
 const loadComputeNodes = async () => {
   const generation = ++computeRequestGeneration
+  const identity = captureComputeIdentity()
+  const current = () => {
+    try {
+      identity.assertCurrent()
+      return generation === computeRequestGeneration
+    } catch { return false }
+  }
+  let updated = false
+  const applySnapshot = response => {
+    if (!current()) return false
+    if (!Array.isArray(response.data)) throw new Error('Invalid GPU selection response')
+    computeNodes.value = response.data
+    computeNodesError.value = false
+    return true
+  }
   computeNodesLoading.value = true
   computeNodesError.value = false
   try {
-    const response = await listComputeSelection()
-    if (generation !== computeRequestGeneration) return false
-    if (!Array.isArray(response.data)) throw new Error('Invalid GPU selection response')
-    computeNodes.value = response.data
-    return true
+    const response = await listComputeSelection(response => {
+      if (applySnapshot(response)) updated = true
+    })
+    return updated ? current() : applySnapshot(response)
   } catch {
-    if (generation !== computeRequestGeneration) return false
+    if (!current()) return false
     computeNodes.value = []
     computeNodesError.value = true
     return false
   } finally {
-    if (generation === computeRequestGeneration) computeNodesLoading.value = false
+    if (current()) computeNodesLoading.value = false
   }
 }
 const computeClaimLabels = { FREE: '空闲，请先占用整实例', MINE: '我的占用', OTHER: '他人占用', ISOLATED: '隔离' }
@@ -2187,8 +2201,6 @@ const restoreTrainingConfig = async (originalData) => {
     computeNodeId.value = normalizeComputeNodeId(saved?.computeNodeId)
     cloudModelSource.value = saved?.modelSource === 'algorithm' ? 'algorithm' : 'preset'
   } catch { /* Historical configuration can be empty. */ }
-  await loadComputeNodes()
-  if (generation !== trainingConfigGeneration) return
   epochTotal.value = Number(originalData.epochTotal || 10)
   batchSize.value = 16
   trainImgSize.value = 640
@@ -2196,30 +2208,6 @@ const restoreTrainingConfig = async (originalData) => {
   publicationState.value = ''
   try {
     console.log('恢复训练配置:', originalData)
-
-    // 1. dataset
-    if (originalData.datasetId) {
-      // Load dataset item (if Load )
-      if (datasetOptions.value.length === 0) {
-        await loadDatasetOptions()
-        if (generation !== trainingConfigGeneration) return
-      }
-
-      // find dataset
-      const dataset = datasetOptions.value.find(d => d.value === String(originalData.datasetId))
-      if (isDatasetReady(dataset)) {
-        selectedDatasets.value = [dataset]
-        selectedDatasetIds.value = [dataset.value]
-        console.log('已恢复数据集选择:', dataset.label)
-      } else {
-        console.warn('未找到对应的数据集:', originalData.datasetId)
-        selectedDatasets.value = []
-        selectedDatasetIds.value = []
-      }
-    } else {
-      selectedDatasets.value = []
-      selectedDatasetIds.value = []
-    }
 
     // 2. trainingparameterconfiguration
     if (originalData.configParams) {
@@ -2249,6 +2237,22 @@ const restoreTrainingConfig = async (originalData) => {
     } else {
       console.log('没有保存的训练配置，使用默认配置')
       resetToDefaultConfig()
+    }
+
+    // Restore local fields before any remote lookup; inventory refresh never blocks them.
+    void loadComputeNodes()
+    selectedDatasets.value = []
+    selectedDatasetIds.value = []
+    if (originalData.datasetId) {
+      if (datasetOptions.value.length === 0) {
+        await loadDatasetOptions()
+        if (generation !== trainingConfigGeneration) return
+      }
+      const dataset = datasetOptions.value.find(d => d.value === String(originalData.datasetId))
+      if (isDatasetReady(dataset)) {
+        selectedDatasets.value = [dataset]
+        selectedDatasetIds.value = [dataset.value]
+      }
     }
 
   } catch (error) {
@@ -3339,9 +3343,26 @@ const openDatasetSelector = async () => {
 
 .list-view {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-y: auto;
+
+  .intro-section,
+  .tableTenBox {
+    flex-shrink: 0;
+  }
+
+  .tableTenBox {
+    flex: none;
+    height: auto;
+  }
+
+  .tableTenItU {
+    flex: none;
+    height: auto;
+  }
 }
 
 /* main */
