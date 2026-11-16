@@ -163,7 +163,7 @@
         </div>
         <el-alert v-if="modelTasksError" :title="modelTasksError" type="warning" :closable="false" show-icon />
         <el-alert v-if="modelError" :title="modelError" type="warning" :closable="false" show-icon />
-        <el-table :data="reportedModels" border scrollbar-always-on :empty-text="liveModels !== null ? $tp('设备当前无模型') : detailDevice?.modelsJson == null ? $tp('设备尚未上报模型信息') : $tp('设备上报的模型列表为空')">
+        <el-table v-loading="modelBusy === 'query'" :data="reportedModels" border scrollbar-always-on :empty-text="liveModels !== null ? $tp('设备当前无模型') : detailDevice?.modelsJson == null ? $tp('设备尚未上报模型信息') : $tp('设备上报的模型列表为空')">
           <el-table-column prop="modelId" :label="$tp('模型 ID')" min-width="140" show-overflow-tooltip />
           <el-table-column prop="modelName" :label="$tp('模型名称')" min-width="140" show-overflow-tooltip />
           <el-table-column prop="format" :label="$tp('格式')" width="90" />
@@ -520,6 +520,9 @@ async function openDetail(device) {
     detailStreams.value = streamsResult?.data || []
     firmwareDetail.value = detailResult?.data || null
     refreshModelTasks()
+    // A saved heartbeat can still list an uninstalled model. Reconcile with the
+    // online device on every open, independently of tasks and tunnel loading.
+    refreshModels()
     await loadRemoteManagementStatus(device.deviceId)
   }
   catch (error) {

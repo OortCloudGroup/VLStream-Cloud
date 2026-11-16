@@ -112,7 +112,7 @@
     </div>
 
     <!-- Update rtspdevice -->
-    <el-dialog :title="title" v-model="open" width="30%" append-to-body>
+    <el-dialog :title="title" v-model="open" width="30%" append-to-body @close="closeLocationPicker">
       <el-form ref="RtspDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="ip" prop="ip">
           <el-input v-model="form.ip" :placeholder="$tp('请输入ip')" maxlength="50" show-word-limit/>
@@ -155,6 +155,19 @@
             <el-input v-model="form.channel" :placeholder="$tp('请输入通道号')" maxlength="10" show-word-limit/>
           </el-form-item>
         </div>
+        <el-form-item :label="$tp('经度')" prop="lng">
+          <el-input-number v-model="form.lng" :min="-180" :max="180" :precision="7" :controls="false" />
+        </el-form-item>
+        <el-form-item :label="$tp('纬度')" prop="lat">
+          <el-input-number v-model="form.lat" :min="-90" :max="90" :precision="7" :controls="false" />
+        </el-form-item>
+        <el-form-item :label="$tp('地址')" prop="addressMap">
+          <el-input v-model="form.addressMap" :placeholder="$tp('请输入地址')">
+            <template #append>
+              <el-button @click="openFormLocationPicker">{{ $tp('地图选点') }}</el-button>
+            </template>
+          </el-input>
+        </el-form-item>
         <el-form-item :label="$tp('备注')" prop="remark">
           <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入内容')" maxlength="255" show-word-limit/>
         </el-form-item>
@@ -297,8 +310,8 @@
       </div>
     </el-dialog>
 
-    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapLocation ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+    <el-dialog :title="$tp('地图选点')" v-model="showMap" width="45%" append-to-body @opened="Create" @close="closeLocationPicker" destroy-on-close>
+      <MapLocation ref="MapContainer" :auto-initialize="false" @update-value="updateDialogMap" :position="position" :toponym="toponym || ''"/>
     </el-dialog>
 
   </div>
@@ -358,6 +371,7 @@ const previewDeviceId = ref(null);
 const showAIPaly = ref(false);
 const showAI = ref(false);
 const showMap = ref(false);
+const mapForForm = ref(false);
 const showAlarmClock = ref(false);
 const cusPlayer = ref(null);
 const alarmClockFormRef = ref(null);
@@ -480,22 +494,28 @@ function moreClick(command, itemData) {
 }
 
 const updateDialogMap = (value) => {
-  form.value.addressMap = value.address + value.detailedStreet;
-  form.value.lng = value.lng;
-  form.value.lat = value.lat;
-  position.value = [form.value.lng, form.value.lat];
-  toponym.value = form.value.addressMap;
-  updateRtspDevice(form.value).then(res => {
-    showMap.value = false;
-    Destruction();
+  if (!showMap.value || (mapForForm.value && !open.value)) return;
+  const coordinates = [value.lng, value.lat];
+  if (!coordinates.every(item => ['number', 'string'].includes(typeof item) && String(item).trim() !== '' && Number.isFinite(Number(item))) ||
+      Math.abs(Number(value.lng)) > 180 || Math.abs(Number(value.lat)) > 90) return;
+  const selected = { ...form.value, addressMap: (value.address || '') + (value.detailedStreet || ''), lng: Number(value.lng), lat: Number(value.lat) };
+  if (mapForForm.value) {
+    form.value = selected;
+    closeLocationPicker();
+    return;
+  }
+  updateRtspDevice(selected).then(() => {
+    closeLocationPicker();
+    getList();
     proxy.$modal.msgSuccess("操作成功");
   }).catch(() => {
     proxy.$modal.msgError("操作失败");
-  })
-}
+  });
+};
 
-const Destruction = () => {
-  MapContainer.value?.Destruction();
+const closeLocationPicker = () => {
+  showMap.value = false;
+  MapContainer.value?.destroy();
 };
 
 const passwordVisibility = ref({});
@@ -517,15 +537,22 @@ const alarmClockOptions = ref({
 });
 
 const handleMap = (row) => {
-  form.value = row;
+  form.value = { ...row };
+  mapForForm.value = false;
   position.value = [form.value.lng, form.value.lat];
   toponym.value = form.value.addressMap;
   showMap.value = true;
-  Create();
+};
+
+const openFormLocationPicker = () => {
+  mapForForm.value = true;
+  position.value = [form.value.lng, form.value.lat];
+  toponym.value = form.value.addressMap || '';
+  showMap.value = true;
 };
 
 const Create = () => {
-  MapContainer.value?.inGaDeMap();
+  if (showMap.value) MapContainer.value?.initialize();
 };
 
 
@@ -639,6 +666,7 @@ function cancel() {
 
 // form
 function reset() {
+  closeLocationPicker();
   form.value = {
     id: null,
     ip: null,
