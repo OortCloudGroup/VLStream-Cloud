@@ -20,6 +20,8 @@ import com.ruoyi.workorder.domain.bo.WorkOrderBo;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.service.ActiveSafetyEventReportService;
+import cn.hutool.json.JSONObject;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiLocalEventSink;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
 import org.slf4j.Logger;
@@ -530,9 +532,25 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         return LocationTaskResult.success();
     }
 
-    /**
-     * Return one event with the same composite-id and JSON expansion as Go.
-     */
+    @Override
+    public JSONObject loadReviewSource(String eventId, String tenantId) {
+        if (string(tenantId).isEmpty()) throw new ServiceException("事件缺少可信租户上下文");
+        Map<String, Object> row = findEventRaw(eventId, tenantId);
+        if (row == null) throw new ServiceException("事件不存在或已删除");
+        Map<String, Object> data = jsonMap(row.get("data"));
+        return new JSONObject()
+            .set("tenantId", tenantId)
+            .set("sourceMessageId", data.get("mqtt_message_id"))
+            .set("deviceEventId", data.get("device_event_id"))
+            .set("deviceId", row.get("device_id"))
+            .set("deviceName", row.get("device_name"))
+            .set("eventType", row.get("item"))
+            .set("description", data.get("describe"))
+            .set("mediaId", data.get("media_id"))
+            .set("mqttPayload", data.get("mqtt_payload"));
+    }
+
+    /** Return one event with the same composite-id and JSON expansion as Go. */
     public LocationTaskResult<?> eventInfo(Map<String, Object> body, UserContext user) {
         String id = stringValue(body, "id");
         if (id.isEmpty()) {
@@ -2475,6 +2493,9 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
      */
     private Map<String, Object> pagedEvents(String from, List<String> where, List<Object> args,
                                              int page, int pageSize, String tenantId, String verifiedToken) {
+        where.add("NOT EXISTS (SELECT 1 FROM vls_llm_review_task review WHERE CAST(review.tenant_id AS BINARY(64)) = CAST(te.tenant_id AS BINARY(64))"
+            + " AND review.review_status = 'REJECTED' AND CAST(review.formal_event_id AS BINARY(256)) ="
+            + " CAST(CASE WHEN te.`no` = 0 THEN te.id ELSE CONCAT(te.id, '-', te.`no`) END AS BINARY(256)))");
         String condition = where.isEmpty() ? "" : " WHERE " + join(where, " AND ");
         Long count = jdbc.queryForObject("SELECT COUNT(*)" + from + condition, Long.class, args.toArray());
         List<Object> queryArgs = new ArrayList<Object>(args);

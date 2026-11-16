@@ -8,6 +8,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.service;
 
+import cn.hutool.json.JSONObject;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 
@@ -15,6 +16,9 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
  * Shared active-safety event sink used by HTTP and MQTT adapters.
  */
 public interface ActiveSafetyEventReportService {
+
+	/** Load the stored event and its media references within the trusted tenant. */
+	JSONObject loadReviewSource(String eventId, String tenantId);
 
 	ActiveSafetyEventReportResult findDuplicate(String sourceMessageId, String deviceId,
 											   String deviceEventId);

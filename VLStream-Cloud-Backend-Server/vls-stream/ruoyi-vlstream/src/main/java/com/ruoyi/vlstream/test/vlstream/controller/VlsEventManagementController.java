@@ -27,6 +27,7 @@ import org.springblade.core.tool.api.R;
 import org.springblade.core.tool.utils.DateUtil;
 import org.springblade.core.tool.utils.Func;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
 import com.ruoyi.vlstream.test.vlstream.enums.EventStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
@@ -79,7 +80,9 @@ public class VlsEventManagementController extends BladeController {
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsEventManagement")
 	public R<IPage<EventManagementVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsEventManagement, Query query) {
-		IPage<EventManagement> pages = vlsEventManagementService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsEventManagement, EventManagement.class));
+		QueryWrapper<EventManagement> wrapper = Condition.getQueryWrapper(vlsEventManagement, EventManagement.class);
+		wrapper.apply(VlsEventManagementMapper.EXCLUDE_REJECTED_REVIEWS);
+		IPage<EventManagement> pages = vlsEventManagementService.page(Condition.getPage(query), wrapper);
 		return R.data(VlsEventManagementWrapper.build().pageVO(pages));
 	}
 
@@ -149,6 +152,7 @@ public class VlsEventManagementController extends BladeController {
 	@Operation(summary = "导出数据", description = "传入vlsEventManagement")
 	public void exportVlsEventManagement(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsEventManagement, BladeUser bladeUser, HttpServletResponse response) {
 		QueryWrapper<EventManagement> queryWrapper = Condition.getQueryWrapper(vlsEventManagement, EventManagement.class);
+		queryWrapper.apply(VlsEventManagementMapper.EXCLUDE_REJECTED_REVIEWS);
 		//if (!AuthUtil.isAdministrator()) {
 		//	queryWrapper.lambda().eq(VlsEventManagementEntity::getTenantId, bladeUser.getTenantId());
 		//}

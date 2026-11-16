@@ -76,6 +76,7 @@ public class VlsEventManagementServiceImpl extends BaseServiceImpl<VlsEventManag
 											 LocalDateTime startTime,
 											 LocalDateTime endTime) {
 		LambdaQueryWrapper<EventManagement> wrapper = new LambdaQueryWrapper<>();
+		wrapper.apply(VlsEventManagementMapper.EXCLUDE_REJECTED_REVIEWS);
 		wrapper.eq(StringUtils.isNotBlank(eventType), EventManagement::getEventType, eventType);
 		wrapper.eq(StringUtils.isNotBlank(eventStatus), EventManagement::getEventStatus, eventStatus);
 		wrapper.eq(StringUtils.isNotBlank(eventLevel), EventManagement::getEventLevel, eventLevel);

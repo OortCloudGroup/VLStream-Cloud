@@ -47,6 +47,7 @@
 
     <el-drawer v-model="detailVisible" :title="$tp('复核详情')" size="560px">
       <div v-loading="detailLoading" class="detail-content">
+        <el-button v-if="detail" :loading="detailLoading" @click="openDetail(detail)">{{ $tp('刷新复核结果') }}</el-button>
         <el-image v-if="mediaUrl" :src="mediaUrl" fit="contain" class="event-image" :preview-src-list="[mediaUrl]" />
         <el-descriptions v-if="detail" :column="1" border>
           <el-descriptions-item :label="$tp('复核状态')">{{ statusLabel(detail.reviewStatus) }}</el-descriptions-item>
@@ -69,7 +70,8 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getEventMediaViewUrl,
@@ -88,6 +90,7 @@ const statusOptions = [
   { label: '复核失败', value: 'ERROR' }
 ]
 const query = reactive({ current: 1, size: 10, status: '', algorithmId: '' })
+const route = useRoute()
 const rows = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -125,11 +128,11 @@ async function openDetail(row) {
   detail.value = null
   mediaUrl.value = ''
   try {
-    const [taskResponse, mediaResponse] = await Promise.all([
-      getLlmReviewTask(row.id),
-      getEventMediaViewUrl(row.mediaId).catch(() => null)
-    ])
+    const taskResponse = await getLlmReviewTask(row.id)
     detail.value = taskResponse.data
+    const mediaResponse = detail.value?.mediaId
+      ? await getEventMediaViewUrl(detail.value.mediaId).catch(() => null)
+      : null
     mediaUrl.value = mediaResponse?.data || ''
   } finally {
     detailLoading.value = false
@@ -146,6 +149,9 @@ async function manual(decision) {
   await load()
 }
 
+watch(() => route.query.taskId, taskId => {
+  if (typeof taskId === 'string' && /^\d+$/.test(taskId)) openDetail({ id: taskId })
+}, { immediate: true })
 onMounted(load)
 </script>
 

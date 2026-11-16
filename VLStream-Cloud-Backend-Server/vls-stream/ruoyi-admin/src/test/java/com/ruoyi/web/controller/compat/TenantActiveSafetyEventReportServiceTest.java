@@ -246,7 +246,8 @@ class TenantActiveSafetyEventReportServiceTest {
             when(media.readBoundImage(anyString(), anyInt())).thenReturn(new byte[]{1});
             service = new LlmReviewTaskService(new com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties(),
                 mock(com.ruoyi.vlstream.test.vlstream.mapper.AlgorithmLlmReviewConfigMapper.class), providers,
-                mock(LlmSystemProviderService.class), tasks, media, vision, sink);
+                mock(LlmSystemProviderService.class), tasks, media, vision, sink,
+                mock(com.ruoyi.vlstream.test.vlstream.service.LlmReviewManagementService.class));
         }
 
         OpenAiVisionClient.VisionDecision decision(String type) {

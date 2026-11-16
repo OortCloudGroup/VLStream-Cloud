@@ -138,6 +138,13 @@ public class VlsLlmReviewController {
 		return R.data(managementService.saveAlgorithmConfig(algorithmId, config));
 	}
 
+	@SaCheckPermission({"vls:menu:llm-review-tasks", "active-safety:events:list"})
+	@PostMapping("/events/{eventId}/review")
+	@Operation(summary = "立即复核已有主动安全事件，重复提交返回同一任务")
+	public R<LlmReviewTask> reviewExistingEvent(@PathVariable String eventId) {
+		return R.data(taskService.reviewExistingEvent(eventId));
+	}
+
 	@SaCheckPermission("vls:menu:llm-review-tasks")
 	@GetMapping("/tasks")
 	@Operation(summary = "分页查询大模型复核任务")

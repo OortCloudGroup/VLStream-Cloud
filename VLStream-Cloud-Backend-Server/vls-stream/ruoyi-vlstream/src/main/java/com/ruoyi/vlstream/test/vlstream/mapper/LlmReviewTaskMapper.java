@@ -16,10 +16,15 @@ public interface LlmReviewTaskMapper extends BaseMapper<LlmReviewTask> {
 
 	@Insert("INSERT IGNORE INTO vls_llm_review_task (id,tenant_id,source_message_id,device_event_id,device_id,"
 		+ "algorithm_id,provider_id,media_id,event_payload_json,config_snapshot_json,review_status,attempt_count,"
-		+ "next_retry_time,create_time,update_time) VALUES (#{id},#{tenantId},#{sourceMessageId},#{deviceEventId},"
+		+ "next_retry_time,create_time,update_time,formal_event_id) VALUES (#{id},#{tenantId},#{sourceMessageId},#{deviceEventId},"
 		+ "#{deviceId},#{algorithmId},#{providerId},#{mediaId},#{eventPayloadJson},#{configSnapshotJson},"
-		+ "#{reviewStatus},#{attemptCount},#{nextRetryTime},#{createTime},#{updateTime})")
+		+ "#{reviewStatus},#{attemptCount},#{nextRetryTime},#{createTime},#{updateTime},#{formalEventId})")
 	int insertIgnore(LlmReviewTask task);
+
+	@Select("SELECT * FROM vls_llm_review_task WHERE tenant_id=#{tenantId} AND device_id=#{deviceId} "
+		+ "AND device_event_id=#{eventId} LIMIT 1 FOR UPDATE")
+	LlmReviewTask findExistingForUpdate(@Param("tenantId") String tenantId,
+		@Param("deviceId") String deviceId, @Param("eventId") String eventId);
 
 	@InterceptorIgnore(tenantLine = "true")
 	@Update("UPDATE vls_llm_review_task SET review_status='PROCESSING', locked_by=#{workerId}, "

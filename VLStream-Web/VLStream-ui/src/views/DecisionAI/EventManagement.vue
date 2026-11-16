@@ -299,9 +299,10 @@
                   <span v-else class="no-executor">{{ $tp('暂无执行人') }}</span>
                 </template>
               </el-table-column>
-              <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(200)">
+              <el-table-column fixed="right" align="right" :label="$tp('操作')" width="320">
                 <template #default="scope">
                   <div class="operateAppBox flexRowAC" @click.stop>
+                      <EventLlmReviewButton :event-id="scope.row.id" />
                     <div class="new_table_svg_group" @click="handleAssignExecutor(scope.row)">
                       <oort-svg-icon width="14" height="14" name="allocation" class="new_table_svg_group_svg" />
                       <span>{{ $tp('选择执行人') }}</span>
@@ -342,6 +343,7 @@ import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import CloudEventEvidence from './cloudAi/CloudEventEvidence.vue'
 import CloudDeviceEvidence from './cloudAi/CloudDeviceEvidence.vue'
+import EventLlmReviewButton from './EventLlmReviewButton.vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Document, Monitor, Location, Clock, User, Picture, Plus, CircleCheck} from '@element-plus/icons-vue'
 import {

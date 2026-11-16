@@ -90,6 +90,10 @@ export function getLlmReviewTasks(params) {
   return request({ url: '/vlsLlmReview/tasks', method: 'get', params })
 }
 
+export function reviewExistingEvent(eventId) {
+  return request({ url: `/vlsLlmReview/events/${encodeURIComponent(eventId)}/review`, method: 'post', silentError: true })
+}
+
 export function getLlmReviewTask(id) {
   return request({ url: `/vlsLlmReview/tasks/${id}`, method: 'get' })
 }

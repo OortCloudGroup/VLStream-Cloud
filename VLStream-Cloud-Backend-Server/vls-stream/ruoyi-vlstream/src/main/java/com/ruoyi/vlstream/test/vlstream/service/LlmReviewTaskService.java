@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.LoginHelper;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.AlgorithmLlmReviewConfigMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.LlmProviderMapper;
@@ -53,6 +54,53 @@ public class LlmReviewTaskService {
 	private final DeviceMediaUploadService mediaUploadService;
 	private final OpenAiVisionClient visionClient;
 	private final ActiveSafetyEventReportService activeSafetyEventReportService;
+	private final LlmReviewManagementService managementService;
+
+	/** Review a persisted event without creating another formal event or enabling future reviews. */
+	@Transactional(rollbackFor = Exception.class)
+	public LlmReviewTask reviewExistingEvent(String eventId) {
+		String tenantId = TenantContextHolder.getTenantId();
+		if (StringUtils.isAnyBlank(eventId, tenantId)) throw new ServiceException("事件编号或可信租户不能为空");
+		if (!Boolean.TRUE.equals(properties.getEnabled())) throw new ServiceException("当前环境的大模型复核服务未启用");
+		JSONObject event = activeSafetyEventReportService.loadReviewSource(eventId, tenantId);
+		if (event == null || !tenantId.equals(event.getStr("tenantId"))) throw new ServiceException("事件不存在或无权访问");
+		if (StringUtils.isAnyBlank(event.getStr("sourceMessageId"), event.getStr("deviceEventId"), event.getStr("deviceId"))) {
+			throw new ServiceException("当前事件缺少设备上报信息，无法发起大模型复核");
+		}
+		LlmReviewTask existing = existingTask(event);
+		if (existing != null) return existing;
+		JSONObject payload = event.getJSONObject("mqttPayload");
+		Long algorithmId = parseLong(payload == null ? null : payload.getStr("algorithmId"));
+		AlgorithmLlmReviewConfig config = managementService.getEventReviewConfig(algorithmId);
+		LlmProvider provider = providerForUse(config.getProviderId(), true);
+		List<String> candidates = new ArrayList<String>();
+		candidates.add(event.getStr("mediaId"));
+		cn.hutool.json.JSONArray media = payload == null ? null : payload.getJSONArray("media");
+		if (media != null) {
+			for (int index = 0; index < media.size(); index++) candidates.add(media.getJSONObject(index).getStr("mediaId"));
+		}
+		DeviceMediaUpload image = null;
+		for (String mediaId : candidates) {
+			DeviceMediaUpload upload = StringUtils.isBlank(mediaId) ? null : mediaUploadService.getByMediaId(mediaId);
+			if (upload != null && tenantId.equals(upload.getTenantId())
+				&& event.getStr("deviceId").equals(upload.getDeviceId())
+				&& event.getStr("sourceMessageId").equals(upload.getBoundEventMessageId())
+				&& "BOUND".equals(upload.getUploadStatus()) && !DeviceMediaUploadService.isVideoType(upload.getContentType())) {
+				image = upload;
+				break;
+			}
+		}
+		if (image == null) throw new ServiceException("当前事件缺少本环境已绑定的抓拍图片，无法进行视觉复核");
+		event.set("mediaId", image.getMediaId());
+		return insertTask(event, config, provider.getId(), algorithmId, eventId);
+	}
+
+	private LlmReviewTask existingTask(JSONObject event) {
+		return taskMapper.selectOne(new LambdaQueryWrapper<LlmReviewTask>()
+			.eq(LlmReviewTask::getTenantId, event.getStr("tenantId"))
+			.eq(LlmReviewTask::getDeviceId, event.getStr("deviceId"))
+			.eq(LlmReviewTask::getDeviceEventId, event.getStr("deviceEventId")).last("limit 1"));
+	}
 
 	/** Return true when the event was routed into the optional review gate. */
 	@Transactional(rollbackFor = Exception.class)
@@ -83,12 +131,7 @@ public class LlmReviewTaskService {
 		if (DeviceMediaUploadService.isVideoType(upload.getContentType())) {
 			throw new ServiceException("当前算法要求图片复核，请同时上报抓拍图片和视频");
 		}
-		LlmProvider provider = providerForUse(config.getProviderId(), false);
-		if (provider == null) {
-			log.warn("算法选择的大模型当前不可用，事件保持原安全事件链路: tenantId={}, algorithmId={}, providerId={}, messageId={}",
-				device.getTenantId(), algorithmId, config.getProviderId(), envelope.getStr("messageId"));
-			return false;
-		}
+		if (config.getProviderId() == null) throw new ServiceException("当前算法已开启复核，请先配置视觉大模型");
 
 		JSONObject event = new JSONObject();
 		event.set("sourceMessageId", envelope.getStr("messageId"));
@@ -104,7 +147,13 @@ public class LlmReviewTaskService {
 		event.set("longitude", device.getLongitude());
 		event.set("latitude", device.getLatitude());
 		event.set("mqttPayload", mqttPayload);
+		event.set("tenantId", device.getTenantId());
+		insertTask(event, config, config.getProviderId(), algorithmId, null);
+		return true;
+	}
 
+	private LlmReviewTask insertTask(JSONObject event, AlgorithmLlmReviewConfig config,
+			Long providerId, Long algorithmId, String formalEventId) {
 		JSONObject snapshot = new JSONObject();
 		snapshot.set("promptTemplate", config.getPromptTemplate());
 		snapshot.set("decisionThreshold", config.getDecisionThreshold());
@@ -115,13 +164,14 @@ public class LlmReviewTaskService {
 		Date now = new Date();
 		LlmReviewTask task = new LlmReviewTask();
 		task.setId(IdUtil.getSnowflakeNextId());
-		task.setTenantId(device.getTenantId());
-		task.setSourceMessageId(envelope.getStr("messageId"));
-		task.setDeviceEventId(eventId);
-		task.setDeviceId(device.getDeviceId());
+		task.setTenantId(event.getStr("tenantId"));
+		task.setSourceMessageId(event.getStr("sourceMessageId"));
+		task.setDeviceEventId(event.getStr("deviceEventId"));
+		task.setDeviceId(event.getStr("deviceId"));
 		task.setAlgorithmId(algorithmId);
-		task.setProviderId(provider.getId());
-		task.setMediaId(upload.getMediaId());
+		task.setProviderId(providerId);
+		task.setMediaId(event.getStr("mediaId"));
+		task.setFormalEventId(formalEventId);
 		task.setEventPayloadJson(event.toString());
 		task.setConfigSnapshotJson(snapshot.toString());
 		task.setReviewStatus("PENDING");
@@ -129,8 +179,11 @@ public class LlmReviewTaskService {
 		task.setNextRetryTime(now);
 		task.setCreateTime(now);
 		task.setUpdateTime(now);
-		taskMapper.insertIgnore(task);
-		return true;
+		if (taskMapper.insertIgnore(task) == 1) return task;
+		LlmReviewTask existing = taskMapper.findExistingForUpdate(event.getStr("tenantId"),
+			event.getStr("deviceId"), event.getStr("deviceEventId"));
+		if (existing == null) throw new ServiceException("复核任务创建失败，请重试");
+		return existing;
 	}
 
 	public IPage<LlmReviewTask> page(int current, int size, String status, Long algorithmId) {
@@ -172,8 +225,8 @@ public class LlmReviewTaskService {
 			OpenAiVisionClient.VisionDecision decision = visionClient.review(provider, prompt, images);
 			BigDecimal threshold = config.getBigDecimal("decisionThreshold", new BigDecimal("0.8000"));
 			String status = terminalStatus(decision, threshold);
-			String formalEventId = null;
-			if ("CONFIRMED".equals(status)) {
+			String formalEventId = task.getFormalEventId();
+			if ("CONFIRMED".equals(status) && StringUtils.isBlank(formalEventId)) {
 				formalEventId = persistFormalEvent(task).getActiveSafetyEventId();
 			}
 			finish(task, workerId, status, attempt, now, decision.getDecision(), decision.getConfidence(),
@@ -185,7 +238,7 @@ public class LlmReviewTaskService {
 				: StringUtils.defaultIfBlank(config.getStr("failureStrategy"), "MANUAL_REVIEW");
 			Date retryAt = new Date(now.getTime() + retryDelay(attempt));
 			finish(task, workerId, status, attempt, retryAt, null, null, null, null,
-				StringUtils.abbreviate(exception.getMessage(), 2000), null, now);
+				StringUtils.abbreviate(exception.getMessage(), 2000), task.getFormalEventId(), now);
 			log.warn("大模型事件复核失败: taskId={}, tenantId={}, attempt={}, status={}, reason={}",
 				task.getId(), task.getTenantId(), attempt, status, exception.getMessage());
 		}

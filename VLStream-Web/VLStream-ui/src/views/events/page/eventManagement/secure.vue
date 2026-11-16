@@ -117,9 +117,10 @@
                 <template v-else>{{ scope.row[column.key] }}</template>
               </template>
             </el-table-column>
-            <el-table-column fixed="right" align="right" :label="$tp('操作')" width="120">
+            <el-table-column fixed="right" align="right" :label="$tp('操作')" width="240">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC">
+                  <EventLlmReviewButton :event-id="scope.row.id" />
                   <div v-if="scope.row.status !== 1 && scope.row.mod_status === 0&&false" class="new_table_svg_group" @click="confirmAlert(scope.row, 'confirm')">
                     <oort-svg-icon
                       width="14"
@@ -207,6 +208,7 @@
 
 <script setup lang="ts">
 import EventLocation from './components/EventLocation.vue'
+import EventLlmReviewButton from '@/views/DecisionAI/EventLlmReviewButton.vue'
 import EventExportDialog from './components/EventExportDialog.vue'
 import { translatePhrase as uiText } from '@/i18n'
 import EventRecordedVideos from './components/EventRecordedVideos.vue'

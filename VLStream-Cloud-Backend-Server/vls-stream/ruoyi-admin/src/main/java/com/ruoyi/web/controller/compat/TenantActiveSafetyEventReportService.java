@@ -4,6 +4,7 @@
  */
 package com.ruoyi.web.controller.compat;
 
+import cn.hutool.json.JSONObject;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
@@ -27,6 +28,17 @@ public class TenantActiveSafetyEventReportService implements ActiveSafetyEventRe
     private final LocationTaskCompatService singleTenantService;
     private final VlsEventReportApplicationService eventApplicationService;
     private final WvpVlStreamDeviceResolver deviceResolver;
+
+    @Override
+    public JSONObject loadReviewSource(String eventId, String tenantId) {
+        if (!StringUtils.equals(requireTenant(), tenantId)) throw new ServiceException("事件租户不一致");
+        if (!eventApplicationService.isMultiTenant()) return singleTenantService.loadReviewSource(eventId, tenantId);
+        try {
+            return eventApplicationService.loadReviewSource(Long.valueOf(eventId), tenantId);
+        } catch (NumberFormatException exception) {
+            throw new ServiceException("事件编号格式不正确");
+        }
+    }
 
     @Override
     public ActiveSafetyEventReportResult findDuplicate(String messageId, String deviceId, String eventId) {

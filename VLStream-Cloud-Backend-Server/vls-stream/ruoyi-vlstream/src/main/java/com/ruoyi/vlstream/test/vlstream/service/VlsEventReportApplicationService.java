@@ -55,6 +55,19 @@ public class VlsEventReportApplicationService {
 		return MULTI.equalsIgnoreCase(StringUtils.trimToEmpty(tenantType));
 	}
 
+	public JSONObject loadReviewSource(Long eventId, String tenantId) {
+		EventManagement event = eventManagementMapper.selectOne(new LambdaQueryWrapper<EventManagement>()
+			.eq(EventManagement::getId, eventId).eq(EventManagement::getTenantId, tenantId));
+		if (event == null) throw new ServiceException("事件不存在或已删除");
+		return new JSONObject().set("tenantId", tenantId)
+			.set("sourceMessageId", event.getMqttMessageId())
+			.set("deviceEventId", event.getDeviceEventId())
+			.set("deviceId", event.getReportDevice()).set("deviceName", event.getReportDevice())
+			.set("eventType", event.getEventType()).set("description", event.getEventDesc())
+			.set("mediaId", event.getMediaId())
+			.set("mqttPayload", StringUtils.isBlank(event.getEventData()) ? new JSONObject() : new JSONObject(event.getEventData()));
+	}
+
 	public EventManagement findDuplicate(String mqttMessageId, String deviceId, String deviceEventId) {
 		if (StringUtils.isAnyBlank(mqttMessageId, deviceId, deviceEventId)) {
 			return null;

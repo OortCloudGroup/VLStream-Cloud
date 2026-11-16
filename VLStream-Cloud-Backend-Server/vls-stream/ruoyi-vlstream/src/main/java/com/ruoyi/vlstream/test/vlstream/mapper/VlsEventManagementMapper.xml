@@ -29,7 +29,12 @@
     </resultMap>
 
     <select id="selectVlsEventManagementPage" resultMap="vlsEventManagementResultMap">
-        select * from vls_event_management where is_deleted = 0 order by create_time desc
+        select * from vls_event_management where is_deleted = 0
+        AND NOT EXISTS (SELECT 1 FROM vls_llm_review_task review
+            WHERE CAST(review.tenant_id AS BINARY(64)) = CAST(vls_event_management.tenant_id AS BINARY(64))
+                AND review.review_status = 'REJECTED' AND CAST(review.formal_event_id AS BINARY(256))
+                    = CAST(CONCAT('', vls_event_management.id) AS BINARY(256)))
+        order by create_time desc
     </select>
 
     <select id="exportVlsEventManagement" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel">

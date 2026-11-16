@@ -51,6 +51,7 @@ class LocationTaskEventDeletionTest {
             + "uuid VARCHAR(64), u_type INT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
         jdbc.execute("CREATE TABLE oort_task_event_back (task_event_id VARCHAR(150), tenant_id VARCHAR(64), data VARCHAR(1000))");
         jdbc.execute("CREATE TABLE vls_device_media_upload (media_id VARCHAR(64), upload_status VARCHAR(20))");
+        jdbc.execute("CREATE TABLE vls_llm_review_task (tenant_id VARCHAR(64), formal_event_id VARCHAR(150), review_status VARCHAR(30))");
         jdbc.update("INSERT INTO vls_device_media_upload VALUES ('media-1','BOUND')");
         workflows = mock(IWfProcessService.class);
         media = mock(DeviceMediaUploadService.class);
@@ -225,6 +226,39 @@ class LocationTaskEventDeletionTest {
     private void addEvent(String id, String tenant, String owner, String data) {
         jdbc.update("INSERT INTO oort_task_event (id,`no`,tenant_id,uuid,data,item) VALUES (?,1,?,?,?,'synthetic')",
             id + "-20261015", tenant, owner, data);
+    }
+
+    @Test
+    void rejectedReviewsLeaveActiveListButRemainAvailableForReviewAndCanBeCorrected() {
+        addEvent("alarm", "tenant-a", "viewer", "{}");
+        addEvent("pending", "tenant-a", "viewer", "{}");
+        jdbc.update("INSERT INTO vls_llm_review_task VALUES ('tenant-b','alarm-20261015-1','REJECTED')");
+        jdbc.update("INSERT INTO vls_llm_review_task VALUES ('tenant-a','pending-20261015-1','MANUAL_REVIEW')");
+        assertEquals(2L, eventCount());
+        jdbc.update("INSERT INTO vls_llm_review_task VALUES ('tenant-a','alarm-20261015-1','REJECTED')");
+        assertEquals(1L, eventCount());
+        Map<String, Object> personalQuery = body("exec_status", 2);
+        personalQuery.put("mod_type", 2);
+        Map<?, ?> personal = (Map<?, ?>) service.myEventList(personalQuery, user).getData();
+        assertEquals(1L, ((Number) personal.get("count")).longValue());
+        assertEquals(3, jdbc.queryForObject("SELECT COUNT(*) FROM vls_llm_review_task", Integer.class));
+        assertEquals(200, service.eventInfo(body("id", "alarm-20261015-1"), user).getCode());
+        jdbc.update("UPDATE vls_llm_review_task SET review_status='CONFIRMED' WHERE tenant_id='tenant-a' AND formal_event_id='alarm-20261015-1'");
+        assertEquals(2L, eventCount());
+        assertEquals(0L, jdbc.queryForObject("SELECT SUM(deleted_at) FROM oort_task_event", Long.class));
+    }
+
+    @Test
+    void filtersHistoricalEventIdsWithZeroSequence() {
+        addEvent("legacy", "tenant-a", "viewer", "{}");
+        jdbc.update("UPDATE oort_task_event SET `no`=0");
+        jdbc.update("INSERT INTO vls_llm_review_task VALUES ('tenant-a','legacy-20261015','REJECTED')");
+        assertEquals(0L, eventCount());
+    }
+
+    private long eventCount() {
+        Map<?, ?> page = (Map<?, ?>) service.eventList(body("mod_type", 2), user).getData();
+        return ((Number) page.get("count")).longValue();
     }
 
     private void addRelations(String id, String tenant) {

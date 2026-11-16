@@ -28,6 +28,11 @@ import java.util.List;
  */
 public interface VlsEventManagementMapper extends BaseMapper<EventManagement> {
 
+	String EXCLUDE_REJECTED_REVIEWS = "NOT EXISTS (SELECT 1 FROM vls_llm_review_task review "
+		+ "WHERE CAST(review.tenant_id AS BINARY(64)) = CAST(vls_event_management.tenant_id AS BINARY(64)) "
+		+ "AND review.review_status = 'REJECTED' AND CAST(review.formal_event_id AS BINARY(256)) "
+		+ "= CAST(CONCAT('', vls_event_management.id) AS BINARY(256)))";
+
 	/**
 	 * Custom
 	 *

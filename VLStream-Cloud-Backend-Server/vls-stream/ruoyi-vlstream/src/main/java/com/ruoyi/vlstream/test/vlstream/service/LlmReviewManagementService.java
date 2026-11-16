@@ -146,6 +146,13 @@ public class LlmReviewManagementService {
 		return defaults;
 	}
 
+	public AlgorithmLlmReviewConfig getEventReviewConfig(Long algorithmId) {
+		if (algorithmId == null || algorithmMapper.selectById(algorithmId) == null) {
+			throw new ServiceException("当前事件的算法在本环境不存在，请核对设备上报的算法编号");
+		}
+		return getAlgorithmConfig(algorithmId);
+	}
+
 	@Transactional(rollbackFor = Exception.class)
 	public AlgorithmLlmReviewConfig saveAlgorithmConfig(Long algorithmId,
 													 AlgorithmLlmReviewConfig input) {
