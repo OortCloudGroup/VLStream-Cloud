@@ -30,7 +30,7 @@ import java.util.Map;
  * @since 2025-12-23
  */
 public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance> {
-	String TRUSTED_TASK_ASSOCIATION = " AND training_task_id IS NOT NULL AND create_user IS NOT NULL AND create_user<>'' AND ("
+	String TRUSTED_TASK_ASSOCIATION = " AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job cj WHERE cj.container_record_id=vls_container_instance.id) AND training_task_id IS NOT NULL AND create_user IS NOT NULL AND create_user<>'' AND ("
 		+ "(CAST(instance_type AS BINARY)=CAST('training' AS BINARY) AND EXISTS (SELECT 1 FROM vls_algorithm_training t WHERE t.id=vls_container_instance.training_task_id"
 		+ " AND CAST(t.tenant_id AS BINARY)=CAST(vls_container_instance.tenant_id AS BINARY) AND t.create_user IS NOT NULL AND t.create_user<>''"
 		+ " AND CAST(t.create_user AS BINARY)=CAST(vls_container_instance.create_user AS BINARY) AND COALESCE(t.is_deleted,0)=0))"
