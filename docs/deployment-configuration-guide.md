@@ -211,15 +211,15 @@ Docker Compose 示例里的 MinIO 用户名、密码和 Bucket 都必须替换�
 | `VLSTREAM_TRAINING_CONDA_PROFILE` | 远程服务器上的 Conda 初始化脚本 |
 | `VLSTREAM_TRAINING_CONDA_ENV` | 默认 Conda 环境名 |
 | `VLSTREAM_TRAINING_WORK_DIR` | 远程训练/数据集工作目录 |
-| `VLSTREAM_TRAINING_LOG_DIR` | 训练日志目录 |
-| `VLSTREAM_TRAINING_SYNSET_FILE_NAME` | 分类训练标签文件名 |
+| `vlstream.training.log-dir` | 训练日志目录 |
+| `vlstream.training.synset-file-name` | 分类训练标签文件名 |
 | `VLSTREAM_TRAINING_RKNN_MODEL_ZOO_PATH` | RKNN `convert.py` 所在的模型转换工程目录 |
 
 这些路径是远程 SSH 服务器上的路径，不是后端服务器本地路径。部署前需要用同一个 SSH 用户验证目录存在且可读写。
 
 ### 6.4 MQTT 和设备下发
 
-| 环境变量 | 是否必改 | 说明 |
+| 配置项 | 是否必改 | 说明 |
 | --- | --- | --- |
 | `VLSTREAM_MQTT_HOST` | 是 | MQTT Broker 地址 |
 | `VLSTREAM_MQTT_PORT` | 是 | MQTT 端口 |
@@ -227,35 +227,37 @@ Docker Compose 示例里的 MinIO 用户名、密码和 Bucket 都必须替换�
 | `VLSTREAM_MQTT_PASSWORD` | 是 | MQTT 密码 |
 | `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` | 是 | VLS 常驻事件/模型总线 ID；同 Broker 内各环境、副本及 WVP 必须唯一 |
 | `VLSTREAM_MQTT_CLIENT_ID_PREFIX` | 推荐 | 临时控制发布连接前缀，实际 ID 追加 UUID；不替代常驻连接 ID |
-| `VLSTREAM_MQTT_QOS` | 按设备协议 | QoS，通常为 `0` 或 `1` |
-| `VLSTREAM_MQTT_KEEP_ALIVE_SECONDS` | 否 | 心跳时间 |
-| `VLSTREAM_MQTT_CONNECTION_TIMEOUT_SECONDS` | 否 | 连接超时 |
+| `vlstream.mqtt.qos` | 按设备协议 | QoS，通常为 `0` 或 `1` |
+| `vlstream.mqtt.keep-alive-seconds` | 否 | 心跳时间 |
+| `vlstream.mqtt.connection-timeout-seconds` | 否 | 连接超时 |
+
+协议 Topic、QoS、心跳、重试和扫描周期等稳定参数直接使用 YAML 默认值，按需在外置 YAML 覆盖相应属性。部署环境继续配置服务地址、身份凭据、存储及执行路径。
 
 Topic 必须与设备固件或边缘端保持一致：
 
 ```text
 VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC
-VLSTREAM_MQTT_TOPIC_CAMERA_DISPLAY
-VLSTREAM_MQTT_TOPIC_CAMERA_OSD
-VLSTREAM_MQTT_TOPIC_AUDIO_ANOMALY
-VLSTREAM_MQTT_TOPIC_AUDIO_DEFENSE
-VLSTREAM_MQTT_TOPIC_AUDIO_LINKAGE
-VLSTREAM_MQTT_TOPIC_TIME_STRATEGY
-VLSTREAM_MQTT_TOPIC_RECORD_EVENT
+vlstream.mqtt.vls-camera-display-setting-topic
+vlstream.mqtt.vls-camera-osd-setting-topic
+vlstream.mqtt.vls-audio-anomaly-detection-setting-topic
+vlstream.mqtt.vls-audio-defense-time-setting-topic
+vlstream.mqtt.vls-audio-linkage-mode-setting-topic
+vlstream.mqtt.vls-time-strategy-topic
+vlstream.mqtt.vls-record-event-strategy-topic
 ```
 
 如果只改后端 Topic、不改设备订阅 Topic，接口可能返回成功但设备不会收到指令。验收时应同时检查 Broker 消息和设备日志。
 
 ### 6.5 RTSP 录像和 FFmpeg
 
-| 环境变量 | 说明 |
+| 配置项 | 说明 |
 | --- | --- |
 | `VLSTREAM_RTSP_RECORDING_ENABLED` | 是否启用后台录像管理器 |
 | `VLSTREAM_RTSP_FFMPEG_PATH` | FFmpeg 可执行文件或绝对路径 |
 | `VLSTREAM_RTSP_STORAGE_PATH` | 录像根目录 |
-| `VLSTREAM_RTSP_SEGMENT_SECONDS` | 单个录像切片秒数 |
-| `VLSTREAM_RTSP_PROCESS_STOP_WAIT_SECONDS` | 停止进程等待秒数 |
-| `VLSTREAM_RTSP_STALE_FILE_SECONDS` | 文件稳定后再同步的等待秒数 |
+| `vlstream.rtsp-recording.segment-seconds` | 单个录像切片秒数 |
+| `vlstream.rtsp-recording.process-stop-wait-seconds` | 停止进程等待秒数 |
+| `vlstream.rtsp-recording.stale-file-seconds` | 文件稳定后再同步的等待秒数 |
 
 部署前检查：
 
@@ -278,8 +280,8 @@ VLSTREAM_MQTT_TOPIC_RECORD_EVENT
 | --- | --- | --- |
 | `VLS_SINGLE_TENANT_ID` | `000000` | 当前单租户标识；前后端必须一致 |
 | `VLS_APAAS_SYNC_ENABLED` | `false` | 独立部署保持关闭 |
-| `VLS_LOCATION_TASK_WORKFLOW_APP_PACKAGE` | 自己的应用包标识 | 工单/事件跳转来源 |
-| `VLS_LOCATION_TASK_WORKFLOW_JUMP_PATH` | 自己的前端详情路由 | 工单跳转路径 |
+| `vls.location-task.workflow.app-package` | 自己的应用包标识 | 工单/事件跳转来源 |
+| `vls.location-task.workflow.jump-path` | 自己的前端详情路由 | 工单跳转路径 |
 | `VLS_LOCATION_TASK_WORKFLOW_JUMP_PARAMS` | 按前端参数格式 | 工单跳转参数模板 |
 
 不要为独立部署启用 SpringBlade 多租户拦截，也不要迁移源项目 system 用户体系。
@@ -429,8 +431,6 @@ VLSTREAM_SEMSEG_DETECTION_ENABLED=false
 VLSTREAM_TRAINING_CONDA_PROFILE=/opt/conda/etc/profile.d/conda.sh
 VLSTREAM_TRAINING_CONDA_ENV=vlstream
 VLSTREAM_TRAINING_WORK_DIR=/srv/vlstream/training
-VLSTREAM_TRAINING_LOG_DIR=/srv/vlstream/logs
-VLSTREAM_TRAINING_SYNSET_FILE_NAME=synset.txt
 VLSTREAM_TRAINING_RKNN_MODEL_ZOO_PATH=/srv/vlstream/rknn_model_zoo
 
 VLSTREAM_MQTT_HOST=mqtt
@@ -443,7 +443,6 @@ VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC=vlstream/dispatchAlgorithms
 VLSTREAM_RTSP_RECORDING_ENABLED=true
 VLSTREAM_RTSP_FFMPEG_PATH=/usr/bin/ffmpeg
 VLSTREAM_RTSP_STORAGE_PATH=/srv/vlstream/recordings
-VLSTREAM_RTSP_SEGMENT_SECONDS=300
 
 VLS_SINGLE_TENANT_ID=000000
 VLS_APAAS_SYNC_ENABLED=false

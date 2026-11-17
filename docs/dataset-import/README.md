@@ -61,10 +61,10 @@
 
 | 配置 | 默认 | 用途 |
 | --- | --- | --- |
-| `VLS_DATASET_MAX_FILE_BYTES` | 17179869184 | 单个来源文件或上传文件上限，最低支持4 GiB |
-| `VLS_DATASET_MAX_UNPACKED_BYTES` | 34359738368 | ZIP解压后总大小限额 |
+| `vlstream.data-management.max-file-bytes` | 17179869184 | 单个来源文件或上传文件上限，最低支持4 GiB |
+| `vlstream.data-management.max-unpacked-bytes` | 34359738368 | ZIP解压后总大小限额 |
 | `VLS_DATASET_ALLOW_PRIVATE_S3` | false | 允许管理员明确配置的内网S3来源；公开下载仍拒绝内网地址 |
-| `VLS_DATASET_IMPORT_SCAN_MS` | 3000 | 后台扫描任务间隔 |
+| `vlstream.data-management.scan-interval-ms` | 3000 | 后台扫描任务间隔 |
 | `vlstream.data-management.temp-directory` | 现有`java.io.tmpdir/vls-data` | 大文件落盘与解包暂存，沿用当前路径配置 |
 
 上传分片为8 MiB，请确保反向代理允许略大于8 MiB的multipart请求，超时覆盖一片传输；无需让单个请求通过4 GiB。
