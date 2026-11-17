@@ -198,6 +198,32 @@
             @search="mapSearchKeyword = $event"
           >
           </VideoSquareDevicePanel>
+      <!-- Layout overlays must remain inside the native fullscreen target. -->
+      <div v-if="showExtendedLayout" class="extended-layout-overlay" @click="hideExtendedLayoutDialog">
+        <div ref="extendedLayoutDialogRef" class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
+          <div class="extended-layout-content">
+            <button v-for="option in extendedLayouts" :key="option.key" class="extended-layout-option" :class="{ active: isExtendedLayoutActive(option) }" @click="handleExtendedLayoutSelect(option.count, option.variant)">
+              <span class="layout-option-icon" aria-hidden="true">
+                <span v-for="(cell, index) in option.cells" :key="index" class="layout-icon-cell" :style="layoutPreviewCellStyle(option, cell)"></span>
+              </span>
+              <span class="layout-option-text">{{ $tp(option.label) }}</span>
+            </button>
+            <button class="extended-layout-option is-custom" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">
+              <span class="layout-option-icon icon-custom" aria-hidden="true"></span>
+              <span class="layout-option-text">{{ $tp('自定义') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <el-dialog v-model="showCustomLayout" :title="$tp('自定义布局')" width="400px" :append-to-body="false" class="square-custom-layout">
+        <el-form label-position="top">
+          <el-form-item :label="$tp('画面数量')"><el-input-number v-model="customWindowCount" :min="1" :max="25" :precision="0" /></el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showCustomLayout = false">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" :disabled="!customWindowCount" @click="showCustomLayout = false; handleLayoutSelect(customWindowCount)">{{ $tp('确定') }}</el-button>
+        </template>
+      </el-dialog>
     </div>
 
     <!-- Map/list previews reuse the video-mode player and transparent controls. -->
@@ -246,34 +272,8 @@
     </el-dialog>
   </div>
 
-  <!-- dialog -->
-  <div v-if="showExtendedLayout" class="extended-layout-overlay" @click="hideExtendedLayoutDialog">
-    <div ref="extendedLayoutDialogRef" class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
-      <div class="extended-layout-content">
-        <button v-for="option in extendedLayouts" :key="option.key" class="extended-layout-option" :class="{ active: isExtendedLayoutActive(option) }" @click="handleExtendedLayoutSelect(option.count, option.variant)">
-          <span class="layout-option-icon" aria-hidden="true">
-            <span v-for="(cell, index) in option.cells" :key="index" class="layout-icon-cell" :style="layoutPreviewCellStyle(option, cell)"></span>
-          </span>
-          <span class="layout-option-text">{{ $tp(option.label) }}</span>
-        </button>
-        <button class="extended-layout-option is-custom" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">
-          <span class="layout-option-icon icon-custom" aria-hidden="true"></span>
-          <span class="layout-option-text">{{ $tp('自定义') }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
   <Teleport v-if="mapRecordingTarget" :to="mapRecordingTarget.host"><PlatformRecordingActions :key="mapRecordingTarget.source.protocol + mapRecordingTarget.source.rowId" :protocol="mapRecordingTarget.source.protocol" :row-id="mapRecordingTarget.source.rowId" :online="videoSourceOnline(mapRecordingTarget.source)" /></Teleport>
   <VideoSquareDevicePicker v-model="showDevicePicker" :devices="visibleDevices" :loading="loading" :error="catalogError" @select="assignSelectedDevice" />
-  <el-dialog v-model="showCustomLayout" :title="$tp('自定义布局')" width="400px" class="square-custom-layout">
-    <el-form label-position="top">
-      <el-form-item :label="$tp('画面数量')"><el-input-number v-model="customWindowCount" :min="1" :max="25" :precision="0" /></el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="showCustomLayout = false">{{ $tp('取消') }}</el-button>
-      <el-button type="primary" :disabled="!customWindowCount" @click="showCustomLayout = false; handleLayoutSelect(customWindowCount)">{{ $tp('确定') }}</el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup>
