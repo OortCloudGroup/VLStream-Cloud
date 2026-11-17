@@ -19,8 +19,8 @@ public class VlsModelHubController {
     @GetMapping("/models")
     public R<JSONObject> models(@RequestParam(defaultValue="1") int page,
         @RequestParam(defaultValue="12") int size, @RequestParam(defaultValue="") String keyword,
-        @RequestParam(defaultValue="") String category) {
-        return R.data(service.list(page, size, keyword, category));
+        @RequestParam(defaultValue="") String category, @RequestParam(defaultValue="false") boolean featured) {
+        return R.data(service.list(page, size, keyword, category, featured));
     }
 
     @PostMapping("/categories")

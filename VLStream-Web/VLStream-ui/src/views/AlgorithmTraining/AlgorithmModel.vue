@@ -50,9 +50,10 @@
           <el-table-column prop="version" :label="$tp('版本')" align="center" />
           <el-table-column prop="downloadCount" :label="$tp('下载次数')" align="center" />
           <el-table-column prop="createTime" :label="$tp('创建时间')" />
-          <el-table-column :label="$tp('操作')" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
+          <el-table-column :label="$tp('操作')" :min-width="clacPXToVW(400)" :width="clacPXToVW(400)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
+                <FeaturedPublishActions kind="model" :id="scope.row.id" :name="scope.row.name" />
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>{{ $tp('查看') }}</span>
@@ -279,6 +280,7 @@
 </template>
 
 <script setup>
+import FeaturedPublishActions from '@/components/FeaturedPublishActions.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import {computed, h, onMounted, onUnmounted, ref} from 'vue'

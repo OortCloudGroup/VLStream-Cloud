@@ -32,7 +32,7 @@ class ModelHubCatalogServiceTest {
             .andExpect(method(HttpMethod.POST)).andExpect(header("accesstoken", "test-guest"))
             .andExpect(header("appid", "test-app")).andExpect(header("secretkey", "test-key"))
             .andExpect(header("requesttype", "app"))
-            .andExpect(content().json("{\"page\":1,\"pagesize\":48,\"keyword\":\"安全\",\"category\":\"\"}",true))
+            .andExpect(content().json("{\"featured_only\":false,\"page\":1,\"pagesize\":48,\"keyword\":\"安全\",\"category\":\"\"}",true))
             .andRespond(withSuccess("{\"code\":200,\"data\":{\"list\":[],\"counts\":0}}",MediaType.APPLICATION_JSON));
         assertEquals(0, service.list(0,100," 安全 ").getInt("counts"));
         server.verify();

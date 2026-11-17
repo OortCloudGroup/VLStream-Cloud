@@ -3,7 +3,7 @@
     append-to-body :before-close="closeDrawer" :show-close="!submitting"
     modal-class="device-model-mask" :close-on-click-modal="!submitting" :close-on-press-escape="!submitting" @update:model-value="emit('update:modelValue', $event)">
     <div class="picker-shell">
-      <ModelHubCatalog v-if="source === 'hub' && modelValue" @count="hubTotal = $event" @busy="submitting = $event; emit('busy', $event)">
+      <ModelHubCatalog v-if="source === 'hub' && modelValue" :devices="targetDevices" @submitted="emit('submitted')" @count="hubTotal = $event" @busy="submitting = $event; emit('busy', $event)">
         <template #tabs>
           <el-tabs v-model="source" class="source-tabs">
             <el-tab-pane :disabled="submitting" :label="$tp('自主训练的模型{value0}', { value0: sourceTotal === null ? '' : ` (${sourceTotal})` })" name="local" />

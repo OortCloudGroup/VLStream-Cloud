@@ -401,7 +401,7 @@ const handleEditLabel = (labelData) => {
   // new component is dataobject
   if (labelData && labelData.id) {
     // Process
-    emit('edit-label', labelData)
+    emit('update-label', labelData)
   } else {
     //
     editingLabel.value = labelData

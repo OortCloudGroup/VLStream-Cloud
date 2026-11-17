@@ -116,6 +116,33 @@ public class ModelDispatchService {
     @Resource
     private ModelDispatchLocks dispatchLocks;
 
+    /** Only called with an authenticated, fixed-commit, hash-verified Hub archive. No invented training record. */
+    String dispatchHubArtifact(Long algorithmId, String path, Long size, String sha,
+        ModelClassFileService.ClassFile classes, String deviceId, String requestId) {
+        validateConfiguration();
+        return dispatchLocks.run("device:" + dispatchAccess.tenant() + ":" + deviceId, () -> {
+            DeviceInfo device = dispatchAccess.requireDevice(deviceId, "om", true);
+            ModelDispatchTask previous = taskService.getByRequestId(requestId);
+            if (previous != null) {
+                if (!dispatchAccess.tenant().equals(previous.getTenantId()) || !deviceId.equals(previous.getDeviceId())
+                    || !algorithmId.equals(previous.getAlgorithmId()) || !path.equals(previous.getRemotePath())
+                    || !sha.equals(previous.getSha256()) || !classes.getSha256().equals(previous.getClassFileSha256()))
+                    throw new ServiceException("原任务与当前模型不一致，不能恢复");
+                return requestId;
+            }
+            taskService.requireNoActiveTask(deviceId);
+            try {
+                RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(path);
+                if (!size.equals(metadata.getFileSize()) || !sha.equals(metadata.getSha256()))
+                    throw new ServiceException("Hub 归档产物已改变，不能下发");
+                AlgorithmTraining origin = new AlgorithmTraining();
+                origin.setTenantId(dispatchAccess.tenant());
+                return dispatchToDevice(algorithmId, origin, "om", path, metadata, classes, device, "model.om", requestId, true);
+            } catch (RuntimeException ex) { throw ex; }
+            catch (Exception ex) { throw new ServiceException("Hub 归档产物不可用"); }
+        });
+    }
+
     /** Immutable artifact selection shared by all batch devices and every explicit retry. */
     @lombok.Data
     public static class DeploymentSnapshot {
@@ -312,7 +339,7 @@ public class ModelDispatchService {
 		Map<String, Object> modelPayload = new LinkedHashMap<String, Object>();
 		modelPayload.put("requestId", requestId);
 		modelPayload.put("algorithmId", String.valueOf(algorithmId));
-		modelPayload.put("trainingId", String.valueOf(training.getId()));
+		if (training.getId() != null) modelPayload.put("trainingId", String.valueOf(training.getId()));
 		modelPayload.put("modelType", modelType);
 		modelPayload.put("modelUrl", downloadUrl);
 		modelPayload.put("fileName", fileName);

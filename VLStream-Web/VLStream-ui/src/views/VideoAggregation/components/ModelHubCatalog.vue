@@ -3,6 +3,7 @@
     <div class="hub-header">
       <slot name="tabs" />
       <div class="hub-toolbar">
+        <el-checkbox v-model="featuredOnly" @change="search">{{ $tp('仅精选') }}</el-checkbox>
         <el-input v-model="keyword" :placeholder="$tp('搜索 Model Hub 模型')" clearable :prefix-icon="Search" @input="scheduleSearch" @keyup.enter="search" />
         <el-select v-if="categories.length" v-model="category" clearable :placeholder="$tp('全部分类')" class="hub-categories" @change="search">
           <el-option v-for="item in categories" :key="item.category" :value="item.category" :label="`${categoryText(item.category)} (${item.count})`" />
@@ -18,6 +19,7 @@
         <article v-for="model in models" :key="model.uid" class="hub-card">
           <ModelHubCover class="hub-cover" :resource="model" :alt="modelName(model)" />
           <div class="hub-card-body">
+            <el-tag v-if="model.featured === true" size="small" type="warning">{{ $tp('发布者精选') }}</el-tag>
             <h3 :title="modelName(model)">{{ modelName(model) }}</h3>
             <p class="hub-meta" :title="[categoryText(model.category), model.author_name].filter(Boolean).join(' · ')">{{ categoryText(model.category) }}<span v-if="model.author_name"> · {{ model.author_name }}</span></p>
             <div class="hub-description-area">
@@ -29,7 +31,7 @@
               <p v-if="!model.repo_owner || !model.repo_name" class="hub-repository-note">{{ $tp('尚未建立模型文件空间') }}</p>
             </div>
             <div class="hub-actions"><el-button type="primary" plain size="small" @click="openFiles(model)">{{ $tp('查看文件') }}</el-button>
-              <el-tooltip :content="$tp('尚缺少设备兼容格式、类别文件及校验信息')"><el-button size="small" disabled>{{ $tp('下发') }}</el-button></el-tooltip></div>
+              <el-tooltip :content="$tp(hasDeviceManifest(model) ? '将校验设备兼容性后下发' : '尚缺少设备兼容格式、类别文件及校验信息')"><el-button size="small" :disabled="!hasDeviceManifest(model) || !devices.length" @click="deployModel = model; deployVisible = true">{{ $tp('下发') }}</el-button></el-tooltip></div>
           </div>
         </article>
       </div>
@@ -37,6 +39,7 @@
     <div v-if="total > 12" class="hub-footer">
       <el-pagination v-model:current-page="page" :page-size="12" :total="total" :pager-count="5" :disabled="loading" layout="total, prev, pager, next" background @current-change="load" />
     </div>
+    <HubDeployDialog v-model="deployVisible" :model="deployModel" :devices="devices" @busy="emit('busy', $event)" @submitted="emit('submitted')" />
     <el-dialog :model-value="Boolean(descriptionModel)" class="model-description-dialog" :title="modelName(descriptionModel)" width="min(560px, 92vw)" append-to-body @update:model-value="descriptionModel = null">
       <p class="full-model-description">{{ modelText(descriptionModel?.description) }}</p>
       <template #footer><el-button @click="descriptionModel = null">{{ $tp('关闭') }}</el-button></template>
@@ -61,6 +64,8 @@ import { onMounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import ModelHubCover from './ModelHubCover.vue'
+import HubDeployDialog from './HubDeployDialog.vue'
+import { hasDeviceManifest } from '@/utils/modelHubDeployment.mjs'
 import { getPublicHubModels, getHubCategories, getHubFiles, downloadHubFile } from '@/api/modelHubCatalog'
 import { getOortCloudSession } from '@/utils/oortCloudSession'
 import { isMultiTenantMode, redirectToPlatformLogin } from '@/utils/platformSession'
@@ -86,9 +91,11 @@ const modelText = (value, fallback = '') => translateModelHubText(value, current
 const modelName = model => modelText(model?.name, modelText(model?.alias, uiText('未命名模型')))
 const categoryText = value => modelText(value, uiText('未分类'))
 
-const emit = defineEmits(['count', 'busy'])
+defineProps({ devices: { type: Array, default: () => [] } })
+const emit = defineEmits(['count', 'busy', 'submitted'])
+const deployModel = ref(null), deployVisible = ref(false)
 const keyword = ref(''), page = ref(1), total = ref(0), models = ref([]), loading = ref(false), error = ref('')
-const category = ref(''), categories = ref([])
+const category = ref(''), categories = ref([]), featuredOnly = ref(false)
 const categoryError = ref('')
 const descriptionModel = ref(null)
 const currentSession = () => getOortCloudSession(isMultiTenantMode() ? 'multi' : 'single')
@@ -108,11 +115,11 @@ async function load() {
   const id = ++sequence
   loading.value = true; error.value = ''; models.value = []
   try {
-    const data = await getPublicHubModels({ page: page.value, size: 12, keyword: keyword.value.trim(), category: category.value })
+    const data = await getPublicHubModels({ page: page.value, size: 12, keyword: keyword.value.trim(), category: category.value, featured: featuredOnly.value ? true : undefined })
     if (id !== sequence) return
     if (!Array.isArray(data?.list)) throw new Error('Model Hub 列表响应格式不正确')
     models.value = data.list; total.value = Number(data.counts ?? data.count ?? 0)
-    if (!keyword.value.trim() && !category.value) emit('count', total.value)
+    if (!keyword.value.trim() && !category.value && !featuredOnly.value) emit('count', total.value)
   } catch (e) { if (id === sequence) error.value = e.message || '加载 Model Hub 失败' }
   finally { if (id === sequence) loading.value = false }
 }

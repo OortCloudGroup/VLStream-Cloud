@@ -51,7 +51,11 @@ public class ModelHubCatalogService {
     }
 
     public JSONObject list(int page, int size, String keyword, String category) {
-        return post("modelList", new JSONObject().set("page", Math.max(1, page))
+        return list(page, size, keyword, category, false);
+    }
+
+    public JSONObject list(int page, int size, String keyword, String category, boolean featured) {
+        return post("modelList", new JSONObject().set("featured_only", featured).set("page", Math.max(1, page))
             .set("pagesize", Math.max(1, Math.min(size, 48))).set("keyword", StringUtils.left(StringUtils.trimToEmpty(keyword), 200))
             .set("category", StringUtils.left(StringUtils.trimToEmpty(category), 100)),
             properties.getGuestToken(), null).getJSONObject("data");

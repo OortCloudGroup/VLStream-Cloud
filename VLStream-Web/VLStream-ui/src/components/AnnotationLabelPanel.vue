@@ -76,7 +76,7 @@
 import { translatePhrase as uiText } from '@/i18n'
 
 import { ref, computed, reactive } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -140,8 +140,7 @@ const handleDeleteLabel = (labelId) => {
     type: 'warning'
   }).then(() => {
     emit('delete-label', labelId)
-    ElMessage.success(uiText('标签删除成功'))
-  })
+  }).catch(() => {})
 }
 
 const handleSaveLabel = async () => {
@@ -156,14 +155,12 @@ const handleSaveLabel = async () => {
         name: labelForm.name,
         color: labelForm.color
       })
-      ElMessage.success(uiText('标签更新成功'))
     } else {
       emit('add-label', {
         name: labelForm.name,
         color: labelForm.color,
         usageCount: 0
       })
-      ElMessage.success(uiText('标签添加成功'))
     }
 
     showLabelDialog.value = false

@@ -47,7 +47,7 @@ export function createAnnotationLabel(annotationId, data) {
  */
 export function updateAnnotationLabel(id, data) {
   return request({
-    url: `/vlsAnnotationLabel/${id}`,
+    url: `/vlsAnnotationLabel/labels/${id}`,
     method: 'put',
     data
   })
@@ -60,7 +60,7 @@ export function updateAnnotationLabel(id, data) {
  */
 export function deleteAnnotationLabel(id) {
   return request({
-    url: `/vlsAnnotationLabel/${id}`,
+    url: `/vlsAnnotationLabel/labels/${id}`,
     method: 'delete'
   })
 }

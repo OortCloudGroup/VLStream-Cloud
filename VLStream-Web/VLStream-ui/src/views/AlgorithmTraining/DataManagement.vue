@@ -32,7 +32,7 @@
         <el-table-column :label="$tp('标注配置')" width="160"><template #default="{ row }">{{ typeName(row.annotationType) }}</template></el-table-column>
         <el-table-column prop="remark" :label="$tp('数据集说明')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createTime" :label="$tp('创建时间')" width="170" />
-        <el-table-column :label="$tp('操作')" width="160"><template #default="{ row }"><el-button link type="primary" @click="enter(row)">{{ $tp('管理数据') }}</el-button><el-button link @click="openProject(row)">{{ $tp('编辑') }}</el-button></template></el-table-column>
+        <el-table-column :label="$tp('操作')" width="340"><template #default="{ row }"><FeaturedPublishActions kind="dataset" :id="row.id" :name="row.annotationName" /><el-button link type="primary" @click="enter(row)">{{ $tp('管理数据') }}</el-button><el-button link @click="openProject(row)">{{ $tp('编辑') }}</el-button></template></el-table-column>
       </el-table>
       <el-pagination v-model:current-page="projectQuery.page" :page-size="20" :total="projectTotal" layout="total, prev, pager, next" @current-change="loadProjects" />
     </template>
@@ -161,6 +161,7 @@
 </template>
 
 <script setup>
+import FeaturedPublishActions from '@/components/FeaturedPublishActions.vue'
 import { translatePhrase as uiText } from '@/i18n'
 import DatasetGenerationDialog from './components/DatasetGenerationDialog.vue'
 import { viewTrainingDatasetReport } from '@/utils/datasetGeneration'

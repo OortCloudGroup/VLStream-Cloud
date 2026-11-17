@@ -74,9 +74,10 @@
             </template>
           </el-table-column>
           <el-table-column prop="createTime" :label="$tp('创建时间')" :width="clacPXToVW(180)" />
-          <el-table-column :label="$tp('操作')" :width="clacPXToVW(380)" align="right" fixed="right">
+          <el-table-column :label="$tp('操作')" :width="clacPXToVW(520)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
+                <FeaturedPublishActions kind="dataset" :id="scope.row.id" :name="scope.row.name" />
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>{{ $tp('标注') }}</span>
@@ -717,6 +718,7 @@
 </template>
 
 <script setup>
+import FeaturedPublishActions from '@/components/FeaturedPublishActions.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
@@ -1987,11 +1989,15 @@ const handleAddAnnotationLabel = (labelData) => {
   }
 }
 
-const handleEditAnnotationLabel = (labelData) => {
+const handleEditAnnotationLabel = async (labelData) => {
   // new component is dataobject
   if (labelData && labelData.id) {
     // Process
-    updateAnnotationLabel(labelData)
+    try {
+      await updateLabelAPI(labelData.id, labelData)
+    } catch (error) {
+      console.error('更新标签失败:', error)
+    }
   } else {
     //
     labelDialogData.value = {

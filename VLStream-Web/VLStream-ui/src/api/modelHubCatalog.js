@@ -1,3 +1,4 @@
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import request from '@/utils/request'
 
 function checked(response) {
@@ -16,4 +17,13 @@ export async function downloadHubFile(data, session) {
     throw new Error(result.msg || result.message || '模型下载失败')
   }
   return blob
+}
+
+export async function deployHubModel(data, session) {
+  const identity = captureComputeIdentity()
+  identity.assertCurrent()
+  const result = await request({ url: '/vlsModelHub/deploy', method: 'post', data,
+    headers: headers(session), sensitiveData: true, silentError: true, timeout: 180000 })
+  identity.assertCurrent()
+  return checked(result)
 }
