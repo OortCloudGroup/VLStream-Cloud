@@ -335,8 +335,15 @@
         :title="$tp('编辑算法')"
         width="40%"
         :close-on-click-modal="false"
+        @close="handleAlgorithmImageClose"
     >
       <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
+        <el-form-item :label="$tp('所属算法库')" prop="repositoryId" label-width="100px" required>
+          <el-tree-select v-model="algorithmEditForm.repositoryId" :data="repositoryChoices"
+            node-key="id" :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
+            check-strictly filterable default-expand-all :loading="repositoryChoicesLoading"
+            :disabled="repositoryChoicesLoading || submitting" :placeholder="$tp('请选择所属算法库')" style="width:100%" />
+        </el-form-item>
         <el-form-item :label="$tp('算法名称')" prop="name" required>
           <el-input
               v-model="algorithmEditForm.name"
@@ -378,20 +385,16 @@
           <div class="algorithm-image-editor">
             <el-upload
                 class="algorithm-image-uploader"
-                :action="algorithmImageUploadUrl"
-                :headers="algorithmImageUploadHeaders"
-                :http-request="uploadTrustedApi"
+                :http-request="uploadAlgorithmImage"
                 accept="image/jpeg,image/png,image/webp"
                 :show-file-list="false"
                 :multiple="false"
-                :disabled="imageUploading"
-                :on-success="handleAlgorithmImageUploadSuccess"
-                :on-error="handleAlgorithmImageUploadError"
+                :disabled="imageUploading || submitting"
                 :before-upload="beforeAlgorithmImageUpload"
             >
               <div class="algorithm-image-preview">
                 <img
-                    :src="algorithmEditForm.imageUrl || getAlgorithmCardBackground(editingAlgorithm || {}, algorithmEditForm.repositoryId || currentRepositoryId)"
+                    :src="algorithmImagePreview || getAlgorithmCardBackground({ id: editingAlgorithm?.id }, algorithmEditForm.repositoryId || currentRepositoryId)"
                     :alt="$tp('算法图片')"
                 />
                 <div class="algorithm-image-overlay">
@@ -404,6 +407,7 @@
                 type="danger"
                 link
                 size="small"
+                :disabled="imageUploading || submitting"
                 @click="clearAlgorithmImage"
             > {{ $tp('清除图片') }} </el-button>
             <span class="algorithm-image-tip">{{ $tp('支持 JPG、PNG、WEBP，大小不超过 5MB') }}</span>
@@ -419,8 +423,9 @@
           />
         </el-form-item>
         <el-divider content-position="left">{{ $tp('大模型复核（可选）') }}</el-divider>
+        <el-alert v-if="!llmReviewConfigLoaded" :title="$tp('复核配置未加载，保存仅更新算法信息，原复核设置保持不变；重新打开编辑可重试。')" type="warning" :closable="false" show-icon />
         <el-form-item :label="$tp('开启复核')" label-width="100px">
-          <el-switch v-model="llmReviewForm.enabled" @change="handleLlmReviewToggle" />
+          <el-switch v-model="llmReviewForm.enabled" :disabled="!llmReviewConfigLoaded" @change="handleLlmReviewToggle" />
           <span class="llm-review-tip">{{ $tp('关闭时保持原有 YOLO 事件流程') }}</span>
         </el-form-item>
         <template v-if="llmReviewForm.enabled">
@@ -456,7 +461,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="handleAlgorithmEditCancel" class="common_btn">{{ $tp('取消') }}</el-button>
-          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting" class="common_btn"> {{ $tp('更新') }} </el-button>
+          <el-button type="primary" @click="handleAlgorithmEditConfirm" :disabled="imageUploading" :loading="submitting" class="common_btn"> {{ $tp('更新') }} </el-button>
         </div>
       </template>
     </el-dialog>
@@ -558,9 +563,6 @@ import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Upload} from '@e
 import { clacPXToVW } from '@/utils/index'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import AlgorithmCatalogView from './components/AlgorithmCatalogView.vue'
-import Config from '@/config'
-import { uploadTrustedApi } from '@/utils/trustedUpload'
-import { apaasServiceUrl } from '@/utils/apaasApiBase'
 import {
   getCloudPlatformUserPath,
   getModelHubAccessToken,
@@ -574,11 +576,14 @@ import {
   deleteAlgorithmRepository,
   evaluateAlgorithm as apiEvaluateAlgorithm,
   getAlgorithmPage,
+  getAlgorithmCatalogCategories,
   getAlgorithmRepositoryPage,
   updateAlgorithm,
+  uploadAlgorithmCover,
   updateAlgorithmRepository,
   updateAlgorithmRepositoryStatus
 } from '@/api/algorithmManagement'
+import { algorithmRepositoryOptions } from '@/utils/algorithmRepositoryOptions.mjs'
 import {dispatchAlgorithmToDevices} from '@/api/device'
 import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 import {
@@ -590,15 +595,16 @@ import {
 
 const router = useRouter()
 const catalogRef = ref(null)
+const repositoryChoices = ref([])
+const repositoryChoicesLoading = ref(false)
 
 // Load
 const repositoriesLoading = ref(false)
 const algorithmsLoading = ref(false)
 const submitting = ref(false)
 const imageUploading = ref(false)
-
-const algorithmImageUploadUrl = apaasServiceUrl('apaas-fastdfsservice', 'fastdfs/v1/uploadFile')
-const algorithmImageUploadHeaders = Config.headers
+const algorithmImagePreview = ref('')
+let imageUploadVersion = 0
 
 // current menu
 const activeTopMenu = ref('management')
@@ -701,6 +707,7 @@ const defaultLlmReviewForm = () => ({
   imageMode: 'FULL_AND_CROP'
 })
 const llmReviewForm = ref(defaultLlmReviewForm())
+const llmReviewConfigLoaded = ref(false)
 const selectedLlmProvider = computed(() => llmProviders.value.find((provider) => String(provider.id) === String(llmReviewForm.value.providerId)) || null)
 
 const handleLlmReviewToggle = (enabled) => {
@@ -739,6 +746,7 @@ const algorithmAddFormRules = ref({
 })
 
 const algorithmEditFormRules = ref({
+  repositoryId: [{ required: true, message: '请选择所属算法库', trigger: 'change' }],
   name: [
     { required: true, message: '请输入算法名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
@@ -794,8 +802,9 @@ const getNumericModulo = (value, divisor) => {
 // Get algorithm
 const getAlgorithmCardBackground = (algorithm, repositoryId) => {
   // if algorithm already ,
-  if (algorithm.imageUrl && algorithm.imageUrl.trim() !== '') {
-    return algorithm.imageUrl
+  const imageUrl = algorithm.imagePreviewUrl || algorithm.imageUrl
+  if (imageUrl && imageUrl.trim() !== '' && !imageUrl.startsWith('minio://')) {
+    return imageUrl
   }
 
   // algorithmID and ID
@@ -1058,6 +1067,20 @@ const addAlgorithm = () => {
 }
 
 const editAlgorithm = async (algorithm) => {
+  repositoryChoicesLoading.value = true
+  repositoryChoices.value = []
+  try {
+    const response = await getAlgorithmCatalogCategories()
+    repositoryChoices.value = algorithmRepositoryOptions(response.data || [])
+  } catch {
+    ElMessage.error(uiText('算法库加载失败，请稍后重试'))
+    return
+  } finally {
+    repositoryChoicesLoading.value = false
+  }
+  imageUploadVersion++
+  imageUploading.value = false
+  algorithmImagePreview.value = algorithm.imagePreviewUrl || (algorithm.imageUrl?.startsWith('minio://') ? '' : algorithm.imageUrl) || ''
   // Set algorithm
   editingAlgorithm.value = algorithm
 
@@ -1071,17 +1094,20 @@ const editAlgorithm = async (algorithm) => {
     isSystem: algorithm.isSystem,
     imageUrl: algorithm.imageUrl || '',
     description: algorithm.description || '',
-    repositoryId: algorithm.repositoryId || currentRepositoryId.value
+    repositoryId: normalizeRepositoryId(algorithm.repositoryId)
   }
 
   llmReviewForm.value = defaultLlmReviewForm()
+  llmReviewConfigLoaded.value = false
   try {
     const [configResponse, providersResponse, authorizationResponse] = await Promise.all([
       getAlgorithmLlmReviewConfig(algorithm.id),
       getLlmProviders(),
       getOortCloudLlmAuthorization()
     ])
-    llmReviewForm.value = { ...defaultLlmReviewForm(), ...(configResponse.data || {}) }
+    if (configResponse.code !== 200 || !configResponse.data) throw new Error('复核配置未加载')
+    llmReviewForm.value = { ...defaultLlmReviewForm(), ...configResponse.data }
+    llmReviewConfigLoaded.value = true
     llmProviders.value = providersResponse.data || []
     llmAuthorized.value = Boolean(authorizationResponse.data?.authorized)
   } catch (error) {
@@ -1137,24 +1163,32 @@ const beforeAlgorithmImageUpload = (file) => {
   return isImage && isWithinLimit
 }
 
-const handleAlgorithmImageUploadSuccess = (response) => {
-  imageUploading.value = false
-  const imageUrl = response?.data?.url
-  if (response?.code === 200 && imageUrl) {
-    algorithmEditForm.value.imageUrl = imageUrl
+const uploadAlgorithmImage = async ({ file }) => {
+  const version = imageUploadVersion
+  try {
+    const response = await uploadAlgorithmCover(editingAlgorithm.value.id, file)
+    if (version !== imageUploadVersion) return
+    if (response?.code !== 200 || !response?.data?.imageUrl || !response?.data?.imagePreviewUrl) {
+      throw new Error(response?.message || response?.msg || uiText('图片上传失败'))
+    }
+    algorithmEditForm.value.imageUrl = response.data.imageUrl
+    algorithmImagePreview.value = response.data.imagePreviewUrl
     ElMessage.success(uiText('图片上传成功'))
-  } else {
-    ElMessage.error(response?.message || response?.msg || uiText('图片上传失败'))
+  } catch (error) {
+    if (version === imageUploadVersion) ElMessage.error(error.message || uiText('图片上传失败'))
+  } finally {
+    if (version === imageUploadVersion) imageUploading.value = false
   }
-}
-
-const handleAlgorithmImageUploadError = () => {
-  imageUploading.value = false
-  ElMessage.error(uiText('图片上传失败'))
 }
 
 const clearAlgorithmImage = () => {
   algorithmEditForm.value.imageUrl = ''
+  algorithmImagePreview.value = ''
+}
+
+const handleAlgorithmImageClose = () => {
+  imageUploadVersion++
+  imageUploading.value = false
 }
 
 const deployAlgorithm = async (algorithm) => {
@@ -1565,6 +1599,7 @@ const handleAlgorithmAddCancel = () => {
 
 // algorithm dialogProcess method
 const handleAlgorithmEditConfirm = async () => {
+  if (imageUploading.value) return
   let algorithmSaved = false
   try {
     // form
@@ -1592,14 +1627,18 @@ const handleAlgorithmEditConfirm = async () => {
 
     if (response.code === 200) {
       algorithmSaved = true
-      const reviewResponse = await saveAlgorithmLlmReviewConfig(
-        editingAlgorithm.value.id,
-        llmReviewForm.value
-      )
-      if (reviewResponse.code !== 200) {
-        throw new Error(reviewResponse.message || '大模型复核配置保存失败')
+      // Refresh immediately: moving the algorithm has succeeded even if optional review saving fails.
+      await catalogRef.value?.refreshAll()
+      if (llmReviewConfigLoaded.value) {
+        const reviewResponse = await saveAlgorithmLlmReviewConfig(
+          editingAlgorithm.value.id,
+          llmReviewForm.value
+        )
+        if (reviewResponse.code !== 200) {
+          throw new Error(reviewResponse.message || '大模型复核配置保存失败')
+        }
       }
-      ElMessage.success(uiText('算法及大模型复核配置更新成功'))
+      ElMessage.success(uiText(llmReviewConfigLoaded.value ? '算法及大模型复核配置更新成功' : '算法更新成功，原复核配置保持不变'))
       showAlgorithmEditDialog.value = false
 
       // new Load current algorithm algorithm
@@ -1622,6 +1661,8 @@ const handleAlgorithmEditConfirm = async () => {
 }
 
 const handleAlgorithmEditCancel = () => {
+  imageUploadVersion++
+  algorithmImagePreview.value = ''
   showAlgorithmEditDialog.value = false
   imageUploading.value = false
   algorithmEditForm.value = {

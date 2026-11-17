@@ -47,6 +47,7 @@ export const defaultAlgorithmCover = id => {
 }
 
 export const algorithmCoverUrl = algorithm => {
-  const url = String(algorithm?.imageUrl || '').trim()
+  const url = String(algorithm?.imagePreviewUrl || algorithm?.imageUrl || '').trim()
+  if (url.startsWith('minio://')) return defaultAlgorithmCover(algorithm?.id)
   return url && !isLegacyGeneratedCover(url) ? url : defaultAlgorithmCover(algorithm?.id)
 }

@@ -76,6 +76,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -186,7 +187,8 @@ class CloudAiControllerPermissionTest {
         ReflectionTestUtils.setField(dispatchController, "taskService", dispatchTasks);
         SaInterceptor guard = new SaInterceptor();
         mvc = MockMvcBuilders.standaloneSetup(new CloudAiController(service, sources, events, models), new PlatformRecordingController(recordings),
-                new VlsAlgorithmController(algorithms), new AlgorithmCatalogController(catalog),
+                new VlsAlgorithmController(algorithms, mock(com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService.class)),
+                new AlgorithmCatalogController(catalog, mock(com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService.class)),
                 new VlsLlmReviewController(llmManagement, llmTasks, mock(com.ruoyi.vlstream.test.vlstream.service.OpenAiVisionClient.class)),
                 new VlsDataManagementController(data, mock(DataTransferService.class)),
                 new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class)),
@@ -295,11 +297,15 @@ class CloudAiControllerPermissionTest {
         mvc.perform(logged(get("/vlsAlgorithmCatalog/categories"))).andExpect(status().isForbidden());
         mvc.perform(logged(delete("/vlsAlgorithm/1"))).andExpect(status().isForbidden());
         mvc.perform(logged(get("/vlsAlgorithm/remove").param("ids", "1"))).andExpect(status().isForbidden());
+        mvc.perform(logged(multipart("/vlsAlgorithm/1/image").file(new MockMultipartFile("file", "cover.png", "image/png", new byte[]{1}))))
+            .andExpect(status().isForbidden());
         verifyNoInteractions(algorithms, catalog);
         permissions.clear(); permissions.add("vls:menu:algorithm-management");
         mvc.perform(logged(get("/vlsAlgorithmCatalog/categories"))).andExpect(status().isOk());
         mvc.perform(logged(delete("/vlsAlgorithm/1"))).andExpect(status().isOk());
         mvc.perform(logged(get("/vlsAlgorithm/remove").param("ids", "1"))).andExpect(status().isOk());
+        mvc.perform(logged(multipart("/vlsAlgorithm/1/image").file(new MockMultipartFile("file", "cover.png", "image/png", new byte[]{1}))))
+            .andExpect(status().isOk());
         verify(catalog).categories();
         verify(algorithms).deleteAlgorithm(1L);
         verify(algorithms).deleteLogic(anyList());

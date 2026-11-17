@@ -33,8 +33,12 @@ import com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmService;
+import com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsAlgorithmWrapper;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +57,14 @@ import java.util.Map;
 public class VlsAlgorithmController extends BladeController {
 
 	private final IVlsAlgorithmService vlsAlgorithmService;
+	private final AlgorithmCoverService covers;
+
+	@SaCheckPermission("vls:menu:algorithm-management")
+	@PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+	@Operation(summary = "上传算法封面", description = "上传至现有对象存储，保存算法时绑定图片引用")
+	public R<Algorithm> uploadImage(@PathVariable Long id, @RequestPart("file") MultipartFile file) throws IOException {
+		return R.data(covers.upload(id, file));
+	}
 
 	/**
 	 * algorithm
@@ -63,6 +75,7 @@ public class VlsAlgorithmController extends BladeController {
 	@Operation(summary = "详情", description = "传入vlsAlgorithm")
 	public R<AlgorithmVO> detail(Algorithm vlsAlgorithm) {
 		Algorithm detail = vlsAlgorithmService.getOne(Condition.getQueryWrapper(vlsAlgorithm));
+		covers.prepare(detail);
 		return R.data(VlsAlgorithmWrapper.build().entityVO(detail));
 	}
 
@@ -75,6 +88,7 @@ public class VlsAlgorithmController extends BladeController {
 	@Operation(summary = "分页", description = "传入vlsAlgorithm")
 	public R<IPage<AlgorithmVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithm, Query query) {
 		IPage<Algorithm> pages = vlsAlgorithmService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsAlgorithm, Algorithm.class));
+		pages.getRecords().forEach(covers::prepare);
 		return R.data(VlsAlgorithmWrapper.build().pageVO(pages));
 	}
 
@@ -89,6 +103,7 @@ public class VlsAlgorithmController extends BladeController {
 	public R<IPage<AlgorithmVO>> page(AlgorithmVO vlsAlgorithm, Query query) {
 		IPage<AlgorithmVO> pages = vlsAlgorithmService.selectVlsAlgorithmPage(Condition.getPage(query), vlsAlgorithm);
 		for (AlgorithmVO algorithm : pages.getRecords()) {
+			covers.prepare(algorithm);
 			algorithm.setCategoryName(algorithm.getCategory().getDescription());
 		}
 		return R.data(pages);
@@ -102,6 +117,7 @@ public class VlsAlgorithmController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithm")
 	public R save(@Valid @RequestBody Algorithm vlsAlgorithm) {
+		covers.validate(vlsAlgorithm);
 		return R.status(vlsAlgorithmService.save(vlsAlgorithm));
 	}
 
@@ -113,7 +129,8 @@ public class VlsAlgorithmController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithm")
 	public R update(@Valid @RequestBody Algorithm vlsAlgorithm) {
-		return R.status(vlsAlgorithmService.updateById(vlsAlgorithm));
+		covers.validate(vlsAlgorithm);
+		return R.status(vlsAlgorithmService.updateAlgorithm(vlsAlgorithm));
 	}
 
 	/**
@@ -124,7 +141,9 @@ public class VlsAlgorithmController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithm")
 	public R submit(@Valid @RequestBody Algorithm vlsAlgorithm) {
-		return R.status(vlsAlgorithmService.saveOrUpdate(vlsAlgorithm));
+		covers.validate(vlsAlgorithm);
+		return R.status(vlsAlgorithm.getId() == null ? vlsAlgorithmService.save(vlsAlgorithm)
+			: vlsAlgorithmService.updateAlgorithm(vlsAlgorithm));
 	}
 
 	/**
@@ -167,6 +186,7 @@ public class VlsAlgorithmController extends BladeController {
 		log.info("根据仓库ID查询算法列表：{}", repositoryId);
 
 		List<Algorithm> algorithms = vlsAlgorithmService.getByRepositoryId(repositoryId);
+		algorithms.forEach(covers::prepare);
 		return R.data(algorithms);
 	}
 
@@ -182,6 +202,7 @@ public class VlsAlgorithmController extends BladeController {
 		log.info("根据分类查询算法列表：{}", category);
 
 		List<Algorithm> algorithms = vlsAlgorithmService.getByCategory(category);
+		algorithms.forEach(covers::prepare);
 		return R.data(algorithms);
 	}
 
@@ -201,6 +222,7 @@ public class VlsAlgorithmController extends BladeController {
 			return R.fail("算法不存在");
 		}
 
+		covers.prepare(algorithm);
 		return R.data(algorithm);
 	}
 
@@ -211,6 +233,7 @@ public class VlsAlgorithmController extends BladeController {
 	@PostMapping
 	@Operation(summary = "创建算法", description = "新增算法")
 	public R<String> createAlgorithm(@Valid @RequestBody Algorithm algorithm) {
+		covers.validate(algorithm);
 		log.info("创建算法：{}", algorithm.getName());
 
 		boolean success = vlsAlgorithmService.createAlgorithm(algorithm);
@@ -234,6 +257,7 @@ public class VlsAlgorithmController extends BladeController {
 		log.info("更新算法：ID={}", id);
 
 		algorithm.setId(id);
+		covers.validate(algorithm);
 		boolean success = vlsAlgorithmService.updateAlgorithm(algorithm);
 
 		if (success) {

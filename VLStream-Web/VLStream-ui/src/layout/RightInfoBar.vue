@@ -157,6 +157,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.right-info-sdk-container { display: flex; align-items: center; }
+/* SDK 会给自己的根节点写入最大 z-index，这里建立独立层叠上下文并压到弹层之下，保证抽屉/弹窗能盖住顶部用户信息 */
+.right-info-sdk-container { display: flex; align-items: center; position: relative; z-index: 1900; }
 .identity-switch-overlay { position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center; color: #fff; background: rgb(0 0 0 / 55%); }
 </style>

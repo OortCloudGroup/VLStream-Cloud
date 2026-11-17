@@ -9,6 +9,8 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmRepository;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -29,6 +31,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * algorithm service
@@ -109,22 +114,48 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		log.info("更新算法：ID={}, Name={}", algorithm.getId(), algorithm.getName());
 
 		// Get algorithminfo
-		Algorithm existing = getById(algorithm.getId());
+		Algorithm existing = getOne(new QueryWrapper<Algorithm>().eq("id", algorithm.getId()).last("FOR UPDATE"));
 		if (existing == null) {
 			log.warn("算法不存在：ID={}", algorithm.getId());
 			return false;
 		}
 
-		// if , need to new algorithm
-		Long oldRepositoryId = existing.getRepositoryId();
-		Long newRepositoryId = algorithm.getRepositoryId();
-		boolean result = updateById(algorithm);
-
-		// new algorithm
-		if (result && !oldRepositoryId.equals(newRepositoryId)) {
-			algorithmRepositoryService.updateAlgorithmCount(oldRepositoryId);
-			algorithmRepositoryService.updateAlgorithmCount(newRepositoryId);
-		}
+        Long oldRepositoryId = existing.getRepositoryId();
+        Long newRepositoryId = algorithm.getRepositoryId() == null ? oldRepositoryId : algorithm.getRepositoryId();
+        boolean moved = !Objects.equals(oldRepositoryId, newRepositoryId);
+        if (moved) {
+            // Lock the same tenant-scoped category rows as hierarchy edits/deletion.
+            List<AlgorithmRepository> categories = algorithmRepositoryService.list(
+                new QueryWrapper<AlgorithmRepository>().orderByAsc("id").last("FOR UPDATE"));
+            Set<Long> visited = new HashSet<>();
+            Long cursor = newRepositoryId;
+            while (cursor != null && cursor != 0L) {
+                final Long categoryId = cursor;
+                AlgorithmRepository category = categories.stream().filter(row -> Objects.equals(row.getId(), categoryId))
+                    .findFirst().orElseThrow(() -> new ServiceException("算法库不存在或无权访问"));
+                if (!Objects.equals(existing.getTenantId(), category.getTenantId())) {
+                    throw new ServiceException("算法库不存在或无权访问");
+                }
+                if (!visited.add(cursor) || !Integer.valueOf(1).equals(category.getStatus())) {
+                    throw new ServiceException("目标算法库或其上级分类未启用");
+                }
+                cursor = category.getParentId();
+            }
+            if (newRepositoryId == null || newRepositoryId <= 0L) throw new ServiceException("请选择所属算法库");
+        }
+        String name = algorithm.getName() == null ? existing.getName() : algorithm.getName();
+        if (count(new QueryWrapper<Algorithm>().eq("repository_id", newRepositoryId).eq("name", name)
+            .ne("id", existing.getId()).eq("is_deleted", 0)) > 0) {
+            throw new ServiceException("同一算法库下算法名称已存在");
+        }
+        // Moving a category never transfers tenant ownership supplied by a client.
+        algorithm.setTenantId(existing.getTenantId());
+        algorithm.setRepositoryId(newRepositoryId);
+        boolean result = updateById(algorithm);
+        if (result && moved) {
+            if (oldRepositoryId != null) algorithmRepositoryService.updateAlgorithmCount(oldRepositoryId);
+            algorithmRepositoryService.updateAlgorithmCount(newRepositoryId);
+        }
 
 		return result;
 	}

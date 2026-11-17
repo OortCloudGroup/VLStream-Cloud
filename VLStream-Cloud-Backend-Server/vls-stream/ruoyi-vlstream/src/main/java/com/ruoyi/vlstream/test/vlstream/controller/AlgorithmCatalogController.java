@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmRepository;
 import com.ruoyi.vlstream.test.vlstream.service.AlgorithmCatalogService;
+import com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequestMapping("/vlsAlgorithmCatalog")
 public class AlgorithmCatalogController {
     private final AlgorithmCatalogService catalog;
+    private final AlgorithmCoverService covers;
 
     @GetMapping("/categories")
     public R<List<AlgorithmRepository>> categories() { return R.data(catalog.categories()); }
@@ -41,7 +43,9 @@ public class AlgorithmCatalogController {
                                         @RequestParam(required = false) String type,
                                         @RequestParam(defaultValue = "1") long current,
                                         @RequestParam(defaultValue = "24") long size) {
-        return R.data(catalog.algorithmPage(categoryId, keyword, type, current, size));
+        Page<Algorithm> page = catalog.algorithmPage(categoryId, keyword, type, current, size);
+        page.getRecords().forEach(covers::prepare);
+        return R.data(page);
     }
 
     @GetMapping("/settings")

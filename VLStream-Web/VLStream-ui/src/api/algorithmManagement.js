@@ -256,6 +256,19 @@ export function updateAlgorithm(id, data) {
   })
 }
 
+export function uploadAlgorithmCover(id, file) {
+  const data = new FormData()
+  data.append('file', file)
+  return request({
+    url: `/vlsAlgorithm/${id}/image`,
+    method: 'post',
+    data,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    silentError: true,
+    timeout: 60000
+  })
+}
+
 /**
  * Delete algorithm
  * @param {number} id algorithmID
