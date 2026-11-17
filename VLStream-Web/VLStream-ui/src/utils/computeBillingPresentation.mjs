@@ -16,12 +16,25 @@ const labels = {
   QUOTED: '待确认开机', FUNDING: '正在预冻结', STARTING: '厂商开机处理中', RUNNING: '实例运行中', STOPPING: '实例关机处理中',
   CANCELLING: '正在取消开机', RELEASING: '正在释放未消费余额', COMPLETED: '已停止并完成结算', CANCELLED: '已取消并完成释放'
 }
-export const paidRunState = state => labels[state] || '状态待确认'
+const confirmedStopped = run => run?.billingDiagnostics?.usageState === 'STOPPED'
+  && run.billingDiagnostics.safetyState === 'STOP_CONFIRMED'
+  && run.billingDiagnostics.stopObservedMs > 0 && run.billingDiagnostics.billingEndMs > 0
+export const paidRunState = value => {
+  const state = typeof value === 'string' ? value : value?.state
+  if (['STOPPING', 'RELEASING'].includes(state) && confirmedStopped(value)) return '已关机，结算处理中'
+  return labels[state] || '状态待确认'
+}
 export const paidRunActive = run => !['QUOTED', 'COMPLETED', 'CANCELLED'].includes(run.state)
 
 // Occupancy is a platform claim, not a supplier capacity observation.
 export const paidClaimLabel = claimState => claimState === 'OTHER' ? '占用中'
   : claimState === 'ISOLATED' ? '暂不可用' : '状态待确认'
+
+export function paidStartLabel(nodeId, runs = []) {
+  const latest = runs.filter(run => String(run.nodeId) === String(nodeId) && run.state !== 'QUOTED' && !run.archiveRecovery)
+    .sort((a, b) => Number(b.quoteUntilMs) - Number(a.quoteUntilMs))[0]
+  return latest?.state === 'CANCELLED' && latest.startFailureCode === 'NO_STOCK' ? '暂无库存' : '付费开机'
+}
 
 export function paidRunErrorPresentation(run) {
   if (!run?.errorCode && !run?.startFailureCode) return null
@@ -31,7 +44,9 @@ export function paidRunErrorPresentation(run) {
   }
   const pending = run.errorCode === 'BILLING_ORIGIN_MISMATCH'
     ? '原订单的账本来源未确认或与当前账本不一致，资金恢复已暂停；请联系管理员核对，请勿重复开机。'
-    : '状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。'
+    : confirmedStopped(run) && ['STOPPING', 'RELEASING'].includes(run.state)
+      ? '实例已关机，系统正在核对本次费用和释放剩余冻结余额，完成后自动解除占用。'
+      : '状态确认暂未完成，系统会查询原单；请勿重复提交启停操作。'
   // The original order's start cause is separate from current funding/recovery errors.
   // Older responses may carry only errorCode; never infer capacity from provider text.
   const startCode = Object.prototype.hasOwnProperty.call(run, 'startFailureCode') ? run.startFailureCode : run.errorCode

@@ -320,7 +320,9 @@ class ComputeExpiredTailReleaseTest {
 
     @Test void normalSshTickRearmsValidHoldTailAndWaitsForTheOriginalDispatcher() throws Exception {
         ReleaseBarrierGateway barrier=sshTail(true);Map<String,Object> original=new LinkedHashMap<>(f.row(tail));
-        paidService(barrier).tick(run);
+        ComputePaidRunService paid=paidService(barrier);
+        org.springframework.test.util.ReflectionTestUtils.setField(paid,"configuredPower",mock(com.ruoyi.vlstream.test.vlstream.compute.ConfiguredPaidPowerService.class));
+        paid.tick(run);
         Map<String,Object> prepared=new LinkedHashMap<>(f.row(tail));assertEquals("PREPARED",prepared.get("state"));
         prepared.put("state",original.get("state"));assertEquals(original,prepared);
         assertEquals("STOPPING",f.jdbc.queryForObject("SELECT state FROM vls_compute_paid_run WHERE run_id=?",String.class,run));
@@ -627,6 +629,78 @@ class ComputeExpiredTailReleaseTest {
         gateway = barrier; f.gateway = barrier;
         f.jdbc.update("UPDATE vls_compute_billing_slice SET error_code='RUN_WINDOW_EXPIRED',create_time=? WHERE merchant_charge_id=?", new Timestamp(expiry - 10000L), tail);
         f.jdbc.update("UPDATE vls_compute_billing_session SET risk_code='RUN_WINDOW_EXPIRED' WHERE usage_id=?", usage);
+        return barrier;
+    }
+
+    @Test void coordinationFailureRearmsOriginalTailWithoutChangingItsEvidence() throws Exception {
+        ReleaseBarrierGateway barrier=coordinationTail(true);
+        Map<String,Object> original=new LinkedHashMap<>(f.row(tail));
+        ComputePaidRunService paid=paidService(barrier);
+        org.springframework.test.util.ReflectionTestUtils.setField(paid,"configuredPower",mock(com.ruoyi.vlstream.test.vlstream.compute.ConfiguredPaidPowerService.class));
+        com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService lifecycle=mock(com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingLifecycleService.class, invocation -> {
+            if("controlledNode".equals(invocation.getMethod().getName()))throw new IllegalStateException("catalog unavailable");
+            return org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation);
+        });
+        org.springframework.test.util.ReflectionTestUtils.setField(paid,"lifecycle",lifecycle);
+        paid.tick(run);
+        org.mockito.Mockito.verifyNoInteractions(lifecycle);
+        Map<String,Object> prepared=new LinkedHashMap<>(f.row(tail));
+        assertEquals("PREPARED",prepared.put("state",original.get("state")));
+        assertEquals(original,prepared);assertEquals(0,barrier.writes);assertEquals(0,barrier.releasePosts);
+        assertNotNull(f.jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,run));
+    }
+
+    @Test void coordinationFailureExpiresThroughOriginalReleaseBeforeFreeingClaim() throws Exception {
+        ReleaseBarrierGateway barrier=coordinationTail(false);
+        Map<String,Object> original=new LinkedHashMap<>(f.row(tail));List<Map<String,Object>> captures=settled();
+        ComputePaidRunService paid=paidService(barrier);for(int i=0;i<3;i++)paid.tick(run);
+        assertEquals("COMPLETED",f.jdbc.queryForObject("SELECT state FROM vls_compute_paid_run WHERE run_id=?",String.class,run));
+        assertNull(f.jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,run));
+        Map<String,Object> marked=new LinkedHashMap<>(f.row(tail));
+        assertEquals(ComputeBillingSettlementService.RELEASED_COORDINATION_TAIL,marked.put("error_code",original.get("error_code")));
+        assertEquals(original,marked);assertEquals(captures,settled());
+        assertEquals(1,barrier.releaseEffects);assertEquals(1,barrier.releasePosts);assertEquals(0,barrier.writes);
+    }
+
+    @Test void coordinationFailureKeepsClaimWhenOriginalReleaseIsUnknown() throws Exception {
+        ReleaseBarrierGateway barrier=coordinationTail(false);barrier.releaseUnknownBeforeCommit=true;
+        ComputePaidRunService paid=paidService(barrier);for(int i=0;i<3;i++)paid.tick(run);
+        assertNotNull(f.jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,run));
+        assertEquals("BLOCKED",f.state(tail));assertEquals(0,barrier.releaseEffects);assertEquals(0,barrier.writes);
+    }
+
+    @Test void coordinationRecoveryCannotBypassAuthorizationFailure() throws Exception {
+        coordinationTail(true);
+        f.jdbc.update("UPDATE vls_compute_billing_session SET risk_code='NOT_AUTHORIZED' WHERE usage_id=?",usage);
+        assertCoordinationRearmDenied();
+    }
+
+    @Test void coordinationRecoveryCannotRepeatAnAttemptedCapture() throws Exception {
+        coordinationTail(true);
+        f.jdbc.update("UPDATE vls_compute_billing_slice SET attempt_count=1 WHERE merchant_charge_id=?",tail);
+        assertCoordinationRearmDenied();
+    }
+
+    @Test void coordinationRecoveryRequiresConfirmedPhysicalStop() throws Exception {
+        coordinationTail(true);
+        f.jdbc.update("UPDATE vls_compute_billing_session SET safety_state='STOP_PENDING' WHERE usage_id=?",usage);
+        assertCoordinationRearmDenied();
+    }
+
+    @Test void coordinationRecoveryRequiresBothOriginalLookupsToBeAbsent() throws Exception {
+        coordinationTail(true);gateway.key=ExternalBillingGateway.Status.UNKNOWN;assertCoordinationRearmDenied();
+    }
+
+    private void assertCoordinationRearmDenied() {
+        Map<String,Object> original=new LinkedHashMap<>(f.row(tail));String remainder=currentRemainder().toString();
+        assertFalse(f.service.recoverStoppedCoordinationTail(usage));assertEquals(original,f.row(tail));
+        assertEquals(remainder,currentRemainder().toString());assertEquals(0,gateway.writes);
+    }
+
+    private ReleaseBarrierGateway coordinationTail(boolean active) throws Exception {
+        ReleaseBarrierGateway barrier=sshTail(active);
+        f.jdbc.update("UPDATE vls_compute_billing_slice SET error_code='COORDINATION_UNAVAILABLE' WHERE merchant_charge_id=?",tail);
+        f.jdbc.update("UPDATE vls_compute_billing_session SET risk_code='COORDINATION_UNAVAILABLE' WHERE usage_id=?",usage);
         return barrier;
     }
 

@@ -1,8 +1,12 @@
 <template>
   <section class="billing-panel" :aria-label="uiText('平台余额与付费实例')">
     <div class="account-line">
-      <div class="account-summary"><strong class="account-label">{{ uiText('平台账户余额') }}</strong><span v-if="account" class="account-amount">{{ currency(account.availableQuota) }}</span><span v-else class="account-placeholder">{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '平台账户配置待确认') }}</span></div>
-      <el-button class="account-query" :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
+      <div class="account-summary">
+        <strong class="account-label"><el-icon aria-hidden="true"><Wallet /></el-icon>{{ uiText('平台账户余额') }}</strong>
+        <span v-if="account" class="account-amount" :aria-label="currency(account.availableQuota)" aria-live="polite"><span>{{ balanceParts.integer }}</span><span v-if="balanceParts.fraction" class="account-fraction">.{{ balanceParts.fraction }}</span></span>
+        <span v-else class="account-placeholder">{{ uiText(capabilities.accountAvailable ? '使用当前统一平台账户' : '平台账户配置待确认') }}</span>
+      </div>
+      <el-button class="account-query" :icon="Refresh" :disabled="!capabilities.accountAvailable" :loading="busy === 'account'" @click="checkAccount">{{ uiText('查询余额') }}</el-button>
     </div>
     <el-alert v-if="capabilities.unavailableReason" type="info" :title="uiText(capabilities.unavailableReason)" :closable="false" show-icon />
     <el-alert v-if="error" type="warning" :title="uiText(error)" :closable="false" show-icon />
@@ -22,11 +26,12 @@ import { translateUiMessage as uiText, translatePhrase as phrase } from '@/i18n'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import { Refresh, Wallet } from '@element-plus/icons-vue'
 import { getComputeBillingCapabilities, checkComputeBillingAccount, quoteComputePaidRun, quoteComputeArchiveRecovery, listComputePaidRuns, acceptComputePaidRun, stopComputePaidRun } from '@/api/computeBilling'
 import { refreshComputeHealth } from '@/api/compute'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent } from '@/utils/computePlatformAuth'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '@/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel } from '@/utils/computeBillingPresentation.mjs'
 
 const props = defineProps({ resources: { type: Array, default: () => [] }, inlineActions: { type: Boolean, default: true } })
 const emit = defineEmits(['changed'])
@@ -39,6 +44,10 @@ const recoveryAttempts = ref({})
 const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run)))
 const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || uiText('付费实例')
 const currency = quota => billingCurrency(quota, account.value.numerator, account.value.denominator)
+const balanceParts = computed(() => {
+  const [integer, fraction = ''] = account.value ? currency(account.value.availableQuota).split('.') : ['']
+  return { integer: integer.replace(/\B(?=(\d{3})+(?!\d))/g, ','), fraction }
+})
 let active = true, polling = false, timer, revision = 0
 let identity = captureComputeIdentity()
 const reset = () => { revision++; submittedRunId = null; account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
@@ -170,7 +179,8 @@ const prepareTraining = run => execute(run.runId, async (proof, valid) => {
   if (valid()) await router.push({ path: '/algorithm-training', query: { nodeId: run.nodeId } })
 })
 const activeRun = nodeId => visibleRuns.value.find(run => String(run.nodeId) === String(nodeId))
-defineExpose({ start, stop, prepareTraining, activeRun, busy })
+const startLabel = nodeId => paidStartLabel(nodeId, runs.value)
+defineExpose({ start, stop, prepareTraining, activeRun, startLabel, busy })
 onMounted(async () => {
   const epoch = revision
   try {
@@ -190,17 +200,21 @@ onUnmounted(() => { active = false; clearInterval(timer); window.removeEventList
 </script>
 
 <style scoped>
-.billing-panel { max-width: 1200px; margin: 0 auto 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; }
+.billing-panel { max-width: 1200px; margin: 0 auto 20px; }
 .account-line, .paid-run { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; }
-.account-line { min-height: 64px; gap: 24px; padding: 8px 0 12px; }
-.account-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px 24px; min-width: 0; }
-.account-label { color: #64748b; font-size: 14px; font-weight: 500; white-space: nowrap; }
-.account-amount { color: #172b4d; font-size: 28px; font-weight: 600; line-height: 1.25; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.account-placeholder { color: #64748b; font-size: 14px; }
-.account-query { flex-shrink: 0; min-height: 36px; padding: 0 16px; border-color: #dce3ed; border-radius: 8px; color: #2454d6; font-weight: 500; }
+.account-line { min-height: 112px; box-sizing: border-box; gap: 24px; padding: 20px 24px; border: 1px solid #e3eafb; border-radius: 12px; background: #f5f8ff; }
+.account-summary { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.account-label { display: flex; align-items: center; gap: 8px; color: #526482; font-size: 13px; font-weight: 500; line-height: 20px; }
+.account-label .el-icon { color: #2454d6; font-size: 17px; }
+.account-amount { color: #172b4d; font-size: 30px; font-weight: 600; line-height: 1.2; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.account-fraction { color: #526482; font-size: 18px; font-weight: 500; letter-spacing: 0; }
+.account-placeholder { min-height: 36px; display: flex; align-items: center; color: #64748b; font-size: 14px; }
+.account-query { flex-shrink: 0; min-height: 38px; padding: 0 16px; border-color: #dce5fa; border-radius: 8px; background: #fff; color: #2454d6; font-weight: 500; }
+.account-query:not(:disabled):hover { background: #edf2ff; border-color: #b5c8ff; }
 .account-query:focus-visible { outline: 2px solid #2454d6; outline-offset: 3px; }
+.billing-panel > .el-alert { margin-top: 12px; }
 .paid-run span, .paid-run small { display: block; margin-top: 5px; color: #606266; }
 .paid-run { border-top: 1px solid #eee; margin-top: 8px; }
 .run-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-@media (max-width: 700px) { .paid-run { align-items: flex-start; flex-direction: column; } .account-line { gap: 16px; } .account-summary { flex-direction: column; gap: 6px; } .account-amount { font-size: 23px; } }
+@media (max-width: 700px) { .paid-run { align-items: flex-start; flex-direction: column; } .account-line { flex-wrap: wrap; gap: 16px; padding: 18px; } .account-amount { font-size: 26px; } .account-fraction { font-size: 16px; } .account-query { margin-left: auto; } }
 </style>

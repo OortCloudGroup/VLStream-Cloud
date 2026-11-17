@@ -200,6 +200,15 @@ public class ComputePublicInventoryService {
         jdbc.update("UPDATE vls_compute_public_instance SET public_state='FREE',owner_subject=NULL,claim_id=NULL,generation=generation+1 WHERE instance_key=? AND public_state='OCCUPIED' AND claim_id=?", instanceKey, row.getClaimId());
     }
 
+    /** A settled original run can release its own clean claim even when its catalog is offline. */
+    void releaseCompleted(String instanceKey, String originalPlatformSubject) {
+        if(blank(instanceKey)||blank(originalPlatformSubject))return;
+        ComputeNode identity=new ComputeNode();identity.setPublicInstanceKey(instanceKey);
+        Instance row=read(identity,true);
+        if(row==null||!ModelArtifactObjectStore.hash("trusted-platform-user\n"+originalPlatformSubject).equals(row.getOwnerSubject()))return;
+        releaseCompleted(identity,instanceKey);
+    }
+
     void requireEditable(ComputeNode node) {
         Instance row = read(node,true);
         if(node.getPublicInstanceKey()!=null && row==null)throw new ServiceException("公共实例身份记录缺失，不能调整配置或移除");

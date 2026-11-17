@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
@@ -112,7 +113,8 @@ public class UnifiedComputeCatalog {
     }
 
     private JsonNode fetch() {
-        if (blank(properties.getAppId()) || blank(properties.getSecretKey())) throw new IllegalArgumentException("Execution application identity required");
+        ModelHubProperties deployment = properties.getDeployment();
+        if (blank(deployment.getAppId()) || blank(deployment.getSecretKey())) throw new IllegalArgumentException("Execution application identity required");
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory() {
             @Override protected void prepareConnection(HttpURLConnection connection, String method) throws java.io.IOException {
                 super.prepareConnection(connection, method); connection.setInstanceFollowRedirects(false);
@@ -120,13 +122,15 @@ public class UnifiedComputeCatalog {
         };
         factory.setConnectTimeout(5000); factory.setReadTimeout(10000);
         RestTemplate rest = new RestTemplate(factory);
-        String base = properties.getBaseUrl().replaceAll("/+$", "");
+        String base = deployment.getBaseUrl().trim().replaceAll("/+$", "");
         return rest.execute(base + "/compute/v1/executionCatalog", HttpMethod.POST, request -> {
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
             request.getHeaders().set("requesttype", "app");
-            request.getHeaders().set("appid", properties.getAppId());
-            request.getHeaders().set("secretkey", properties.getSecretKey());
-            if (!blank(properties.getAccessToken())) request.getHeaders().set("accesstoken", properties.getAccessToken());
+            request.getHeaders().set("appid", deployment.getAppId());
+            request.getHeaders().set("secretkey", deployment.getSecretKey());
+            // The platform gateway validates its access token before deployment checks the service app.
+            // Direct deployment connections may omit it; never substitute a logged-in user's token.
+            if (!blank(deployment.getGuestToken())) request.getHeaders().set("accesstoken", deployment.getGuestToken());
             request.getBody().write("{}".getBytes(StandardCharsets.UTF_8));
         }, response -> {
             if (!response.getStatusCode().is2xxSuccessful()) throw new IllegalStateException("Execution catalog refused");

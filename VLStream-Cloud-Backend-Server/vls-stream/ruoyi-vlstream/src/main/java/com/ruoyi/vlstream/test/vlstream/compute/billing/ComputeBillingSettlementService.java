@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 public class ComputeBillingSettlementService {
     public static final String EXPIRED_UNSENT_TAIL = "HOLD_EXPIRED_NEVER_DEBITED";
     public static final String RELEASED_RUN_WINDOW_TAIL = "RUN_WINDOW_EXPIRED_RELEASED_UNCHARGED";
+    public static final String RELEASED_COORDINATION_TAIL = "COORDINATION_UNAVAILABLE_RELEASED_UNCHARGED";
     public static final String RELEASED_SSH_PREPARATION_TAIL = "SSH_PREPARATION_FAILED_RELEASED_UNCHARGED";
     private static final long TAIL_CLOCK_SKEW_MS = 2000L;
     private static final long TAIL_BIRTH_MARGIN_MS = 5000L;
@@ -104,9 +105,17 @@ public class ComputeBillingSettlementService {
     /** A control-plane SSH failure does not invalidate already confirmed runtime.
      * Only the original, unattempted final slice can regain dispatch under its still-valid hold. */
     public boolean recoverStoppedSshPreparationTail(String usageId) {
+        return recoverStoppedControlTail(usageId,"SSH_PREPARATION_FAILED");
+    }
+
+    public boolean recoverStoppedCoordinationTail(String usageId) {
+        return recoverStoppedControlTail(usageId,"COORDINATION_UNAVAILABLE");
+    }
+
+    private boolean recoverStoppedControlTail(String usageId,String controlFailure) {
         try {
             tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
-            ExpiredTail original=expiredTail(usageId,false,false,true);
+            ExpiredTail original=expiredTail(usageId,false,false,controlFailure);
             tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
             ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
             long evidenceAt=System.currentTimeMillis();
@@ -117,25 +126,25 @@ public class ComputeBillingSettlementService {
             ExternalBillingGateway.Result observed=gateway.holdById(original.holdId);
             tailRequire(observed!=null&&observed.status==ExternalBillingGateway.Status.SUCCEEDED&&observed.charge!=null,"EXPIRED_TAIL_HOLD_CONFLICT");
             FundingContracts.HoldDetail detail=FundingContracts.holdDetail(observed.charge);
-            verifyActiveSshTailHold(original,detail);
+            verifyActiveControlTailHold(original,detail);
             return Boolean.TRUE.equals(transactions.execute(tx->{
-                ExpiredTail current=expiredTail(usageId,true,false,true);
+                ExpiredTail current=expiredTail(usageId,true,false,controlFailure);
                 tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
                 long now=System.currentTimeMillis();
                 tailRequire(now>=evidenceAt&&now-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
-                verifyActiveSshTailHold(current,detail);
+                verifyActiveControlTailHold(current,detail);
                 lockTailRemainder(current,usageId);
                 // Keep the original reason as audit evidence. PREPARED alone restores the
                 // ordinary dispatcher, which rechecks this same reference/key and hold.
-                tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET state='PREPARED' WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code='SSH_PREPARATION_FAILED' AND attempt_count=0 AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
-                    current.tail.get("merchant_charge_id"))==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET state='PREPARED' WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code=? AND attempt_count=0 AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
+                    current.tail.get("merchant_charge_id"),controlFailure)==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
                 return true;
             }));
         } catch(ExpiredTailBlocked blocked) {expiredTailReason(usageId,blocked.reason);return false;}
         catch(RuntimeException unavailable) {expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;}
     }
 
-    private void verifyActiveSshTailHold(ExpiredTail value,FundingContracts.HoldDetail detail) {
+    private void verifyActiveControlTailHold(ExpiredTail value,FundingContracts.HoldDetail detail) {
         tailRequire(value.expires>System.currentTimeMillis()&&("ACTIVE".equals(detail.holdStatus)||"PARTIALLY_CAPTURED".equals(detail.holdStatus))
             &&"0".equals(detail.releasedQuota),"EXPIRED_TAIL_HOLD_CONFLICT");
         verifyTailHoldObservation(value,detail);
@@ -188,18 +197,22 @@ public class ComputeBillingSettlementService {
     /** Expiry prevents a new debit. This only permits the original final RELEASE;
      * the tail stays blocked until the release transaction forms a hold-lock barrier. */
     public boolean allowExpiredRunWindowTailRelease(String usageId) {
-        return allowExpiredStoppedTailRelease(usageId,false);
+        return allowExpiredStoppedTailRelease(usageId,null);
     }
 
     public boolean allowExpiredSshPreparationTailRelease(String usageId) {
-        return allowExpiredStoppedTailRelease(usageId,true);
+        return allowExpiredStoppedTailRelease(usageId,"SSH_PREPARATION_FAILED");
     }
 
-    private boolean allowExpiredStoppedTailRelease(String usageId,boolean sshPreparation) {
+    public boolean allowExpiredCoordinationTailRelease(String usageId) {
+        return allowExpiredStoppedTailRelease(usageId,"COORDINATION_UNAVAILABLE");
+    }
+
+    private boolean allowExpiredStoppedTailRelease(String usageId,String controlFailure) {
         try {
             tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
-            ExpiredTail original=expiredTail(usageId,false,true,sshPreparation);
-            if(releasedTailReason(sshPreparation).equals(original.tail.get("error_code")))return true;
+            ExpiredTail original=expiredTail(usageId,false,true,controlFailure);
+            if(releasedTailReason(controlFailure).equals(original.tail.get("error_code")))return true;
             tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
             ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
             long evidenceAt=System.currentTimeMillis();
@@ -211,7 +224,7 @@ public class ComputeBillingSettlementService {
             }
             final FundingContracts.HoldDetail beforeRelease=detail;
             return Boolean.TRUE.equals(transactions.execute(tx->{
-                ExpiredTail current=expiredTail(usageId,true,true,sshPreparation);
+                ExpiredTail current=expiredTail(usageId,true,true,controlFailure);
                 tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
                 tailRequire(System.currentTimeMillis()>=evidenceAt&&System.currentTimeMillis()-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
                 if(beforeRelease!=null)verifyExpiredTailHold(current,beforeRelease);
@@ -224,18 +237,22 @@ public class ComputeBillingSettlementService {
     /** A confirmed original RELEASE serializes after any old capture on this same hold.
      * Absence lookups only become conclusive after that barrier and exact counter checks. */
     public boolean confirmReleasedRunWindowTail(String usageId) {
-        return confirmReleasedStoppedTail(usageId,false);
+        return confirmReleasedStoppedTail(usageId,null);
     }
 
     public boolean confirmReleasedSshPreparationTail(String usageId) {
-        return confirmReleasedStoppedTail(usageId,true);
+        return confirmReleasedStoppedTail(usageId,"SSH_PREPARATION_FAILED");
     }
 
-    private boolean confirmReleasedStoppedTail(String usageId,boolean sshPreparation) {
+    public boolean confirmReleasedCoordinationTail(String usageId) {
+        return confirmReleasedStoppedTail(usageId,"COORDINATION_UNAVAILABLE");
+    }
+
+    private boolean confirmReleasedStoppedTail(String usageId,String controlFailure) {
         try {
             tailRequire(!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive(),"EXPIRED_TAIL_TRANSACTION_ACTIVE");
-            ExpiredTail original=expiredTail(usageId,false,true,sshPreparation);
-            if(releasedTailReason(sshPreparation).equals(original.tail.get("error_code")))return true;
+            ExpiredTail original=expiredTail(usageId,false,true,controlFailure);
+            if(releasedTailReason(controlFailure).equals(original.tail.get("error_code")))return true;
             verifyRunWindowReleaseReceipt(original);
             tailRequire(properties.hasMerchantConfiguration(),"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
             ExternalBillingGateway gateway=gateways.get();tailRequire(gateway!=null,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");
@@ -261,8 +278,8 @@ public class ComputeBillingSettlementService {
             tailRequire(reference!=null&&key!=null&&reference.status==ExternalBillingGateway.Status.NOT_FOUND
                 &&key.status==ExternalBillingGateway.Status.NOT_FOUND,"EXPIRED_TAIL_ORIGINAL_LOOKUP_UNCONFIRMED");
             return Boolean.TRUE.equals(transactions.execute(tx->{
-                ExpiredTail current=expiredTail(usageId,true,true,sshPreparation);
-                if(releasedTailReason(sshPreparation).equals(current.tail.get("error_code")))return true;
+                ExpiredTail current=expiredTail(usageId,true,true,controlFailure);
+                if(releasedTailReason(controlFailure).equals(current.tail.get("error_code")))return true;
                 tailRequire(original.fingerprint.equals(current.fingerprint),"EXPIRED_TAIL_CONCURRENT_CHANGE");
                 tailRequire(System.currentTimeMillis()>=evidenceAt&&System.currentTimeMillis()-evidenceAt<=30000L,"EXPIRED_TAIL_EVIDENCE_STALE");
                 verifyRunWindowReleaseReceipt(current);verifyReleasedTailHold(current,detail);
@@ -270,15 +287,15 @@ public class ComputeBillingSettlementService {
                 jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
                     current.before.numerator.toString(),current.before.denominator.toString(),current.payer,unit);
                 tailRequire(jdbc.update("UPDATE vls_compute_billing_slice SET error_code=? WHERE merchant_charge_id=? AND state='BLOCKED' AND error_code=? AND attempt_count=0 AND lease_token IS NULL AND lease_until_ms=0 AND charge_id IS NULL AND ledger_entry_id IS NULL",
-                    releasedTailReason(sshPreparation),current.tail.get("merchant_charge_id"),sshPreparation?"SSH_PREPARATION_FAILED":"RUN_WINDOW_EXPIRED")==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
-                jdbc.update("UPDATE vls_compute_paid_run SET error_code=? WHERE usage_id=?",sshPreparation?"SSH_PREPARATION_TAIL_WAIVED_AFTER_RELEASE":"RUN_WINDOW_TAIL_WAIVED_AFTER_RELEASE",usageId);return true;
+                    releasedTailReason(controlFailure),current.tail.get("merchant_charge_id"),controlFailure!=null?controlFailure:"RUN_WINDOW_EXPIRED")==1,"EXPIRED_TAIL_CONCURRENT_CHANGE");
+                jdbc.update("UPDATE vls_compute_paid_run SET error_code=? WHERE usage_id=?",controlFailure==null?"RUN_WINDOW_TAIL_WAIVED_AFTER_RELEASE":"SSH_PREPARATION_FAILED".equals(controlFailure)?"SSH_PREPARATION_TAIL_WAIVED_AFTER_RELEASE":"COORDINATION_TAIL_WAIVED_AFTER_RELEASE",usageId);return true;
             }));
         } catch(ExpiredTailBlocked blocked) {expiredTailReason(usageId,blocked.reason);return false;}
         catch(RuntimeException unavailable) {expiredTailReason(usageId,"EXPIRED_TAIL_EVIDENCE_UNAVAILABLE");return false;}
     }
 
-    private static String releasedTailReason(boolean sshPreparation) {
-        return sshPreparation?RELEASED_SSH_PREPARATION_TAIL:RELEASED_RUN_WINDOW_TAIL;
+    private static String releasedTailReason(String controlFailure) {
+        return controlFailure==null?RELEASED_RUN_WINDOW_TAIL:"SSH_PREPARATION_FAILED".equals(controlFailure)?RELEASED_SSH_PREPARATION_TAIL:RELEASED_COORDINATION_TAIL;
     }
 
     private String lockTailRemainder(ExpiredTail current,String usageId) {
@@ -299,9 +316,9 @@ public class ComputeBillingSettlementService {
         return expiredTail(id,lock,false);
     }
     private ExpiredTail expiredTail(String id,boolean lock,boolean releaseBarrier) {
-        return expiredTail(id,lock,releaseBarrier,false);
+        return expiredTail(id,lock,releaseBarrier,null);
     }
-    private ExpiredTail expiredTail(String id,boolean lock,boolean releaseBarrier,boolean sshPreparation) {
+    private ExpiredTail expiredTail(String id,boolean lock,boolean releaseBarrier,String controlFailure) {
         String suffix=lock?" FOR UPDATE":"";
         Map<String,Object> usage=usage(id);
         Map<String,Object> session=jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?"+suffix,id);
@@ -341,7 +358,7 @@ public class ComputeBillingSettlementService {
             else {
                 tailRequire(tail==null,"EXPIRED_TAIL_MULTIPLE_UNSETTLED");
                 tailRequire("BLOCKED".equals(state),"EXPIRED_TAIL_UNSETTLED_SLICE_STATE");
-                tailRequire(sshPreparation?("SSH_PREPARATION_FAILED".equals(slice.get("error_code"))||(releaseBarrier&&RELEASED_SSH_PREPARATION_TAIL.equals(slice.get("error_code")))):releaseBarrier?("RUN_WINDOW_EXPIRED".equals(slice.get("error_code"))||RELEASED_RUN_WINDOW_TAIL.equals(slice.get("error_code")))
+                tailRequire(controlFailure!=null?(controlFailure.equals(slice.get("error_code"))||(releaseBarrier&&releasedTailReason(controlFailure).equals(slice.get("error_code")))):releaseBarrier?("RUN_WINDOW_EXPIRED".equals(slice.get("error_code"))||RELEASED_RUN_WINDOW_TAIL.equals(slice.get("error_code")))
                     :("HOLD_EXPIRED".equals(slice.get("error_code"))||EXPIRED_UNSENT_TAIL.equals(slice.get("error_code"))),"EXPIRED_TAIL_UNSETTLED_SLICE_REASON");
                 tailRequire(number(slice,"is_tail")==1&&number(slice,"interval_end_ms")==ended,"EXPIRED_TAIL_NOT_FINAL_TAIL");
                 tailRequire(slice.get("charge_id")==null&&slice.get("ledger_entry_id")==null,"EXPIRED_TAIL_DEBIT_EVIDENCE");
@@ -370,8 +387,8 @@ public class ComputeBillingSettlementService {
             &&expires==number(run,"hold_until_ms"),"EXPIRED_TAIL_HOLD_CONFLICT");
         tailRequire(run.get("create_time") instanceof Timestamp&&tail.get("create_time") instanceof Timestamp,"EXPIRED_TAIL_CLOCK_UNVERIFIED");
         long runCreated=((Timestamp)run.get("create_time")).getTime(),quoted=Math.subtractExact(number(run,"quote_until_ms"),120000L),created=((Timestamp)tail.get("create_time")).getTime();
-        if(sshPreparation) {
-            tailRequire("SSH_PREPARATION_FAILED".equals(session.get("risk_code")),"EXPIRED_TAIL_FINANCIAL_RISK");
+        if(controlFailure!=null) {
+            tailRequire(controlFailure.equals(session.get("risk_code")),"EXPIRED_TAIL_FINANCIAL_RISK");
             tailRequire(created<expires,"EXPIRED_TAIL_NOT_HISTORICAL_RUN_WINDOW");
             tailRequire(releaseBarrier?expires<=System.currentTimeMillis():expires>System.currentTimeMillis(),"EXPIRED_TAIL_HOLD_CONFLICT");
         } else if(releaseBarrier) {

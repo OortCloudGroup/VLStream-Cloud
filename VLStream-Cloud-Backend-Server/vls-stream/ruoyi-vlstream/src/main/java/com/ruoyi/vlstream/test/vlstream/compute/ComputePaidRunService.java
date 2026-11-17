@@ -280,7 +280,8 @@ public class ComputePaidRunService {
             eligible(node,archive);
             JsonNode quotedResource = parse(text(row,"quote_snapshot")).path("configuredResource");
             if (node.isPlatformCatalogManaged() && !quotedResource.isMissingNode()
-                && !quotedResource.equals(json.valueToTree(nodes.configurationSnapshot(node))))
+                // Compare both snapshots after persistence normalization: JSON reads small long values as int nodes.
+                && !quotedResource.equals(parse(write(nodes.configurationSnapshot(node)))))
                 throw new ServiceException("算力执行配置已变化，请重新确认报价");
             if(archive)validateRecoverySnapshot(node,row);
             if(System.currentTimeMillis()>=Math.min(number(row,"quote_until_ms"),stopDeadline(row))||!node.getPublicInstanceKey().equals(text(row,"instance_key")))
@@ -454,7 +455,9 @@ public class ComputePaidRunService {
             jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code IS NULL THEN 'RUN_WINDOW_EXPIRED' ELSE risk_code END WHERE usage_id=?",usage);
             session.put("stop_requested",1);
         }
-        if(configuredPower!=null&&("STARTING".equals(state)||"RUNNING".equals(state)||"STOPPING".equals(state))) {
+        boolean physicallyStopped="STOPPED".equals(observedUsage.get("state"))&&observedUsage.get("billing_end_at")!=null
+            &&"STOP_CONFIRMED".equals(session.get("safety_state"))&&number(session,"physical_stop_observed_ms")>0;
+        if(!physicallyStopped&&configuredPower!=null&&("STARTING".equals(state)||"RUNNING".equals(state)||"STOPPING".equals(state))) {
             ComputeNode controlled=lifecycle.controlledNode(usage);
             officialPowerControl=nodes.officialConfigured(controlled);
             if(officialPowerControl&&(!"STARTING".equals(state)||number(session,"stop_requested")==0||!"PREPARED".equals(text(run,"power_start_state")))) {
@@ -530,8 +533,14 @@ public class ComputePaidRunService {
         if(sshPreparationTail&&session.get("funding_expires_at_ms")!=null&&number(session,"funding_expires_at_ms")>System.currentTimeMillis()) {
             settlements.recoverStoppedSshPreparationTail(usage);return; // Normal coordinator dispatch owns the original request.
         }
+        boolean coordinationTail=stopped&&!unsettled.isEmpty()&&("COORDINATION_UNAVAILABLE".equals(session.get("risk_code"))
+            ||!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='BLOCKED' AND error_code IN ('COORDINATION_UNAVAILABLE',?)",usage,ComputeBillingSettlementService.RELEASED_COORDINATION_TAIL).isEmpty());
+        if(coordinationTail&&session.get("funding_expires_at_ms")!=null&&number(session,"funding_expires_at_ms")>System.currentTimeMillis()) {
+            settlements.recoverStoppedCoordinationTail(usage);return;
+        }
         boolean runWindowTail=stopped&&!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='BLOCKED' AND error_code IN ('RUN_WINDOW_EXPIRED',?)",usage,ComputeBillingSettlementService.RELEASED_RUN_WINDOW_TAIL).isEmpty();
         if(!unsettled.isEmpty()&&!(sshPreparationTail?settlements.allowExpiredSshPreparationTailRelease(usage)
+            :coordinationTail?settlements.allowExpiredCoordinationTailRelease(usage)
             :runWindowTail?settlements.allowExpiredRunWindowTailRelease(usage):settlements.confirmExpiredUnsentTail(usage)))return;
         // The two exact unallocated markers prove that the sealed interval never acquired
         // permission to send. Preserve its amount/error/state; release is not a fake settlement.
@@ -567,16 +576,18 @@ public class ComputePaidRunService {
         }
         if(runWindowTail&&!settlements.confirmReleasedRunWindowTail(usage))return;
         if(sshPreparationTail&&!settlements.confirmReleasedSshPreparationTail(usage))return;
+        if(coordinationTail&&!settlements.confirmReleasedCoordinationTail(usage))return;
         tx.execute(status->{
             jdbc.update("UPDATE vls_compute_paid_run SET state=?,active_instance_key=NULL,error_code=NULL,update_time=NOW() WHERE run_id=?",neverStarted?"CANCELLED":"COMPLETED",id);
             jdbc.update("UPDATE vls_compute_usage SET active_server_key=NULL,state=CASE WHEN billing_start_at IS NULL THEN 'START_FAILED' ELSE state END WHERE id=?",usage);
             return null;
         });
         String completedInstanceKey=text(run,"instance_key");
-        long completedNodeId=Long.valueOf(text(run,"node_id"));
+        String completedOwner=text(run,"platform_subject");
         try {
-            ComputeNode completedNode=nodes.get(completedNodeId);
-            tx.execute(status->{nodes.publicInventory().releaseCompleted(completedNode,completedInstanceKey);return null;});
+            // The original claim is a persisted identity; finishing its money journal must
+            // not depend on today's catalog retaining a historical execution configuration.
+            tx.execute(status->{nodes.publicInventory().releaseCompleted(completedInstanceKey,completedOwner);return null;});
         } catch (RuntimeException ignored) {
             // The order is settled; an unverified claim stays owned for the explicit release path.
         }

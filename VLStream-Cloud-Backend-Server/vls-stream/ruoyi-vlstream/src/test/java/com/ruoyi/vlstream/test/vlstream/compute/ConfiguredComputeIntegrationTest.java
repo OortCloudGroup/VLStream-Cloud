@@ -99,6 +99,23 @@ public class ConfiguredComputeIntegrationTest {
     ComputeRequests.Start request(Long id){ComputeRequests.Start request=new ComputeRequests.Start();request.setNodeId(id);request.setDatasetId(3L);request.setModelSource("preset");request.setEpochs(1);return request;}
     CloudTrainingJob job(){return jdbc.queryForObject("SELECT * FROM vls_cloud_training_job",new BeanPropertyRowMapper<>(CloudTrainingJob.class));}
 
+    @Test void modelHubConfigurationSuppliesTheCompanyCatalogConnection() {
+        com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties modelHub = new com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties();
+        modelHub.setBaseUrl("https://model-hub.invalid");
+        ComputeCatalogProperties catalog = new ComputeCatalogProperties(modelHub);
+        ReflectionTestUtils.setField(registry, "catalogProperties", catalog);
+        assertTrue(catalog.configured());
+        registry.initialize();
+        assertTrue(registry.published().isEmpty());
+        modelHub.setBaseUrl("  ");
+        assertFalse(catalog.configured());
+        registry.initialize();
+        assertEquals(2, registry.published().size());
+        modelHub.setBaseUrl("https://deployment.invalid");
+        assertTrue(catalog.configured());
+        registry.initialize();
+        assertTrue(registry.published().isEmpty());
+    }
     @Test void deletedRowsLeaveTwoSelectableResourcesAndNoManagementCrudOrBackfill() throws Exception {
         ready(-173L);ready(-99L);
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node",Integer.class));assertEquals(2,market.list(true).size());assertTrue(market.list(true).stream().allMatch(ComputeMarketService.Resource::isSchedulable));
@@ -157,15 +174,22 @@ public class ConfiguredComputeIntegrationTest {
         assertNotNull(build);
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
         for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
-        ComputeCatalogProperties bound=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.of(ComputeCatalogProperties.class)).get();
-        assertFalse(bound.configured());assertFalse(bound.getAppId().isEmpty());assertFalse(bound.getSecretKey().isEmpty());
+        com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties deployment=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vls.model-hub",org.springframework.boot.context.properties.bind.Bindable.of(com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties.class)).get();
+        ComputeCatalogProperties bound=new ComputeCatalogProperties(deployment);
+        org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.ofInstance(bound));
+        assertTrue(bound.configured());assertFalse(deployment.getAppId().isEmpty());assertFalse(deployment.getSecretKey().isEmpty());
         for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("legacy-compute-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application-compute-legacy.yml").toFile())))environment.getPropertySources().addLast(source);
         ConfiguredComputeProperties legacy=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.company-resources",org.springframework.boot.context.properties.bind.Bindable.of(ConfiguredComputeProperties.class)).get();
         assertEquals(3,legacy.getResources().size());
         assertEquals(Arrays.asList(-173L,-99L,-6000L),legacy.getResources().stream().map(ConfiguredComputeProperties.Resource::getNodeId).collect(java.util.stream.Collectors.toList()));
         assertEquals(new java.math.BigDecimal("13.00"),legacy.getResources().get(2).getFixedPrice().getPerInstanceHour());
-        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("explicit-catalog",Collections.singletonMap("VLSTREAM_COMPUTE_CATALOG_BASE_URL","https://catalog.example")));
-        assertTrue(org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.of(ComputeCatalogProperties.class)).get().configured());
+        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("deployment-target",Collections.singletonMap("VLS_MODEL_HUB_BASE_URL","https://deployment.example/bus/apaas-deployment-service")));
+        org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vls.model-hub",org.springframework.boot.context.properties.bind.Bindable.ofInstance(deployment));
+        assertSame(deployment,bound.getDeployment());
+        assertEquals("https://deployment.example/bus/apaas-deployment-service",bound.getDeployment().getBaseUrl());
+        assertNull(environment.getProperty("vlstream.compute.catalog.base-url"));
+        assertNull(environment.getProperty("vlstream.compute.catalog.app-id"));
+        assertNull(environment.getProperty("vlstream.compute.catalog.secret-key"));
         assertEquals("localhost",bound.getEnvironmentId());assertTrue(bound.getSnapshotFile().endsWith("compute-catalog.snapshot"));
         assertFalse(json.writeValueAsString(new ComputeNode()).contains("catalogDefinition"));
     }

@@ -30,6 +30,28 @@ class ComputeBillingCoordinatorTest {
         reconciliation=reconciler();coordinator=new ComputeBillingCoordinator(f.jdbc,f.service,f.properties,beans.getBeanProvider(BillingLifecycleGateway.class),reconciliation);
     }
     ComputeBillingReconciliationService reconciler(){return new ComputeBillingReconciliationService(f.jdbc,f.manager,f.properties,beans.getBeanProvider(ExternalBillingGateway.class),f.json);}
+    @Test void coordinationExceptionDoesNotEraseAnExistingFinancialRisk() throws Exception {
+        for(String risk:new String[]{"NOT_AUTHORIZED","FUNDING_OPERATION_CONFLICT","SUBMISSION_UNCERTAIN"}) {
+            String id=usage();
+            f.jdbc.update("UPDATE vls_compute_billing_session SET risk_code=? WHERE usage_id=?",risk,id);
+            BillingLifecycleGateway unavailable=org.mockito.Mockito.mock(BillingLifecycleGateway.class);
+            org.mockito.Mockito.when(unavailable.observe(id)).thenThrow(new IllegalStateException("transport failed"));
+            coordinator.tick(id,unavailable);
+            assertEquals(risk,f.jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+            assertEquals(1,f.jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=?",Integer.class,id));
+        }
+    }
+    @Test void stoppedOriginalFinishesSettlementWithoutObservingOrStoppingTheCurrentCatalog() throws Exception {
+        String id=usage();
+        f.service.recordRunningObservation(id,Instant.ofEpochMilli(f.start+60000));
+        f.service.confirmPhysicalStop(id,Instant.ofEpochMilli(f.start+60000));
+        f.jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1 WHERE usage_id=?",id);
+        coordinator.tick(id,lifecycle);
+        due();coordinator.tick(id,lifecycle);
+        assertEquals(0,lifecycle.observations);assertEquals(0,lifecycle.stops);
+        assertEquals("STOP_CONFIRMED",f.jdbc.queryForObject("SELECT safety_state FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
+        assertEquals(1,f.jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_slice WHERE usage_id=? AND state='SETTLED'",Integer.class,id));
+    }
     String usage() throws Exception{return f.usage("tenant-test","1","500000","1");}
     void due(){f.jdbc.update("UPDATE vls_compute_billing_slice SET next_attempt_ms=0");}
     @Test void missingMerchantConfigurationStillObservesAndStopsOriginalUsageWithoutLedgerCalls() throws Exception {
@@ -174,7 +196,7 @@ class ComputeBillingCoordinatorTest {
         f.gateway.loseResponse=false;lifecycle.power="STOPPED";lifecycle.at=100000;
 
         coordinator.scan();
-        assertEquals(1,lifecycle.observations);assertEquals("UNKNOWN",f.state(tail));
+        assertEquals(0,lifecycle.observations);assertEquals("UNKNOWN",f.state(tail));
         assertNull(f.jdbc.queryForObject("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?",String.class,id));
         assertEquals(1,f.jdbc.queryForObject("SELECT stop_requested FROM vls_compute_billing_session WHERE usage_id=?",Integer.class,id));
         for(String field:new String[]{"request_json","request_hash","idempotency_key","amount_text"})assertEquals(original.get(field),f.row(tail).get(field));

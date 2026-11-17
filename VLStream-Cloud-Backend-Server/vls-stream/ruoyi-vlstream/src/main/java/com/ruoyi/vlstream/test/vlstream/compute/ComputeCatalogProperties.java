@@ -1,22 +1,26 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
-import lombok.Data;
-import lombok.ToString;
+import com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
 @Component
 @ConfigurationProperties(prefix = "vlstream.compute.catalog")
 public class ComputeCatalogProperties {
-    private String baseUrl;
-    private String appId;
-    @ToString.Exclude private String secretKey;
-    @ToString.Exclude private String accessToken;
+    private final ModelHubProperties deployment;
     private String environmentId = "localhost";
     private long refreshMillis = 15000;
     private long maximumAgeMillis = 60000;
     private String snapshotFile = "./data/security/compute-catalog.snapshot";
 
-    public boolean configured() { return baseUrl != null && !baseUrl.trim().isEmpty(); }
+    public boolean configured() {
+        String baseUrl = deployment.getBaseUrl();
+        return baseUrl != null && !baseUrl.trim().isEmpty();
+    }
 }

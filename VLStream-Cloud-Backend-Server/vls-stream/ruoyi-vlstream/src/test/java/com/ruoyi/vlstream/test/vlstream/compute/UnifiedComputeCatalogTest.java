@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayOutputStream;
@@ -41,8 +42,10 @@ public class UnifiedComputeCatalogTest {
         jdbc.execute("CREATE TABLE vls_compute_public_instance(provider VARCHAR(32),provider_instance_id VARCHAR(100),instance_key VARCHAR(100))");
         jdbc.execute("CREATE ALIAS GET_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.UnifiedComputeCatalogTest.acquireLock'");
         jdbc.execute("CREATE ALIAS RELEASE_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.UnifiedComputeCatalogTest.releaseLock'");
-        properties = new ComputeCatalogProperties(); properties.setBaseUrl("http://127.0.0.1:1");
-        properties.setAppId("catalog-app"); properties.setSecretKey("catalog-app-secret");
+        ModelHubProperties deployment = new ModelHubProperties();
+        deployment.setBaseUrl("http://127.0.0.1:1");
+        deployment.setAppId("catalog-app"); deployment.setSecretKey("catalog-app-secret");
+        properties = new ComputeCatalogProperties(deployment);
         registry = registry();
     }
 
@@ -323,14 +326,18 @@ public class UnifiedComputeCatalogTest {
         ConfiguredComputeProperties.Resource value = resource(1); ObjectNode document = document(value);
         AtomicBoolean failure = new AtomicBoolean(); AtomicBoolean authenticated = new AtomicBoolean();
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/compute/v1/executionCatalog", exchange -> {
-            authenticated.set("catalog-app".equals(exchange.getRequestHeaders().getFirst("appid"))
+        server.createContext("/bus/apaas-deployment-service/compute/v1/executionCatalog", exchange -> {
+            authenticated.set("POST".equals(exchange.getRequestMethod())
+                && "app".equals(exchange.getRequestHeaders().getFirst("requesttype"))
+                && "catalog-gateway-token".equals(exchange.getRequestHeaders().getFirst("accesstoken"))
+                && "catalog-app".equals(exchange.getRequestHeaders().getFirst("appid"))
                 && "catalog-app-secret".equals(exchange.getRequestHeaders().getFirst("secretkey")));
             byte[] body = document.toString().getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(failure.get() ? 503 : 200, body.length); exchange.getResponseBody().write(body); exchange.close();
+            exchange.sendResponseHeaders(!authenticated.get() ? 400 : failure.get() ? 503 : 200, body.length); exchange.getResponseBody().write(body); exchange.close();
         }); server.start();
         Path directory = testDirectory(); properties.setSnapshotFile(directory.resolve("catalog.snapshot").toString());
-        properties.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
+        properties.getDeployment().setGuestToken("catalog-gateway-token");
+        properties.getDeployment().setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/bus/apaas-deployment-service/");
         try {
             UnifiedComputeCatalog catalog = new UnifiedComputeCatalog(properties, registry, cipher, json); catalog.refresh();
             assertTrue(authenticated.get()); registry.requireAdmission(registry.resolve(-300L));
@@ -339,6 +346,49 @@ public class UnifiedComputeCatalogTest {
             failure.set(true); catalog.refresh(); assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
             registry = registry(); new UnifiedComputeCatalog(properties, registry, cipher, json).start();
             assertEquals("192.168.55.10", registry.resolve(-300L).getHost()); assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+        } finally { server.stop(0); }
+    }
+
+    @Test void gatewayTokenDoesNotBypassDeploymentApplicationAuthorization() throws Exception {
+        ConfiguredComputeProperties.Resource value = resource(1); install(value, value);
+        ObjectNode denied = document(value); denied.put("code", 4001);
+        denied.put("msg", "算力执行目录尚未配置服务应用授权");
+        AtomicBoolean gatewayAccepted = new AtomicBoolean();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/compute/v1/executionCatalog", exchange -> {
+            gatewayAccepted.set("catalog-gateway-token".equals(exchange.getRequestHeaders().getFirst("accesstoken")));
+            byte[] body = denied.toString().getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length); exchange.getResponseBody().write(body); exchange.close();
+        }); server.start();
+        Path snapshot = testDirectory().resolve("denied.snapshot");
+        properties.setSnapshotFile(snapshot.toString());
+        properties.getDeployment().setGuestToken("catalog-gateway-token");
+        properties.getDeployment().setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
+        try {
+            new UnifiedComputeCatalog(properties, registry, cipher, json).refresh();
+            assertTrue(gatewayAccepted.get()); assertFalse(Files.exists(snapshot));
+            assertEquals(value.getHost(), registry.resolve(-300L).getHost());
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+        } finally { server.stop(0); }
+    }
+
+    @Test void directDeploymentWithoutGatewayTokenRetainsServiceApplicationAuthentication() throws Exception {
+        AtomicBoolean authenticated = new AtomicBoolean();
+        ObjectNode document = document(resource(1));
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/compute/v1/executionCatalog", exchange -> {
+            authenticated.set(exchange.getRequestHeaders().getFirst("accesstoken") == null
+                && "catalog-app".equals(exchange.getRequestHeaders().getFirst("appid"))
+                && "catalog-app-secret".equals(exchange.getRequestHeaders().getFirst("secretkey")));
+            byte[] body = document.toString().getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(authenticated.get() ? 200 : 403, body.length);
+            exchange.getResponseBody().write(body); exchange.close();
+        }); server.start();
+        properties.setSnapshotFile(testDirectory().resolve("direct.snapshot").toString());
+        properties.getDeployment().setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
+        try {
+            new UnifiedComputeCatalog(properties, registry, cipher, json).refresh();
+            assertTrue(authenticated.get()); registry.requireAdmission(registry.resolve(-300L));
         } finally { server.stop(0); }
     }
 
