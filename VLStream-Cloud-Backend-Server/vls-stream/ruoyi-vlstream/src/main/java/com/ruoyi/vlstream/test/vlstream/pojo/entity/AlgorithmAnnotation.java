@@ -8,7 +8,9 @@
 
 package com.ruoyi.vlstream.test.vlstream.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -44,6 +46,11 @@ public class AlgorithmAnnotation extends TenantEntity {
 	 */
 	@Schema(description = "数据集路径")
 	private String datasetPath;
+
+	@TableField(exist = false)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@Schema(description = "当前训练数据集已生成")
+	private Boolean datasetGenerated;
 	/**
 	 *
 	 */

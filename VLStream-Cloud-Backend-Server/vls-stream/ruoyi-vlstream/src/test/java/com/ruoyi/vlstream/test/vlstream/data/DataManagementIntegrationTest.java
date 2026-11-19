@@ -83,8 +83,8 @@ class DataManagementIntegrationTest {
         TenantContextHolder.setTenantId("tenant-b");
         assertThrows(ServiceException.class, () -> data.project(project));
         assertThrows(ServiceException.class, () -> data.version(project, version));
-        assertEquals(0, data.projects(null, 1, 20).getTotal());
-        TenantContextHolder.clear(); assertThrows(ServiceException.class, () -> data.projects(null, 1, 20));
+        assertEquals(0, data.projects(null, 1, 20, false, false).getTotal());
+        TenantContextHolder.clear(); assertThrows(ServiceException.class, () -> data.projects(null, 1, 20, false, false));
     }
 
     @Test void importSearchSplitCompareAndRestoreRecoverDeletedFileAndAnnotations() throws Exception {

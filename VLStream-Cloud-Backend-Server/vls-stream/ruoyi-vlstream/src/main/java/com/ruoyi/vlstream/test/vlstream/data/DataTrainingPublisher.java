@@ -24,7 +24,7 @@ public class DataTrainingPublisher {
     public DatasetGenerationReport generate(Long projectId) {
         DatasetGenerationReport report;
         try {
-            report = preflight.check(projectId, data.snapshot(projectId));
+            report = preflight.check(projectId, data.snapshotForVersion(projectId));
             if ("BLOCKED".equals(report.getStatus())) return report;
             DatasetVersion version = data.savePreparedTrainingVersion(projectId, report);
             TrainingDatasetArtifact artifact = artifacts.ensure(projectId, version);

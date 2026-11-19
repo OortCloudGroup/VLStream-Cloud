@@ -1,8 +1,19 @@
 package com.ruoyi.vlstream.test.vlstream.data;
 
+import cn.dev33.satoken.SaManager;
+import cn.dev33.satoken.context.SaHolder;
+import cn.dev33.satoken.context.SaTokenContext;
+import cn.dev33.satoken.context.SaTokenContextForThreadLocal;
+import cn.dev33.satoken.context.SaTokenContextForThreadLocalStorage;
+import cn.dev33.satoken.servlet.model.SaRequestForServlet;
+import cn.dev33.satoken.servlet.model.SaResponseForServlet;
+import cn.dev33.satoken.servlet.model.SaStorageForServlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.common.helper.TenantContextHolder;
+import com.ruoyi.vlstream.test.vlstream.controller.VlsDataManagementController;
+import com.ruoyi.vlstream.test.vlstream.controller.VlsSmartAnnotationController;
 import com.ruoyi.vlstream.test.vlstream.mapper.*;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.*;
 import com.ruoyi.vlstream.test.vlstream.service.*;
@@ -12,8 +23,13 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.context.annotation.*;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -21,6 +37,9 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("dev")
 @EnabledIfEnvironmentVariable(named = "VLS_DATA_TEST_JDBC", matches = "jdbc:mysql://127\\.0\\.0\\.1:33316/vls_data_test_smart\\?.*")
@@ -48,12 +67,10 @@ class SmartAnnotationIntegrationTest {
     @BeforeEach void setup() throws Exception {
         DataTestConfiguration.initialize(context.getBean(DataSource.class));
         jdbc = new JdbcTemplate(context.getBean(DataSource.class));
-        jdbc.execute("DROP TABLE IF EXISTS vls_training_dataset_artifact");
-        jdbc.execute("CREATE TABLE vls_training_dataset_artifact(tenant_id VARCHAR(64),dataset_id BIGINT,storage_state VARCHAR(20))");
         for (String table : Arrays.asList("vls_smart_annotation_candidate", "vls_smart_annotation_round", "vls_smart_annotation_task")) jdbc.execute("DROP TABLE IF EXISTS " + table);
         String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
-        applyFourTypeMigration(jdbc);
+        applyDatasetMigrations(jdbc);
         TenantContextHolder.setTenantId("tenant-a");
         smart = context.getBean(SmartAnnotationService.class); data = context.getBean(DataManagementService.class); sql = context.getBean(SqlSessionTemplate.class);
         DataRequests.Project request = new DataRequests.Project(); request.setAnnotationName("Smart annotation test"); request.setProjectCode("SMART");
@@ -63,9 +80,13 @@ class SmartAnnotationIntegrationTest {
     }
     @AfterEach void clear() { TenantContextHolder.clear(); }
 
-    static void applyFourTypeMigration(JdbcTemplate jdbc) throws Exception {
-        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_022__four_type_annotation_payloads.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
-        for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+    static void applyDatasetMigrations(JdbcTemplate jdbc) throws Exception {
+        jdbc.execute("DROP TABLE IF EXISTS vls_training_dataset_artifact");
+        Path migrations = DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        for (String file : Arrays.asList("V1_2_0_022__four_type_annotation_payloads.sql", "V1_2_0_026__training_dataset_object_storage.sql")) {
+            String migration = new String(Files.readAllBytes(migrations.resolve(file)), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
+            for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+        }
         jdbc.execute("ALTER TABLE vls_smart_annotation_task ADD COLUMN compute_node_id BIGINT NULL");
     }
 
@@ -105,6 +126,58 @@ class SmartAnnotationIntegrationTest {
         assertEquals(2, data.versions(dataset).size());
     }
 
+    @Test void optionsImportsAndRoundSnapshotsWorkBeyondTenThousandSamples() throws Exception {
+        int sampleCount = 10_001;
+        long firstId = 1_000L;
+        long lastId = firstId + sampleCount - 1;
+        List<Object[]> members = new ArrayList<>(sampleCount);
+        for (int i = 0; i < sampleCount; i++) {
+            String name = "bulk-" + i + ".png";
+            members.add(new Object[]{firstId + i, dataset, name, i == 501 ? "__MACOSX/" + name : name, name,
+                i == 500 ? "video" : "image", i < 500 ? "low" : i == 502 ? "excluded" : "accepted"});
+        }
+        jdbc.batchUpdate("INSERT INTO vls_annotation_image (id, tenant_id, annotation_id, image_name, original_name, local_path, "
+            + "media_type, quality_status) VALUES (?, 'tenant-a', ?, ?, ?, ?, ?, ?)", members);
+        jdbc.batchUpdate("INSERT INTO vls_annotation_instance (tenant_id, annotation_id, image_id, label_id, annotation_type, annotation_data, is_deleted) "
+            + "VALUES (?, ?, ?, ?, 'rect', '{}', ?)", Arrays.asList(
+                new Object[]{"tenant-a", dataset, lastId, label, 0},
+                new Object[]{"tenant-a", dataset, lastId, label, 0},
+                new Object[]{"tenant-a", dataset, firstId, label, 0},
+                new Object[]{"tenant-a", dataset, lastId - 1, label, 1},
+                new Object[]{"tenant-b", dataset, lastId - 2, label, 0}));
+
+        MockMvcBuilders.standaloneSetup(new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class)))
+            .setMessageConverters(new MappingJackson2HttpMessageConverter(context.getBean(ObjectMapper.class))).build()
+            .perform(get("/vlsData/smart-annotation/options/{datasetId}", dataset))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.unlabeled").value(sampleCount - 504))
+            .andExpect(jsonPath("$.data.labelCounts[0].name").value("car"))
+            .andExpect(jsonPath("$.data.labelCounts[0].count").value("2"));
+
+        SampleMediaInspector.Inspection single = new SampleMediaInspector.Inspection();
+        single.setMediaType("image");
+        single.setSha256("single-import");
+        Map<String, Object> registered = data.register(dataset, "new.png", "new.png", 1, "test", single);
+        assertEquals(false, registered.get("duplicate"));
+        SampleMediaInspector.Inspection archived = new SampleMediaInspector.Inspection();
+        archived.setMediaType("image");
+        archived.setSha256("archive-import");
+        Map<String, Object> result = data.registerArchiveFromSource(dataset, Arrays.asList(
+            new PendingSampleImport("a.png", "a.png", "a.png", 1, archived),
+            new PendingSampleImport("duplicate.png", "duplicate.png", "duplicate.png", 1, single)), null, "test");
+        Map<?, ?> duplicate = (Map<?, ?>) ((List<?>) result.get("results")).get(1);
+        assertEquals(true, duplicate.get("duplicate"));
+        assertEquals(registered.get("id"), duplicate.get("id"));
+
+        SmartAnnotationTask task = create("model");
+        SmartAnnotationRound round = smart.current(task);
+        assertEquals(sampleCount + 2, data.version(dataset, round.getVersionId()).getSampleCount());
+        DatasetSnapshot frozen = smart.snapshot(task, round);
+        assertEquals(sampleCount + 2, frozen.getSamples().size());
+        assertEquals(sampleCount - 502, SmartAnnotationService.unannotated(frozen).size());
+        assertEquals(2L, frozen.getInstances().stream().filter(instance -> instance.getImageId().equals(lastId)).count());
+    }
+
     @Test void batchConflictRollsBackEarlierImagesAndReviewState() {
         Long first = image(1), second = image(2); SmartAnnotationTask task = create("model");
         SmartAnnotationCandidate a = prediction(task, first, label), b = prediction(task, second, 99999L);
@@ -134,14 +207,14 @@ class SmartAnnotationIntegrationTest {
 
     @Test void queuedCancellationIsDurableAndReviewCancellationKeepsConfirmedData() {
         Long image = image(1); SmartAnnotationTask task = create("model");
-        smart.cancel(task.getId()); assertEquals("CANCEL_REQUESTED", smart.task(task.getId()).getTaskState());
+        cancelAsCreator(task); assertEquals("CANCEL_REQUESTED", smart.task(task.getId()).getTaskState());
         jdbc.update("UPDATE vls_smart_annotation_task SET task_state='REVIEW' WHERE id=?", task.getId());
         SmartAnnotationCandidate result = prediction(task, image, label);
         SmartAnnotationRequests.Review request = new SmartAnnotationRequests.Review(); request.setBoxes(smart.boxes(result.getBoxesJson())); smart.review(task.getId(), result.getId(), request);
-        smart.cancel(task.getId()); assertEquals("CANCELLED", smart.task(task.getId()).getTaskState()); assertEquals(1, data.snapshot(dataset).getInstances().size());
+        cancelAsCreator(task); assertEquals("CANCELLED", smart.task(task.getId()).getTaskState()); assertEquals(1, data.snapshot(dataset).getInstances().size());
     }
 
-    @Test void activeLearningFreezesOnlyConfirmedLabelsForTheNextRound() {
+    @Test void activeLearningRequiresGeneratedInputOnlyForTheFirstRound() {
         for (int n = 0; n < 103; n++) image(n);
         List<AnnotationImage> images = data.snapshot(dataset).getSamples();
         for (int n = 0; n < 10; n++) {
@@ -149,16 +222,60 @@ class SmartAnnotationIntegrationTest {
             instance.setAnnotationType(com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationTypeEnum.rect); instance.setAnnotationData("{\"x\":10,\"y\":10,\"width\":20,\"height\":20}"); instance.setIsDeleted(0); instance.setStatus(1);
             sql.getMapper(VlsAnnotationInstanceMapper.class).insert(instance);
         }
+        assertEquals(false, smart.options(dataset, true).get("datasetGenerated"));
+        assertEquals(0, data.projects("SMART", 1, 20, true, false).getTotal());
+        assertEquals(1, data.projects("SMART", 1, 20, false, false).getTotal());
+        assertTrue(assertThrows(ServiceException.class, () -> create("active")).getMessage().contains("请先到算法标注页面生成数据集"));
+
+        DataRequests.Version generatedRequest = new DataRequests.Version();
+        generatedRequest.setName("训练数据快照");
+        DatasetVersion generated = data.saveVersion(dataset, generatedRequest);
+        String artifactId = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO vls_training_dataset_artifact (id,tenant_id,dataset_id,version_id,annotation_type,snapshot_sha256,dataset_yaml,storage_state) "
+            + "VALUES (?, 'tenant-b', ?, ?, 'object_detection', ?, '', 'READY')", artifactId, dataset, generated.getId(), String.join("", Collections.nCopies(64, "a")));
+        jdbc.update("UPDATE vls_algorithm_annotation SET dataset_path=? WHERE id=?", TrainingDatasetArtifactService.reference(artifactId), dataset);
+        assertFalse(data.isDatasetGenerated(dataset));
+        jdbc.update("UPDATE vls_training_dataset_artifact SET tenant_id='tenant-a', storage_state='BUILDING' WHERE id=?", artifactId);
+        assertFalse(data.isDatasetGenerated(dataset));
+        jdbc.update("UPDATE vls_training_dataset_artifact SET storage_state='READY' WHERE id=?", artifactId);
+        assertEquals(true, smart.options(dataset, true).get("datasetGenerated"));
+        assertEquals(dataset, data.projects("SMART", 1, 20, true, false).getRecords().get(0).getId());
+
         SmartAnnotationTask task = create("active"); SmartAnnotationCandidate confirmed = prediction(task, images.get(2).getId(), label);
         SmartAnnotationCandidate untouched = prediction(task, images.get(3).getId(), label);
         untouched.setHardExample(0); sql.getMapper(SmartAnnotationCandidateMapper.class).updateById(untouched);
         assertThrows(ServiceException.class, () -> smart.next(task.getId()));
         SmartAnnotationRequests.Review review = new SmartAnnotationRequests.Review(); review.setBoxes(smart.boxes(confirmed.getBoxesJson())); smart.review(task.getId(), confirmed.getId(), review);
+        assertEquals(0, data.projects("SMART", 1, 20, true, false).getTotal());
+        assertEquals(false, data.projects("SMART", 1, 20, false, true).getRecords().get(0).getDatasetGenerated());
         smart.next(task.getId()); SmartAnnotationTask next = smart.task(task.getId());
         assertEquals(2, next.getRoundNumber()); assertEquals("QUEUED", next.getTaskState());
         DatasetSnapshot snapshot = smart.snapshot(next, smart.current(next));
         assertEquals(11, snapshot.getInstances().size()); assertEquals(100, SmartAnnotationService.unannotated(snapshot).size());
-        assertEquals(2, data.versions(dataset).size());
+        assertEquals(3, data.versions(dataset).size());
+    }
+
+    @Test void datasetPickerReturnsGeneratedAndUngeneratedRowsWithTheirStatus() throws Exception {
+        jdbc.update("UPDATE vls_algorithm_annotation SET dataset_path=? WHERE id=?", "/data/generated/dataset.yaml", dataset);
+        DataRequests.Project ungenerated = new DataRequests.Project();
+        ungenerated.setProjectCode("SMART-UNG");
+        ungenerated.setAnnotationName("Ungenerated");
+        Long ungeneratedId = data.saveProject(null, ungenerated).getId();
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(
+            new VlsDataManagementController(data, mock(DataTransferService.class)),
+            new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class))).build();
+        mvc.perform(get("/vlsData/projects").param("keyword", "SMART").param("includeGeneratedStatus", "true"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records.length()").value(2))
+            .andExpect(jsonPath("$.data.records[0].datasetGenerated").value(false))
+            .andExpect(jsonPath("$.data.records[1].datasetGenerated").value(true));
+        mvc.perform(get("/vlsData/projects").param("keyword", "SMART"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records[0].datasetGenerated").doesNotExist());
+        mvc.perform(get("/vlsData/smart-annotation/options/{datasetId}", ungeneratedId).param("forActiveLearning", "true"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.datasetGenerated").value(false))
+            .andExpect(jsonPath("$.data.datasetName").value("Ungenerated"));
     }
 
     @org.junit.jupiter.params.ParameterizedTest
@@ -177,6 +294,9 @@ class SmartAnnotationIntegrationTest {
         }
         DatasetAnnotationEditor.Edit edit = new DatasetAnnotationEditor.Edit(); edit.setRevision(String.valueOf(editor.read(dataset, first).get("revision"))); edit.setBoxes(Collections.singletonList(region)); editor.save(dataset, first, edit);
         assertThrows(ServiceException.class, () -> editor.save(dataset, first, edit));
+        Map<String, Object> options = smart.options(dataset, false);
+        assertEquals(1, options.get("unlabeled"));
+        assertEquals(Collections.singletonList(DataManagementService.map("name", "car", "count", 1L)), options.get("labelCounts"));
         SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create(); request.setDatasetId(dataset); request.setComputeNodeId(10L); request.setTaskName(type); request.setMode("model"); request.setSourceType("system"); request.setSourceId(0L);
         SmartAnnotationTask task = smart.create(request);
         SmartAnnotationCandidate candidate = prediction(task, second, label); region.setConfidence(.9);
@@ -202,8 +322,25 @@ class SmartAnnotationIntegrationTest {
         assertEquals("PENDING", sql.getMapper(SmartAnnotationCandidateMapper.class).selectById(invalid.getId()).getReviewState());
         assertEquals(1, smart.task(task.getId()).getBulkConflicts());
         assertEquals("REVIEW", smart.task(task.getId()).getTaskState());
-        smart.confirmAll(task.getId()); smart.cancel(task.getId()); worker.tick();
+        smart.confirmAll(task.getId()); cancelAsCreator(task); worker.tick();
         assertEquals("CANCELLED", smart.task(task.getId()).getTaskState()); assertEquals(1, data.snapshot(dataset).getInstances().size());
+    }
+
+    private void cancelAsCreator(SmartAnnotationTask task) {
+        long creator = 101L;
+        jdbc.update("UPDATE vls_smart_annotation_task SET create_user=? WHERE id=?", creator, task.getId());
+        SaTokenContext previous = SaManager.getSaTokenContext();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        SaManager.setSaTokenContext(new SaTokenContextForThreadLocal());
+        try {
+            SaTokenContextForThreadLocalStorage.setBox(new SaRequestForServlet(request),
+                new SaResponseForServlet(new MockHttpServletResponse()), new SaStorageForServlet(request));
+            SaHolder.getStorage().set(LoginHelper.USER_KEY, Long.toString(creator));
+            smart.cancel(task.getId());
+        } finally {
+            SaTokenContextForThreadLocalStorage.clearBox();
+            SaManager.setSaTokenContext(previous);
+        }
     }
 
     @org.springframework.boot.test.context.TestConfiguration

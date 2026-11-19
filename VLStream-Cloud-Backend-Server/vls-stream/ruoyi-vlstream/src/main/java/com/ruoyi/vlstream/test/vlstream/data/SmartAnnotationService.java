@@ -82,10 +82,15 @@ public class SmartAnnotationService {
         return tasks.selectPage(new Page<>(Math.max(1, page), 20), query.orderByDesc("id"));
     }
 
-    public Map<String, Object> options(Long datasetId) {
-        DatasetSnapshot snapshot = data.snapshot(datasetId);
-        requireType(snapshot);
-        AnnotationTaskType type = AnnotationTaskType.of(snapshot.getAnnotationType());
+    public Map<String, Object> options(Long datasetId, boolean forActiveLearning) {
+        AlgorithmAnnotation project = data.project(datasetId);
+        boolean datasetGenerated = data.isDatasetGenerated(datasetId);
+        if (forActiveLearning && !datasetGenerated) {
+            return DataManagementService.map("datasetName", project.getAnnotationName(), "datasetGenerated", false);
+        }
+        String annotationType = project.getAnnotationType();
+        List<AnnotationLabel> labels = data.datasetLabels(datasetId);
+        AnnotationTaskType type = requireType(annotationType, labels);
         List<Map<String, Object>> sources = new ArrayList<>();
         sources.add(DataManagementService.map("id", "0", "type", "system", "name", "系统基础模型 · " + type.getLabel()));
         for (AlgorithmModel model : models.selectList(this.<AlgorithmModel>scope().isNotNull("model_path").orderByDesc("id"))) {
@@ -98,13 +103,44 @@ public class SmartAnnotationService {
         }
         for (SmartAnnotationRound round : rounds.selectList(this.<SmartAnnotationRound>scope().eq("round_state", "REVIEW").isNotNull("model_path").orderByDesc("id"))) {
             SmartAnnotationTask owner = tasks.selectOne(this.<SmartAnnotationTask>scope().eq("id", round.getTaskId()).eq("mode", "active"));
-            if (owner != null && snapshot.getAnnotationType().equals(owner.getAnnotationType())) sources.add(DataManagementService.map("id", round.getId().toString(), "type", "round", "name", owner.getTaskName() + " · 第" + round.getRoundNumber() + "轮"));
+            if (owner != null && annotationType.equals(owner.getAnnotationType())) sources.add(DataManagementService.map("id", round.getId().toString(), "type", "round", "name", owner.getTaskName() + " · 第" + round.getRoundNumber() + "轮"));
         }
-        Map<Long, Long> counts = seedCounts(snapshot);
-        return DataManagementService.map("annotationType", type.getCode(), "countUnit", type == AnnotationTaskType.CLASSIFICATION || type == AnnotationTaskType.SEMANTIC_SEGMENTATION ? "张图片" : "个实例",
-            "sources", sources, "labels", snapshot.getLabels(), "unlabeled", unannotated(snapshot).size(),
-            "labelCounts", snapshot.getLabels().stream().map(label -> DataManagementService.map("name", label.getName(), "count", counts.getOrDefault(label.getId(), 0L))).collect(Collectors.toList()),
+        InputCounts counts = inputCounts(datasetId, type);
+        return DataManagementService.map("annotationType", type.getCode(), "countUnit", countSeedsByImage(type) ? "张图片" : "个实例",
+            "sources", sources, "labels", labels, "unlabeled", counts.unlabeled,
+            "datasetName", project.getAnnotationName(), "datasetGenerated", datasetGenerated,
+            "labelCounts", labels.stream().map(label -> DataManagementService.map("name", label.getName(), "count", counts.seeds.getOrDefault(label.getId(), 0L))).collect(Collectors.toList()),
             "minBoxesPerLabel", minBoxes, "minUnlabeledImages", minUnlabeled, "maxRounds", maxRounds);
+    }
+
+    private InputCounts inputCounts(Long datasetId, AnnotationTaskType type) {
+        InputCounts counts = new InputCounts();
+        boolean byImage = countSeedsByImage(type);
+        Long afterId = null;
+        while (true) {
+            List<AnnotationImage> batch = data.sampleMetadataBatch(datasetId, afterId);
+            if (batch.isEmpty()) return counts;
+            afterId = batch.get(batch.size() - 1).getId();
+            List<AnnotationImage> usable = batch.stream().filter(DatasetPartitioner::usable).collect(Collectors.toList());
+            if (usable.isEmpty()) continue;
+            List<Long> ids = usable.stream().map(AnnotationImage::getId).collect(Collectors.toList());
+            List<Map<String, Object>> groups = instances.selectMaps(this.<AnnotationInstance>scope().eq("annotation_id", datasetId)
+                .in("image_id", ids).select("image_id", "label_id", "COUNT(*) AS instance_count").groupBy("image_id", "label_id"));
+            Set<Long> annotated = new HashSet<>();
+            for (Map<String, Object> group : groups) {
+                annotated.add(((Number) group.get("image_id")).longValue());
+                long labelId = ((Number) group.get("label_id")).longValue();
+                long count = byImage ? 1L : ((Number) group.get("instance_count")).longValue();
+                counts.seeds.merge(labelId, count, Long::sum);
+            }
+            counts.unlabeled += (int) usable.stream().filter(SmartAnnotationService::imageForPrediction)
+                .filter(sample -> !annotated.contains(sample.getId())).count();
+        }
+    }
+
+    private static class InputCounts {
+        private final Map<Long, Long> seeds = new HashMap<>();
+        private int unlabeled;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -113,7 +149,10 @@ public class SmartAnnotationService {
         if (tasks.selectCount(this.<SmartAnnotationTask>scope().eq("dataset_id", request.getDatasetId())
             .in("task_state", "QUEUED", "PREPARING", "RUNNING", "REVIEW", "CONFIRMING", "CANCEL_REQUESTED")) > 0)
             throw new ServiceException("当前数据集已有进行中的智能标注任务，请先完成或取消");
-        DatasetSnapshot snapshot = data.snapshot(request.getDatasetId());
+        if ("active".equals(request.getMode()) && !data.isDatasetGenerated(request.getDatasetId())) {
+            throw new ServiceException("主动学习需要已生成的数据集，请先到算法标注页面生成数据集");
+        }
+        DatasetSnapshot snapshot = data.snapshotForVersion(request.getDatasetId());
         validateInput(snapshot, request.getMode(), true);
         SmartAnnotationTask task = new SmartAnnotationTask();
         task.setTenantId(data.tenant()); task.setDatasetId(request.getDatasetId()); task.setTaskName(request.getTaskName());
@@ -124,7 +163,7 @@ public class SmartAnnotationService {
         resolveSource(task);
         task.setConfidence(request.getConfidence()); task.setEpochs(request.getEpochs()); task.setReviewSize(request.getReviewSize());
         task.setRoundNumber(1); task.setTaskState("QUEUED"); tasks.insert(task);
-        enqueueRound(task);
+        enqueueRound(task, snapshot);
         return task;
     }
 
@@ -162,18 +201,23 @@ public class SmartAnnotationService {
 
     private boolean pt(String path) { return path != null && (path.startsWith("/") || path.startsWith("cloud-training/")) && path.endsWith(".pt") && !path.contains("/../"); }
 
-    private void requireType(DatasetSnapshot snapshot) {
-        AnnotationTaskType.of(snapshot.getAnnotationType());
-        if (snapshot.getLabels().isEmpty()) throw new ServiceException("请先在标注页面创建需要识别的标签");
+    private AnnotationTaskType requireType(String annotationType, List<AnnotationLabel> labels) {
+        AnnotationTaskType type = AnnotationTaskType.of(annotationType);
+        if (labels.isEmpty()) throw new ServiceException("请先在标注页面创建需要识别的标签");
+        return type;
+    }
+
+    private static boolean countSeedsByImage(AnnotationTaskType type) {
+        return type == AnnotationTaskType.CLASSIFICATION || type == AnnotationTaskType.SEMANTIC_SEGMENTATION;
     }
 
     private void validateInput(DatasetSnapshot snapshot, String mode, boolean first) {
-        requireType(snapshot);
+        AnnotationTaskType type = requireType(snapshot.getAnnotationType(), snapshot.getLabels());
         int count = unannotated(snapshot).size();
         if (count == 0) throw new ServiceException("没有可预标注的未标注图片");
         if (!"active".equals(mode)) return;
         if (first && count < minUnlabeled) throw new ServiceException("主动学习至少需要 " + minUnlabeled + " 张未标注图片");
-        Map<Long, Long> counts = seedCounts(snapshot);
+        Map<Long, Long> counts = seedCounts(snapshot, type);
         for (AnnotationLabel label : snapshot.getLabels()) if (counts.getOrDefault(label.getId(), 0L) < minBoxes)
             throw new ServiceException("主动学习需要每个标签至少 " + minBoxes + " 个已确认样本/实例：" + label.getName());
         if (snapshot.getInstances().stream().map(AnnotationInstance::getImageId).distinct().count() < 2)
@@ -182,16 +226,19 @@ public class SmartAnnotationService {
 
     public static List<AnnotationImage> unannotated(DatasetSnapshot snapshot) {
         Set<Long> annotated = snapshot.getInstances().stream().map(AnnotationInstance::getImageId).collect(Collectors.toSet());
-        return snapshot.getSamples().stream().filter(s -> s.getMediaType() == null || "image".equals(s.getMediaType()))
+        return snapshot.getSamples().stream().filter(SmartAnnotationService::imageForPrediction)
             .filter(s -> !annotated.contains(s.getId())).filter(DatasetPartitioner::usable)
             .collect(Collectors.toList());
     }
 
-    private Map<Long, Long> seedCounts(DatasetSnapshot snapshot) {
+    private static boolean imageForPrediction(AnnotationImage sample) {
+        return sample.getMediaType() == null || "image".equals(sample.getMediaType());
+    }
+
+    private Map<Long, Long> seedCounts(DatasetSnapshot snapshot, AnnotationTaskType type) {
         Set<Long> usable = snapshot.getSamples().stream().filter(DatasetPartitioner::usable).map(AnnotationImage::getId).collect(Collectors.toSet());
         List<AnnotationInstance> valid = snapshot.getInstances().stream().filter(instance -> usable.contains(instance.getImageId())).collect(Collectors.toList());
-        AnnotationTaskType type = AnnotationTaskType.of(snapshot.getAnnotationType());
-        if (type == AnnotationTaskType.CLASSIFICATION || type == AnnotationTaskType.SEMANTIC_SEGMENTATION) {
+        if (countSeedsByImage(type)) {
             Map<Long, Set<Long>> images = new HashMap<>();
             valid.forEach(instance -> images.computeIfAbsent(instance.getLabelId(), ignored -> new HashSet<>()).add(instance.getImageId()));
             return images.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> (long) entry.getValue().size()));
@@ -199,20 +246,18 @@ public class SmartAnnotationService {
         return valid.stream().collect(Collectors.groupingBy(AnnotationInstance::getLabelId, Collectors.counting()));
     }
 
-    private void enqueueRound(SmartAnnotationTask task) {
-        DataRequests.Version request = new DataRequests.Version();
-        request.setName("智能标注 · " + shortName(task.getTaskName()) + " · 第" + task.getRoundNumber() + "轮");
-        request.setDescription("本轮输入快照；预标注结果须人工确认后才进入正式标注");
-        DatasetVersion version = data.saveVersion(task.getDatasetId(), request);
+    private void enqueueRound(SmartAnnotationTask task, DatasetSnapshot snapshot) {
+        String name = "智能标注 · " + shortName(task.getTaskName()) + " · 第" + task.getRoundNumber() + "轮";
+        DatasetVersion version = data.saveVersion(task.getDatasetId(), name, "本轮输入快照；预标注结果须人工确认后才进入正式标注", snapshot);
         SmartAnnotationRound round = new SmartAnnotationRound(); round.setTenantId(data.tenant());
         round.setTaskId(task.getId()); round.setRoundNumber(task.getRoundNumber()); round.setVersionId(version.getId());
         round.setRoundState("QUEUED"); round.setPredictedCount(0); rounds.insert(round);
-        enqueue(task, round);
+        enqueue(task, round, snapshot);
     }
 
-    private void enqueue(SmartAnnotationTask task, SmartAnnotationRound round) {
+    private void enqueue(SmartAnnotationTask task, SmartAnnotationRound round, DatasetSnapshot snapshot) {
         if (task.getComputeNodeId() == null) scheduler.enqueueSmartAnnotation(round.getId());
-        else compute.enqueue(task, round, snapshot(task, round));
+        else compute.enqueue(task, round, snapshot);
     }
 
     public Map<String, Object> detail(Long id) {
@@ -221,7 +266,7 @@ public class SmartAnnotationService {
         Map<String, Long> counts = all.stream().collect(Collectors.groupingBy(SmartAnnotationCandidate::getReviewState, Collectors.counting()));
         return DataManagementService.map("task", task, "round", round, "rounds", rounds.selectList(this.<SmartAnnotationRound>scope().eq("task_id", id).orderByAsc("round_number")),
             "counts", counts, "pendingHard", all.stream().filter(c -> c.getHardExample() == 1 && "PENDING".equals(c.getReviewState())).count(),
-            "labels", data.snapshot(task.getDatasetId()).getLabels(), "maxRounds", maxRounds,
+            "labels", data.datasetLabels(task.getDatasetId()), "maxRounds", maxRounds,
             "execution", task.getComputeNodeId()==null?Collections.emptyMap():compute.execution(task,round.getId()));
     }
 
@@ -350,9 +395,10 @@ public class SmartAnnotationService {
             throw new ServiceException("请先完成本轮难例的确认或跳过");
         if (candidates.selectCount(this.<SmartAnnotationCandidate>scope().eq("round_id", round.getId()).eq("review_state", "ACCEPTED")) == 0)
             throw new ServiceException("本轮尚未增加已确认样本，请先确认标注后继续学习");
-        validateInput(data.snapshot(task.getDatasetId()), task.getMode(), false);
+        DatasetSnapshot snapshot = data.snapshotForVersion(task.getDatasetId());
+        validateInput(snapshot, task.getMode(), false);
         task.setModelPath(round.getModelPath()); task.setRoundNumber(task.getRoundNumber() + 1); task.setTaskState("QUEUED"); tasks.updateById(task);
-        enqueueRound(task);
+        enqueueRound(task, snapshot);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -371,7 +417,7 @@ public class SmartAnnotationService {
         SmartAnnotationRound round = current(task);
         rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant()).set("round_state", "QUEUED").set("error_message", null));
         tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", id).eq("tenant_id", data.tenant()).set("task_state", "QUEUED").set("error_message", null));
-        enqueue(task, round);
+        enqueue(task, round, task.getComputeNodeId() == null ? null : snapshot(task, round));
     }
 
     @Transactional(rollbackFor = Exception.class)

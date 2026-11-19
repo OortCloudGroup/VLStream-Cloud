@@ -1051,7 +1051,7 @@ HH时mm分ss秒\tHH:mm:ss
 选择本地文件夹\tSelect local folder
 有标注信息\tContains annotation data
 暂停上传\tPause upload
-支持 JPG/JPEG、PNG、BMP、MP4、MOV、ZIP。图片保持 4000 万像素上限。ZIP 支持 ZIP64，默认解压容量 32 GiB、最多 10000 个样本；文件上传成功后仍需完成格式和标注校验。\tSupports JPG/JPEG, PNG, BMP, MP4, MOV, and ZIP. Images are limited to 40 megapixels. ZIP64 is supported, with a default extracted size limit of 32 GiB and up to 10,000 samples. Uploaded files still require format and annotation validation.
+支持 JPG/JPEG、PNG、BMP、MP4、MOV、ZIP。图片最多 4000 万像素。ZIP 支持 ZIP64，默认解压容量 32 GiB，最多 30000 个文件。上传完成后，系统会校验格式和标注。\tSupports JPG/JPEG, PNG, BMP, MP4, MOV, and ZIP. Images are limited to 40 megapixels. ZIP64 archives can contain up to 30,000 files, with a default extracted size limit of 32 GiB. The system validates file formats and annotations after upload.
 支持单文件 ≤4 GiB 断点续传；更大的文件会继续尝试，受存储容量和文件内容限制。\tSupports resumable uploads for individual files up to 4 GiB. Larger files are attempted subject to storage capacity and file contents.
 S3 对象存储\tS3 object storage
 VLS 样本归档（vls-samples.json）\tVLS sample archive (vls-samples.json)

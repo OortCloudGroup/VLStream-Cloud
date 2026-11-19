@@ -7,7 +7,8 @@ const call = async (path = '', method = 'get', data, params) => {
 }
 
 export const listSmartTasks = params => call('', 'get', undefined, params)
-export const smartOptions = datasetId => call(`/options/${datasetId}`)
+export const smartOptions = (datasetId, forActiveLearning = false) =>
+  call(`/options/${datasetId}`, 'get', undefined, forActiveLearning ? { forActiveLearning: true } : undefined)
 export const createSmartTask = data => call('', 'post', data)
 export const getSmartTask = id => call(`/${id}`)
 export const smartPredictions = (id, params) => call(`/${id}/predictions`, 'get', undefined, params)

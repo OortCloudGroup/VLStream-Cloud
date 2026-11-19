@@ -363,7 +363,7 @@ class CloudAiControllerPermissionTest {
         mvc.perform(logged(put("/vlsData/projects/1").contentType(MediaType.APPLICATION_JSON).content("{}")))
             .andExpect(status().isForbidden());
         mvc.perform(logged(get("/vlsData/projects/1/samples/2/annotation"))).andExpect(status().isForbidden());
-        verify(data).projects(isNull(), eq(1), eq(20));
+        verify(data).projects(isNull(), eq(1), eq(20), eq(false), eq(false));
         verify(smart).detail(1L);
         verify(data, never()).saveProject(any(), any());
         verifyNoInteractions(editor);

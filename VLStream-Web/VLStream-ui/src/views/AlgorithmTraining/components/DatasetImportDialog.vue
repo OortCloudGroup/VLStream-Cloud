@@ -7,7 +7,7 @@
     </el-form>
     <template v-if="method === 'local'">
       <el-alert :title="$tp('支持单文件 ≤4 GiB 断点续传；更大的文件会继续尝试，受存储容量和文件内容限制。')" type="info" :closable="false" />
-      <p class="import-tip">{{ $tp('支持 JPG/JPEG、PNG、BMP、MP4、MOV、ZIP。图片保持 4000 万像素上限。ZIP 支持 ZIP64，默认解压容量 32 GiB、最多 10000 个样本；文件上传成功后仍需完成格式和标注校验。') }}</p>
+      <p class="import-tip">{{ $tp('支持 JPG/JPEG、PNG、BMP、MP4、MOV、ZIP。图片最多 4000 万像素。ZIP 支持 ZIP64，默认解压容量 32 GiB，最多 30000 个文件。上传完成后，系统会校验格式和标注。') }}</p>
       <el-upload v-model:file-list="files" drag :auto-upload="false" multiple :limit="500" :disabled="uploading" :accept="annotated ? '.zip' : '.jpg,.jpeg,.png,.bmp,.mp4,.mov,.zip'"><p>{{ $tp('拖入文件或点击选择文件') }}</p><p class="import-tip">{{ $tp('恢复上传时重新选择同一原文件即可') }}</p></el-upload>
       <input ref="directoryInput" type="file" webkitdirectory multiple hidden @change="selectDirectory" />
       <el-button v-if="!annotated" :disabled="uploading" @click="directoryInput.click()">{{ $tp('选择本地文件夹') }}</el-button>

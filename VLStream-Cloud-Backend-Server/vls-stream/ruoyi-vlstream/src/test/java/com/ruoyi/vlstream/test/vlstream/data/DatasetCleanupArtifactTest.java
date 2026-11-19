@@ -37,6 +37,7 @@ class DatasetCleanupArtifactTest {
     private ResultSet trainingRow;
     private String datasetPath;
     private String manifestJson;
+    private Map<String, Object> importJob;
     private String artifactState;
     private List<String> remoteIdentities;
     private List<String> sharedArtifacts;
@@ -64,6 +65,7 @@ class DatasetCleanupArtifactTest {
                     project.put("dataset_path", datasetPath); project.put("is_deleted", 0);
                     return Collections.singletonList(project);
                 }
+                if (sql.contains("multipart_id,job_state FROM vls_dataset_import_job") && importJob != null) return Collections.singletonList(importJob);
                 if (sql.startsWith("SELECT remote_identity")) return remoteIdentities;
                 if (sql.startsWith("SELECT object_key FROM vls_training_dataset_artifact")) return sharedArtifacts;
                 return Collections.emptyList();
@@ -126,6 +128,22 @@ class DatasetCleanupArtifactTest {
         assertEquals("datasets", plan.getBuckets().get("fixed-config"));
         verify(jdbc).update("DELETE FROM vls_training_dataset_artifact WHERE tenant_id=? AND dataset_id=?", TENANT, 1L);
         verify(jdbc).update("DELETE FROM vls_training_dataset_remote_usage WHERE tenant_id=? AND dataset_id=?", TENANT, 1L);
+    }
+
+    @Test void cancelledFrameJobBorrowsVideoWithoutOwningAnUpload() {
+        importJob = new HashMap<>();
+        importJob.put("import_type", "video-frames");
+        importJob.put("job_state", "CANCELLED");
+        importJob.put("object_key", "samples/source.mp4");
+        assertTrue(service.delete(1L));
+        verify(storage, never()).get(null);
+        verify(client, never()).delete("samples/source.mp4");
+    }
+
+    @Test void uploadWithoutStorageIdentityStopsBeforeDeleting() {
+        importJob = Collections.singletonMap("import_type", "local");
+        assertThrows(ServiceException.class, () -> service.delete(1L));
+        verify(client, never()).delete(anyString());
     }
 
     @Test void pendingArtifactPreventsFreezingCleanupManifest() {

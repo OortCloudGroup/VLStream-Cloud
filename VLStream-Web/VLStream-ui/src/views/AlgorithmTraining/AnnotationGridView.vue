@@ -40,6 +40,22 @@
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC">
               <button-group :button-list="toolbarButtonList" />
+              <div class="selection-actions">
+                <el-button
+                  :type="allPageImagesSelected ? 'primary' : 'default'"
+                  :aria-pressed="allPageImagesSelected"
+                  :disabled="busy || !uploadedImages.length"
+                  @click="toggleSelectAll"
+                >
+                  {{ $tp('全选') }}
+                </el-button>
+                <el-button type="danger" plain :loading="deleting" :disabled="busy || !selectedImages.size" @click="handleDeleteSelected">
+                  {{ $tp('删除') }}
+                </el-button>
+                <span v-if="selectedImages.size" class="selection-count" role="status">
+                  {{ $tp('已选 {value0} 张', { value0: selectedImages.size }) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -51,7 +67,7 @@
               v-for="image in uploadedImages"
               :key="image.id"
               class="image-card"
-              :class="{ selected: selectedImages.includes(image.id) }"
+              :class="{ selected: selectedImages.has(image.id) }"
               @click="handleImageCardClick(image.id, $event)"
             >
               <div class="image-container">
@@ -95,7 +111,7 @@
             :page-size="query.size"
             :page-sizes="[10, 20, 50, 100]"
             :total="total"
-            :disabled="loading"
+            :disabled="busy"
             layout="total, prev, pager, next, sizes"
             class="justifyAlign"
             @current-change="changePage"
@@ -257,7 +273,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, reactive, ref, watch} from 'vue'
+import {computed, onBeforeUnmount, reactive, ref, watch} from 'vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 import {ArrowDown, Crop, Delete, Edit, Folder, FullScreen, InfoFilled, Picture, Upload} from '@element-plus/icons-vue'
 import {uploadAnnotationImages} from '@/api/annotationImage'
@@ -309,7 +325,15 @@ const annotationFilters = ref([
 
 const selectedLabelId = computed(() => props.query.labelId)
 const gridWrapper = ref(null)
-const selectedImages = ref([])
+const selectedImages = ref(new Set())
+const allPageImagesSelected = computed(() => uploadedImages.value.length > 0 &&
+  uploadedImages.value.every(image => selectedImages.value.has(image.id)))
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+const busy = computed(() => props.loading || confirmingDelete.value || deleting.value)
+const selectionScope = computed(() => JSON.stringify([props.annotationData.id, props.query]))
+let mounted = true
+onBeforeUnmount(() => { mounted = false })
 const showLabelDialog = ref(false)
 const showUploadDialog = ref(false)
 const editingLabel = ref(null)
@@ -354,27 +378,25 @@ const labelRules = {
 }
 
 const changePage = (page) => {
-  if (props.loading || page === props.query.page) return
-  selectedImages.value = []
+  if (busy.value || page === props.query.page) return
+  clearSelection()
   emit('page-change', { page, size: props.query.size })
 }
 
 const changePageSize = (size) => {
-  if (props.loading || size === props.query.size) return
-  selectedImages.value = []
+  if (busy.value || size === props.query.size) return
+  clearSelection()
   emit('page-change', { page: 1, size })
 }
 
 const selectLabel = (labelId) => {
-  if (props.loading) return
+  if (busy.value) return
   const selected = String(selectedLabelId.value) === String(labelId) ? null : labelId
-  selectedImages.value = []
   emit('filter-change', { labelId: selected })
 }
 
 const handleFilterChange = (annotationStatus) => {
-  if (props.loading) return
-  selectedImages.value = []
+  if (busy.value) return
   emit('filter-change', { annotationStatus })
 }
 
@@ -440,114 +462,96 @@ const handleSaveLabel = () => {
 }
 
 const handleImportImages = () => {
+  if (busy.value) return
   pendingUploadFiles.value = []
   pendingZipFile.value = null
   showUploadDialog.value = true
 }
 
 const handleBatchAnnotate = () => {
-  if (selectedImages.value.length === 0) {
+  if (busy.value) return
+  const images = [...selectedImages.value].map(id => uploadedImages.value.find(image => image.id === id)).filter(Boolean)
+  if (images.length === 0) {
     ElMessage.warning(uiText('请先选择要标注的图片'))
     return
   }
 
-  console.log(`开始批量标注 ${selectedImages.value.length} 张图片`)
+  emit('start-annotation', { type: 'batch', images })
+}
 
-  // all in annotationpage
-  emit('start-annotation', {
-    type: 'batch',
-    images: selectedImages.value.map(id =>
-      uploadedImages.value.find(img => img.id === id)
-    ).filter(Boolean)
-  })
+const clearSelection = () => {
+  selectedImages.value.clear()
+}
+
+const toggleSelectAll = () => {
+  if (busy.value || !uploadedImages.value.length) return
+  selectedImages.value = allPageImagesSelected.value
+    ? new Set()
+    : new Set(uploadedImages.value.map(image => image.id))
 }
 
 const handleDeleteSelected = async () => {
-  if (selectedImages.value.length === 0) {
-    ElMessage.warning(uiText('请先选择要删除的图片'))
+  if (busy.value || !selectedImages.value.size || !props.annotationData.id) return
+
+  const scope = selectionScope.value
+  const annotationId = props.annotationData.id
+  const { annotationStatus, labelId } = props.query
+  const pageImages = uploadedImages.value
+  const imageIds = pageImages.map(image => image.id).filter(id => selectedImages.value.has(id))
+  if (!imageIds.length) return
+  const tab = annotationFilters.value.find(filter => filter.key === annotationStatus)
+  const label = annotationLabels.value.find(item => String(item.id) === String(labelId))
+  const filterName = [uiText(tab?.label || '全部'), label?.name].filter(Boolean).join(' · ')
+
+  confirmingDelete.value = true
+  try {
+    await ElMessageBox.confirm(
+      uiText('确定从「{value0}」中删除选中的 {value1} 张图片及其关联标注吗？', { value0: filterName, value1: imageIds.length }),
+      uiText('确认删除'),
+      { confirmButtonText: uiText('删除'), cancelButtonText: uiText('取消'), type: 'warning' }
+    )
+  } catch {
     return
+  } finally {
+    confirmingDelete.value = false
   }
+  if (!mounted || scope !== selectionScope.value || pageImages !== uploadedImages.value || props.loading) return
 
-  console.log('=== 开始删除选中的图片 ===')
-  console.log('选中的图片ID:', selectedImages.value)
-  console.log('uploadedImages数组:', uploadedImages.value)
-
-  ElMessageBox.confirm(uiText('确定要删除选中的 {value0} 张图片吗？这将同时删除图片文件和相关的标注数据。', { value0: selectedImages.value.length }), uiText('确认删除'), {
-    confirmButtonText: uiText('确定'),
-    cancelButtonText: uiText('取消'),
-    type: 'warning'
-  }).then(async () => {
-    try {
-      // Get need to Delete info, IDfind
-      const validImages = []
-      for (const imageId of selectedImages.value) {
-        const image = uploadedImages.value.find(img => img.id === imageId)
-        if (image) {
-          validImages.push(image)
-          console.log(`找到要删除的图片: ID=${imageId}, name=${image.name}`)
-        } else {
-          console.warn(`未找到图片: ID=${imageId}`)
-        }
-      }
-
-      console.log('要删除的图片信息:', validImages)
-      console.log('标注数据ID:', props.annotationData?.id)
-
-      if (validImages.length === 0) {
-        console.warn('没有找到有效的图片进行删除')
-        ElMessage.warning(uiText('没有找到有效的图片进行删除'))
-        return
-      }
-
-      const imageIds = validImages.map(img => img.id)
-
-      // Delete (Delete and annotationdata)
-      if (props.annotationData && props.annotationData.id) {
-        await deleteImageAndRelatedData(props.annotationData.id, imageIds)
-      }
-
-      selectedImages.value = []
-
-      console.log('=== 图片删除流程完成 ===')
-      ElMessage.success(uiText('图片及相关标注数据删除成功'))
-    } catch (error) {
-      console.error('删除图片失败:', error)
-      ElMessage.error(uiText('删除图片失败: ') + error.message)
-    }
-  })
+  deleting.value = true
+  try {
+    await new Promise((resolve, reject) => {
+      emit('delete-image-and-data', { annotationId, imageIds, resolve, reject })
+    })
+    ElMessage.success(uiText('图片及相关标注数据删除成功'))
+  } catch (error) {
+    ElMessage.error(uiText('删除未完成，请核对剩余图片后重试。{value0}', { value0: error.message }))
+  } finally {
+    clearSelection()
+    deleting.value = false
+  }
 }
 
-const toolbarButtonList = computed(() => [
+const toolbarButtonList = [
   { name: '导入', svg: 'table_incoming', clickFn: handleImportImages },
-  { name: '标注', svg: 'table_edit', clickFn: handleBatchAnnotate },
-  { name: '删除', svg: 'table_del', clickFn: handleDeleteSelected }
-])
-
-const deleteImageAndRelatedData = async (annotationId, imageIds) => {
-  console.log('deleteImageAndRelatedData :', { annotationId, imageIds: imageIds })
-
-  // is sub component, emitnotification componentProcess
-  return new Promise((resolve, reject) => {
-    emit('delete-image-and-data', { annotationId, imageIds, resolve, reject })
-  })
-}
+  { name: '标注', svg: 'table_edit', clickFn: handleBatchAnnotate }
+]
 
 const handleImageCardClick = (imageId, event) => {
+  if (busy.value) return
   if (event.ctrlKey || event.metaKey) {
-    // Ctrl/Cmd + :
-    const selectedIndex = selectedImages.value.indexOf(imageId)
-    if (selectedIndex > -1) {
-      selectedImages.value.splice(selectedIndex, 1)
+    if (selectedImages.value.has(imageId)) {
+      selectedImages.value.delete(imageId)
     } else {
-      selectedImages.value.push(imageId)
+      selectedImages.value.add(imageId)
     }
   } else {
-    // :
-    selectedImages.value = [imageId]
+    clearSelection()
+    selectedImages.value.add(imageId)
   }
 }
 
 const handleAnnotateImage = (imageId) => {
+  if (busy.value) return
   //
   const image = uploadedImages.value.find(img => img.id === imageId)
   if (image) {
@@ -705,8 +709,9 @@ const handleImageError = (event) => {
   event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjEwMCIgeT0iNzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+S4jeWtmOWcqDwvdGV4dD48L3N2Zz4='
 }
 
-watch(() => uploadedImages.value, () => {
-  selectedImages.value = []
+watch(selectionScope, clearSelection)
+watch(uploadedImages, () => {
+  clearSelection()
   if (gridWrapper.value) gridWrapper.value.scrollTop = 0
 })
 </script>
@@ -718,6 +723,23 @@ watch(() => uploadedImages.value, () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.selection-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-inline-start: 8px;
+
+  .el-button + .el-button {
+    margin-inline-start: 0;
+  }
+}
+
+.selection-count {
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
 }
 
 .grid-container {

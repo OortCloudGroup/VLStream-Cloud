@@ -79,10 +79,11 @@ export function batchDeleteAnnotationInstances(instanceIds) {
  * @param {string|string[]} imageIds - Image names to delete
  * @returns {Promise}
  */
-export function deleteAnnotationInstancesByImage(annotationId, imageIds) {
+export function deleteAnnotationInstancesByImage(annotationId, imageIds, { silentError = false } = {}) {
     return request({
         url: '/vlsAnnotationInstance/instances/by-image',
         method: 'delete',
-        data: { annotationId, imageIds: imageIds }
+    data: { annotationId, imageIds },
+    silentError
     })
 }

@@ -27,12 +27,14 @@ public class DatasetGenerationPreflight {
         TrainingDatasetLayout layout = new TrainingDatasetLayout(prepared.getAnnotationType(), prepared.getLabels());
         List<AnnotationImage> eligible = prepared.getSamples().stream().filter(DatasetPartitioner::usable)
             .filter(s -> annotations.containsKey(s.getId())).collect(Collectors.toList());
+        byte[] buffer = new byte[32768];
         for (AnnotationImage sample : eligible) {
             report.setCheckedImages(report.getCheckedImages() + 1);
+            int previousErrorCount = report.getErrors().size();
             try {
                 byte[] bytes;
                 try (InputStream input = media.read(sample.getLocalPath()); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                    byte[] buffer = new byte[32768]; int count;
+                    int count;
                     while ((count = input.read(buffer)) != -1) {
                         if ((long) output.size() + count > 25 * 1024 * 1024) throw new ServiceException("图片超过25 MiB");
                         output.write(buffer, 0, count);
@@ -63,7 +65,7 @@ public class DatasetGenerationPreflight {
                 layout.imagePath(sample.getId(), sample.getOriginalName().substring(sample.getOriginalName().lastIndexOf('.') + 1).toLowerCase(Locale.ROOT), "train", values);
                 layout.annotations(sample.getId(), "train", values, image.getWidth(), image.getHeight());
             } catch (Exception ex) {
-                if (report.getErrors().stream().noneMatch(e -> sample.getId().toString().equals(e.get("imageId"))))
+                if (report.getErrors().size() == previousErrorCount)
                     report.getErrors().add(issue(sample, null, ex instanceof ServiceException ? ex.getMessage() : "图片读取或解码失败，请检查原始文件", null, null));
             }
         }

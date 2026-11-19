@@ -23,7 +23,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DataManagementService {
-    static final int MAX_SNAPSHOT_SAMPLES = 10000;
+    private static final int MAX_VERSION_SAMPLES = 100_000;
+    private static final int SAMPLE_QUERY_BATCH_SIZE = 500;
+    private static final String HAS_ANNOTATION = "EXISTS (SELECT 1 FROM vls_annotation_instance ai WHERE ai.image_id = vls_annotation_image.id "
+        + "AND ai.annotation_id = vls_annotation_image.annotation_id AND ai.tenant_id = {0} AND ai.is_deleted = 0)";
     private final VlsAlgorithmAnnotationMapper projects;
     private final DataSampleMapper samples;
     private final VlsAnnotationLabelMapper labels;
@@ -38,10 +41,33 @@ public class DataManagementService {
         return tenant;
     }
 
-    public IPage<AlgorithmAnnotation> projects(String keyword, int page, int size) {
-        QueryWrapper<AlgorithmAnnotation> query = new QueryWrapper<AlgorithmAnnotation>().eq("tenant_id", tenant());
+    public IPage<AlgorithmAnnotation> projects(String keyword, int page, int size, boolean generatedOnly, boolean includeGeneratedStatus) {
+        QueryWrapper<AlgorithmAnnotation> query = generatedOnly ? generatedProjects() : new QueryWrapper<AlgorithmAnnotation>().eq("tenant_id", tenant());
         if (hasText(keyword)) query.and(q -> q.like("annotation_name", keyword).or().like("project_code", keyword));
-        return projects.selectPage(new Page<>(Math.max(1, page), Math.max(1, Math.min(100, size))), query.orderByDesc("id"));
+        IPage<AlgorithmAnnotation> result = projects.selectPage(new Page<>(Math.max(1, page), Math.max(1, Math.min(100, size))), query.orderByDesc("id"));
+        if (includeGeneratedStatus && !result.getRecords().isEmpty()) {
+            List<Long> ids = result.getRecords().stream().map(AlgorithmAnnotation::getId).collect(Collectors.toList());
+            Set<Long> generatedIds = projects.selectList(generatedProjects().select("id").in("id", ids)).stream()
+                .map(AlgorithmAnnotation::getId).collect(Collectors.toSet());
+            result.getRecords().forEach(project -> project.setDatasetGenerated(generatedIds.contains(project.getId())));
+        }
+        return result;
+    }
+
+    boolean isDatasetGenerated(Long projectId) {
+        return projects.selectCount(generatedProjects().eq("id", projectId)) > 0;
+    }
+
+    private QueryWrapper<AlgorithmAnnotation> generatedProjects() {
+        String tenant = tenant();
+        // The current pointer is cleared on edits even when older READY packages still exist.
+        return new QueryWrapper<AlgorithmAnnotation>().eq("tenant_id", tenant)
+            .apply("NOT EXISTS (SELECT 1 FROM vls_dataset_cleanup c WHERE c.annotation_id = vls_algorithm_annotation.id AND c.tenant_id = {0})", tenant)
+            .apply("((TRIM(dataset_path) LIKE '/%' AND CAST(TRIM(dataset_path) AS BINARY) LIKE '%/dataset.yaml') "
+                + "OR EXISTS (SELECT 1 FROM vls_training_dataset_artifact a WHERE a.tenant_id = {0} "
+                + "AND a.dataset_id = vls_algorithm_annotation.id AND a.storage_state = 'READY' "
+                + "AND CAST(a.annotation_type AS BINARY) = CAST(vls_algorithm_annotation.annotation_type AS BINARY) "
+                + "AND CAST(CONCAT('vls-dataset://', a.id) AS BINARY) = CAST(TRIM(vls_algorithm_annotation.dataset_path) AS BINARY)))", tenant);
     }
 
     public AlgorithmAnnotation project(Long id) {
@@ -139,10 +165,8 @@ public class DataManagementService {
         if (request.getLabelId() != null) query.apply("EXISTS (SELECT 1 FROM vls_annotation_instance li "
             + "WHERE li.image_id = vls_annotation_image.id AND li.annotation_id = vls_annotation_image.annotation_id "
             + "AND li.tenant_id = {0} AND li.is_deleted = 0 AND li.label_id = {1})", tenant(), request.getLabelId());
-        String annotated = "EXISTS (SELECT 1 FROM vls_annotation_instance ai WHERE ai.image_id = vls_annotation_image.id "
-            + "AND ai.annotation_id = vls_annotation_image.annotation_id AND ai.tenant_id = {0} AND ai.is_deleted = 0)";
-        if ("annotated".equals(request.getAnnotationStatus())) query.apply(annotated, tenant());
-        if ("unannotated".equals(request.getAnnotationStatus())) query.apply("NOT " + annotated, tenant());
+        if ("annotated".equals(request.getAnnotationStatus())) query.apply(HAS_ANNOTATION, tenant());
+        if ("unannotated".equals(request.getAnnotationStatus())) query.apply("NOT " + HAS_ANNOTATION, tenant());
         if (hasText(request.getTag())) query.apply("(JSON_CONTAINS(COALESCE(sample_tags, '[]'), JSON_QUOTE({0})) OR EXISTS "
             + "(SELECT 1 FROM vls_annotation_instance ai JOIN vls_annotation_label al ON al.id = ai.label_id "
             + "AND al.tenant_id = ai.tenant_id AND al.is_deleted = 0 WHERE ai.image_id = vls_annotation_image.id "
@@ -199,7 +223,6 @@ public class DataManagementService {
         lock(projectId);
         List<AnnotationImage> duplicate = samples.selectList(this.<AnnotationImage>scope(projectId).eq("content_sha256", inspection.getSha256()).last("LIMIT 1"));
         if (!duplicate.isEmpty()) return map("id", String.valueOf(duplicate.get(0).getId()), "duplicate", true);
-        if (samples.selectCount(scope(projectId)) >= MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集最多支持 10000 个样本，请另建数据集");
         AnnotationImage sample = newImportedSample(projectId, filename, key, size, source, inspection);
         samples.insert(sample);
         invalidate(projectId); refreshProgress(projectId);
@@ -255,17 +278,20 @@ public class DataManagementService {
     public Map<String, Object> registerArchiveFromSource(Long projectId, List<PendingSampleImport> files, DatasetSnapshot manifest, String sourceName) {
         lock(projectId);
         Map<String, Map<String, Object>> imported = new LinkedHashMap<>();
-        List<AnnotationImage> existing = samples.selectList(this.<AnnotationImage>scope(projectId).select("id", "content_sha256"));
+        List<String> hashes = files.stream().map(file -> file.getInspection().getSha256())
+            .filter(DataManagementService::hasText).distinct().collect(Collectors.toList());
         Map<String, Long> byHash = new HashMap<>();
-        existing.forEach(sample -> { if (hasText(sample.getContentSha256())) byHash.put(sample.getContentSha256(), sample.getId()); });
-        int sampleCount = existing.size();
+        for (int start = 0; start < hashes.size(); start += SAMPLE_QUERY_BATCH_SIZE) {
+            List<String> batch = hashes.subList(start, Math.min(start + SAMPLE_QUERY_BATCH_SIZE, hashes.size()));
+            samples.selectList(this.<AnnotationImage>scope(projectId).select("id", "content_sha256").in("content_sha256", batch))
+                .forEach(sample -> byHash.put(sample.getContentSha256(), sample.getId()));
+        }
         for (PendingSampleImport file : files) {
             String hash = file.getInspection().getSha256();
             Long duplicateId = byHash.get(hash);
             Map<String, Object> result;
             if (duplicateId != null) result = map("id", String.valueOf(duplicateId), "duplicate", true);
             else {
-                if (++sampleCount > MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集最多支持 10000 个样本，请拆分数据集");
                 AnnotationImage sample = newImportedSample(projectId, file.getFilename(), file.getObjectKey(), file.getSize(), sourceName, file.getInspection());
                 samples.insert(sample); byHash.put(hash, sample.getId());
                 result = map("id", String.valueOf(sample.getId()), "duplicate", false);
@@ -413,14 +439,14 @@ public class DataManagementService {
     @Transactional(rollbackFor = Exception.class)
     public DatasetVersion saveVersion(Long projectId, DataRequests.Version request) {
         lock(projectId);
-        return saveVersion(projectId, request.getName(), request.getDescription(), snapshot(projectId));
+        return saveVersion(projectId, request.getName(), request.getDescription(), snapshotForVersion(projectId));
     }
 
     /** Freeze verified metadata and content-group partitions without altering source annotations or the published pointer. */
     @Transactional(rollbackFor = Exception.class)
     public DatasetVersion savePreparedTrainingVersion(Long projectId, DatasetGenerationReport report) {
         lock(projectId);
-        if (!writeJson(snapshot(projectId)).equals(report.getOriginalJson()))
+        if (!writeJson(snapshotForVersion(projectId)).equals(report.getOriginalJson()))
             throw new ServiceException("检查期间样本或标注发生变化，请重新生成");
         DatasetSnapshot prepared = report.getPrepared();
         // Keep an explicit rollback snapshot before automatic partition repair.
@@ -433,8 +459,10 @@ public class DataManagementService {
         return saveVersion(projectId, "MinIO 训练快照", "原始标注保留；训练框取图片边界交集；相同内容不跨训练/验证", prepared);
     }
 
-    private DatasetVersion saveVersion(Long projectId, String name, String description, DatasetSnapshot snapshot) {
-        DatasetVersion latest = versions.selectOne(this.<DatasetVersion>scope(projectId).orderByDesc("version_number").last("LIMIT 1"));
+    /** The caller must hold the dataset lock before reading and saving the snapshot. */
+    DatasetVersion saveVersion(Long projectId, String name, String description, DatasetSnapshot snapshot) {
+        validateVersionSize(snapshot.getSamples().size());
+        DatasetVersion latest = versions.selectOne(this.<DatasetVersion>scope(projectId).select("version_number").orderByDesc("version_number").last("LIMIT 1"));
         DatasetVersion version = new DatasetVersion();
         version.setAnnotationId(projectId); version.setTenantId(tenant());
         version.setVersionNumber(latest == null ? 1 : latest.getVersionNumber() + 1);
@@ -518,7 +546,8 @@ public class DataManagementService {
         lock(projectId);
         DatasetVersion target = version(projectId, versionId);
         DatasetSnapshot snapshot = readSnapshot(target.getSnapshotJson());
-        saveVersion(projectId, "回退前自动备份", "回退至 V" + target.getVersionNumber() + " 前保留当前状态", snapshot(projectId));
+        validateVersionSize(snapshot.getSamples().size());
+        saveVersion(projectId, "回退前自动备份", "回退至 V" + target.getVersionNumber() + " 前保留当前状态", snapshotForVersion(projectId));
         samples.delete(scope(projectId)); labels.delete(scope(projectId)); instances.delete(scope(projectId));
         for (AnnotationImage sample : snapshot.getSamples()) {
             sample.setTenantId(tenant()); sample.setAnnotationId(projectId); sample.setIsDeleted(0);
@@ -557,17 +586,43 @@ public class DataManagementService {
             .set("content_sha256", sample.getContentSha256()).set("dataset_split", sample.getDatasetSplit()).set("update_time", new Date()));
     }
 
+    List<AnnotationLabel> datasetLabels(Long projectId) {
+        return labels.selectList(this.<AnnotationLabel>scope(projectId).orderByAsc("id"));
+    }
+
+    List<AnnotationImage> sampleMetadataBatch(Long projectId, Long afterId) {
+        return samples.selectList(this.<AnnotationImage>scope(projectId)
+            .select("id", "image_name", "original_name", "media_type", "quality_status")
+            .gt(afterId != null, "id", afterId).orderByAsc("id").last("LIMIT " + SAMPLE_QUERY_BATCH_SIZE));
+    }
+
     public DatasetSnapshot snapshot(Long projectId) {
+        return snapshot(projectId, false);
+    }
+
+    DatasetSnapshot snapshotForVersion(Long projectId) {
+        return snapshot(projectId, true);
+    }
+
+    private DatasetSnapshot snapshot(Long projectId, boolean forVersion) {
         AlgorithmAnnotation project = project(projectId);
-        List<AnnotationImage> members = samples.selectList(this.<AnnotationImage>scope(projectId).orderByAsc("id").last("LIMIT " + (MAX_SNAPSHOT_SAMPLES + 1)));
-        if (members.size() > MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集版本最多支持 10000 个样本，请按业务拆分数据集");
+        QueryWrapper<AnnotationImage> query = this.<AnnotationImage>scope(projectId).orderByAsc("id");
+        if (forVersion) query.last("LIMIT " + (MAX_VERSION_SAMPLES + 1));
+        List<AnnotationImage> members = samples.selectList(query);
+        if (forVersion) validateVersionSize(members.size());
         DatasetSnapshot snapshot = new DatasetSnapshot();
         snapshot.setAnnotationType(project.getAnnotationType()); snapshot.setAnnotationRules(project.getAnnotationRules()); snapshot.setSamples(members);
-        snapshot.setLabels(labels.selectList(this.<AnnotationLabel>scope(projectId).orderByAsc("id")));
+        snapshot.setLabels(datasetLabels(projectId));
         Set<Long> ids = members.stream().map(AnnotationImage::getId).collect(Collectors.toSet());
         snapshot.setInstances(instances.selectList(this.<AnnotationInstance>scope(projectId).orderByAsc("id")).stream()
             .filter(i -> ids.contains(i.getImageId())).collect(Collectors.toList()));
         return snapshot;
+    }
+
+    private static void validateVersionSize(int sampleCount) {
+        if (sampleCount > MAX_VERSION_SAMPLES) {
+            throw new ServiceException("单数据集版本最多支持 " + MAX_VERSION_SAMPLES + " 个样本，请按业务拆分数据集");
+        }
     }
 
     public DatasetSnapshot exportSnapshot(Long projectId, DataRequests.SampleQuery request, List<Long> ids) {
@@ -585,12 +640,12 @@ public class DataManagementService {
     }
 
     private void refreshProgress(Long projectId) {
-        List<AnnotationImage> active = samples.selectList(this.<AnnotationImage>scope(projectId).ne("media_type", "video").ne("quality_status", "excluded"));
-        Set<Long> ids = active.stream().map(AnnotationImage::getId).collect(Collectors.toSet());
-        int annotated = (int) instances.selectList(scope(projectId)).stream().map(AnnotationInstance::getImageId).filter(ids::contains).distinct().count();
-        int progress = active.isEmpty() ? 0 : annotated * 100 / active.size();
+        QueryWrapper<AnnotationImage> active = this.<AnnotationImage>scope(projectId).ne("media_type", "video").ne("quality_status", "excluded");
+        long total = samples.selectCount(active);
+        long annotated = total == 0 ? 0 : samples.selectCount(active.apply(HAS_ANNOTATION, tenant()));
+        int progress = total == 0 ? 0 : (int) (annotated * 100 / total);
         projects.update(null, new UpdateWrapper<AlgorithmAnnotation>().eq("id", projectId).eq("tenant_id", tenant())
-            .set("total_count", active.size()).set("annotated_count", annotated).set("progress", progress)
+            .set("total_count", total).set("annotated_count", annotated).set("progress", progress)
             .set("annotation_status", progress == 100 ? "completed" : progress == 0 ? "none" : "partial"));
     }
 

@@ -123,7 +123,12 @@ public class DatasetCleanupService {
                 add(plan, providers.isEmpty() ? client : storage.get(providers.get(0)), stored);
             }
         }
-        for (Map<String, Object> job : jdbc.queryForList("SELECT storage_config,storage_bucket,object_key,multipart_id,job_state FROM vls_dataset_import_job WHERE tenant_id=? AND dataset_id=? AND object_key IS NOT NULL", tenant, id)) {
+        for (Map<String, Object> job : jdbc.queryForList("SELECT import_type,storage_config,storage_bucket,object_key,multipart_id,job_state FROM vls_dataset_import_job WHERE tenant_id=? AND dataset_id=? AND object_key IS NOT NULL", tenant, id)) {
+            // Frame jobs borrow the source sample key. Its lifecycle belongs to samples and versions.
+            if ("video-frames".equals(job.get("import_type"))) continue;
+            if (!text((String) job.get("storage_config")) || !text((String) job.get("storage_bucket"))) {
+                throw new ServiceException("导入文件缺少存储归属信息，已停止清理");
+            }
             if (text((String) job.get("multipart_id")) && !Arrays.asList("COMPLETED", "PARTIAL", "FAILED", "CANCELLED", "EXPIRED").contains(job.get("job_state"))) throw new ServiceException("上传分片尚未结束，不能删除");
             OssClient client = storage.get((String) job.get("storage_config"));
             if (!Objects.equals(client.getBucketName(), job.get("storage_bucket"))) throw new ServiceException("导入任务的存储桶已变更，已停止删除");

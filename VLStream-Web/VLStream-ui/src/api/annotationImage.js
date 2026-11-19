@@ -7,6 +7,19 @@
 
 import request from '@/utils/request'
 
+export async function fetchAnnotationPreview(annotationId, imageId, signal) {
+  const blob = await request({
+    url: `/vlsAnnotationImage/dataset/${annotationId}/images/${imageId}/content`,
+    method: 'get',
+    responseType: 'blob',
+    signal
+  })
+  if (!(blob instanceof Blob) || !blob.size || blob.type.includes('json')) {
+    throw new Error('标注图片读取失败')
+  }
+  return blob
+}
+
 export async function getAnnotationImagePage(annotationId, params) {
   const response = await request({
     url: `/vlsAnnotationImage/dataset/${annotationId}/page`,

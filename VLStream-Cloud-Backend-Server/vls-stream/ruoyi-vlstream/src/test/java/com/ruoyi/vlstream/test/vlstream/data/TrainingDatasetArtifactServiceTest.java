@@ -27,6 +27,7 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -134,6 +135,35 @@ class TrainingDatasetArtifactServiceTest {
         assertEquals("1",report.getCorrections().get(0).get("imageId")); assertEquals(original,snapshot.getInstances().get(0).getAnnotationData());
         verify(storage,never()).uploadFile(any(File.class),anyString(),anyString()); verifyNoInteractions(media);
         verify(jdbc,never()).update(anyString(),org.mockito.ArgumentMatchers.<Object>any());
+    }
+
+    @Test void generatesAndValidatesZip64ArchiveForOneHundredThousandSamples() throws Exception {
+        AnnotationImage imageTemplate = snapshot.getSamples().get(0);
+        AnnotationInstance labelTemplate = snapshot.getInstances().get(0);
+        for (long id = 3; id <= 100_000; id++) {
+            AnnotationImage image = new AnnotationImage();
+            org.springframework.beans.BeanUtils.copyProperties(imageTemplate, image);
+            image.setId(id);
+            snapshot.getSamples().add(image);
+            AnnotationInstance label = new AnnotationInstance();
+            org.springframework.beans.BeanUtils.copyProperties(labelTemplate, label);
+            label.setId(id);
+            label.setImageId(id);
+            snapshot.getInstances().add(label);
+        }
+        freeze();
+        TrainingDatasetArtifact artifact = service.ensure(20L, version);
+        assertEquals("READY", artifact.getState());
+        Path local = service.download(artifact);
+        try (ZipFile zip = new ZipFile(local.toFile())) {
+            assertEquals(200_012, zip.size());
+            assertNotNull(zip.getEntry("images/train/100000.png"));
+            assertNotNull(zip.getEntry("labels/train/100000.txt"));
+            TrainingDatasetRuntimeService runtime = new TrainingDatasetRuntimeService(service, null, null, null);
+            assertNotNull(ReflectionTestUtils.invokeMethod(runtime, "inspect", zip));
+        } finally {
+            Files.deleteIfExists(local);
+        }
     }
 
     @Test void persistedFrozenSnapshotOverridesCallerSuppliedChanges() throws Exception {

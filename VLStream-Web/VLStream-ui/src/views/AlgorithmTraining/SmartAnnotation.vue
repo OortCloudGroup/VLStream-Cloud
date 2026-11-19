@@ -26,7 +26,7 @@
         <el-button v-if="!['COMPLETED', 'CANCELLED', 'CANCEL_REQUESTED'].includes(detail.task.taskState)" :disabled="busy" type="danger" plain @click="cancel">{{ $tp('取消任务') }}</el-button>
       </div>
       <template v-if="['REVIEW', 'COMPLETED'].includes(detail.task.taskState)">
-        <div class="filters"><el-select v-model="query.state" @change="loadPredictions"><el-option :label="$tp('待确认')" value="PENDING" /><el-option :label="$tp('已确认')" value="ACCEPTED" /><el-option :label="$tp('已跳过')" value="SKIPPED" /><el-option :label="$tp('全部结果')" value="" /></el-select><el-checkbox v-if="detail.task.mode === 'active'" v-model="query.hardOnly" @change="loadPredictions">{{ $tp('仅看本轮难例（待处理 {count}）', { count: detail.pendingHard }) }}</el-checkbox><el-button v-if="detail.task.taskState === 'REVIEW'" :disabled="busy || !confirmable.length" @click="batchConfirm">{{ $tp('确认本页可用结果（{count}）', { count: confirmable.length }) }}</el-button><el-button v-if="detail.task.taskState === 'REVIEW'" type="primary" :disabled="busy || !detail.counts.PENDING" @click="confirmAll">{{ $tp('一键确认剩余预测') }}</el-button></div>
+        <div class="filters"><el-select v-model="query.state" @change="loadPredictions"><el-option :label="$tp('待确认')" value="PENDING" /><el-option :label="$tp('已确认')" value="ACCEPTED" /><el-option :label="$tp('已跳过')" value="SKIPPED" /><el-option :label="$tp('全部结果')" value="" /></el-select><el-checkbox v-if="detail.task.mode === 'active'" v-model="query.hardOnly" @change="loadPredictions">{{ $tp('仅看本轮难例（待处理 {count}）', { count: detail.pendingHard }) }}</el-checkbox><el-button v-if="detail.task.taskState === 'REVIEW'" :disabled="busy || !confirmable.length" @click="batchConfirm">{{ $tp('确认本页可用结果（{count}）', { count: confirmable.length }) }}</el-button><el-button v-if="detail.task.taskState === 'REVIEW'" type="primary" :disabled="busy || !detail.counts.PENDING" @click="confirmRoundPredictions">{{ $tp('确认本轮已通过标注') }}</el-button></div>
         <p class="hint">{{ $tp('难例按预测置信度排序，优先检查漏检、低置信度和类别不匹配的图片。模型类别未匹配时，需手动选择标签。') }}</p>
         <div class="prediction-grid">
           <article v-for="row in predictions" :key="row.candidate.id" class="prediction-card" @click="openReview(row)">
@@ -47,9 +47,36 @@
     </template>
 
     <el-dialog v-model="creating" :title="$tp('创建智能标注任务')" width="660px" :close-on-click-modal="false">
-      <el-form label-width="110px"><el-form-item :label="$tp('数据集')"><el-select v-model="form.datasetId" filterable remote :remote-method="searchDatasets" :placeholder="$tp('搜索数据集')" style="width:100%" @change="loadOptions"><el-option v-for="dataset in datasets" :key="dataset.id" :label="`${dataset.annotationName} · ${$tp(typeNames[dataset.annotationType])}`" :value="String(dataset.id)" /></el-select></el-form-item>
+      <el-form label-width="110px">
+        <el-form-item :label="$tp('标注方式')">
+          <el-radio-group v-model="form.mode" :disabled="busy" @change="changeMode">
+            <el-radio value="active">{{ $tp('主动学习') }}</el-radio>
+            <el-radio value="model">{{ $tp('指定模型') }}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item :label="$tp('数据集')">
+          <el-select v-model="form.datasetId" filterable remote :remote-method="searchDatasets" :loading="datasetsLoading"
+            :placeholder="$tp('搜索数据集')" :no-data-text="$tp('暂无数据集')"
+            :disabled="busy" style="width:100%" @change="loadOptions">
+            <template #label="{ label }">{{ options?.datasetName ? datasetLabel(options.datasetName, options.annotationType) : label }}</template>
+            <el-option v-for="dataset in datasets" :key="dataset.id" :label="datasetLabel(dataset.annotationName, dataset.annotationType)"
+              :value="String(dataset.id)" :disabled="datasetDisabled(dataset)">
+              <span class="dataset-option">
+                <span class="dataset-option-name">{{ datasetLabel(dataset.annotationName, dataset.annotationType) }}</span>
+                <span v-if="datasetDisabled(dataset)" class="dataset-option-status">
+                  {{ $tp(dataset.datasetGenerated === false ? '训练包未生成或已失效' : '训练包生成状态未确认') }}
+                </span>
+              </span>
+            </el-option>
+          </el-select>
+          <p v-if="activeLearning" class="hint">
+            {{ $tp(datasetNeedsGeneration
+              ? '请在数据集管理中确认该数据集已生成有效训练包，再重新选择。'
+              : '首次主动学习前，请先导入待标注图片并完成人工示例标注，再到数据集管理生成训练包。') }}
+          </p>
+        </el-form-item>
         <el-form-item :label="$tp('GPU 设备')"><div style="width:100%"><TrainingComputeSelector v-model="form.computeNodeId" :nodes="computeNodes" :loading="computeLoading" :disabled="busy" :node-label="node => node.name || String(node.id)" @reload="loadCompute" /><el-button link :disabled="computeLoading" @click="loadCompute">{{ $tp('刷新') }}</el-button><p v-if="form.computeNodeId && !selectedCompute?.schedulable" class="hint">{{ $tp('请先在算力市场完成开机与环境检查') }}</p></div></el-form-item>
-        <el-form-item :label="$tp('任务名称')"><el-input v-model="form.taskName" maxlength="80" /></el-form-item><el-form-item :label="$tp('标注方式')"><el-radio-group v-model="form.mode" @change="sourceKey = form.mode === 'active' ? 'system:0' : ''"><el-radio value="active">{{ $tp('主动学习') }}</el-radio><el-radio value="model">{{ $tp('指定模型') }}</el-radio></el-radio-group></el-form-item>
+        <el-form-item :label="$tp('任务名称')"><el-input v-model="form.taskName" maxlength="80" /></el-form-item>
         <el-form-item :label="$tp('模型来源')"><el-select v-model="sourceKey" :placeholder="$tp('请选择模型')" style="width:100%" filterable><el-option v-for="source in sources" :key="`${source.type}:${source.id}`" :label="sourceLabel(source)" :value="`${source.type}:${source.id}`" /></el-select></el-form-item>
         <el-form-item :label="$tp('预测阈值')"><el-slider v-model="form.confidence" :min="0.05" :max="0.95" :step="0.05" show-input /></el-form-item>
         <template v-if="form.mode === 'active'"><el-form-item :label="$tp('每轮训练次数')"><el-input-number v-model="form.epochs" :min="1" :max="100" /></el-form-item><el-form-item :label="$tp('每轮难例数量')"><el-input-number v-model="form.reviewSize" :min="1" :max="500" /></el-form-item></template>
@@ -79,9 +106,12 @@ const route = useRoute(); const router = useRouter()
 const tasks = ref([]); const taskPage = ref(1); const taskTotal = ref(0); const detail = ref(null)
 const loading = ref(false); const busy = ref(false); const creating = ref(false)
 const datasets = ref([]); const options = ref(null); const sourceKey = ref('')
+const datasetsLoading = ref(false)
+const datasetNeedsGeneration = ref(false)
 const predictions = ref([]); const predictionTotal = ref(0); const reviewItem = ref(null)
 const logsOpen = ref(false); const logs = ref('')
 const form = reactive({ datasetId: '', computeNodeId: '', taskName: '', mode: 'active', confidence: 0.25, epochs: 20, reviewSize: 50 })
+const activeLearning = computed(() => form.mode === 'active')
 const computeNodes = ref([]); const computeLoading = ref(false)
 const selectedCompute = computed(() => computeNodes.value.find(node => String(node.id) === form.computeNodeId))
 let computeSequence = 0
@@ -95,6 +125,7 @@ const loadCompute = async () => {
 const query = reactive({ page: 1, state: 'PENDING', hardOnly: false })
 const states = { QUEUED: '等待 GPU', PREPARING: '准备数据', RUNNING: '计算中', REVIEW: '待确认', CONFIRMING: '批量确认中', COMPLETED: '已完成', FAILED: '失败', CANCEL_REQUESTED: '正在取消', CANCELLED: '已取消' }
 const typeNames = { image_classification: '图像分类', object_detection: '物体检测', instance_segmentation: '实例分割', semantic_segmentation: '语义分割' }
+const datasetLabel = (name, type) => `${name} · ${uiText(typeNames[type])}`
 const countUnits = { image_classification: '个类别', object_detection: '个预测框', instance_segmentation: '个实例', semantic_segmentation: '类区域' }
 const reviewStates = { PENDING: '待确认', ACCEPTED: '已确认', SKIPPED: '已跳过' }
 const modeName = mode => uiText(mode === 'active' ? '主动学习' : '指定模型')
@@ -107,7 +138,11 @@ const sourceLabel = source => {
   if (source.type === 'round') return source.name.replace(/ · 第(\d+)轮$/, (_, round) => ` · ${uiText('轮次 {round}', { round })}`)
   return source.name
 }
-const ready = computed(() => !computeLoading.value && selectedCompute.value?.schedulable && form.datasetId && form.taskName.trim() && sourceKey.value && options.value?.unlabeled > 0 && (form.mode !== 'active' || (options.value.unlabeled >= options.value.minUnlabeledImages && options.value.labelCounts.every(label => label.count >= options.value.minBoxesPerLabel))))
+const ready = computed(() => !computeLoading.value && selectedCompute.value?.schedulable && form.datasetId
+  && form.taskName.trim() && sourceKey.value && options.value?.unlabeled > 0
+  && (!activeLearning.value || (options.value.datasetGenerated === true
+    && options.value.unlabeled >= options.value.minUnlabeledImages
+    && options.value.labelCounts.every(label => label.count >= options.value.minBoxesPerLabel))))
 const boxCount = row => JSON.parse(row.candidate.boxesJson || '[]').length
 const confirmable = computed(() => predictions.value.filter(row => {
   if (row.predictionQuality?.classConflict) return false
@@ -130,11 +165,96 @@ const refresh = async () => {
 const enter = id => run(async () => { detail.value = await getSmartTask(id); query.page = 1; query.state = 'PENDING'; query.hardOnly = detail.value.task.mode === 'active'; await router.replace({ query: { ...route.query, task: String(id) } }); if (['REVIEW', 'COMPLETED'].includes(detail.value.task.taskState)) await loadPredictions() })
 const leave = async () => { detail.value = null; reviewItem.value = null; await router.replace({ query: route.query.dataset ? { dataset: route.query.dataset } : {} }); await refresh() }
 const openDataset = () => router.push({ path: '/data-management', query: { dataset: detail.value.task.datasetId } })
-const searchDatasets = async keyword => { try { const result = await listDataProjects({ keyword, size: 100 }); datasets.value = result.records.filter(dataset => typeNames[dataset.annotationType]) } catch (error) { handleError(error) } }
+const datasetDisabled = dataset => activeLearning.value && dataset.datasetGenerated !== true
+let datasetSequence = 0
+const searchDatasets = async keyword => {
+  const sequence = ++datasetSequence
+  datasetsLoading.value = true
+  try {
+    const result = await listDataProjects({ keyword, size: 100, includeGeneratedStatus: activeLearning.value })
+    if (sequence === datasetSequence && creating.value) {
+      datasets.value = result.records.filter(dataset => typeNames[dataset.annotationType])
+    }
+  } catch (error) {
+    if (sequence === datasetSequence && creating.value) {
+      datasets.value = []
+      handleError(error)
+    }
+  } finally {
+    if (sequence === datasetSequence) datasetsLoading.value = false
+  }
+}
+
 let optionSequence = 0
-const loadOptions = async () => { const sequence = ++optionSequence; options.value = null; sourceKey.value = ''; try { const result = await smartOptions(form.datasetId); if (sequence === optionSequence) { options.value = result; if (form.mode === 'active') sourceKey.value = 'system:0'; if (!form.taskName) form.taskName = `${datasets.value.find(dataset => String(dataset.id) === form.datasetId)?.annotationName || uiText('数据集')} - ${uiText('智能标注')}` } } catch (error) { handleError(error) } }
-const openCreate = async () => { creating.value = true; await loadCompute(); await searchDatasets(''); if (route.query.dataset) { form.datasetId = String(route.query.dataset); await loadOptions() } }
-const create = () => run(async () => { await loadCompute(); if (!selectedCompute.value?.schedulable) throw new Error(uiText("所选 GPU 设备尚未就绪，请刷新后重试")); const [sourceType, sourceId] = sourceKey.value.split(':'); const result = await createSmartTask({ ...form, taskName: form.taskName.trim(), sourceType, sourceId }); creating.value = false; detail.value = await getSmartTask(result.id); await router.replace({ query: { ...route.query, task: String(result.id) } }); ElMessage.success(uiText('智能标注任务已入队')) })
+const resetOptions = () => {
+  options.value = null
+  sourceKey.value = ''
+  datasetNeedsGeneration.value = false
+  return ++optionSequence
+}
+const rejectDataset = () => {
+  form.datasetId = ''
+  datasetNeedsGeneration.value = true
+}
+const loadOptions = async () => {
+  const sequence = resetOptions()
+  const datasetId = form.datasetId
+  if (!datasetId) return
+  const selected = datasets.value.find(dataset => String(dataset.id) === datasetId)
+  if (selected && datasetDisabled(selected)) {
+    rejectDataset()
+    return
+  }
+
+  try {
+    const result = await smartOptions(datasetId, activeLearning.value)
+    if (sequence !== optionSequence || !creating.value) return
+    if (activeLearning.value && result.datasetGenerated !== true) {
+      datasets.value = datasets.value.map(dataset => String(dataset.id) === datasetId
+        ? { ...dataset, datasetGenerated: result.datasetGenerated } : dataset)
+      rejectDataset()
+      if (datasetsLoading.value) await searchDatasets('')
+      return
+    }
+    options.value = result
+    if (activeLearning.value) sourceKey.value = 'system:0'
+    if (!form.taskName) {
+      const datasetName = result.datasetName || selected?.annotationName
+      form.taskName = `${datasetName || uiText('数据集')} - ${uiText('智能标注')}`
+    }
+  } catch (error) {
+    if (sequence === optionSequence && creating.value) {
+      if (activeLearning.value) form.datasetId = ''
+      handleError(error)
+    }
+  }
+}
+
+const changeMode = async () => {
+  datasets.value = []
+  const sequence = resetOptions()
+  await searchDatasets('')
+  if (sequence === optionSequence && creating.value) await loadOptions()
+}
+
+const openCreate = async () => {
+  creating.value = true
+  if (route.query.dataset) form.datasetId = String(route.query.dataset)
+  await Promise.all([changeMode(), loadCompute()])
+}
+
+const create = () => run(async () => {
+  if (!creating.value || !ready.value) return
+  await loadCompute()
+  if (!selectedCompute.value?.schedulable) throw new Error(uiText('所选 GPU 设备尚未就绪，请刷新后重试'))
+  if (!creating.value || !ready.value) return
+  const [sourceType, sourceId] = sourceKey.value.split(':')
+  const result = await createSmartTask({ ...form, taskName: form.taskName.trim(), sourceType, sourceId })
+  creating.value = false
+  detail.value = await getSmartTask(result.id)
+  await router.replace({ query: { ...route.query, task: String(result.id) } })
+  ElMessage.success(uiText('智能标注任务已入队'))
+})
 const openReview = row => run(async () => {
   if (row.candidate.reviewState !== 'PENDING' || detail.value.task.taskState !== 'REVIEW') return
   const result = await getSmartPrediction(detail.value.task.id, row.candidate.id)
@@ -143,7 +263,15 @@ const openReview = row => run(async () => {
 })
 const saveReview = request => run(async () => { await reviewSmartPrediction(detail.value.task.id, reviewItem.value.candidate.id, request); reviewItem.value = null; await refresh(); ElMessage.success(request.skip ? uiText('已跳过') : uiText('标注已确认并保存')) })
 const batchConfirm = () => run(async () => { await ElMessageBox.confirm(uiText('将本页 {value0} 张图片的全部预测框保存为正式标注。请先检查预测效果。', { value0: confirmable.value.length }), uiText('批量确认'), { type: 'warning' }); await confirmSmartBatch(detail.value.task.id, confirmable.value.map(row => row.candidate.id)); await refresh() })
-const confirmAll = () => run(async () => { await ElMessageBox.confirm(uiText('检查效果满意后，可采用本轮剩余 {value0} 张图片的预测。低置信度、标签未匹配或存在冲突的图片会留待人工处理。', { value0: detail.value.counts.PENDING || 0 }), uiText('一键确认剩余预测'), { type: 'warning', confirmButtonText: uiText('采用剩余预测') }); await confirmAllSmartPredictions(detail.value.task.id); await refresh() })
+const confirmRoundPredictions = () => run(async () => {
+  await ElMessageBox.confirm(
+    uiText('将检查本轮 {value0} 张待确认图片。仅保存通过校验的预测，其余图片继续待确认，可逐张处理。', { value0: detail.value.counts.PENDING || 0 }),
+    uiText('确认本轮已通过标注'),
+    { type: 'warning', confirmButtonText: uiText('保存通过校验的标注') }
+  )
+  await confirmAllSmartPredictions(detail.value.task.id)
+  await refresh()
+})
 const perform = operation => run(async () => { await operation(detail.value.task.id); await refresh() })
 const next = () => run(async () => { await ElMessageBox.confirm(uiText('使用当前已确认标注训练下一轮模型，并重新筛选剩余图片。未确认结果不会用于训练。'), uiText('继续主动学习')); await nextSmartRound(detail.value.task.id); predictions.value = []; await refresh() })
 const finish = () => run(async () => { await ElMessageBox.confirm(uiText('完成任务并保存数据集版本。未确认结果会保留在任务记录中，不会自动写入正式标注。'), uiText('完成智能标注')); await finishSmartTask(detail.value.task.id); await refresh() })
@@ -156,4 +284,18 @@ onBeforeUnmount(() => { computeSequence++; clearInterval(timer) })
 
 <style scoped>
 .smart-page{padding:24px;max-width:1600px;margin:auto}.smart-heading,.actions,.task-summary,.filters{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.smart-heading{justify-content:space-between;margin-bottom:24px}.smart-heading h2{margin:8px 0}.smart-heading p,.hint{color:var(--el-text-color-secondary);font-size:13px}.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}.mode-cards>div{padding:18px 22px;border:1px solid var(--el-border-color);border-radius:10px;background:var(--el-bg-color)}.mode-cards h3{margin-top:0}.mode-cards p{line-height:1.7;color:var(--el-text-color-secondary)}.el-table{margin-top:20px}.el-pagination{margin-top:20px;justify-content:flex-end}.task-summary{padding:18px;border:1px solid var(--el-border-color);border-radius:10px;margin-bottom:20px}.task-actions{margin:20px 0}.filters .el-select{width:160px}.prediction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}.prediction-card{overflow:hidden;border:1px solid var(--el-border-color);border-radius:9px;cursor:pointer;background:var(--el-bg-color)}.prediction-card .image{height:170px;position:relative;background:#142333}.prediction-card img{width:100%;height:100%;object-fit:contain}.hard-tag{position:absolute;left:8px;top:8px}.prediction-description{padding:12px;display:flex;flex-direction:column;gap:8px}.prediction-description strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prediction-description span{font-size:12px;color:var(--el-text-color-secondary)}.round-history{margin-top:28px}.label-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.logs{white-space:pre-wrap;word-break:break-word;background:#102032;color:#d1e2f4;padding:16px;max-height:60vh;overflow:auto;font-size:12px}@media(max-width:700px){.smart-page{padding:14px}.mode-cards{grid-template-columns:1fr}.prediction-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dataset-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dataset-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dataset-option-status {
+  flex-shrink: 0;
+  font-size: 12px;
+}
 </style>

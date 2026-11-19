@@ -18,7 +18,10 @@ public class VlsSmartAnnotationController {
     private final SmartAnnotationWorker worker;
 
     @GetMapping public R<IPage<SmartAnnotationTask>> list(@RequestParam(required = false) Long datasetId, @RequestParam(defaultValue = "1") int page) { return R.data(service.list(datasetId, page)); }
-    @GetMapping("/options/{datasetId}") public R<Map<String, Object>> options(@PathVariable Long datasetId) { return R.data(service.options(datasetId)); }
+    @GetMapping("/options/{datasetId}")
+    public R<Map<String, Object>> options(@PathVariable Long datasetId, @RequestParam(defaultValue = "false") boolean forActiveLearning) {
+        return R.data(service.options(datasetId, forActiveLearning));
+    }
     @PostMapping public R<SmartAnnotationTask> create(@Valid @RequestBody SmartAnnotationRequests.Create request) { return R.data(service.create(request)); }
     @GetMapping("/{id}") public R<Map<String, Object>> detail(@PathVariable Long id) { return R.data(service.detail(id)); }
     @GetMapping("/{id}/predictions") public R<Map<String, Object>> predictions(@PathVariable Long id, @RequestParam(defaultValue = "1") int page,

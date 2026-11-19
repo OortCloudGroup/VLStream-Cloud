@@ -24,7 +24,7 @@ def validate(dataset, model, kind, dataset_id=None):
     if not isinstance(names, list) or not names or len(set(names)) != len(names) or names != meta.get('names') or meta.get('nc') != len(names):
         raise ValueError('类别名称与编号不一致')
     samples = data.get('samples')
-    if not isinstance(samples, list) or len(samples) > 10000: raise ValueError('样本清单无效')
+    if not isinstance(samples, list): raise ValueError('样本清单无效')
     hashes, identifiers = {}, set()
     counts = {'train': 0, 'val': 0}
     categories = {'train': set(), 'val': set()}

@@ -49,7 +49,8 @@
 训练历史、模型文件和独立类别快照仍按原规则保留。AutoDL 实例与云端工作目录不在本次自动删除范围内。
 
 制作/下载 ZIP 会使用平台临时磁盘，配置项 `vlstream.training-dataset.temp-dir` 可指向容量充足的位置。
-默认展开上限 32 GiB（`vlstream.training-dataset.max-expanded-bytes`），单条目 128 MiB、图片 25 MiB、最多 100000 条目。
+单个冻结版本最多 100000 个样本。制作 ZIP 和训练读取均允许最多 350000 个 ZIP 条目，可容纳每张图对应的图片和标注，以及类别目录和元数据。
+制包展开上限 32 GiB，训练读取的默认展开上限也是 32 GiB（`vlstream.training-dataset.max-expanded-bytes`）；单条目上限 128 MiB，单图上限 25 MiB。
 临时文件在处理结束后删除；持久训练包保存在 MinIO。
 
 本地 Java 8 编译与 145 项定向测试、前端构建通过；其中 8 项实际使用独立 MySQL/MinIO 验证四类训练包的上传回读下载与一致性。

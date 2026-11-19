@@ -39,7 +39,7 @@ public class SmartAnnotationBrowserHarness {
         for (String table : Arrays.asList("vls_smart_annotation_candidate", "vls_smart_annotation_round", "vls_smart_annotation_task")) jdbc.execute("DROP TABLE IF EXISTS " + table);
         String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
-        SmartAnnotationIntegrationTest.applyFourTypeMigration(jdbc);
+        SmartAnnotationIntegrationTest.applyDatasetMigrations(jdbc);
         seed(web, jdbc); seedFour(web, jdbc); web.getBean(SmartAnnotationConfirmationWorker.class).start();
         System.out.println("SMART_BROWSER_READY http://127.0.0.1:38082"); tomcat.getServer().await();
     }

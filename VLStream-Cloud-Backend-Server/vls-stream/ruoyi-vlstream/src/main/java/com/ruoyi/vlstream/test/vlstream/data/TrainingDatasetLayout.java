@@ -12,6 +12,8 @@ import java.util.*;
 
 /** Native training artifacts for all four tasks; instance masks are never reduced to bounding boxes. */
 public final class TrainingDatasetLayout {
+    // Allow one image and one target per sample, plus both classification splits' directories and metadata.
+    static final int MAX_ARCHIVE_ENTRIES = 350_000;
     private final AnnotationTaskType type;
     private final Map<Long, Integer> classes = new LinkedHashMap<>();
     private final List<String> names = new ArrayList<>();

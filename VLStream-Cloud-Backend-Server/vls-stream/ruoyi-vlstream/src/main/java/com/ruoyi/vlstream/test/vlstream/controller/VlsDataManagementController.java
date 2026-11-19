@@ -29,8 +29,10 @@ public class VlsDataManagementController {
     @SaCheckPermission(value = {"vls:menu:data-management", "vls:menu:smart-annotation"}, mode = SaMode.OR)
     @GetMapping
     public R<IPage<AlgorithmAnnotation>> projects(@RequestParam(required = false) @Size(max = 100) String keyword,
-        @RequestParam(defaultValue = "1") @Min(1) int page, @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return R.data(data.projects(keyword, page, size));
+        @RequestParam(defaultValue = "1") @Min(1) int page, @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+        @RequestParam(defaultValue = "false") boolean generatedOnly,
+        @RequestParam(defaultValue = "false") boolean includeGeneratedStatus) {
+        return R.data(data.projects(keyword, page, size, generatedOnly, includeGeneratedStatus));
     }
 
     @SaCheckPermission("vls:menu:data-management")

@@ -43,7 +43,7 @@ class DatasetCleanupTest {
         jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(20),env_config TEXT)");
         for (String table : Arrays.asList("vls_annotation_image","vls_annotation_label","vls_annotation_instance")) jdbc.execute("CREATE TABLE " + table + "(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),annotation_id BIGINT,local_path TEXT)");
         jdbc.execute("CREATE TABLE vls_dataset_version(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),annotation_id BIGINT,snapshot_json LONGTEXT)");
-        jdbc.execute("CREATE TABLE vls_dataset_import_job(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_id BIGINT,job_state VARCHAR(20),storage_config VARCHAR(64),storage_bucket VARCHAR(64),object_key TEXT,multipart_id TEXT)");
+        jdbc.execute("CREATE TABLE vls_dataset_import_job(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_id BIGINT,import_type VARCHAR(32),job_state VARCHAR(20),storage_config VARCHAR(64),storage_bucket VARCHAR(64),object_key TEXT,multipart_id TEXT)");
         jdbc.execute("CREATE TABLE vls_dataset_upload_part(job_id BIGINT)");
         jdbc.execute("CREATE TABLE vls_dataset_frame_origin(tenant_id VARCHAR(64),dataset_id BIGINT)");
         jdbc.execute("CREATE TABLE vls_training_dataset_artifact(tenant_id VARCHAR(64),dataset_id BIGINT,storage_config VARCHAR(64),storage_bucket VARCHAR(64),object_key TEXT,storage_state VARCHAR(20))");

@@ -146,10 +146,12 @@ public class TrainingDatasetRuntimeService {
         Inventory inventory = new Inventory();
         Set<String> explicit = new HashSet<>(), directories = new HashSet<>(), files = new HashSet<>();
         long total = 0;
+        byte[] buffer = new byte[65536];
         Enumeration<? extends ZipEntry> entries = zip.entries();
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
-            if (inventory.entries.size() >= 100000) throw new IOException("训练数据包文件数超过 100000");
+            if (inventory.entries.size() >= TrainingDatasetLayout.MAX_ARCHIVE_ENTRIES)
+                throw new IOException("训练数据包条目数超过 " + TrainingDatasetLayout.MAX_ARCHIVE_ENTRIES);
             String name = relative(entry.getName(), entry.isDirectory());
             if (!explicit.add(name)) throw new IOException("训练数据包包含重复路径");
             if (entry.isDirectory()) {
@@ -175,7 +177,7 @@ public class TrainingDatasetRuntimeService {
             CRC32 crc = new CRC32();
             long size = 0;
             try (InputStream input = zip.getInputStream(entry)) {
-                byte[] buffer = new byte[65536]; int count;
+                int count;
                 while ((count = input.read(buffer)) != -1) {
                     size += count; total += count;
                     if (size > MAX_ENTRY_BYTES || total > maxExpandedBytes || (metadata && size > MAX_METADATA_BYTES))

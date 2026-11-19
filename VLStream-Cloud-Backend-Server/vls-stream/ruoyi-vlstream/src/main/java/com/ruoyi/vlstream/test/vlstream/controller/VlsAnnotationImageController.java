@@ -15,6 +15,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import com.ruoyi.vlstream.test.vlstream.data.DataMediaStorage;
+import org.springframework.util.StreamUtils;
 import javax.validation.Valid;
 import javax.annotation.Resource;
 import com.ruoyi.vlstream.test.vlstream.data.DataManagementService;
@@ -59,6 +63,24 @@ public class VlsAnnotationImageController extends BladeController {
 	private final IVlsAnnotationImageService vlsAnnotationImageService;
 	@Resource
 	private DataManagementService dataManagementService;
+	@Resource
+	private DataMediaStorage mediaStorage;
+
+	@GetMapping("/dataset/{annotationId}/images/{imageId}/content")
+	public void readAnnotationImage(@PathVariable Long annotationId, @PathVariable Long imageId,
+		HttpServletResponse response) throws IOException {
+		AnnotationImage image = dataManagementService.sample(annotationId, imageId);
+		if (!"image".equals(image.getMediaType())) {
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		try (InputStream input = mediaStorage.read(image.getLocalPath())) {
+			response.setContentType("application/octet-stream");
+			response.setHeader("Cache-Control", "private, no-store");
+			response.setHeader("X-Content-Type-Options", "nosniff");
+			StreamUtils.copy(input, response.getOutputStream());
+		}
+	}
 
 	/** Return only this page's images and annotation instances in the trusted tenant. */
 	@GetMapping("/dataset/{annotationId}/page")

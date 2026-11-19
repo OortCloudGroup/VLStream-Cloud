@@ -47,7 +47,6 @@ public class DatasetArchiveImporter {
             Map<String,Path> media=new LinkedHashMap<>();
             entries.forEach((name,path)->{if(isMedia(name))media.put(name,path);});
             if(media.isEmpty()) throw new ServiceException("ZIP 内没有支持的图片或视频");
-            if(media.size()>DataManagementService.MAX_SNAPSHOT_SAMPLES) throw new ServiceException("数据集最多 10000 个样本，请拆分数据集");
             DatasetSnapshot manifest=null;
             if("vls".equals(format)) {
                 String manifestName=entries.keySet().stream().filter(k->k.equals("vls-samples.json")||k.endsWith("/vls-samples.json")).findFirst().orElseThrow(()->new ServiceException("未找到 vls-samples.json"));

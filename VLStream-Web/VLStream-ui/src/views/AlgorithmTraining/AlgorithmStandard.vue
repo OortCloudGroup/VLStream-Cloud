@@ -780,7 +780,7 @@ import {
   getAnnotationInstances,
 } from '@/api/annotationInstances'
 import request, {getBaseURL} from '@/utils/request'
-import {batchSaveAnnotationImages, getAnnotationImagePage, uploadAnnotationImages} from '@/api/annotationImage'
+import {batchSaveAnnotationImages, fetchAnnotationPreview, getAnnotationImagePage, uploadAnnotationImages} from '@/api/annotationImage'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
@@ -792,7 +792,17 @@ const annotationLoadError = ref('')
 const annotationImageQuery = ref({ page: 1, size: 20, annotationStatus: 'all', labelId: null })
 const annotationImageTotal = ref(0)
 let annotationLoadSequence = 0
-onUnmounted(() => { annotationLoadSequence++ })
+let previewRequests
+const previewUrls = new Set()
+const releaseAnnotationPreviews = () => {
+  previewRequests?.abort()
+  for (const url of previewUrls) URL.revokeObjectURL(url)
+  previewUrls.clear()
+}
+onUnmounted(() => {
+  annotationLoadSequence++
+  releaseAnnotationPreviews()
+})
 const showDetailAnnotation = ref(false) // whether annotationpage
 const currentAnnotationImage = ref(null) // current annotation
 
@@ -1795,6 +1805,7 @@ const saveImagesToDatabase = async (images, annotationId) => {
 // method
 const showTableView = () => {
   annotationLoadSequence++
+  releaseAnnotationPreviews()
   showAnnotationView.value = false
   showDetailAnnotation.value = false  // annotationpage also
   currentAnnotationData.value = null
@@ -1803,6 +1814,7 @@ const showTableView = () => {
 
 const handleBackToList = () => {
   annotationLoadSequence++
+  releaseAnnotationPreviews()
   annotationDataLoading.value = false
   showAnnotationView.value = false
   showDetailAnnotation.value = false
@@ -1881,31 +1893,20 @@ const handleDeleteLabelFromGrid = async (labelId) => {
   }
 }
 
-// Process from Delete relateddata
 const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds, resolve, reject }) => {
-  console.log('=== 父组件收到删除图片及相关数据的请求 ===')
-
   try {
-    console.log('准备调用 deleteAnnotationInstancesByImage API')
-
-    const response = await deleteAnnotationInstancesByImage(annotationId, imageIds)
-
-    console.log('API响应:', response)
-
-    if (response && response.code === 200) {
-      console.log('删除图片及相关数据成功:', imageIds)
-      await loadAnnotationPage()
-      resolve()
-      // in successfully , sub componentProcess
-      // ElMessage.success(' relatedannotationdataDelete successfully')
-    } else {
-      console.error('API返回错误:', response)
-      throw new Error(response?.message || '删除失败')
+    const response = await deleteAnnotationInstancesByImage(annotationId, imageIds, { silentError: true })
+    if (response?.code !== 200 || response.success === false) {
+      throw new Error(response?.msg || response?.message || uiText('删除失败'))
     }
+    resolve()
   } catch (error) {
-    console.error('从网格视图删除图片及相关数据失败:', error)
-    ElMessage.error(uiText('删除图片及相关数据失败: ') + error.message)
     reject(error)
+  } finally {
+    if (showAnnotationView.value && !showDetailAnnotation.value &&
+        String(currentAnnotationData.value?.id) === String(annotationId)) {
+      await loadAnnotationPage()
+    }
   }
 }
 
@@ -2149,6 +2150,9 @@ const deleteLabelAPI = async (labelId) => {
 
 // Only the requested page and its annotation instances are loaded.
 const loadAnnotationPage = async ({ imageId } = {}) => {
+  releaseAnnotationPreviews()
+  const controller = new AbortController()
+  previewRequests = controller
   const sequence = ++annotationLoadSequence
   const query = { ...annotationImageQuery.value }
   annotationDataLoading.value = true
@@ -2163,9 +2167,7 @@ const loadAnnotationPage = async ({ imageId } = {}) => {
     if (labelsResponse?.code !== 200 || !Array.isArray(page?.records)) {
       throw new Error('标注数据加载失败，请重试')
     }
-    if (page.records.some(image => image.previewError)) {
-      throw new Error('图片列表加载失败，请检查对象存储连接后重试')
-    }
+
     const lastPage = Math.max(1, Math.ceil(page.total / query.size))
     if (!imageId && query.page > lastPage) {
       annotationImageQuery.value.page = lastPage
@@ -2180,11 +2182,30 @@ const loadAnnotationPage = async ({ imageId } = {}) => {
       annotationImageQuery.value.page = 1
       return await loadAnnotationPage()
     }
-    uploadedImages.value = page.records.map(image => ({
+    const urls = new Array(page.records.length)
+    let nextImage = 0
+    const loadPreviews = async () => {
+      while (!controller.signal.aborted && nextImage < page.records.length) {
+        const index = nextImage++
+        try {
+          const blob = await fetchAnnotationPreview(annotationId, page.records[index].id, controller.signal)
+          if (controller.signal.aborted) return
+          urls[index] = URL.createObjectURL(blob)
+          previewUrls.add(urls[index])
+        } catch (error) {
+          if (controller.signal.aborted) return
+          urls[index] = ''
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(4, urls.length) }, loadPreviews))
+    if (sequence !== annotationLoadSequence) return false
+    if (urls.length && !urls.some(Boolean)) throw new Error('标注图片读取失败')
+    uploadedImages.value = page.records.map((image, index) => ({
       id: String(image.id),
       name: image.imageName,
       originalName: image.originalName,
-      url: image.previewUrl,
+      url: urls[index],
       annotations: (image.instances || []).map(instance => {
         let data
         try {
@@ -2205,7 +2226,7 @@ const loadAnnotationPage = async ({ imageId } = {}) => {
       }).filter(Boolean),
       isFromDatabase: true,
       dbData: image,
-      imageExists: true
+      imageExists: Boolean(urls[index])
     }))
     annotationImageTotal.value = Number(page.total)
     annotationImageQuery.value.page = Number(page.current)

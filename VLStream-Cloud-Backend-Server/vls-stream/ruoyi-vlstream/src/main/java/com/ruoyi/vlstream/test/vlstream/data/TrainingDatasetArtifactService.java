@@ -353,7 +353,8 @@ public class TrainingDatasetArtifactService {
         private int entries;
         private BoundedZipOutputStream(OutputStream out) { super(out); }
         @Override public void putNextEntry(ZipEntry entry) throws IOException {
-            if (++entries > 100000) throw new IOException("训练数据包文件数超过 100000");
+            if (++entries > TrainingDatasetLayout.MAX_ARCHIVE_ENTRIES)
+                throw new IOException("训练数据包条目数超过 " + TrainingDatasetLayout.MAX_ARCHIVE_ENTRIES);
             current = 0; super.putNextEntry(entry);
         }
         @Override public void write(byte[] bytes, int offset, int count) throws IOException {

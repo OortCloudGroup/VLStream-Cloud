@@ -41,8 +41,8 @@ def validate(dataset, model):
         if root not in directory.parents or not directory.is_dir():
             raise ValueError('训练集或验证集路径超出数据集目录')
         images = sorted(p for p in directory.rglob('*') if p.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.webp'})
-        if not images or len(images) > 10000:
-            raise ValueError('每个集合需包含 1 至 10000 张图片')
+        if not images:
+            raise ValueError('训练集和验证集均需包含图片')
         boxes = 0
         for image in images:
             if not image.is_file() or root not in image.resolve().parents:
