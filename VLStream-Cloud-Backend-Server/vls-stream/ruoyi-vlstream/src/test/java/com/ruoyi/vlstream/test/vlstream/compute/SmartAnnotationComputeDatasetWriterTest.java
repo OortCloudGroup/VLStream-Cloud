@@ -50,4 +50,43 @@ class SmartAnnotationComputeDatasetWriterTest {
         assertEquals(1,writer.upload(job,snapshot,connection).size());
         verify(storage,never()).read("metadata-key");
     }
+
+    @Test void newlyConfirmedCopyWithoutHashStaysWithTheExistingValidationImage() throws Exception {
+        job.setOptionsJson("{\"mode\":\"active\"}");
+        snapshot.setAnnotationType("object_detection");
+        AnnotationImage validation = seed(10L, "source-key", "val");
+        AnnotationImage confirmedCopy = seed(11L, "source-key", "unassigned");
+        AnnotationImage training = seed(12L, "different-source", "train");
+        BufferedImage different = new BufferedImage(40, 30, BufferedImage.TYPE_INT_RGB);
+        different.setRGB(0, 0, 0xffffff);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ImageIO.write(different, "png", bytes);
+        when(storage.read("different-source")).thenAnswer(call -> new ByteArrayInputStream(bytes.toByteArray()));
+        snapshot.setSamples(Arrays.asList(image, validation, confirmedCopy, training));
+        List<AnnotationInstance> labels = new ArrayList<>();
+        for (AnnotationImage sample : Arrays.asList(validation, confirmedCopy, training)) {
+            AnnotationInstance instance = new AnnotationInstance();
+            instance.setImageId(sample.getId());
+            instance.setLabelId(1L);
+            instance.setAnnotationData("{\"x\":2,\"y\":3,\"width\":8,\"height\":9}");
+            labels.add(instance);
+        }
+        snapshot.setInstances(labels);
+
+        assertEquals(1, writer.upload(job, snapshot, connection).size());
+        verify(connection).put(eq("/fixture/job/dataset/images/val/10.png"), any(InputStream.class));
+        verify(connection).put(eq("/fixture/job/dataset/images/val/11.png"), any(InputStream.class));
+        verify(connection).put(eq("/fixture/job/dataset/images/train/12.png"), any(InputStream.class));
+        assertNull(confirmedCopy.getContentSha256());
+        assertEquals("unassigned", confirmedCopy.getDatasetSplit());
+    }
+
+    private AnnotationImage seed(Long id, String key, String split) {
+        AnnotationImage sample = new AnnotationImage();
+        sample.setId(id);
+        sample.setLocalPath(key);
+        sample.setOriginalName("sample.png");
+        sample.setDatasetSplit(split);
+        return sample;
+    }
 }

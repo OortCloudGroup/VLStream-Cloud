@@ -520,7 +520,9 @@ public class ConfiguredComputeRegistry {
     }
     public synchronized ComputeNode resolve(Long id) {
         ComputeNode original = resources.get(canonicalId(id));
-        if (original == null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
+        if (original == null) throw unavailable(catalogProperties != null && catalogProperties.configured()
+            ? "统一平台算力目录暂未解析到本轮绑定节点，任务保留等待目录同步"
+            : "自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
         if(official(original))return resolveOfficial(original);
         if (original.getHost()==null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
         // A reserved ID must never silently alias a persisted third-party/private node.

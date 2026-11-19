@@ -109,7 +109,11 @@ public class SmartAnnotationWorker {
 
     /** Respect an existing holdout; otherwise create a deterministic local split without changing the dataset. */
     public static Map<Long, String> partition(List<AnnotationImage> samples) {
-        List<Long> validation = samples.stream().filter(s -> "val".equals(s.getDatasetSplit())).map(AnnotationImage::getId).collect(Collectors.toList());
+        Set<String> validationHashes = samples.stream().filter(s -> "val".equals(s.getDatasetSplit()))
+            .map(AnnotationImage::getContentSha256).filter(hash -> hash != null && !hash.isEmpty()).collect(Collectors.toSet());
+        List<Long> validation = samples.stream()
+            .filter(s -> "val".equals(s.getDatasetSplit()) || validationHashes.contains(s.getContentSha256()))
+            .map(AnnotationImage::getId).collect(Collectors.toList());
         DataRequests.Split request = new DataRequests.Split();
         if (!validation.isEmpty()) { request.setMode("manual"); request.setValidationIds(validation); }
         return DatasetPartitioner.partition(samples, Collections.emptyMap(), request);
