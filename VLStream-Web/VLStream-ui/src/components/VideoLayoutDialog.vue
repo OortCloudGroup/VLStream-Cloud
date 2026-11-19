@@ -53,6 +53,7 @@
           <!--  -->
           <div class="video-player-section">
             <div ref="videoAreaElement" class="video-area" :class="[`presentation-${presentationMode}`, { 'is-multi-screen': presentationMode !== 'bottom' && dialog.layoutCount > 1 }]" @playing.capture="rememberFrame" @loadeddata.capture="rememberFrame"
+              @focusin="handleCarouselFocus" @focusout="handleCarouselFocus"
               @loadedmetadata.capture="rememberAspect" @resize.capture="rememberAspect" @emptied.capture="refreshMediaState" @volumechange.capture="refreshMediaState">
               <!-- 缩略图横条随窗口数量联动：收起所有视频后一并隐藏，重新打开视频时自动恢复 -->
               <VideoSquareThumbnailStrip v-if="presentationMode === 'default' && showThumbnails" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
@@ -60,9 +61,10 @@
               <!--  -->
               <div ref="workspaceElement" class="video-grid" :class="[`layout-${getLayoutClass(dialog.layoutCount)}`, `variant-${dialog.layoutVariant || 'grid'}`]"
                 :style="compactGridStyle"
-                @wheel="scrollCarouselWheel">
+                @wheel="scrollCarouselWheel" @pointerover="handleCarouselPointer" @pointerout="handleCarouselPointer"
+                @pointercancel="carouselMarquee.setPaused('pointer', false)">
                 <div v-if="presentationMode === 'bottom'" ref="carouselElement" class="window-carousel-scroll"
-                  tabindex="0" :aria-label="$tp('底部视频轮播')" @scroll="carouselOffset = $event.target.scrollLeft">
+                  tabindex="0" :aria-label="$tp('底部视频轮播')" @scroll="carouselMarquee.syncOffset">
                   <div :style="{ width: carouselWidth + 'px', height: '1px' }"></div>
                 </div>
                 <div
@@ -154,10 +156,12 @@
               </div>
 
               <!-- MasterGo 257:28182 / 309:26171: controls follow the picture. -->
-              <div v-if="presentationMode === 'bottom' && dialog.layoutCount" class="carousel-edge-controls" :style="{ height: carouselSize.height + 'px' }">
-                <button type="button" :disabled="carouselOffset <= 0" :aria-label="$tp('向左滚动视频')"
+              <div v-if="presentationMode === 'bottom' && dialog.layoutCount" class="carousel-edge-controls" :style="{ height: carouselSize.height + 'px' }"
+                @pointerenter="carouselMarquee.setPaused('edges', true)" @pointerleave="carouselMarquee.setPaused('edges', false)"
+                @pointercancel="carouselMarquee.setPaused('edges', false)">
+                <button type="button" :disabled="!canScrollCarouselLeft" :aria-label="$tp('向左滚动视频')"
                   @pointerenter="carouselHover.start(-1)" @pointerleave="carouselHover.stop" @pointercancel="carouselHover.stop" @blur="carouselHover.stop" @click="scrollCarousel(-1)">‹</button>
-                <button type="button" :disabled="carouselOffset >= carouselWidth - workspaceSize.width - 1" :aria-label="$tp('向右滚动视频')"
+                <button type="button" :disabled="!canScrollCarouselRight" :aria-label="$tp('向右滚动视频')"
                   @pointerenter="carouselHover.start(1)" @pointerleave="carouselHover.stop" @pointercancel="carouselHover.stop" @blur="carouselHover.stop" @click="scrollCarousel(1)">›</button>
               </div>
               <div v-if="presentationMode === 'bottom'" class="window-carousel-navigation" :style="{ bottom: (carouselSize.height + 28) + 'px' }">
@@ -191,6 +195,7 @@ import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import VideoSquareDevicePlayer from '@/views/VideoAggregation/components/VideoSquareDevicePlayer.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useHoverScroll } from '@/composables/useHoverScroll'
+import { useVideoMarquee, videoStripLoopWidth, videoStripWrappedCount } from '@/composables/useVideoMarquee.mjs'
 import VideoSquareFloatingPtz from '@/views/VideoAggregation/components/VideoSquareFloatingPtz.vue'
 import VideoSquareThumbnailStrip from '@/views/VideoAggregation/components/VideoSquareThumbnailStrip.vue'
 import VideoSquarePlaybackControls from '@/views/VideoAggregation/components/VideoSquarePlaybackControls.vue'
@@ -299,7 +304,6 @@ const carouselElement = ref(null)
 const carouselHover = useHoverScroll(carouselElement)
 const workspaceSize = ref({width: 0, height: 0})
 const availableGridSize = ref({width:0, height:0})
-const carouselOffset = ref(0)
 const floatingWindows = ref({})
 const movingWindowIndex = ref(null)
 const windowLayers = ref({})
@@ -309,8 +313,21 @@ let suppressWindowClickUntil = 0
 let workspaceObserver
 const windowSize = () => uniformWindowSize(workspaceSize.value.width, workspaceSize.value.height)
 const carouselSize = computed(() => windowSize())
-const dockedWindowOffset = index => windowSize().width * index
-const carouselWidth = computed(() => dockedWindowOffset(props.dialog.layoutCount))
+const dockedWindowOffset = index => carouselSize.value.width * index
+const carouselLoopWidth = computed(() => props.presentationMode === 'bottom' && props.active && !props.dialog.minimized
+  ? videoStripLoopWidth(props.dialog.layoutCount, carouselSize.value.width, workspaceSize.value.width) : 0)
+const carouselMarquee = useVideoMarquee(carouselElement, carouselLoopWidth)
+const carouselOffset = carouselMarquee.offset
+const carouselWidth = computed(() => carouselMarquee.period.value
+  ? carouselMarquee.period.value + workspaceSize.value.width : dockedWindowOffset(props.dialog.layoutCount))
+const canScrollCarouselLeft = computed(() => carouselOffset.value > 0)
+const canScrollCarouselRight = computed(() => carouselOffset.value < carouselWidth.value - workspaceSize.value.width - 1)
+const wrappedCarouselCount = computed(() => videoStripWrappedCount(carouselSize.value.width, carouselOffset.value, carouselMarquee.period.value))
+const dockedWindowStart = index => dockedWindowOffset(index) + (index < wrappedCarouselCount.value ? carouselMarquee.period.value : 0)
+watch(carouselOffset, offset => {
+  workspaceElement.value?.style.setProperty('--video-carousel-offset', `${-offset}px`)
+}, { flush:'sync' })
+watch([showPtz, carouselElement], ([open]) => carouselMarquee.setPaused('ptz', open), { flush:'post' })
 // Use the same browser layout-unit edge for both neighbours, avoiding fractional hairline seams.
 const layoutEdge = value => Math.round(value * 64) / 64
 const layoutSpec = computed(() => resolveLayoutSpec(props.dialog.layoutCount, props.dialog.layoutVariant || 'grid'))
@@ -343,7 +360,7 @@ const windowPlacement = index => {
   }
   const size = windowSize()
   const position = floatingWindows.value[index] || {
-    x: dockedWindowOffset(index) - carouselOffset.value,
+    x: dockedWindowStart(index),
     y: Math.max(0, workspaceSize.value.height - size.height),
   }
   return {position:'absolute', left:`${position.x}px`, top:`${position.y}px`, width:`${size.width}px`, height:`${size.height}px`,
@@ -373,6 +390,7 @@ const stopWindowDrag = () => {
   if (windowDrag?.handle.hasPointerCapture?.(windowDrag.pointerId)) windowDrag.handle.releasePointerCapture(windowDrag.pointerId)
   windowDrag = null
   movingWindowIndex.value = null
+  carouselMarquee.setPaused('drag', false)
   window.removeEventListener('pointermove', moveWindowDrag)
   window.removeEventListener('pointerup', stopWindowDrag)
   window.removeEventListener('pointercancel', stopWindowDrag)
@@ -403,6 +421,7 @@ const startWindowDrag = (event, index) => {
   const cell = event.currentTarget.getBoundingClientRect()
   windowDrag = {index, pointerId:event.pointerId, handle:event.currentTarget, start:{x:event.clientX, y:event.clientY},
     origin:{x:cell.left - area.left, y:cell.top - area.top}, moved:false}
+  carouselMarquee.setPaused('drag', true)
   event.currentTarget.setPointerCapture(event.pointerId)
   window.addEventListener('pointermove', moveWindowDrag, {passive:false})
   window.addEventListener('pointerup', stopWindowDrag)
@@ -416,8 +435,9 @@ const restoreWindowLayout = (revive = false) => {
   floatingWindows.value = {}
   windowLayers.value = {}
   frontWindowLayer = 1
-  carouselOffset.value = 0
   if (carouselElement.value) carouselElement.value.scrollLeft = 0
+  carouselMarquee.syncOffset()
+  carouselMarquee.schedule()
   nextTick(measureWorkspace)
 }
 // 切换展示方式或窗口数量时清掉拖动留下的自由位置，保证默认按当前布局重新贴底排列
@@ -428,6 +448,27 @@ const scrollCarouselWheel = event => {
   if (event.clientY < area.bottom - carouselSize.value.height - 18 || event.target.closest('.is-floating')) return
   event.preventDefault()
   carouselElement.value.scrollLeft += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+}
+const handleCarouselPointer = event => {
+  if (props.presentationMode !== 'bottom') return
+  const next = event.type === 'pointerout' ? event.relatedTarget : event.target
+  const overStrip = !!next?.closest?.('.video-window, .window-carousel-scroll') && event.currentTarget.contains(next)
+  carouselMarquee.setPaused('pointer', overStrip)
+}
+const revealCarouselWindow = (index, behavior) => {
+  if (!carouselElement.value || floatingWindows.value[index]) return
+  const left = dockedWindowStart(index) - carouselOffset.value
+  const right = left + carouselSize.value.width
+  if (right > 0 && left < workspaceSize.value.width) return
+  carouselElement.value.scrollTo({left: dockedWindowOffset(index), behavior})
+  carouselMarquee.syncOffset()
+}
+const handleCarouselFocus = event => {
+  if (props.presentationMode !== 'bottom') return
+  carouselMarquee.trackFocus(event)
+  if (event.type !== 'focusin' || !event.target.matches(':focus-visible')) return
+  const cell = event.target.closest('.video-window')
+  if (cell) revealCarouselWindow(Number(cell.dataset.windowIndex), 'instant')
 }
 watch(() => [props.presentationMode, props.dialog.layoutRevision], () => restoreWindowLayout())
 watch(() => props.dialog.windowIds?.slice(), (ids, oldIds) => {
@@ -456,8 +497,8 @@ watch(() => props.presentationMode, () => nextTick(observeWorkspace))
 watch(() => props.dialog.activeWindowIndex, index => {
   if (Number.isInteger(index) && index < props.dialog.layoutCount) {
     activeWindowIndex.value = index
-    if (props.presentationMode === 'bottom' && !floatingWindows.value[index]) {
-      carouselElement.value?.scrollTo({left:dockedWindowOffset(index), behavior:'smooth'})
+    if (props.presentationMode === 'bottom') {
+      revealCarouselWindow(index, 'smooth')
     }
   }
 })
@@ -1988,7 +2029,8 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-area.presentation-default .video-window:has(.window-titlebar) > .no-signal-placeholder { padding-top:0; }
 
 /* Current selection 309:28524: continuous 356px windows, 56px blue header, 20px card inset. */
-.video-area.presentation-bottom > .video-grid { margin:0 36px; width:calc(100% - 72px); overflow:hidden; }
+.video-area.presentation-bottom > .video-grid { margin:0 36px; width:calc(100% - 72px); overflow:clip; }
+.video-area.presentation-bottom .video-window:not(.is-floating) { translate: var(--video-carousel-offset, 0px) 0; }
 .video-area.presentation-bottom .video-window,
 .video-area.presentation-bottom .video-window.active { border:0; border-radius:0; touch-action:none; user-select:none; cursor:grab; }
 .video-area.presentation-bottom .video-window.is-moving { cursor:grabbing; }

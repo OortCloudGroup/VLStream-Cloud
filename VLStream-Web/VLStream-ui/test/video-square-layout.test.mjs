@@ -1,8 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { videoGridStyle, assignVideoWindow, resizeVideoLayout, fillLayoutWindows } from '../src/utils/videoSquareLayout.mjs'
+import { videoGridStyle, assignVideoWindow, resizeVideoLayout, fillLayoutWindows, resolveLayoutSpec } from '../src/utils/videoSquareLayout.mjs'
 
-test('all supported custom counts fit in finite nonzero grid tracks', () => {
+test('all supported window counts fit in finite nonzero grid tracks', () => {
   for (let count = 1; count <= 25; count++) {
     const style = videoGridStyle(count)
     const columns = Number(style.gridTemplateColumns.match(/repeat\((\d+)/)[1])
@@ -11,6 +11,28 @@ test('all supported custom counts fit in finite nonzero grid tracks', () => {
     assert.ok(columns * (rows - 1) < count)
   }
   for (const count of [0, 26, 2.5, NaN, '4']) assert.throws(() => videoGridStyle(count), RangeError)
+})
+
+test('custom grids place equal windows in row order regardless of the preset with the same count', () => {
+  const dialog = { id: 1, cameras: [] }
+  resizeVideoLayout(dialog, 6, 'custom-2x3')
+  const spec = resolveLayoutSpec(dialog.layoutCount, dialog.layoutVariant)
+
+  assert.equal(dialog.cameras.length, 6)
+  assert.equal(spec.rows, 2)
+  assert.equal(spec.cols, 3)
+  assert.deepEqual(spec.cells.map(({row, col}) => [row, col]), [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]])
+  assert.ok(spec.cells.every(({rowSpan, colSpan}) => rowSpan === 1 && colSpan === 1))
+  assert.equal(resolveLayoutSpec(6, 'custom-3x2').cols, 2)
+  assert.equal(resolveLayoutSpec(6).rows, 3)
+})
+
+test('custom grids allow dimensions from 1 to 9 and at most 25 windows', () => {
+  assert.equal(resolveLayoutSpec(9, 'custom-1x9').cells.length, 9)
+  assert.equal(resolveLayoutSpec(25, 'custom-5x5').cells.length, 25)
+  for (const [count, variant] of [[27, 'custom-3x9'], [10, 'custom-1x10'], [1, 'custom-0x1'], [5, 'custom-2x3']]) {
+    assert.throws(() => videoGridStyle(count, variant), RangeError)
+  }
 })
 
 test('assign changes only the selected window and retains the real catalog source', () => {

@@ -208,21 +208,36 @@
               </span>
               <span class="layout-option-text">{{ $tp(option.label) }}</span>
             </button>
-            <button class="extended-layout-option is-custom" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">
+            <button class="extended-layout-option is-custom" :class="{ active: activeCustomLayout }" @click="openCustomVideoDialogs">
               <span class="layout-option-icon icon-custom" aria-hidden="true"></span>
               <span class="layout-option-text">{{ $tp('自定义') }}</span>
             </button>
           </div>
         </div>
       </div>
-      <el-dialog v-model="showCustomLayout" :title="$tp('自定义布局')" width="400px" :append-to-body="false" class="square-custom-layout">
-        <el-form label-position="top">
-          <el-form-item :label="$tp('画面数量')"><el-input-number v-model="customWindowCount" :min="1" :max="25" :precision="0" /></el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="showCustomLayout = false">{{ $tp('取消') }}</el-button>
-          <el-button type="primary" :disabled="!customWindowCount" @click="showCustomLayout = false; handleLayoutSelect(customWindowCount)">{{ $tp('确定') }}</el-button>
-        </template>
+      <el-dialog v-model="showCustomLayout" :title="$tp('自定义视图')" width="548px" align-center :append-to-body="false"
+        class="square-custom-layout" @open-auto-focus="customRowInput?.focus()" @closed="focusExtendedLayoutButton">
+        <form class="custom-layout-form" @submit.prevent="applyCustomLayout">
+          <div class="custom-layout-fields">
+            <label>
+              <span>{{ $tp('行（1–9）') }}</span>
+              <input ref="customRowInput" v-model="customRows" type="text" inputmode="numeric"
+                :aria-invalid="!isCustomLayoutDimension(customRows)" aria-describedby="square-custom-layout-status" />
+            </label>
+            <span class="custom-layout-multiply" aria-hidden="true">×</span>
+            <label>
+              <span>{{ $tp('列（1–9）') }}</span>
+              <input v-model="customCols" type="text" inputmode="numeric"
+                :aria-invalid="!isCustomLayoutDimension(customCols)" aria-describedby="square-custom-layout-status" />
+            </label>
+          </div>
+          <div class="custom-layout-actions">
+            <p id="square-custom-layout-status" :class="{ 'is-error': customLayoutError }" aria-live="polite">
+              {{ $tp(customLayoutError || '最多 {count} 个画面', { count: MAX_VIDEO_WINDOWS }) }}
+            </p>
+            <el-button type="primary" native-type="submit" :disabled="Boolean(customLayoutError)">{{ $tp('确定') }}</el-button>
+          </div>
+        </form>
       </el-dialog>
     </div>
 
@@ -306,7 +321,7 @@ import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
 import VideoSquareCatalogTable from './components/VideoSquareCatalogTable.vue'
 import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
 import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
-import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
+import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, customLayoutDimensions, MAX_VIDEO_WINDOWS, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import { defaultVideoSource, videoSourceOnline } from '@/utils/videoSquareCatalog'
@@ -334,7 +349,11 @@ const isDarkMode = ref(false)
 const isFullscreen = ref(false)
 const workspacePreferences = readVideoSquarePreferences()
 const layoutChoice = ref(workspacePreferences.layout)
-const layoutMode = ref(({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[layoutChoice.value.count] || `custom-${layoutChoice.value.count}`)
+const layoutMode = computed(() => {
+  const { count, variant } = layoutChoice.value
+  if (customLayoutDimensions(variant)) return variant
+  return ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
+})
 // MasterGo 257:28183 默认态为「视频展示」
 const viewMode = ref('video')
 const showSharing = ref(false)
@@ -399,7 +418,7 @@ const handleDeviceSelect = device => {
     const dialog = layoutDialogs.value[0]
     const empty = dialog.cameras.findIndex(camera => !camera)
     if (empty >= 0) { dialog.cameras[empty] = catalogVideoCamera(device); dialog.activeWindowIndex = empty }
-    else if (dialog.layoutCount < 25) {
+    else if (dialog.layoutCount < MAX_VIDEO_WINDOWS) {
       resizeVideoLayout(dialog, dialog.layoutCount + 1, 'grid', {resetPositions:false})
       dialog.cameras[dialog.layoutCount - 1] = catalogVideoCamera(device)
       dialog.activeWindowIndex = dialog.layoutCount - 1
@@ -423,7 +442,6 @@ const openDeviceInSingleWindow = device => {
   devicePickerTarget.value = null
   presentationMode.value = 'grid'
   layoutChoice.value = {count:1, variant:'grid'}
-  layoutMode.value = '1x1'
   const dialog = ensureLayoutDialog()
   resizeVideoLayout(dialog, 1, 'grid')
   dialog.cameras[0] = catalogVideoCamera(device)
@@ -453,8 +471,7 @@ const selectPresentation = mode => {
     dialog.activeWindowIndex = 0
   }
   if (mode === 'bottom') {
-    resizeVideoLayout(dialog, BOTTOM_DEFAULT_WINDOW_COUNT, 'grid')
-    loadLayoutCameras(dialog)
+    loadBottomLayout(dialog)
   }
 }
 const selectThumbnail = (dialogId, deviceId) => {
@@ -473,7 +490,16 @@ const dropCatalogDevice = (dialogId, windowIndex, deviceId) => {
   devicePickerTarget.value = null
 }
 const showCustomLayout = ref(false)
-const customWindowCount = ref(4)
+const customRowInput = ref(null)
+const customRows = ref('1')
+const customCols = ref('1')
+const isCustomLayoutDimension = value => /^[1-9]$/.test(value)
+const activeCustomLayout = computed(() => presentationMode.value === 'grid' && customLayoutDimensions(layoutChoice.value.variant))
+const customLayoutError = computed(() => {
+  if (!isCustomLayoutDimension(customRows.value) || !isCustomLayoutDimension(customCols.value)) return '行和列都必须是 1–9 的整数'
+  if (Number(customRows.value) * Number(customCols.value) > MAX_VIDEO_WINDOWS) return '行数 × 列数不能超过 {count}'
+  return ''
+})
 const extendedLayouts = VIDEO_LAYOUT_OPTIONS
 const isExtendedLayoutActive = option => layoutChoice.value.count === option.count && layoutChoice.value.variant === option.variant
 const layoutPreviewCellStyle = (option, cell) => ({
@@ -537,7 +563,6 @@ const restoreLayoutWindows = (dialogId, requestedCount) => {
   resizeVideoLayout(dialog, count, variant)
   if (requestedCount && presentationMode.value !== 'default') {
     layoutChoice.value = {count,variant}
-    layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
   }
   layoutClosed.value = false
   return dialog
@@ -704,6 +729,13 @@ const visibleDevices = computed(() => classificationCandidates.value.filter(devi
   matchesVideoDevice(device, mapSearchKeyword.value)
 ))
 watch(visibleDevices, () => updateMapMarkers())
+watch(visibleDevices, (devices, previous) => {
+  const dialog = layoutDialogs.value[0]
+  if (presentationMode.value !== 'bottom' || layoutClosed.value || !dialog?.layoutCount) return
+  const count = Math.min(devices.length, MAX_VIDEO_WINDOWS)
+  if (count === Math.min(previous.length, MAX_VIDEO_WINDOWS) && devices.slice(0, count).every((device, index) => device.id === previous[index].id)) return
+  loadBottomLayout(dialog)
+})
 watch(() => displaySettings.value.deviceTypes, () => {
   const allowed = new Map(classificationCandidates.value.map(device => [device.id, device]))
   for (const dialog of layoutDialogs.value) {
@@ -1094,6 +1126,12 @@ const loadLayoutCameras = dialog => {
   devicePickerTarget.value = null
 }
 
+const loadBottomLayout = dialog => {
+  const count = Math.max(BOTTOM_DEFAULT_WINDOW_COUNT, Math.min(visibleDevices.value.length, MAX_VIDEO_WINDOWS))
+  resizeVideoLayout(dialog, count, 'grid')
+  loadLayoutCameras(dialog)
+}
+
 const openVideoDialogs = (count, variant = 'grid') => {
   videoGridStyle(count, variant)
   if (count > 1) presentationMode.value = 'grid'
@@ -1102,11 +1140,27 @@ const openVideoDialogs = (count, variant = 'grid') => {
   resizeVideoLayout(dialog, count, variant)
   loadLayoutCameras(dialog)
   layoutClosed.value = false
-  layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
 }
 
 const openCustomVideoDialogs = () => {
+  const { rows = 1, cols = 1 } = activeCustomLayout.value || {}
+  customRows.value = String(rows)
+  customCols.value = String(cols)
+  if (showExtendedLayout.value) hideExtendedLayoutDialog()
   showCustomLayout.value = true
+}
+
+const applyCustomLayout = () => {
+  if (customLayoutError.value) return
+  const rows = Number(customRows.value)
+  const cols = Number(customCols.value)
+  presentationMode.value = 'grid'
+  openVideoDialogs(rows * cols, `custom-${rows}x${cols}`)
+  showCustomLayout.value = false
+}
+
+const focusExtendedLayoutButton = () => {
+  document.querySelector('.extended-layout-btn')?.focus({ preventScroll: true })
 }
 
 const showExtendedLayoutDialog = () => {
@@ -1341,7 +1395,6 @@ const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
   // The double-click explicitly selects this source; never replace it with the first catalog row.
   presentationMode.value = 'grid'
   layoutChoice.value = {count:1,variant:'grid'}
-  layoutMode.value = '1x1'
   dialog.cameras = [camera]
   dialog.windowIds = [dialog.windowIds[windowIndex]]
   dialog.layoutCount = 1
@@ -2264,7 +2317,6 @@ const removeDeviceFromWindow = (dialogId, windowIndex, windowId) => {
   if (!dialog.layoutCount) dialog.activeWindowIndex = 0
   else if (presentationMode.value !== 'default') {
     layoutChoice.value = {count:dialog.layoutCount, variant:'grid'}
-    layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[dialog.layoutCount] || `custom-${dialog.layoutCount}`
   }
 }
 
@@ -3583,6 +3635,126 @@ body::-webkit-scrollbar {
 }
 
 /* dialog */
+:deep(.square-custom-layout) {
+  --el-dialog-bg-color: #0d344f;
+  --el-dialog-padding-primary: 0px;
+  --el-dialog-border-radius: 10px;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+}
+
+:deep(.square-custom-layout .el-dialog__header) {
+  min-height: 44px;
+  padding: 9px 48px 9px 20px !important;
+  border-bottom: 1px solid #2a526c !important;
+}
+
+:deep(.square-custom-layout .el-dialog__headerbtn) {
+  right: 6px !important;
+  height: 36px !important;
+  width: 36px !important;
+}
+
+:deep(.square-custom-layout .el-dialog__headerbtn:hover) {
+  background-color: #21516f;
+}
+
+:deep(.square-custom-layout .el-dialog__headerbtn .el-dialog__close) {
+  color: #f0f8ff !important;
+}
+
+:deep(.square-custom-layout .el-dialog__title) {
+  color: #f0f8ff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+:deep(.square-custom-layout .el-dialog__body) {
+  padding: 0;
+}
+
+.custom-layout-form {
+  padding: 28px clamp(16px, 5vw, 30px) 20px;
+  color: #cfe4f4;
+}
+
+.custom-layout-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 112px) max-content minmax(0, 112px);
+  align-items: end;
+  gap: 14px;
+}
+
+.custom-layout-fields label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.custom-layout-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #557a94;
+  border-radius: 4px;
+  background: #123f5f;
+  color: #f0f8ff;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.custom-layout-fields input[aria-invalid='true'] {
+  border-color: #ffb4b2;
+}
+
+.custom-layout-multiply {
+  line-height: 36px;
+}
+
+.custom-layout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.custom-layout-actions p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.custom-layout-actions .is-error {
+  color: #ffb4b2;
+}
+
+.custom-layout-actions .el-button {
+  --el-button-bg-color: #27b0ec;
+  --el-button-border-color: #27b0ec;
+  --el-button-text-color: #09263b;
+  --el-button-hover-bg-color: #64cafa;
+  --el-button-hover-border-color: #64cafa;
+  --el-button-hover-text-color: #09263b;
+  --el-button-active-bg-color: #32a6dc;
+  --el-button-active-border-color: #32a6dc;
+  --el-button-disabled-bg-color: #28526e;
+  --el-button-disabled-border-color: #28526e;
+  --el-button-disabled-text-color: #bfd5e6;
+  min-width: 144px;
+  height: 42px;
+  margin-inline-start: auto;
+  font-weight: 600;
+}
+
+.custom-layout-fields input:focus-visible,
+.custom-layout-actions .el-button:focus-visible,
+:deep(.square-custom-layout .el-dialog__headerbtn:focus-visible) {
+  outline: 2px solid #80d7ff;
+  outline-offset: 2px;
+}
+
 .extended-layout-overlay {
   position: fixed;
   top: 0;

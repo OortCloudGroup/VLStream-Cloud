@@ -53,6 +53,30 @@ test('layouts and repeated bottom selection preserve the view and never auto-bin
         assert.equal(s.layoutDialogs.value[0].layoutCount,1);assert.deepEqual(h.calls,[]);h.stop()
     }
 })
+test('bottom loads late catalogue entries and follows the filtered order up to 25 windows', async () => {
+    const h = square()
+    const s = h.state
+    s.displaySettings.value.deviceTypes = ['CUSTOM']
+    s.selectPresentation('bottom')
+    const dialog = s.layoutDialogs.value[0]
+    assert.deepEqual(dialog.cameras, [null, null, null, null])
+
+    const devices = Array.from({length: 30}, (_, index) => ({id: `cam-${index}`, deviceName: `Camera ${index}`}))
+    s.deviceList.value = devices
+    await Vue.nextTick()
+    assert.equal(dialog.layoutCount, 25)
+    assert.deepEqual(dialog.cameras.map(camera => camera.id), devices.slice(0, 25).map(device => device.id))
+
+    s.classificationDeviceIds.value = ['cam-27', 'cam-5']
+    await Vue.nextTick()
+    assert.deepEqual(dialog.cameras.map(camera => camera?.id ?? null), ['cam-5', 'cam-27', null, null])
+
+    s.closeAllVideos()
+    s.classificationDeviceIds.value = null
+    await Vue.nextTick()
+    assert.equal(dialog.layoutCount, 0)
+    h.stop()
+})
 test('red phone removes the last slot without recreating a window',()=>{
     const h=square('list','grid',3),s=h.state,d=s.layoutDialogs.value[0]
     d.cameras=[{id:'a'},{id:'b'},{id:'c'}]

@@ -3,6 +3,34 @@ import assert from 'node:assert/strict'
 import { clampVideoWindow, uniformWindowSize, isWindowDragGesture, fitVideoPicture, packVideoWindows } from '../src/utils/videoSquareWindowWorkspace.mjs'
 import { applyVideoPresentation } from '../src/utils/videoSquarePresentation.mjs'
 import { resolveLayoutSpec, VIDEO_LAYOUT_OPTIONS } from '../src/utils/videoSquareLayout.mjs'
+import { videoStripLoopWidth, videoStripWrappedCount } from '../src/composables/useVideoMarquee.mjs'
+
+test('video strips only wrap fully clipped items and meet without a jump at the loop boundary', () => {
+    for (const {count, width, viewport, gap} of [
+        {count: 16, width: 140, viewport: 1092, gap: 20},
+        {count: 16, width: 287, viewport: 1148, gap: 0},
+        {count: 8, width: 140, viewport: 1218, gap: 20},
+    ]) {
+        const period = videoStripLoopWidth(count, width, viewport, gap)
+        assert.ok(period >= width + viewport)
+        const stride = width + gap
+        for (let index = 0; index < count; index++) {
+            const clipped = index * stride + width
+            assert.equal(videoStripWrappedCount(width, clipped - 0.1, period, gap), index)
+            assert.equal(videoStripWrappedCount(width, clipped, period, gap), index + 1)
+            assert.ok(index * stride + period - clipped >= viewport)
+        }
+        const visiblePositions = offset => {
+            const wrappedCount = videoStripWrappedCount(width, offset, period, gap)
+            return Array.from({length: count}, (_, index) => index * stride + (index < wrappedCount ? period : 0) - offset)
+                .filter(left => left + width > 0 && left < viewport)
+        }
+        assert.deepEqual(visiblePositions(period), visiblePositions(0))
+    }
+    assert.equal(videoStripLoopWidth(4, 287, 1148), 0)
+    assert.equal(videoStripLoopWidth(1, 140, 100, 20), 0)
+})
+
 test('bottom keeps every mounted camera and grid restores without replacing identities', () => {
     const cameras = [{id:1}, {id:2}, null, {id:4}]
     const dialog = {cameras, layoutCount:4, activeWindowIndex:1}

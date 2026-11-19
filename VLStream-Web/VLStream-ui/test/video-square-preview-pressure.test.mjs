@@ -142,7 +142,8 @@ test('thumbnail strip waits for status to settle and holds no previews while the
   globalThis.ResizeObserver = class { observe() {} disconnect() {} }
   const strip = load('views/VideoAggregation/components/VideoSquareThumbnailStrip.vue',
     { devices: [{ id: 'a', status: 'UNKNOWN' }, { id: 'b', status: 'ONLINE' }], selectedId: 'a', autoPreview: true },
-    { useHoverScroll: () => ({ start() {}, stop() {} }), VideoSquareDevicePlayer: {}, document: documentStub })
+    { useHoverScroll: () => ({ start() {}, stop() {} }), useVideoMarquee: () => ({ syncOffset() {} }),
+      VideoSquareDevicePlayer: {}, document: documentStub })
   strip.mounts.forEach(action => action())
   const live = () => [...strip.instance.livePreviewIds.value].sort()
   assert.deepEqual(live(), [], 'nothing mounts before the catalogue settles')

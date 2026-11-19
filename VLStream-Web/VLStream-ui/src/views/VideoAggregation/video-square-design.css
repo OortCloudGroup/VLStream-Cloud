@@ -151,8 +151,6 @@
 .video-square.is-default-video :deep(.square-thumbnail.active) { border: 2px solid #026fff; }
 .video-square :deep(.classification-tree) { max-height: none; min-height: 0; flex: 1; padding: 0 20px 20px; }
 .video-square.is-default-video :deep(.square-thumbnail-strip) { width: 100%; gap: 8px; padding: 0 8px 20px; box-sizing: border-box; }
-.video-square.is-default-video :deep(.square-thumbnail:first-child) { margin-left: auto; }
-.video-square.is-default-video :deep(.square-thumbnail:last-of-type) { margin-right: auto; }
 .video-square.is-default-video :deep(.square-thumbnail) { flex: 0 0 140px; width: 140px; height: 140px; }
 .video-square.is-default-video :deep(.square-thumbnail img) { object-fit: cover; }
 .video-square.is-default-video :deep(.thumbnail-name) { height: 25px; padding: 4px 6px; font-weight: 600; line-height: 17px; box-sizing: border-box; background: rgb(0 0 0 / 40%); }

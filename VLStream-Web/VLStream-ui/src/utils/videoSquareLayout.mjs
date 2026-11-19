@@ -1,5 +1,17 @@
+export const MAX_VIDEO_WINDOWS = 25
+
+export function customLayoutDimensions(variant) {
+  const match = /^custom-([1-9])x([1-9])$/.exec(variant)
+  return match ? {rows: Number(match[1]), cols: Number(match[2])} : null
+}
+
 export function videoGridStyle(count, variant = 'grid') {
-  if (!Number.isInteger(count) || count < 1 || count > 25) throw new RangeError('Invalid video window count')
+  if (!Number.isInteger(count) || count < 1 || count > MAX_VIDEO_WINDOWS) throw new RangeError('Invalid video window count')
+  const custom = customLayoutDimensions(variant)
+  if (custom) {
+    if (custom.rows * custom.cols !== count) throw new RangeError('Layout dimensions do not match window count')
+    return { gridTemplateColumns: `repeat(${custom.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${custom.rows}, minmax(0, 1fr))` }
+  }
   if ((variant === 'two-overlay' && count !== 2) || (['three-top', 'three-left'].includes(variant) && count !== 3)) throw new RangeError('Layout variant does not match window count')
   if (!['grid', 'two-overlay', 'three-top', 'three-left'].includes(variant)) throw new RangeError('Invalid video layout variant')
   if (variant === 'two-overlay') return { gridTemplateColumns: 'minmax(0, 1fr)', gridTemplateRows: 'minmax(0, 1fr)' }
@@ -54,6 +66,10 @@ const fallbackLayoutSpec = count => {
 }
 
 export function resolveLayoutSpec(count, variant = 'grid') {
+  const custom = customLayoutDimensions(variant)
+  if (custom && custom.rows * custom.cols === count && count <= MAX_VIDEO_WINDOWS) {
+    return {...custom, cells: uniformCells(custom.cols, custom.rows)}
+  }
   const cells = VIDEO_LAYOUT_SPECS[VARIANT_LAYOUT_KEY[variant] || DEFAULT_LAYOUT_KEY(count)]
   return cells && cells.cells.length === count ? cells : fallbackLayoutSpec(count)
 }
