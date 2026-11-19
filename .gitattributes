@@ -1,2 +1,38 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+*.py text eol=lf
 tools/compute/*.sh text eol=lf
 tools/compute/*.py text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.bmp binary
+*.mp4 binary
+*.mp3 binary
+*.wav binary
+*.pdf binary
+*.zip binary
+*.tgz binary
+*.gz binary
+*.jar binary
+*.war binary
+*.so binary
+*.dll binary
+*.exe binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.xlsx binary
+*.docx binary
+*.pptx binary
+*.om binary
+*.onnx binary
+*.pt binary
+*.xdb binary
