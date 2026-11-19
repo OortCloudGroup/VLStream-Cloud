@@ -149,7 +149,7 @@
             <div class="operate" @click.stop>
               <!-- null / empty : training and -->
               <template v-if="!scope.row.trainStatus || scope.row.trainStatus === '等待'">
-                <div v-if="isCloudTrainingRow(scope.row)" class="new_table_svg_group" @click="handleStopTraining(scope.row)">
+                <div v-if="isCloudTrainingRow(scope.row) && canStopTraining(scope.row)" class="new_table_svg_group" @click="handleStopTraining(scope.row)">
                   <span>{{ $tp('取消排队') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
@@ -174,7 +174,7 @@
 
               <!-- training in : training and -->
               <template v-else-if="scope.row.trainStatus === '训练中'">
-                <div class="new_table_svg_group" @click="handleStopTraining(scope.row)">
+                <div v-if="canStopTraining(scope.row)" class="new_table_svg_group" @click="handleStopTraining(scope.row)">
                   <span style="color: #F62E2E;">{{ $tp('终止训练') }}</span>
                 </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
@@ -681,7 +681,7 @@
             >
               {{ isTraining ? $tp('训练中...') : $tp('开始训练') }}
             </el-button>
-            <el-button v-if="computeNodeId && isTraining" @click="handleStopTraining(currentTrainingItem)">{{ $tp('请求停止') }}</el-button>
+            <el-button v-if="computeNodeId && isTraining && canStopTraining(currentTrainingItem)" @click="handleStopTraining(currentTrainingItem)">{{ $tp('请求停止') }}</el-button>
             <div v-if="selectedDatasets.length === 0" class="training-hint">
               <el-text type="warning" size="small">{{ $tp('请先选择数据集') }}</el-text>
             </div>
@@ -1797,8 +1797,10 @@ const handleStopTraining = async (row) => {
       type: 'warning'
     })
 
+    if (!canStopTraining(row)) return
     const result = await stopTraining(row.originalData.id)
     if (result.data === 'stop_requested') {
+      stoppingTrainingIds.value.add(row.id)
       ElMessage.info(uiText('停止请求已提交，等待实例确认'))
       appendLogLines('[INFO] 等待实例确认停止，当前任务状态将由后台更新')
       await loadTrainingData()
@@ -2353,7 +2355,11 @@ const handleCurrentChange = (val) => {
 }
 
 // Load trainingdata
+let stopRefreshTimer
+let listRequest = 0
 const loadTrainingData = async () => {
+  clearTimeout(stopRefreshTimer)
+  const request = ++listRequest
   try {
     loading.value = true
     const params = {
@@ -2369,6 +2375,7 @@ const loadTrainingData = async () => {
     }
 
     const response = await getTrainingPage(params)
+    if (request !== listRequest || trainingLogsUnmounted) return
     if (response.data) {
       tableData.value = response.data.records.map(item => ({
         id: item.id,
@@ -2384,7 +2391,20 @@ const loadTrainingData = async () => {
         correspondingModel: null,
         originalData: item
       }))
+      for (const item of response.data.records) {
+        const detail = currentTrainingItem.value?.originalData
+        if (detail && detail.id === item.id) {
+          detail.executionStage = item.executionStage
+          detail.cancelRequested = item.cancelRequested
+        }
+        if (typeof item.cancelRequested === 'boolean' || terminalTrainingStages.has(item.executionStage) || ['stop', 'completed', 'failed'].includes(item.trainStatus)) {
+          stoppingTrainingIds.value.delete(item.id)
+        }
+      }
       total.value = response.data.total
+      if (tableData.value.some(row => stopPending(row) && row.originalData.executionStage !== 'ARCHIVE_PENDING' && !terminalTrainingStages.has(row.originalData.executionStage))) {
+        stopRefreshTimer = setTimeout(loadTrainingData, 5000)
+      }
     }
   } catch (error) {
     ElMessage.error(uiText('加载训练数据失败：') + error.message)
@@ -2405,9 +2425,17 @@ const getTrainStatusText = (status) => {
   return statusMap[status] || status
 }
 
+const stoppingTrainingIds = ref(new Set())
+const terminalTrainingStages = new Set(['COMPLETED', 'FAILED', 'CANCELLED'])
+const stopPending = row => row?.originalData?.cancelRequested || stoppingTrainingIds.value.has(row?.id)
+const canStopTraining = row => Boolean(row) && !stopPending(row) &&
+  row.originalData?.executionStage !== 'ARCHIVE_PENDING' && !terminalTrainingStages.has(row.originalData?.executionStage)
+
 const executionStatusText = row => {
   const stages = { QUEUED: '排队中', PREPARING: '准备训练数据', RUNNING: '训练中', ARCHIVING: '回存训练产物', COMPLETED: '训练完成', FAILED: '训练失败', CANCELLED: '已取消' }
   const stage = row.originalData?.executionStage
+  if (stage === 'ARCHIVE_PENDING') return uiText('训练已结束，等待归档')
+  if (!terminalTrainingStages.has(stage) && stopPending(row)) return uiText('停止请求已提交，等待实例确认')
   if (stages[stage]) return uiText(stages[stage])
   return uiText(row.trainStatus === '等待' && !isCloudTrainingRow(row) ? '待启动' : getTrainStatusText(row.trainStatus))
 }
@@ -2912,6 +2940,9 @@ const handleBatchOperation = () => {
 
 // page Load data
 const onTrainingIdentityChanged = () => {
+  stoppingTrainingIds.value.clear()
+  clearTimeout(stopRefreshTimer)
+  listRequest++
   trainingConfigGeneration++
   trainingSubmitGeneration++
   trainingSubmitting.value = false
@@ -2960,6 +2991,7 @@ onMounted(async () => {
 onUnmounted(() => {
   trainingConfigGeneration++
   computeRequestGeneration++
+  clearTimeout(stopRefreshTimer)
   trainingLogsUnmounted = true
   trainingLogRequestGeneration++
   ElMessageBox.close()

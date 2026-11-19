@@ -174,6 +174,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
 				com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingJob job = cloudTrainingService.current(training);
 				training.setExecutionStage(job.getJobState());
+				training.setCancelRequested(job.isCancelRequested());
 				training.setExecutionMessage(job.getMessage());
 			}
             Algorithm algorithm = algorithmsById.get(training.getAlgorithmId());
