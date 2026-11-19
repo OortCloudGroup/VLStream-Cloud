@@ -59,20 +59,48 @@ public class CloudTrainingWorker {
     private SmartAnnotationComputeDatasetWriter annotationDatasets;
     @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker> annotationWorker;
+    @org.springframework.beans.factory.annotation.Autowired
+    private ComputeCatalogProperties catalogProperties;
+    @org.springframework.beans.factory.annotation.Autowired
+    private ComputeSharedQueueProperties sharedQueueProperties;
 
     @Scheduled(fixedDelay = 5000, initialDelay = 20000)
     public void scan() {
-        List<Long> ids;
-        try { ids = jdbc.queryForList("SELECT node_id FROM vls_cloud_training_job WHERE job_state NOT IN ('COMPLETED','FAILED','CANCELLED') GROUP BY node_id ORDER BY MIN(update_time) LIMIT 100", Long.class); }
+        List<CloudTrainingJob> routes;
+        try {
+            routes = jdbc.query("SELECT node_id,options_json FROM vls_cloud_training_job "
+                + "WHERE job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY update_time",
+                new BeanPropertyRowMapper<>(CloudTrainingJob.class));
+        }
         catch (RuntimeException e) { log.debug("Cloud training migrations not available"); return; }
-        for (Long id : ids) {
+        Set<Long> visited = new HashSet<>();
+        for (CloudTrainingJob route : routes) {
             if (inFlight.size() >= 2) break;
+            if (!ownsExecution(route)) continue;
+            Long id = route.getNodeId();
             Long resolved=nodes.queueId(id);
             Long queueId=resolved==null?id:resolved;
-            if (inFlight.add(queueId)) executor.submit(() -> { try { tick(queueId); } finally { inFlight.remove(queueId); } });
+            if (visited.add(queueId) && inFlight.add(queueId))
+                executor.submit(() -> { try { tick(queueId); } finally { inFlight.remove(queueId); } });
         }
     }
     @PreDestroy public void shutdown() { executor.shutdownNow(); }
+
+    private boolean ownsExecution(CloudTrainingJob job) {
+        String value = job.getOptionsJson();
+        if (value == null || value.trim().isEmpty()) return true;
+        try {
+            JsonNode options = json.readTree(value);
+            String catalogEnvironment = options.path("configuredResource").path("executionEnvironment").asText("");
+            String sharedEnvironment = options.path("sharedQueue").path("environment").asText("");
+            return (catalogEnvironment.isEmpty() || catalogProperties != null && catalogProperties.configured()
+                && catalogEnvironment.equals(catalogProperties.getEnvironmentId()))
+                && (sharedEnvironment.isEmpty() || sharedQueueProperties != null && sharedEnvironment.equals(sharedQueueProperties.getEnvironmentId()));
+        } catch (IOException invalid) {
+            // Retain legacy processing and its existing validation for jobs without readable routing metadata.
+            return true;
+        }
+    }
 
     void tick(Long nodeId) {
         String previous = TenantContextHolder.getTenantId();
@@ -86,18 +114,33 @@ public class CloudTrainingWorker {
                 List<CloudTrainingJob> jobs = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id LIMIT 1", new BeanPropertyRowMapper<>(CloudTrainingJob.class), queueIds.toArray());
                 if (jobs.isEmpty()) return;
                 CloudTrainingJob job = jobs.get(0);
+                if (!ownsExecution(job)) return;
                 TenantContextHolder.setTenantId(job.getTenantId());
                 try {
                     if (sharedQueue!=null && sharedQueue.isSharedJob(job)) {
                         ComputeNode node=nodes.get(nodeId);
                         List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),queueIds.toArray());
-                        for(CloudTrainingJob queued:queue)nodes.verifyJob(queued,node);
-                        try(ComputeSsh.Connection connection=ssh.open(node)) { sharedQueue.register(connection,node,queue); }
+                        List<CloudTrainingJob> ownHead = new ArrayList<>();
+                        // A foreign head keeps its place. Register only the contiguous local prefix.
+                        for (CloudTrainingJob queued : queue) {
+                            if (!ownsExecution(queued)) break;
+                            nodes.verifyJob(queued,node);
+                            ownHead.add(queued);
+                        }
+                        try(ComputeSsh.Connection connection=ssh.open(node)) { sharedQueue.register(connection,node,ownHead); }
                     }
                     process(job);
                 }
                 catch (ServiceException e) {
-                    if(java.util.Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE,e.getCode())) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",limited(e.getMessage()),job.getTenantId(),job.getId());
+                    if (Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE, e.getCode())) {
+                        if (ConfiguredComputeRegistry.CATALOG_NODE_UNAVAILABLE.equals(e.getMessage())
+                            && Arrays.asList("RUNNING", "ARCHIVING", "ARCHIVE_PENDING").contains(job.getJobState())) {
+                            log.debug("Local compute catalog lookup deferred for active job {}", job.getId());
+                        } else {
+                            jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",
+                                limited(e.getMessage()), job.getTenantId(), job.getId());
+                        }
+                    }
                     else if(sharedQueue!=null && sharedQueue.isSharedJob(job)) {
                         String reason=limited(e.getMessage());
                         jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待处理，使用权未释放："+reason,job.getTenantId(),job.getId());

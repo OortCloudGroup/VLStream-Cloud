@@ -484,6 +484,7 @@ public class ConfiguredComputeRegistry {
     private IllegalStateException invalid() { return new IllegalStateException("Company compute configuration contains missing, duplicate or invalid identities/specifications"); }
     /** Hold persisted work until its explicit YAML identity is restored. Never infer process exit. */
     public static final int UNAVAILABLE = 48010;
+    static final String CATALOG_NODE_UNAVAILABLE = "统一平台算力目录暂未解析到本轮绑定节点，任务保留等待目录同步";
     static ServiceException unavailable(String message) { return new ServiceException(message, UNAVAILABLE); }
     public synchronized boolean contains(Long id) {
         return aliases.containsKey(id) || catalogProperties != null && catalogProperties.configured() && id != null && id < -1;
@@ -521,7 +522,7 @@ public class ConfiguredComputeRegistry {
     public synchronized ComputeNode resolve(Long id) {
         ComputeNode original = resources.get(canonicalId(id));
         if (original == null) throw unavailable(catalogProperties != null && catalogProperties.configured()
-            ? "统一平台算力目录暂未解析到本轮绑定节点，任务保留等待目录同步"
+            ? CATALOG_NODE_UNAVAILABLE
             : "自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
         if(official(original))return resolveOfficial(original);
         if (original.getHost()==null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");

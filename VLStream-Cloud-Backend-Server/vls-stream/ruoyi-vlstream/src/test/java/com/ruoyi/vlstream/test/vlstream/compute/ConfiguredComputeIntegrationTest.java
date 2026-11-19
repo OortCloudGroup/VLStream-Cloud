@@ -329,6 +329,9 @@ public class ConfiguredComputeIntegrationTest {
         when(connection.execute(anyString(),anyInt())).thenReturn("VLS_SHARED={}");
         CloudTrainingWorker worker=new CloudTrainingWorker(jdbc,transactions,nodes,ssh,mock(CloudTrainingDatasetWriter.class),mock(DataManagementService.class),storage,mock(RemoteModelArtifactService.class),json);
         ReflectionTestUtils.setField(worker,"sharedQueue",shared);
+        ComputeSharedQueueProperties execution = new ComputeSharedQueueProperties();
+        execution.setEnvironmentId("localhost");
+        ReflectionTestUtils.setField(worker, "sharedQueueProperties", execution);
         try {worker.tick(173L);} finally {worker.shutdown();}
         assertEquals("CANCELLED",jdbc.queryForObject("SELECT job_state FROM vls_cloud_training_job WHERE id=?",String.class,first.getId()));
         assertEquals("QUEUED",jdbc.queryForObject("SELECT job_state FROM vls_cloud_training_job WHERE id='second-ticket'",String.class));
