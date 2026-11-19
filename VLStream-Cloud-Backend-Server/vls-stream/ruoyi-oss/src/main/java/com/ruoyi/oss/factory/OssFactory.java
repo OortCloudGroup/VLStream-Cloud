@@ -36,7 +36,10 @@ public class OssFactory {
      * Get instance
      */
     public static OssClient instance() {
-        // Get redis
+        String overrideKey = System.getenv("VLSTREAM_DEFAULT_OSS_CONFIG_KEY");
+        if (StringUtils.isNotBlank(overrideKey)) {
+            return instance(overrideKey.trim());
+        }
         String configKey = RedisUtils.getCacheObject(OssConstant.DEFAULT_CONFIG_KEY);
         if (StringUtils.isEmpty(configKey)) {
             throw new OssException("文件存储服务类型无法找到!");
