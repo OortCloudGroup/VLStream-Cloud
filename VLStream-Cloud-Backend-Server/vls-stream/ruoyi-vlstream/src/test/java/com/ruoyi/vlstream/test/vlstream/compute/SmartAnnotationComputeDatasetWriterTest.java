@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.data.*;
+import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationTypeEnum;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +34,7 @@ class SmartAnnotationComputeDatasetWriterTest {
         snapshot.setAnnotationType(kind);
         List<Map<String,Object>> images=writer.upload(job,snapshot,connection);
         assertEquals("9",images.get(0).get("id"));assertEquals("dataset/images/predict/9.png",images.get(0).get("path"));
-        verify(connection).putText(eq("/fixture/job/dataset/vls-dataset.json"),argThat(text->{try{return kind.equals(json.readTree(text).path("annotationType").asText());}catch(Exception e){return false;}}));
+        verify(connection).putText(eq("/fixture/job/dataset-preparing/vls-dataset.json"),argThat(text->{try{return kind.equals(json.readTree(text).path("annotationType").asText());}catch(Exception e){return false;}}));
         verify(connection).put(eq("/fixture/job/cloud_training_runner.py"),any(InputStream.class));
         verify(connection).put(eq("/fixture/job/smart_annotation_runner.py"),any(InputStream.class));
         verify(connection).put(eq("/fixture/job/gpu_shared_queue.py"),any(InputStream.class));
@@ -68,15 +69,18 @@ class SmartAnnotationComputeDatasetWriterTest {
             AnnotationInstance instance = new AnnotationInstance();
             instance.setImageId(sample.getId());
             instance.setLabelId(1L);
+            instance.setAnnotationType(AlgorithmAnnotationTypeEnum.rect);
             instance.setAnnotationData("{\"x\":2,\"y\":3,\"width\":8,\"height\":9}");
             labels.add(instance);
         }
         snapshot.setInstances(labels);
 
         assertEquals(1, writer.upload(job, snapshot, connection).size());
-        verify(connection).put(eq("/fixture/job/dataset/images/val/10.png"), any(InputStream.class));
-        verify(connection).put(eq("/fixture/job/dataset/images/val/11.png"), any(InputStream.class));
-        verify(connection).put(eq("/fixture/job/dataset/images/train/12.png"), any(InputStream.class));
+        verify(connection).put(eq("/fixture/job/dataset-preparing/images/val/10.png"), any(InputStream.class));
+        verify(connection).put(eq("/fixture/job/dataset-preparing/images/val/11.png"), any(InputStream.class));
+        verify(connection).put(eq("/fixture/job/dataset-preparing/images/train/12.png"), any(InputStream.class));
+        verify(connection).putText(eq("/fixture/job/dataset-preparing/dataset.yaml"), contains("/fixture/job/dataset\""));
+        verify(connection).execute(contains("mv -T -- '/fixture/job/dataset-preparing' '/fixture/job/dataset'"), eq(30));
         assertNull(confirmedCopy.getContentSha256());
         assertEquals("unassigned", confirmedCopy.getDatasetSplit());
     }

@@ -41,7 +41,8 @@ public class SmartAnnotationComputeDatasetWriter {
             split=DatasetPartitioner.partition(partitionSeeds,labels,request);
         }
         TrainingDatasetLayout layout=new TrainingDatasetLayout(snapshot.getAnnotationType(),snapshot.getLabels());
-        String root=job.getRunDir()+"/dataset";
+        String finalRoot = job.getRunDir() + "/dataset";
+        String root = job.getRunDir() + "/dataset-preparing";
         for(String directory:layout.directories())connection.mkdir(root+"/"+directory);
         if(active)upload.addAll(seeds);
         List<Map<String,Object>> images=new ArrayList<>(), members=new ArrayList<>();
@@ -70,12 +71,18 @@ public class SmartAnnotationComputeDatasetWriter {
             members.add(layout.sample(image.getId(),path,subset,info.getWidth(),info.getHeight(),info.getSha256()));
         }
         if(!Collections.disjoint(trainHashes,valHashes))throw new IOException("训练和验证图片内容重复");
-        connection.putText(root+"/dataset.yaml",layout.yaml(root));
+        connection.putText(root+"/dataset.yaml",layout.yaml(finalRoot));
         connection.putText(root+"/vls-dataset.json",layout.manifest(job.getDatasetId(),job.getTenantId(),members));
         TrainingDatasetRuntimeService.copyScripts(connection,job.getRunDir(),"four_task_runtime.py","cloud_training_runner.py","check_cloud_environment.py","gpu_shared_queue.py");
         try(InputStream runner=new org.springframework.core.io.ClassPathResource("smart-annotation/runner.py").getInputStream()) {
             connection.put(job.getRunDir()+"/smart_annotation_runner.py",runner);
         }
+        // A previous attempt may have written a different split before it failed.
+        // Preserve that directory outside the dataset scanned by the training runner.
+        String target = ComputeSsh.quote(finalRoot);
+        String previousTemplate = ComputeSsh.quote(job.getRunDir() + "/dataset-incomplete-XXXXXX");
+        connection.execute("set -e; if [ -e " + target + " ]; then previous=$(mktemp -d " + previousTemplate
+            + "); mv -T -- " + target + " \"$previous/dataset\"; fi; mv -T -- " + ComputeSsh.quote(root) + " " + target, 30);
         return images;
     }
 
