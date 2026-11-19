@@ -235,7 +235,18 @@ export function getAlgorithmById(id) {
  * @param {string} data.outputFormat
  * @param {number} data.gpuRequired whether need to GPU
  */
-export function createAlgorithm(data) {
+export function createAlgorithm(data, file, review) {
+  if (file || review) {
+    const parts = new FormData()
+    const json = value => new Blob([JSON.stringify(value)], { type: 'application/json' })
+    parts.append('algorithm', json(data))
+    if (file) parts.append('file', file)
+    if (review) parts.append('review', json(review))
+    return request({
+      url: '/vlsAlgorithm/form', method: 'post', data: parts,
+      headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60000
+    })
+  }
   return request({
     url: '/vlsAlgorithm',
     method: 'post',

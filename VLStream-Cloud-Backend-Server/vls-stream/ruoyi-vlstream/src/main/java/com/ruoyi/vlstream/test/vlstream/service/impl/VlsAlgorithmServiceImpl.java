@@ -10,6 +10,7 @@ package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmRepository;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -85,6 +86,9 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 	@Transactional(rollbackFor = Exception.class)
 	public boolean createAlgorithm(Algorithm algorithm) {
 		log.info("创建算法：{}", algorithm.getName());
+        String tenantId = TenantContextHolder.getTenantId();
+        validateTargetRepository(algorithm.getRepositoryId(), tenantId);
+        algorithm.setTenantId(tenantId);
 
 		// whether
 		QueryWrapper<Algorithm> queryWrapper = new QueryWrapper<>();
@@ -124,24 +128,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
         Long newRepositoryId = algorithm.getRepositoryId() == null ? oldRepositoryId : algorithm.getRepositoryId();
         boolean moved = !Objects.equals(oldRepositoryId, newRepositoryId);
         if (moved) {
-            // Lock the same tenant-scoped category rows as hierarchy edits/deletion.
-            List<AlgorithmRepository> categories = algorithmRepositoryService.list(
-                new QueryWrapper<AlgorithmRepository>().orderByAsc("id").last("FOR UPDATE"));
-            Set<Long> visited = new HashSet<>();
-            Long cursor = newRepositoryId;
-            while (cursor != null && cursor != 0L) {
-                final Long categoryId = cursor;
-                AlgorithmRepository category = categories.stream().filter(row -> Objects.equals(row.getId(), categoryId))
-                    .findFirst().orElseThrow(() -> new ServiceException("算法库不存在或无权访问"));
-                if (!Objects.equals(existing.getTenantId(), category.getTenantId())) {
-                    throw new ServiceException("算法库不存在或无权访问");
-                }
-                if (!visited.add(cursor) || !Integer.valueOf(1).equals(category.getStatus())) {
-                    throw new ServiceException("目标算法库或其上级分类未启用");
-                }
-                cursor = category.getParentId();
-            }
-            if (newRepositoryId == null || newRepositoryId <= 0L) throw new ServiceException("请选择所属算法库");
+            validateTargetRepository(newRepositoryId, existing.getTenantId());
         }
         String name = algorithm.getName() == null ? existing.getName() : algorithm.getName();
         if (count(new QueryWrapper<Algorithm>().eq("repository_id", newRepositoryId).eq("name", name)
@@ -159,6 +146,27 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 
 		return result;
 	}
+
+    private void validateTargetRepository(Long newRepositoryId, String tenantId) {
+        // Lock the same tenant-scoped category rows as hierarchy edits/deletion.
+        List<AlgorithmRepository> categories = algorithmRepositoryService.list(
+            new QueryWrapper<AlgorithmRepository>().orderByAsc("id").last("FOR UPDATE"));
+        Set<Long> visited = new HashSet<>();
+        Long cursor = newRepositoryId;
+        while (cursor != null && cursor != 0L) {
+            final Long categoryId = cursor;
+            AlgorithmRepository category = categories.stream().filter(row -> Objects.equals(row.getId(), categoryId))
+                .findFirst().orElseThrow(() -> new ServiceException("算法库不存在或无权访问"));
+            if (!Objects.equals(tenantId, category.getTenantId())) {
+                throw new ServiceException("算法库不存在或无权访问");
+            }
+            if (!visited.add(cursor) || !Integer.valueOf(1).equals(category.getStatus())) {
+                throw new ServiceException("目标算法库或其上级分类未启用");
+            }
+            cursor = category.getParentId();
+        }
+        if (newRepositoryId == null || newRepositoryId <= 0L) throw new ServiceException("请选择所属算法库");
+    }
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)

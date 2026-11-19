@@ -9,6 +9,8 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -41,14 +43,26 @@ public class AlgorithmCoverService {
         try {
             result.setImagePreviewUrl(storage.preview(key));
         } catch (RuntimeException error) {
-            try {
-                storage.remove(key);
-            } catch (RuntimeException cleanupError) {
-                log.warn("Failed to clean up algorithm cover {}", key, cleanupError);
-            }
+            removeUploadedObject(key);
             throw error;
         }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == STATUS_ROLLED_BACK) removeUploadedObject(key);
+                }
+            });
+        }
         return result;
+    }
+
+    private void removeUploadedObject(String key) {
+        try {
+            storage.remove(key);
+        } catch (RuntimeException error) {
+            log.warn("Failed to clean up algorithm cover {}", key, error);
+        }
     }
 
     public void validate(Algorithm algorithm) {

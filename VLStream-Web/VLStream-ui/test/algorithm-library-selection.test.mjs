@@ -69,3 +69,30 @@ for (const loaded of [false, true]) {
   assert.equal(context.showAlgorithmEditDialog.value,false)
  })
 }
+
+for (const isSystem of ['YES', 'NO']) {
+ test(`create ${isSystem} forwards cover and review and omits hidden draft paths`, async () => {
+  const source = readFileSync(new URL('../src/views/AlgorithmWarehouse/AlgorithmManagement.vue', import.meta.url), 'utf8')
+  const handler = source.slice(source.indexOf('const handleAlgorithmAddConfirm ='), source.indexOf('const handleAlgorithmEditConfirm ='))
+  const pendingCover = { name: 'cover.png' }
+  const review = { enabled: true, providerId: '42' }
+  const calls = []
+  const context = {
+   imageUploading: {value:false}, submitting: {value:false}, algorithmEditFormRef: {value:{validate:async () => {}}},
+   algorithmEditForm: {value:{name:'fire', repositoryId:'100', isSystem, ptModelFilePath:'/models/base.pt', onnxModelFilePath:'/models/base.onnx'}},
+   pendingCover: {value:pendingCover}, llmReviewForm: {value:review}, showAlgorithmEditDialog: {value:true},
+   createAlgorithm: async (...args) => { calls.push(args); return {code:200} },
+   loadAlgorithmsByRepository: async () => {}, catalogRef:{value:null}, uiText:key => key,
+   ElMessage: {success:() => {}, error:message => assert.fail(message)}
+  }
+  await runInNewContext(handler + '\nhandleAlgorithmAddConfirm()', context)
+  assert.equal(calls.length, 1)
+  const [data, file, config] = calls[0]
+  assert.equal(data.isSystem, isSystem)
+  assert.equal(data.ptModelFilePath, isSystem === 'NO' ? '/models/base.pt' : '')
+  assert.equal(data.onnxModelFilePath, isSystem === 'NO' ? '/models/base.onnx' : '')
+  assert.equal(file, pendingCover)
+  assert.equal(config, review)
+  assert.equal(context.showAlgorithmEditDialog.value, false)
+ })
+}

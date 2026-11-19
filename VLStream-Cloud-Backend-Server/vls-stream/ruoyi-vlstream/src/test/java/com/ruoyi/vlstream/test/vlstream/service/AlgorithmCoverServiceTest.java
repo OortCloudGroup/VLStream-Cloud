@@ -7,6 +7,10 @@ import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmController;
 import com.ruoyi.vlstream.test.vlstream.data.DataMediaStorage;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
+import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmFormController;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmLlmReviewConfig;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -157,6 +161,73 @@ class AlgorithmCoverServiceTest {
             .content("{\"imageUrl\":\"" + REFERENCE + "\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
         verify(service).updateAlgorithm(argThat(row -> Long.valueOf(42L).equals(row.getId()) && REFERENCE.equals(row.getImageUrl())));
+    }
+
+    @Test
+    void createFormBindsReviewAndCoverToTheGeneratedId() throws Exception {
+        IVlsAlgorithmService service = mock(IVlsAlgorithmService.class);
+        LlmReviewManagementService reviews = mock(LlmReviewManagementService.class);
+        when(service.createAlgorithm(any())).thenAnswer(call -> {
+            Algorithm row = call.getArgument(0);
+            assertNull(row.getId());
+            assertEquals("tenant-a", row.getTenantId());
+            assertNull(row.getPtModelFilePath());
+            assertNull(row.getOnnxModelFilePath());
+            row.setId(42L);
+            return true;
+        });
+        when(service.updateById(any())).thenReturn(true);
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new VlsAlgorithmFormController(
+            new AlgorithmFormService(service, covers, reviews))).build();
+        mvc.perform(multipart("/vlsAlgorithm/form")
+            .file(jsonPart("algorithm", "{\"id\":9,\"tenantId\":\"other\",\"name\":\"sample\",\"ptModelFilePath\":\"/old.pt\"}"))
+            .file(jsonPart("review", "{\"enabled\":true,\"providerId\":11}"))
+            .file(file("image/png", PNG)))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data").value("42"));
+        verify(reviews).saveAlgorithmConfig(eq(42L), argThat(cfg -> cfg.getEnabled() && cfg.getProviderId() == 11L));
+        verify(service).updateById(argThat(row -> row.getImageUrl().startsWith("minio://algorithm-covers/tenant-a/42/")));
+    }
+
+    @Test
+    void failedCoverBindingPropagatesAndRollbackDeletesOnlyTheNewObject() {
+        IVlsAlgorithmService service = mock(IVlsAlgorithmService.class);
+        LlmReviewManagementService reviews = mock(LlmReviewManagementService.class);
+        when(service.createAlgorithm(any())).thenAnswer(call -> {
+            ((Algorithm) call.getArgument(0)).setId(42L);
+            return true;
+        });
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            AlgorithmFormService forms = new AlgorithmFormService(service, covers, reviews);
+            assertThrows(ServiceException.class, () -> forms.create(new Algorithm(), file("image/png", PNG), null));
+            for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+                sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+            }
+            verify(storage).remove(startsWith("algorithm-covers/tenant-a/42/"));
+            verifyNoInteractions(reviews);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void failedReviewPreventsUploadingTheCover() {
+        IVlsAlgorithmService service = mock(IVlsAlgorithmService.class);
+        LlmReviewManagementService reviews = mock(LlmReviewManagementService.class);
+        when(service.createAlgorithm(any())).thenAnswer(call -> {
+            ((Algorithm) call.getArgument(0)).setId(42L);
+            return true;
+        });
+        AlgorithmLlmReviewConfig review = new AlgorithmLlmReviewConfig();
+        review.setEnabled(true);
+        when(reviews.saveAlgorithmConfig(42L, review)).thenThrow(new ServiceException("review rejected"));
+        AlgorithmFormService forms = new AlgorithmFormService(service, covers, reviews);
+        assertThrows(ServiceException.class, () -> forms.create(new Algorithm(), file("image/png", PNG), review));
+        verifyNoInteractions(storage);
+    }
+
+    private MockMultipartFile jsonPart(String name, String json) {
+        return new MockMultipartFile(name, "", "application/json", json.getBytes(StandardCharsets.UTF_8));
     }
 
     private Algorithm algorithm(String reference) {

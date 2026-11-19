@@ -267,78 +267,17 @@
 
     <!-- algorithm -->
     <el-dialog
-        v-model="showAlgorithmAddDialog"
-        :title="$tp('添加算法')"
-        width="40%"
-        :close-on-click-modal="false"
-    >
-      <el-form :model="algorithmAddForm" :rules="algorithmAddFormRules" ref="algorithmAddFormRef" label-width="80px" class="add-form">
-        <el-form-item :label="$tp('算法名称')" prop="name" required>
-          <el-input
-              v-model="algorithmAddForm.name"
-              :placeholder="$tp('请输入算法名称')"
-              clearable
-          />
-        </el-form-item>
-        <el-form-item :label="$tp('算法类型')" prop="category" required>
-          <el-select
-              v-model="algorithmAddForm.category"
-              :placeholder="$tp('请选择算法类型')"
-              style="width: 100%">
-            <el-option :label="$tp('目标检测算法')" value="detect" />
-            <el-option :label="$tp('实例分割算法')" value="segment" />
-            <el-option :label="$tp('图像分类算法')" value="classify" />
-            <el-option :label="$tp('关键点检测算法')" value="pose" />
-            <el-option :label="$tp('旋转目标检测算法')" value="obb" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$tp('pt算法模型')" prop="ptModelFilePath" label-width="100px">
-          <el-input
-              v-model="algorithmAddForm.ptModelFilePath"
-              :placeholder="$tp('请输入pt算法模型')"
-              clearable/>
-        </el-form-item>
-        <el-form-item :label="$tp('onnx算法模型')" prop="onnxModelFilePath" label-width="110px">
-          <el-input
-              v-model="algorithmAddForm.onnxModelFilePath"
-              :placeholder="$tp('请输入onnx算法模型')"
-              clearable/>
-        </el-form-item>
-        <el-form-item :label="$tp('是否为系统预置算法')" label-width="140px">
-          <el-radio-group v-model="algorithmAddForm.isSystem">
-            <el-radio value="YES">{{ $tp('是') }}</el-radio>
-            <el-radio value="NO">{{ $tp('否') }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item :label="$tp('算法描述')" prop="description">
-          <el-input
-              v-model="algorithmAddForm.description"
-              type="textarea"
-              :placeholder="$tp('请输入算法描述')"
-              :rows="4"
-              resize="none"
-          />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="handleAlgorithmAddCancel" class="common_btn">{{ $tp('取消') }}</el-button>
-          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting" class="common_btn"> {{ $tp('添加') }} </el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <!-- algorithm -->
-    <el-dialog
         v-model="showAlgorithmEditDialog"
-        :title="$tp('编辑算法')"
-        width="40%"
+        :title="editingAlgorithm ? $tp('编辑算法') : $tp('添加算法')"
+        width="min(620px, 94vw)"
+        top="5vh"
+        :close-on-press-escape="!submitting"
+        :show-close="!submitting"
         :close-on-click-modal="false"
-        @close="handleAlgorithmImageClose"
+        @close="handleAlgorithmImageClose" destroy-on-close
     >
-      <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
-        <el-form-item :label="$tp('所属算法库')" prop="repositoryId" label-width="100px" required>
+      <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="auto" class="add-form algorithm-form" :disabled="submitting">
+        <el-form-item v-if="editingAlgorithm" :label="$tp('所属算法库')" prop="repositoryId" label-width="100px" required>
           <el-tree-select v-model="algorithmEditForm.repositoryId" :data="repositoryChoices"
             node-key="id" :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
             check-strictly filterable default-expand-all :loading="repositoryChoicesLoading"
@@ -351,7 +290,7 @@
               clearable
           />
         </el-form-item>
-        <el-form-item :label="$tp('算法分类')" prop="category" required>
+        <el-form-item :label="editingAlgorithm ? $tp('算法分类') : $tp('算法类型')" prop="category" required>
           <el-select
               v-model="algorithmEditForm.category"
               :placeholder="$tp('请选择算法类型')"
@@ -363,23 +302,23 @@
             <el-option :label="$tp('旋转目标检测算法')" value="obb" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$tp('pt算法模型')" prop="ptModelFilePath" label-width="100px">
-          <el-input
-              v-model="algorithmEditForm.ptModelFilePath"
-              :placeholder="$tp('请输入算法模型')"
-              clearable/>
-        </el-form-item>
-        <el-form-item :label="$tp('onnx算法模型')" prop="onnxModelFilePath" label-width="110px">
-          <el-input
-              v-model="algorithmEditForm.onnxModelFilePath"
-              :placeholder="$tp('请输入onnx算法模型')"
-              clearable/>
-        </el-form-item>
         <el-form-item :label="$tp('是否为系统预置算法')" label-width="140px">
           <el-radio-group v-model="algorithmEditForm.isSystem">
             <el-radio value="YES">{{ $tp('是') }}</el-radio>
             <el-radio value="NO">{{ $tp('否') }}</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="algorithmEditForm.isSystem === 'NO'" :label="$tp('pt算法模型')" prop="ptModelFilePath" label-width="100px">
+          <el-input
+              v-model="algorithmEditForm.ptModelFilePath"
+              :placeholder="$tp('请输入算法模型')"
+              clearable/>
+        </el-form-item>
+        <el-form-item v-if="algorithmEditForm.isSystem === 'NO'" :label="$tp('onnx算法模型')" prop="onnxModelFilePath" label-width="110px">
+          <el-input
+              v-model="algorithmEditForm.onnxModelFilePath"
+              :placeholder="$tp('请输入onnx算法模型')"
+              clearable/>
         </el-form-item>
         <el-form-item :label="$tp('算法图片')">
           <div class="algorithm-image-editor">
@@ -398,12 +337,12 @@
                     :alt="$tp('算法图片')"
                 />
                 <div class="algorithm-image-overlay">
-                  {{ imageUploading ? $tp('上传中...') : $tp('点击更换图片') }}
+                  {{ imageUploading ? $tp('上传中...') : $tp(editingAlgorithm || pendingCover ? '点击更换图片' : '点击上传图片') }}
                 </div>
               </div>
             </el-upload>
             <el-button
-                v-if="algorithmEditForm.imageUrl"
+                v-if="algorithmEditForm.imageUrl || pendingCover"
                 type="danger"
                 link
                 size="small"
@@ -423,7 +362,7 @@
           />
         </el-form-item>
         <el-divider content-position="left">{{ $tp('大模型复核（可选）') }}</el-divider>
-        <el-alert v-if="!llmReviewConfigLoaded" :title="$tp('复核配置未加载，保存仅更新算法信息，原复核设置保持不变；重新打开编辑可重试。')" type="warning" :closable="false" show-icon />
+        <el-alert v-if="!llmReviewConfigLoaded && !reviewLoading" :title="editingAlgorithm ? $tp('复核配置未加载，保存仅更新算法信息，原复核设置保持不变；重新打开编辑可重试。') : $tp('大模型复核配置加载失败，可稍后重试')" type="warning" :closable="false" show-icon />
         <el-form-item :label="$tp('开启复核')" label-width="100px">
           <el-switch v-model="llmReviewForm.enabled" :disabled="!llmReviewConfigLoaded" @change="handleLlmReviewToggle" />
           <span class="llm-review-tip">{{ $tp('关闭时保持原有 YOLO 事件流程') }}</span>
@@ -437,8 +376,8 @@
             <span v-else-if="selectedLlmProvider?.systemProvider" class="llm-review-tip">{{ $tp('内置 OortCloud 无需手工填写地址、模型或 API Key') }}</span>
             <span v-else class="llm-review-tip">{{ $tp('外部中转站使用“大模型管理”中保存的配置') }}</span>
           </el-form-item>
-          <el-form-item :label="$tp('提示词')" label-width="100px" required>
-            <el-input v-model="llmReviewForm.promptTemplate" type="textarea" :rows="5" />
+          <el-form-item :label="$tp('提示词')" label-width="100px">
+            <el-input v-model="llmReviewForm.promptTemplate" :placeholder="$tp('留空使用系统默认提示词')" type="textarea" :rows="5" />
           </el-form-item>
           <el-form-item :label="$tp('确认阈值')" label-width="100px">
             <el-input-number v-model="llmReviewForm.decisionThreshold" :min="0" :max="1" :step="0.05" :precision="2" />
@@ -460,8 +399,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmEditCancel" class="common_btn">{{ $tp('取消') }}</el-button>
-          <el-button type="primary" @click="handleAlgorithmEditConfirm" :disabled="imageUploading" :loading="submitting" class="common_btn"> {{ $tp('更新') }} </el-button>
+          <el-button :disabled="submitting" @click="handleAlgorithmEditCancel" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="editingAlgorithm ? handleAlgorithmEditConfirm() : handleAlgorithmAddConfirm()" :disabled="imageUploading" :loading="submitting" class="common_btn"> {{ editingAlgorithm ? $tp('更新') : $tp('添加') }} </el-button>
         </div>
       </template>
     </el-dialog>
@@ -556,7 +495,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, ref} from 'vue'
+import {computed, onBeforeUnmount, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Upload} from '@element-plus/icons-vue'
@@ -589,7 +528,6 @@ import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 import {
   getAlgorithmLlmReviewConfig,
   getLlmProviders,
-  getOortCloudLlmAuthorization,
   saveAlgorithmLlmReviewConfig
 } from '@/api/llmReview'
 
@@ -666,35 +604,17 @@ const addForm = ref({
 })
 
 // algorithm related
-const showAlgorithmAddDialog = ref(false)
-const algorithmAddForm = ref({
-  name: '',
-  category: '',
-  type: 'detect',
-  version: '1.0.0',
-  description: '',
-  repositoryId: null,
-  ptModelFilePath: '',
-  onnxModelFilePath: ''
-})
-
-// algorithm related
 const showAlgorithmEditDialog = ref(false)
 const editingAlgorithm = ref(null)
-const algorithmEditForm = ref({
-  name: '',
-  category: '',
-  type: 'detect',
-  version: '1.0.0',
-  description: '',
-  repositoryId: null,
-  ptModelFilePath: '',
-  onnxModelFilePath: '',
-  isSystem: 'YES',
-  imageUrl: ''
+const newAlgorithmForm = (repositoryId = null) => ({
+  repositoryId, name: '', category: '', description: '', imageUrl: '',
+  isSystem: 'YES', ptModelFilePath: '', onnxModelFilePath: ''
 })
+const algorithmEditForm = ref(newAlgorithmForm())
+const pendingCover = ref(null)
+const reviewLoading = ref(false)
 const llmProviders = ref([])
-const llmAuthorized = ref(false)
+const llmAuthorized = computed(() => Boolean(builtInLlmProvider.value?.authorized))
 const builtInLlmProvider = computed(() => llmProviders.value.find((provider) => provider.systemProvider) || null)
 const availableLlmProviders = computed(() => llmProviders.value.filter((provider) => provider.enabled && provider.apiKeyConfigured))
 const defaultLlmReviewForm = () => ({
@@ -712,7 +632,10 @@ const selectedLlmProvider = computed(() => llmProviders.value.find((provider) =>
 
 const handleLlmReviewToggle = (enabled) => {
   if (!enabled) return
-  if (!llmReviewForm.value.providerId && builtInLlmProvider.value) llmReviewForm.value.providerId = builtInLlmProvider.value.id
+  const usable = availableLlmProviders.value.filter(provider => !provider.systemProvider || provider.authorized)
+  if (!usable.some(provider => String(provider.id) === String(llmReviewForm.value.providerId))) {
+    llmReviewForm.value.providerId = usable[0]?.id || null
+  }
   if (!selectedLlmProvider.value) {
     llmReviewForm.value.enabled = false
     ElMessage.warning(uiText('请先选择一个已启用且已配置 API Key 的视觉大模型'))
@@ -735,16 +658,6 @@ const addFormRules = ref({
   ]
 })
 
-const algorithmAddFormRules = ref({
-  name: [
-    { required: true, message: '请输入算法名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-  ],
-  category: [
-    { required: true, message: '请输入算法类型', trigger: 'blur' }
-  ]
-})
-
 const algorithmEditFormRules = ref({
   repositoryId: [{ required: true, message: '请选择所属算法库', trigger: 'change' }],
   name: [
@@ -757,7 +670,6 @@ const algorithmEditFormRules = ref({
 })
 
 const addFormRef = ref(null)
-const algorithmAddFormRef = ref(null)
 const algorithmEditFormRef = ref(null)
 
 // algorithmrelated
@@ -1052,18 +964,33 @@ const addAlgorithm = () => {
     return
   }
 
-  // form
-  algorithmAddForm.value = {
-    name: '',
-    category: '',
-    type: 'detect',
-    version: '1.0.0',
-    modelFilePath: '',
-    description: '',
-    repositoryId: repositoryId
-  }
+  editingAlgorithm.value = null
+  algorithmEditForm.value = newAlgorithmForm(repositoryId)
+  openAlgorithmForm()
+}
 
-  showAlgorithmAddDialog.value = true
+const openAlgorithmForm = async () => {
+  const version = ++imageUploadVersion
+  const algorithmId = editingAlgorithm.value?.id
+  llmReviewForm.value = defaultLlmReviewForm()
+  llmReviewConfigLoaded.value = false
+  llmProviders.value = []
+  reviewLoading.value = true
+  showAlgorithmEditDialog.value = true
+  try {
+    const [providers, config] = await Promise.all([
+      getLlmProviders(), algorithmId ? getAlgorithmLlmReviewConfig(algorithmId) : null
+    ])
+    if (version !== imageUploadVersion) return
+    if (providers.code !== 200 || (algorithmId && (config?.code !== 200 || !config.data))) throw new Error()
+    llmProviders.value = providers.data || []
+    if (config) llmReviewForm.value = { ...defaultLlmReviewForm(), ...config.data }
+    llmReviewConfigLoaded.value = true
+  } catch {
+    if (version === imageUploadVersion) ElMessage.warning(uiText('大模型复核配置加载失败，可稍后重试'))
+  } finally {
+    if (version === imageUploadVersion) reviewLoading.value = false
+  }
 }
 
 const editAlgorithm = async (algorithm) => {
@@ -1091,31 +1018,13 @@ const editAlgorithm = async (algorithm) => {
     type: algorithm.type || 'detect',
     ptModelFilePath: algorithm.ptModelFilePath,
     onnxModelFilePath: algorithm.onnxModelFilePath,
-    isSystem: algorithm.isSystem,
+    isSystem: algorithm.isSystem || 'NO',
     imageUrl: algorithm.imageUrl || '',
     description: algorithm.description || '',
     repositoryId: normalizeRepositoryId(algorithm.repositoryId)
   }
 
-  llmReviewForm.value = defaultLlmReviewForm()
-  llmReviewConfigLoaded.value = false
-  try {
-    const [configResponse, providersResponse, authorizationResponse] = await Promise.all([
-      getAlgorithmLlmReviewConfig(algorithm.id),
-      getLlmProviders(),
-      getOortCloudLlmAuthorization()
-    ])
-    if (configResponse.code !== 200 || !configResponse.data) throw new Error('复核配置未加载')
-    llmReviewForm.value = { ...defaultLlmReviewForm(), ...configResponse.data }
-    llmReviewConfigLoaded.value = true
-    llmProviders.value = providersResponse.data || []
-    llmAuthorized.value = Boolean(authorizationResponse.data?.authorized)
-  } catch (error) {
-    ElMessage.warning(uiText('大模型复核配置加载失败，可稍后重试'))
-  }
-
-  // dialog
-  showAlgorithmEditDialog.value = true
+  openAlgorithmForm()
 }
 
 const openCatalogAlgorithmAdd = (repositoryId) => {
@@ -1166,6 +1075,12 @@ const beforeAlgorithmImageUpload = (file) => {
 const uploadAlgorithmImage = async ({ file }) => {
   const version = imageUploadVersion
   try {
+    if (!editingAlgorithm.value) {
+      clearAlgorithmImage()
+      pendingCover.value = file
+      algorithmImagePreview.value = URL.createObjectURL(file)
+      return
+    }
     const response = await uploadAlgorithmCover(editingAlgorithm.value.id, file)
     if (version !== imageUploadVersion) return
     if (response?.code !== 200 || !response?.data?.imageUrl || !response?.data?.imagePreviewUrl) {
@@ -1182,14 +1097,19 @@ const uploadAlgorithmImage = async ({ file }) => {
 }
 
 const clearAlgorithmImage = () => {
+  if (pendingCover.value) URL.revokeObjectURL(algorithmImagePreview.value)
+  pendingCover.value = null
   algorithmEditForm.value.imageUrl = ''
   algorithmImagePreview.value = ''
 }
 
 const handleAlgorithmImageClose = () => {
+  clearAlgorithmImage()
   imageUploadVersion++
   imageUploading.value = false
 }
+
+onBeforeUnmount(handleAlgorithmImageClose)
 
 const deployAlgorithm = async (algorithm) => {
   selectedAlgorithm.value = algorithm
@@ -1532,72 +1452,31 @@ const handleAddCancel = () => {
 
 // algorithm dialogProcess method
 const handleAlgorithmAddConfirm = async () => {
+  if (imageUploading.value || submitting.value) return
+  submitting.value = true
   try {
-    // form
-    await algorithmAddFormRef.value.validate()
-
-    submitting.value = true
-
-    // to new algorithm
-    const randomBackgroundIndex = Math.floor(Math.random() * cardBackgrounds.length)
-    const assignedBackground = cardBackgrounds[randomBackgroundIndex]
-
-    // algorithmdata
-    const algorithmData = {
-      repositoryId: algorithmAddForm.value.repositoryId,
-      name: algorithmAddForm.value.name,
-      category: algorithmAddForm.value.category,
-      description: algorithmAddForm.value.description,
-      ptModelFilePath: algorithmAddForm.value.ptModelFilePath,
-      onnxModelFilePath: algorithmAddForm.value.onnxModelFilePath,
-      isSystem: algorithmAddForm.value.isSystem || 'NO',
-      inputFormat: 'image',
-      outputFormat: 'json',
-      gpuRequired: 0,
-      imageUrl: assignedBackground //
+    await algorithmEditFormRef.value.validate()
+    const form = algorithmEditForm.value
+    const data = {
+      ...form,
+      ptModelFilePath: form.isSystem === 'NO' ? form.ptModelFilePath : '',
+      onnxModelFilePath: form.isSystem === 'NO' ? form.onnxModelFilePath : '',
+      imageUrl: pendingCover.value ? '' : cardBackgrounds[Math.floor(Math.random() * cardBackgrounds.length)],
+      inputFormat: 'image', outputFormat: 'json', gpuRequired: 0
     }
-
-    // algorithm API
-    const response = await createAlgorithm(algorithmData)
-
-    if (response.code === 200) {
-      ElMessage.success(uiText('算法添加成功'))
-      showAlgorithmAddDialog.value = false
-
-      // new Load current algorithm algorithm
-      if (algorithmAddForm.value.repositoryId) {
-        await loadAlgorithmsByRepository(algorithmAddForm.value.repositoryId)
-      }
-      await catalogRef.value?.refreshAll()
-    } else {
-      ElMessage.error(response.message || uiText('算法添加失败'))
-    }
-
+    const review = llmReviewForm.value.enabled ? llmReviewForm.value : null
+    const response = await createAlgorithm(data, pendingCover.value, review)
+    if (response.code !== 200) throw new Error(response.msg || response.message || uiText('算法添加失败'))
+    showAlgorithmEditDialog.value = false
+    ElMessage.success(uiText('算法添加成功'))
+    await Promise.all([loadAlgorithmsByRepository(form.repositoryId), catalogRef.value?.refreshAll()])
   } catch (error) {
-    if (error.message) {
-      console.error('算法添加失败:', error)
-      ElMessage.error(uiText('算法添加失败'))
-    }
+    if (error.message) ElMessage.error(error.message)
   } finally {
     submitting.value = false
   }
 }
 
-const handleAlgorithmAddCancel = () => {
-  showAlgorithmAddDialog.value = false
-  algorithmAddForm.value = {
-    name: '',
-    category: '',
-    type: 'detect',
-    description: '',
-    repositoryId: null
-  }
-  if (algorithmAddFormRef.value) {
-    algorithmAddFormRef.value.resetFields()
-  }
-}
-
-// algorithm dialogProcess method
 const handleAlgorithmEditConfirm = async () => {
   if (imageUploading.value) return
   let algorithmSaved = false
@@ -1612,8 +1491,10 @@ const handleAlgorithmEditConfirm = async () => {
       repositoryId: algorithmEditForm.value.repositoryId,
       name: algorithmEditForm.value.name,
       category: algorithmEditForm.value.category,
-      ptModelFilePath: algorithmEditForm.value.ptModelFilePath,
-      onnxModelFilePath: algorithmEditForm.value.onnxModelFilePath,
+      ptModelFilePath: algorithmEditForm.value.isSystem === 'YES'
+        ? (editingAlgorithm.value.isSystem === 'YES' ? editingAlgorithm.value.ptModelFilePath : '') : algorithmEditForm.value.ptModelFilePath,
+      onnxModelFilePath: algorithmEditForm.value.isSystem === 'YES'
+        ? (editingAlgorithm.value.isSystem === 'YES' ? editingAlgorithm.value.onnxModelFilePath : '') : algorithmEditForm.value.onnxModelFilePath,
       isSystem: algorithmEditForm.value.isSystem,
       description: algorithmEditForm.value.description,
       inputFormat: 'image',
@@ -1661,23 +1542,7 @@ const handleAlgorithmEditConfirm = async () => {
 }
 
 const handleAlgorithmEditCancel = () => {
-  imageUploadVersion++
-  algorithmImagePreview.value = ''
   showAlgorithmEditDialog.value = false
-  imageUploading.value = false
-  algorithmEditForm.value = {
-    name: '',
-    category: '',
-    type: 'detect',
-    version: '1.0.0',
-    description: '',
-    repositoryId: null,
-    imageUrl: ''
-  }
-  llmReviewForm.value = defaultLlmReviewForm()
-  if (algorithmEditFormRef.value) {
-    algorithmEditFormRef.value.resetFields()
-  }
 }
 
 
@@ -1685,6 +1550,12 @@ const handleAlgorithmEditCancel = () => {
 </script>
 
 <style scoped>
+.algorithm-form {
+  max-height: 64vh;
+  overflow-y: auto;
+  padding-inline: 4px 12px;
+}
+
 .llm-review-tip {
   margin-left: 10px;
   color: #8c8c8c;
