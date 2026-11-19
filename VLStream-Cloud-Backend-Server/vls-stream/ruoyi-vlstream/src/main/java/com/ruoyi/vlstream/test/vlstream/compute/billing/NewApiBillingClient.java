@@ -17,6 +17,7 @@ import java.util.Objects;
 /** Documented billing adapter. User self and merchant operations retain separate verified identities. */
 @Component
 public class NewApiBillingClient implements ExternalBillingGateway {
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(NewApiBillingClient.class);
     private final ExternalBillingProperties properties;
     private final ObjectMapper json;
 
@@ -292,7 +293,9 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     @Override public Result balance(String verifiedUserId) {
         ExactQuota.integer(verifiedUserId, true);
         Reply reply = read("/api/v1/external-billing/users/" + verifiedUserId + "/balance", merchantKey());
-        if (reply.status == 401 || reply.status == 403) return Result.of(Status.NOT_AUTHORIZED);
+        if (reply.status == 401 || reply.status == 403) return new Result(Status.NOT_AUTHORIZED,
+            reply.status == 403 && "NOT_AUTHORIZED".equals(reply.body.path("error").asText())
+                ? "USER_GRANT_REQUIRED" : "MERCHANT_AUTHENTICATION_FAILED", null);
         if (reply.status != 200 || failed(reply.body)) return Result.of(Status.UNKNOWN);
         try {
             if (!verifiedUserId.equals(reply.body.path("user_id").asText())) return Result.of(Status.UNKNOWN);
@@ -341,6 +344,59 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         if (authorization == null) throw new IllegalArgumentException("Verified self identity required");
         return request("GET", "/api/user/self", authorization.headers(), null, null, true);
     }
+    /** Explicit user consent only. Missing first-use grants may be created; existing grants are never widened or restored. */
+    public void acceptBillingPermissions(ComputePlatformAuthorization.Context actor, SelfAuthorization authorization,
+                                         BillingPayer expectedPayer) {
+        requireMerchantConfiguration();
+        BillingPayer current = resolveSelf(actor, authorization);
+        if (expectedPayer == null || !Objects.equals(current.userId, expectedPayer.userId)
+            || !Objects.equals(current.actorId, expectedPayer.actorId) || !Objects.equals(current.tenantId, expectedPayer.tenantId)
+            || !Objects.equals(current.platformSubject, expectedPayer.platformSubject))
+            throw new IllegalStateException("BILLING_IDENTITY_CHANGED");
+        if (hasExistingGrant(readUserGrants(authorization), current.userId)) return;
+        com.fasterxml.jackson.databind.node.ObjectNode consent = json.createObjectNode();
+        consent.put("merchant_id", properties.getMerchantId());
+        consent.putArray("scopes").add("QUERY_BALANCE").add("CHARGE_GPU");
+        Reply created = postUserGrant(authorization, consent.toString());
+        if (created.status != 200 || !created.body.path("success").isBoolean() || !created.body.path("success").booleanValue())
+            throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+        if (!hasExistingGrant(readUserGrants(authorization), current.userId))
+            throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+    }
+    private boolean hasExistingGrant(Reply reply, String userId) {
+        if (reply.status != 200 || !reply.body.path("success").isBoolean() || !reply.body.path("success").booleanValue()
+            || !reply.body.path("data").isArray()) throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+        JsonNode found = null;
+        for (JsonNode grant : reply.body.path("data")) {
+            if (!grant.isObject() || !userId.equals(grant.path("user_id").asText()) || !grant.path("merchant_id").isTextual())
+                throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+            if (!properties.getMerchantId().equals(grant.path("merchant_id").asText())) continue;
+            if (found != null) throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+            found = grant;
+        }
+        if (found == null) return false;
+        if ("REVOKED".equals(found.path("status").asText())) throw new IllegalStateException("BILLING_GRANT_REVOKED");
+        if (!"ACTIVE".equals(found.path("status").asText())) throw new IllegalStateException("BILLING_GRANT_UNCONFIRMED");
+        java.util.Set<String> scopes = new java.util.HashSet<>();
+        JsonNode raw = found.path("scopes");
+        if (raw.isArray()) {
+            for (JsonNode scope : raw) if (scope.isTextual()) scopes.add(scope.textValue());
+        } else if (raw.isTextual()) {
+            // Deployed API serializes the list as [QUERY_BALANCE,CHARGE_GPU]; older versions use JSON strings.
+            String value = raw.textValue().trim();
+            if (value.startsWith("[") && value.endsWith("]")) value = value.substring(1,value.length()-1);
+            for (String scope : value.split(",")) scopes.add(scope.trim().replaceAll("^\"|\"$", ""));
+        }
+        if (!scopes.contains("QUERY_BALANCE") || !scopes.contains("CHARGE_GPU"))
+            throw new IllegalStateException("BILLING_GRANT_SCOPES_MISSING");
+        return true;
+    }
+    protected Reply readUserGrants(SelfAuthorization authorization) {
+        return request("GET", "/api/user/external-billing/authorizations", authorization.headers(), null, null, true);
+    }
+    protected Reply postUserGrant(SelfAuthorization authorization, String body) {
+        return request("POST", "/api/user/external-billing/authorizations", authorization.headers(), null, body, true);
+    }
     protected Reply post(String path, String bearer, String key, String body) {
         return request("POST", path, bearer, key, body);
     }
@@ -353,8 +409,11 @@ public class NewApiBillingClient implements ExternalBillingGateway {
     }
     private Reply request(String method, String path, Map<String,String> headers, String key, String requestBody, boolean selfIdentity) {
         if (selfIdentity) {
-            if (!"GET".equals(method) || !"/api/user/self".equals(path) || key != null || requestBody != null)
-                throw new IllegalArgumentException("Only verified self lookup may use user identity");
+            boolean selfRead = "GET".equals(method) && "/api/user/self".equals(path) && requestBody == null;
+            boolean grantRequest = "/api/user/external-billing/authorizations".equals(path)
+                && (("GET".equals(method) && requestBody == null) || ("POST".equals(method) && requestBody != null));
+            if (key != null || !(selfRead || grantRequest))
+                throw new IllegalArgumentException("Only verified self and user consent may use user identity");
             requireIdentityConfiguration();
         } else requireMerchantConfiguration();
         HttpURLConnection connection = null;
@@ -369,7 +428,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
             for (Map.Entry<String,String> header : headers.entrySet()) connection.setRequestProperty(header.getKey(), header.getValue());
             connection.setRequestProperty("Accept", "application/json");
             if (requestBody != null) {
-                connection.setRequestProperty("Idempotency-Key", key);
+                if (key != null) connection.setRequestProperty("Idempotency-Key", key);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 connection.setDoOutput(true);
                 byte[] bytes = requestBody.getBytes(StandardCharsets.UTF_8);
@@ -378,7 +437,10 @@ public class NewApiBillingClient implements ExternalBillingGateway {
             }
             int status = connection.getResponseCode();
             InputStream stream = status < 400 ? connection.getInputStream() : connection.getErrorStream();
-            if (stream == null) return new Reply(status, json.createObjectNode());
+            if (stream == null) {
+                logDenied(method,path,status,null);
+                return new Reply(status,json.createObjectNode());
+            }
             try (InputStream input = stream; ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 byte[] buffer = new byte[4096]; int size;
                 while ((size = input.read(buffer)) != -1) {
@@ -386,6 +448,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
                     output.write(buffer, 0, size);
                 }
                 JsonNode body = json.readTree(new String(output.toByteArray(), StandardCharsets.UTF_8));
+                logDenied(method,path,status,body);
                 return new Reply(status, body == null ? json.createObjectNode() : body);
             }
         } catch (Exception e) {
@@ -394,6 +457,16 @@ public class NewApiBillingClient implements ExternalBillingGateway {
             return new Reply(0, json.createObjectNode(),kind);
         } finally { if (connection != null) connection.disconnect(); }
     }
+    private static void logDenied(String method,String path,int status,JsonNode body) {
+        if (status != 401 && status != 403) return;
+        String operation = path.startsWith("/api/v1/external-billing/charges") ? "charge"
+            : path.startsWith("/api/v1/external-billing/operations") ? "operation"
+            : path.startsWith("/api/v1/external-billing/holds") ? "hold"
+            : path.startsWith("/api/user/external-billing/authorizations") ? "user-grant" : "billing";
+        boolean userGrant = status == 403 && body != null && "NOT_AUTHORIZED".equals(body.path("error").asText());
+        LOG.warn("NewAPI billing denied method={} operation={} httpStatus={} explicitUserGrantError={}",method,operation,status,userGrant);
+    }
+
     protected HttpURLConnection openConnection(URI target) throws java.io.IOException {
         return (HttpURLConnection) target.toURL().openConnection();
     }

@@ -773,6 +773,9 @@ public class ComputeBillingSettlementService {
                     }
                     if (ExactQuota.integer(detail.remainingQuota, false)
                         .compareTo(ExactQuota.integer(String.valueOf(row.get("amount_text")), true)) < 0) { finish(row, lease, "WAITING_FUNDS", operation.errorCode, null, true); return; }
+                } else if ("NOT_AUTHORIZED".equals(operation.errorCode) && "OWNER_AUTHORIZATION_VERIFIED".equals(row.get("error_code"))) {
+                    // The owner verified the grant for this stopped order. Replay only the
+                    // original body/key after confirming the charge reference is absent.
                 } else if ("CONCURRENT_BALANCE".equals(operation.errorCode)) {
                     // v2.2 explicitly permits the original key/body after this rejected operation.
                     // The reference was confirmed absent above; all original funding guards below still apply.

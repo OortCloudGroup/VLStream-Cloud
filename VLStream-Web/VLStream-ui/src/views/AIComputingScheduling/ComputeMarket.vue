@@ -27,9 +27,11 @@
             <template v-if="item.billingType === 'POINTS' && billingPanel?.activeRun(item.id)">
               <p class="price-note">{{ marketText(paidRunState(billingPanel.activeRun(item.id))) }}</p>
               <el-button v-if="billingPanel.activeRun(item.id).startFailureCode === 'NO_STOCK' && ['CANCELLING', 'RELEASING'].includes(billingPanel.activeRun(item.id).state)" disabled>{{ marketText('暂无库存') }}</el-button>
+              <el-button v-else-if="billingPanel.activeRun(item.id).physicallyStopped" disabled>{{ marketText('已关机') }}</el-button>
               <el-button v-else type="danger" plain :loading="billingPanel.busy === billingPanel.activeRun(item.id).runId" :disabled="['STOPPING', 'RELEASING', 'CANCELLING'].includes(billingPanel.activeRun(item.id).state)" @click="billingPanel.stop(billingPanel.activeRun(item.id))">{{ marketText('关机') }}</el-button>
               <el-button v-if="billingPanel.activeRun(item.id).state === 'RUNNING' && !billingPanel.activeRun(item.id).archiveRecovery" type="primary" :disabled="!!billingPanel.busy" @click="billingPanel.prepareTraining(billingPanel.activeRun(item.id))">{{ marketText('前往训练') }}</el-button>
-              <p v-if="paidRunErrorPresentation(billingPanel.activeRun(item.id))" class="price-note">{{ marketText(paidRunErrorPresentation(billingPanel.activeRun(item.id)).message) }}</p>
+              <p v-if="billingPanel.settlementErrors[billingPanel.activeRun(item.id).runId]" class="price-note">{{ marketText(billingPanel.settlementErrors[billingPanel.activeRun(item.id).runId]) }}</p>
+              <p v-else-if="paidRunErrorPresentation(billingPanel.activeRun(item.id))" class="price-note">{{ marketText(paidRunErrorPresentation(billingPanel.activeRun(item.id)).message) }}</p>
             </template>
             <el-button v-else-if="item.billingType === 'POINTS' && !['FREE', 'MINE'].includes(item.claimState)" disabled>{{ marketText(paidClaimLabel(item.claimState)) }}</el-button>
             <el-button v-else-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>

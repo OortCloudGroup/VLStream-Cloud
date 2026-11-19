@@ -42,7 +42,7 @@ class ComputePaidRunIntegrationTest {
         jdbc.execute("CREATE TABLE vls_compute_node(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),resource_scope VARCHAR(20),billing_type VARCHAR(20),public_instance_key VARCHAR(64),control_mode VARCHAR(20),provider VARCHAR(20),provider_instance_id VARCHAR(100),provider_region VARCHAR(100),provider_product VARCHAR(40),provider_credential_cipher VARCHAR(100),host VARCHAR(100),port INT,server_group VARCHAR(100),power_state VARCHAR(20),power_checked_at TIMESTAMP,capacity_state VARCHAR(20),capacity_source VARCHAR(32),capacity_checked_at TIMESTAMP,provider_gpu_amount INT,provider_locked INT,actual_stopped_mode VARCHAR(40),requested_stopped_mode VARCHAR(40),provider_charge_type VARCHAR(40),power_operation_id VARCHAR(36),power_operation_action VARCHAR(20),power_operation_started_at TIMESTAMP,power_operation_submitted INT DEFAULT 0,probe_state VARCHAR(20),probe_time TIMESTAMP,lifecycle_revision BIGINT DEFAULT 0,lifecycle_message VARCHAR(255),enabled INT DEFAULT 1)");
         jdbc.execute("CREATE TABLE vls_cloud_training_job(id VARCHAR(36) PRIMARY KEY,tenant_id VARCHAR(64),node_id BIGINT,public_claim_id VARCHAR(36),public_owner_subject VARCHAR(100),job_state VARCHAR(20),cancel_requested INT DEFAULT 0,message VARCHAR(255),update_time TIMESTAMP)");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(root!=null&&!Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();assertNotNull(root);
-        for(String name:new String[]{"048__compute_billing_slices","049__compute_billing_coordination","052__compute_funding_intents","053__compute_funding_hold_recovery","056__compute_paid_run_orchestration"})
+        for(String name:new String[]{"048__compute_billing_slices","049__compute_billing_coordination","052__compute_funding_intents","053__compute_funding_hold_recovery","054__compute_corrective_refund_intents","056__compute_paid_run_orchestration"})
             try(java.sql.Connection connection=ds.getConnection()){ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_"+name+".sql")));}
         jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,resource_scope,billing_type,public_instance_key,control_mode,provider,provider_instance_id,provider_region,provider_product,host,port,power_state,power_checked_at,capacity_source,capacity_checked_at,requested_stopped_mode,actual_stopped_mode,provider_charge_type) VALUES(1,'tenant-test','PLATFORM','POINTS','public-test','API','aliyun','instance-test','region-test','ECS','fixture.invalid',22,'STOPPED',NOW(),'PROVIDER_API',NOW(),'StopCharging','StopCharging','PostPaid')");
         actor=new ComputePlatformAuthorization.Context();actor.setAuthorized(true);actor.setVlsUserId("actor-test");actor.setVlsTenantId("tenant-test");actor.setPlatformUserId("platform-test");payer=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":13}"));
@@ -198,6 +198,52 @@ class ComputePaidRunIntegrationTest {
         runs.tick(id);runs.tick(id);assertEquals("COMPLETED",runs.get(id,payer).getState());assertEquals(0,wallet.remaining());assertEquals(1,wallet.releasePosts);
         runs.stop(id,payer);runs.tick(id);assertEquals(1,wallet.capturePosts);assertEquals(1,wallet.releasePosts);assertNull(jdbc.queryForObject("SELECT active_instance_key FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void ownerCanResumeOnlyConfirmedStoppedAuthorizationTailUsingTheOriginalCapture(boolean priorRejectedOperation) throws Exception {
+        String id = accepted();
+        start(id);
+        String usage = runs.get(id,payer).getUsageId();
+        wallet.denyCapture = true;
+        Thread.sleep(1100);
+        coordinator.tick(usage,lifecycle);
+        runs.stop(id,payer);
+        runs.tick(id);
+        power.poll(node(),supplier);
+        coordinator.tick(usage,lifecycle);
+        wallet.denyCapture = false;
+        wallet.originalRejected = priorRejectedOperation;
+        assertEquals(0,wallet.captured);
+        runs.tick(id);
+        ComputePaidRunService.View stopped = runs.list(payer).stream().filter(run -> id.equals(run.getRunId())).findFirst().get();
+        assertTrue(stopped.isPhysicallyStopped());
+        assertTrue(stopped.isSettlementAuthorizationRequired());
+        assertEquals("NOT_AUTHORIZED",stopped.getErrorCode());
+        String query = "SELECT merchant_charge_id,idempotency_key,request_hash,request_json FROM vls_compute_billing_slice WHERE usage_id=? ORDER BY slice_sequence";
+        List<Map<String,Object>> original = jdbc.queryForList(query,usage);
+        assertFalse(original.isEmpty());
+        BillingPayer foreign = BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":14}"));
+        assertThrows(RuntimeException.class, () -> runs.resumeAuthorizedSettlement(id,foreign,wallet));
+        wallet.captured++;
+        assertThrows(RuntimeException.class, () -> runs.resumeAuthorizedSettlement(id,payer,wallet));
+        wallet.captured--;
+        assertFalse(runs.resumeAuthorizedSettlement(id,payer,wallet).isSettlementAuthorizationRequired());
+        assertEquals(original,jdbc.queryForList(query,usage));
+        assertEquals(0,wallet.capturePosts);
+        for (Map<String,Object> row : original) {
+            String ref = (String)row.get("merchant_charge_id");
+            settlements.dispatch(ref);
+            settlements.dispatch(ref);
+        }
+        runs.tick(id);
+        runs.tick(id);
+        assertEquals("COMPLETED",runs.get(id,payer).getState());
+        assertEquals(1,wallet.holdPosts);
+        assertEquals(1,wallet.releasePosts);
+        assertTrue(wallet.captured>0);
+        assertEquals(0,wallet.remaining());
+    }
+
     @Test void cancellationBeforeFirstSendDoesNotFreezeOrStart() {
         String id=accepted();runs.stop(id,payer);runs.tick(id);assertEquals("CANCELLED",runs.get(id,payer).getState());assertEquals(0,wallet.holdPosts);verify(supplier,never()).submit(any(),anyString(),anyString());
     }
@@ -297,6 +343,7 @@ class ComputePaidRunIntegrationTest {
     }
     final class Wallet implements ExternalBillingGateway {
         String power="STOPPED",reference,expiry;int total,captured,released,version=1,holdPosts,capturePosts,releasePosts,releaseEffects;
+        boolean denyCapture, originalRejected;
         boolean loseHoldReply,loseReleaseWithoutCommit,loseReleaseAfterCommit,lookupReleaseAvailable=true;JsonNode charge;
         final Map<String,JsonNode> chargesByReference=new LinkedHashMap<>(),chargesByKey=new LinkedHashMap<>();
         final Map<String,String> captureBodies=new LinkedHashMap<>();
@@ -308,6 +355,7 @@ class ComputePaidRunIntegrationTest {
         public Result holdByReference(String ref){return new Result(Status.SUCCEEDED,"",detail());}
         public Result holdById(String id){return new Result(Status.SUCCEEDED,"",detail());}
         public Result capture(String key,String body){try{
+            if (denyCapture) return new Result(Status.NOT_AUTHORIZED,"NOT_AUTHORIZED",null);
             if(chargesByKey.containsKey(key))return body.equals(captureBodies.get(key))?new Result(Status.SUCCEEDED,"",chargesByKey.get(key)):Result.of(Status.CONFLICT);
             ObjectNode d=(ObjectNode)json.readTree(body);String reference=d.path("merchant_charge_id").asText();
             if(chargesByReference.containsKey(reference))return Result.of(Status.CONFLICT);
@@ -332,7 +380,8 @@ class ComputePaidRunIntegrationTest {
             }catch(Exception invalid){throw new IllegalStateException(invalid);}
             return Result.of(Status.UNKNOWN);
         }
-        public Result byKey(String key){JsonNode receipt=chargesByKey.get(key);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
+        public Result byKey(String key){JsonNode receipt=chargesByKey.get(key);
+            if(receipt==null && originalRejected) return new Result(Status.REJECTED,"NOT_AUTHORIZED",null);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
         public Result byReference(String ref){JsonNode receipt=chargesByReference.get(ref);return receipt==null?Result.of(Status.NOT_FOUND):new Result(Status.SUCCEEDED,"",receipt);}
         public Result balance(String id){throw new AssertionError("No implicit balance/auto-grant in workflow scheduler");}
         public boolean supportsAtomicCapture(){return true;}

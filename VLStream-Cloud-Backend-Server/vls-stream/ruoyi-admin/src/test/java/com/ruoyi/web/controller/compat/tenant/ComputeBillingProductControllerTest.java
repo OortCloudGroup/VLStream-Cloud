@@ -33,6 +33,24 @@ class ComputeBillingProductControllerTest {
         ComputePlatformAuthorization.Context actor=new ComputePlatformAuthorization.Context();actor.setAuthorized(true);actor.setVlsUserId("current-actor");actor.setVlsTenantId("current-tenant");actor.setPlatformUserId("subject-not-payer-id");
         payer=BillingPayer.fromVerifiedSelf(actor,json.readTree("{\"id\":13}"));when(authorization.billingPayer(client)).thenReturn(payer);
     }
+    @Test void stoppedSettlementRequiresTheOriginalPayerOriginAndVerifiedGrant() throws Exception {
+        ComputeBillingBindingController.AccountCheck consent = new ComputeBillingBindingController.AccountCheck();
+        assertThrows(ServiceException.class, () -> controller.resumeSettlement("r",consent));
+        consent.acceptBillingPermissions = true;
+        ComputePaidRunService.View original = quotedView();
+        when(paid.get("r",payer)).thenReturn(original);
+        assertSame(original,controller.resumeSettlement("r",consent).getData());
+        verify(authorization,never()).acceptBillingPermissions(any(),any());
+        ReflectionTestUtils.setField(original,"settlementAuthorizationRequired",true);
+        ReflectionTestUtils.setField(original,"usageId","usage");
+        doThrow(new IllegalStateException("BILLING_GRANT_REVOKED")).when(authorization).acceptBillingPermissions(client,payer);
+        assertThrows(ServiceException.class, () -> controller.resumeSettlement("r",consent));
+        verify(paid,never()).resumeAuthorizedSettlement(anyString(),any(),any());
+        doNothing().when(authorization).acceptBillingPermissions(client,payer);
+        controller.resumeSettlement("r",consent);
+        verify(settlements,times(2)).requireBoundOrigin("usage");
+        verify(paid).resumeAuthorizedSettlement("r",payer,client);
+    }
     @Test void capabilityReadDoesNotContactWalletOrResolveAnotherIdentity() {
         properties.setBaseUrl(null);
         java.util.Map<String,Object> view=controller.capabilities().getData();
@@ -263,6 +281,51 @@ class ComputeBillingProductControllerTest {
     private ComputeBillingBindingController.AccountCheck consent(){
         ComputeBillingBindingController.AccountCheck request=new ComputeBillingBindingController.AccountCheck();
         request.acceptBillingPermissions=true;return request;
+    }
+    @Test void explicitAccountConsentRepairsOnlyMissingUserGrantAndRetriesOnce() {
+        when(accounts.check(eq(payer),eq(client),any(),eq(true)))
+            .thenThrow(new IllegalStateException("BILLING_NOT_AUTHORIZED")).thenReturn(null);
+        controller.account(consent());
+        org.mockito.InOrder order=inOrder(accounts,authorization);
+        order.verify(authorization).billingPayer(client);
+        order.verify(accounts).check(eq(payer),eq(client),any(),eq(true));
+        order.verify(authorization).acceptBillingPermissions(client,payer);
+        order.verify(accounts).check(eq(payer),eq(client),any(),eq(true));
+        verifyNoInteractions(paid,settlements,lifecycle);
+    }
+    @Test void merchantAuthenticationFailureDoesNotGrantOrSuggestWaitingForUserConsent() {
+        when(accounts.check(eq(payer),eq(client),any(),eq(true))).thenThrow(new IllegalStateException("BILLING_MERCHANT_AUTH_FAILED"));
+        assertTrue(assertThrows(ServiceException.class,()->controller.account(consent())).getMessage().contains("商户认证失败"));
+        verify(authorization,never()).acceptBillingPermissions(any(),any());
+    }
+    @Test void revokedGrantIsReportedWithoutASecondBalanceAttempt() {
+        when(accounts.check(eq(payer),eq(client),any(),eq(true))).thenThrow(new IllegalStateException("BILLING_NOT_AUTHORIZED"));
+        doThrow(new IllegalStateException("BILLING_GRANT_REVOKED")).when(authorization).acceptBillingPermissions(client,payer);
+        assertTrue(assertThrows(ServiceException.class,()->controller.account(consent())).getMessage().contains("已撤销"));
+        verify(accounts,times(1)).check(eq(payer),eq(client),any(),eq(true));
+    }
+    @Test void grantFailureAndRepeatedBalanceRejectionDoNotLoop() {
+        when(accounts.check(eq(payer),eq(client),any(),eq(true))).thenThrow(new IllegalStateException("BILLING_NOT_AUTHORIZED"));
+        assertThrows(ServiceException.class,()->controller.account(consent()));
+        verify(authorization,times(1)).acceptBillingPermissions(client,payer);
+        verify(accounts,times(2)).check(eq(payer),eq(client),any(),eq(true));
+    }
+    @Test void automaticReadsNeverSubmitExplicitUserGrant() {
+        controller.identity();controller.runs();controller.capabilities();
+        verify(authorization,never()).acceptBillingPermissions(any(),any());
+    }
+    @Test void explicitStartFromOlderFrontendAlsoCompletesFirstUseGrantBeforeQuote() throws Exception {
+        com.fasterxml.jackson.databind.JsonNode config=json.readTree("{\"conversion_version\":\"fixture\",\"quota_unit\":\"quota\",\"settlement_currency\":\"CNY\",\"quota_per_currency_unit\":{\"numerator\":\"500000\",\"denominator\":\"1\"}}");
+        ExternalBillingGateway gateway=mock(ExternalBillingGateway.class);
+        when(gateway.balance(payer.userId)).thenReturn(new ExternalBillingGateway.Result(ExternalBillingGateway.Status.SUCCEEDED,"",
+            json.readTree("{\"user_id\":13,\"balance_quota\":\"5\",\"held_quota\":\"0\",\"available_quota\":\"5\",\"balance_version\":\"1\"}")));
+        ComputeBillingAccountService.Account account=new ComputeBillingAccountService().check(payer,gateway,config,true);
+        when(accounts.check(eq(payer),eq(client),any(),eq(true)))
+            .thenThrow(new IllegalStateException("BILLING_NOT_AUTHORIZED")).thenReturn(account);
+        controller.quote(1L);
+        verify(authorization).acceptBillingPermissions(client,payer);
+        verify(paid).quote(eq(1L),eq(payer),any(),eq("5"));
+        verify(paid,never()).accept(anyString(),any());
     }
     @Test void existingQuoteOriginIsCheckedBeforeAnyMerchantConfigWalletOrGrantRequest() throws Exception {
         ComputePaidRunService.View quoted=quotedView();when(paid.get("quoted-run",payer)).thenReturn(quoted);

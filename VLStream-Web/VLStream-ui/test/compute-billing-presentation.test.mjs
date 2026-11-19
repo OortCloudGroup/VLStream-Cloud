@@ -19,6 +19,10 @@ test('confirmed physical stop shows settlement progress without implying the mac
   const run = { state: 'STOPPING', errorCode: 'COORDINATION_UNAVAILABLE', billingDiagnostics: {
     usageState: 'STOPPED', safetyState: 'STOP_CONFIRMED', stopObservedMs: 1000, billingEndMs: 900
   } }
+  assert.equal(paidRunState({ state: 'STOPPING', physicallyStopped: true }), '已关机，结算处理中')
+  const pending = { state: 'STOPPING', physicallyStopped: true, settlementAuthorizationRequired: true }
+  assert.equal(paidRunState(pending), '已关机，结算处理中')
+  assert.match(paidRunErrorPresentation(pending).message, /自动解除占用/)
   assert.equal(paidRunState(run), '已关机，结算处理中')
   assert.match(paidRunErrorPresentation(run).message, /实例已关机/)
   assert.equal(paidRunState({ ...run, billingDiagnostics: { ...run.billingDiagnostics, stopObservedMs: null } }), '实例关机处理中')

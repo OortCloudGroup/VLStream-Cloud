@@ -60,7 +60,8 @@ public class ComputeBillingAccountService {
         ExternalBillingGateway.Result result = gateway.balance(payer.userId);
         if (result == null || result.status != ExternalBillingGateway.Status.SUCCEEDED || result.charge == null)
             throw new IllegalStateException(result != null && result.status == ExternalBillingGateway.Status.NOT_AUTHORIZED
-                ? "BILLING_NOT_AUTHORIZED" : "BILLING_BALANCE_UNCONFIRMED");
+                ? ("USER_GRANT_REQUIRED".equals(result.errorCode) ? "BILLING_NOT_AUTHORIZED" : "BILLING_MERCHANT_AUTH_FAILED")
+                : "BILLING_BALANCE_UNCONFIRMED");
         if (!payer.userId.equals(result.charge.path("user_id").asText())) throw new IllegalArgumentException("Wallet payer mismatch");
         return new Account(payer, actual, result.charge);
     }

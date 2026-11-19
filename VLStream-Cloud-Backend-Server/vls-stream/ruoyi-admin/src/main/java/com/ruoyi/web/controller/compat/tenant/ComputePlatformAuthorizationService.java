@@ -94,6 +94,14 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
     public com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer billingPayer(
             com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient billing) {
         Context actor=requireIdentity();
+        return billing.resolveSelf(actor, verifiedSelf(actor).authorization);
+    }
+    public void acceptBillingPermissions(com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient billing,
+                                         com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer payer) {
+        Context actor=requireIdentity();
+        billing.acceptBillingPermissions(actor, verifiedSelf(actor).authorization, payer);
+    }
+    private VerifiedSelf verifiedSelf(Context actor) {
         HttpServletRequest request=currentRequest();
         Object cached=request==null?null:request.getAttribute(SELF_ATTRIBUTE);
         String localToken=request==null?null:TokenHeaderResolver.normalize(request.getHeader("Authorization"));
@@ -104,7 +112,7 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
             ||!Objects.equals(verified.mode,actor.getMode())||!Objects.equals(currentUserId(),actor.getVlsUserId())
             ||!Objects.equals(TenantContextHolder.getTenantId(),actor.getVlsTenantId()))
             throw new com.ruoyi.common.exception.ServiceException("计费身份已变化，请使用当前平台会话重试");
-        return billing.resolveSelf(actor,verified.authorization);
+        return verified;
     }
     protected String currentUserId() { return LoginHelper.getUserId(); }
     /** Compatibility wrappers normalize all auth headers to the local session.

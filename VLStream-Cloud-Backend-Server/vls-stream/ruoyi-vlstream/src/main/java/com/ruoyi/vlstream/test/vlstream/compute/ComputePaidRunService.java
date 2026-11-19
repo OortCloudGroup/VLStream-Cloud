@@ -81,6 +81,8 @@ public class ComputePaidRunService {
         private final String archiveRecoverySourceRunId;
         private final List<String> archiveRecoveryJobIds;
         private final BillingDiagnostics billingDiagnostics;
+        private boolean physicallyStopped;
+        private boolean settlementAuthorizationRequired;
         private View(Map<String,Object> row,BillingSnapshot price,String charged,String remaining,boolean recoveryAvailable,List<String> recoveryJobs,String recoverySource,BillingDiagnostics diagnostics) {
             runId=text(row,"run_id");nodeId=text(row,"node_id");state=text(row,"state");errorCode=text(row,"error_code");
             // Retain the original trusted rejection without hiding a later funds
@@ -323,6 +325,65 @@ public class ComputePaidRunService {
         }
         return visible.values().stream().map(this::view).collect(java.util.stream.Collectors.toList());
     }
+    /** Called after the current owner verifies the NewAPI grant. The coordinator still
+     * reconciles the original reference and key before any capture. */
+    public View resumeAuthorizedSettlement(String id, BillingPayer payer, ExternalBillingGateway gateway) {
+        requireQuoteOrigin(id, payer);
+        Map<String,Object> run = owned(id, payer, false);
+        String usage = text(run, "usage_id");
+        settlements.requireBoundOrigin(usage);
+        String holdIntent = text(run, "hold_intent_id");
+        ComputeFundingIntentService.Intent hold = funding.recover(holdIntent);
+        if (!usage.equals(hold.usageId) || !payer.userId.equals(hold.payerUserId)
+            || !properties.getMerchantId().equals(hold.merchantId) || !"HOLD".equals(hold.operation)
+            || !ComputeFundingIntentService.DETAIL_OBSERVED.equals(hold.state))
+            throw new ServiceException("原订单冻结记录待核对");
+        long readAt = System.currentTimeMillis();
+        ExternalBillingGateway.Result result = gateway.holdByReference(hold.reference);
+        if (result == null || result.status != ExternalBillingGateway.Status.SUCCEEDED || result.charge == null)
+            throw new ServiceException("原订单冻结状态暂未确认");
+        com.ruoyi.vlstream.test.vlstream.compute.billing.FundingContracts.HoldDetail detail =
+            com.ruoyi.vlstream.test.vlstream.compute.billing.FundingContracts.holdDetail(result.charge);
+        if (!hold.reference.equals(detail.merchantHoldId) || !hold.holdId.equals(detail.holdId)
+            || !payer.userId.equals(detail.userId) || !"0".equals(detail.releasedQuota)
+            || !("ACTIVE".equals(detail.holdStatus) || "PARTIALLY_CAPTURED".equals(detail.holdStatus)))
+            throw new ServiceException("原订单冻结信息不匹配");
+        tx.execute(status -> {
+            jdbc.queryForMap("SELECT usage_id FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usage);
+            Map<String,Object> current = owned(id, payer, true);
+            View view = view(current);
+            if (!view.isSettlementAuthorizationRequired() || !holdIntent.equals(current.get("hold_intent_id"))
+                || current.get("release_intent_id") != null || current.get("active_instance_key") == null
+                || !detail.capturedQuota.equals(view.chargedQuota) || !detail.holdQuota.equals(view.reserveQuota)
+                || System.currentTimeMillis() - readAt > 30000 || Long.parseLong(detail.expiresAt) <= System.currentTimeMillis())
+                throw new ServiceException("订单状态已变化，请刷新后核对");
+            if (!jdbc.queryForList("SELECT intent_id FROM vls_compute_funding_intent WHERE usage_id=? AND (intent_id<>? OR state<>'DETAIL_OBSERVED') FOR UPDATE", usage, holdIntent).isEmpty()
+                || !jdbc.queryForList("SELECT refund_intent_id FROM vls_compute_refund_intent WHERE usage_id=? FOR UPDATE", usage).isEmpty())
+                throw new ServiceException("原订单有其他资金记录待核对");
+            List<Map<String,Object>> pending = jdbc.queryForList("SELECT * FROM vls_compute_billing_slice WHERE usage_id=? AND state NOT IN ('SETTLED','NO_DEBIT') FOR UPDATE", usage);
+            BigInteger total = BigInteger.ZERO;
+            for (Map<String,Object> slice : pending) {
+                JsonNode body = parse(text(slice, "request_json"));
+                if (!("BLOCKED".equals(slice.get("state")) || "UNKNOWN".equals(slice.get("state"))) || !"NOT_AUTHORIZED".equals(slice.get("error_code"))
+                    || slice.get("lease_token") != null || slice.get("charge_id") != null || slice.get("ledger_entry_id") != null
+                    || !hold.holdId.equals(body.path("hold_id").asText()) || !payer.userId.equals(body.path("user_id").asText())
+                    || !hold.merchantId.equals(body.path("merchant_id").asText()) || !usage.equals(body.path("usage_session_id").asText())
+                    || !slice.get("merchant_charge_id").equals(body.path("merchant_charge_id").asText())
+                    || !slice.get("amount_text").equals(body.path("charge_quota").asText()))
+                    throw new ServiceException("原订单用量记录待核对");
+                total = total.add(ExactQuota.integer(text(slice, "amount_text"), true));
+            }
+            if (pending.isEmpty() || total.compareTo(ExactQuota.integer(detail.remainingQuota,false)) > 0
+                || jdbc.update("UPDATE vls_compute_billing_session SET risk_code=NULL WHERE usage_id=? AND payer_user_id=? AND merchant_id=? AND funding_hold_intent_id=? AND funding_hold_id=? AND funding_expires_at_ms=? AND stop_requested=1 AND safety_state='STOP_CONFIRMED' AND risk_code='NOT_AUTHORIZED' AND metered_until_ms=last_running_ms",
+                    usage,payer.userId,hold.merchantId,holdIntent,hold.holdId,Long.parseLong(detail.expiresAt)) != 1)
+                throw new ServiceException("原订单计费状态待核对");
+            jdbc.update("UPDATE vls_compute_billing_slice SET state='UNKNOWN',error_code='OWNER_AUTHORIZATION_VERIFIED',next_attempt_ms=0 WHERE usage_id=? AND state IN ('BLOCKED','UNKNOWN') AND error_code='NOT_AUTHORIZED'", usage);
+            jdbc.update("UPDATE vls_compute_paid_run SET error_code=NULL WHERE run_id=?", id);
+            return null;
+        });
+        return get(id,payer);
+    }
+
     public View stop(String id,BillingPayer payer) {
         // Match lifecycle/first-start ordering. Acceptance can attach a usage while an
         // unaccepted quote is being cancelled, so re-read without holding the run lock.
@@ -528,6 +589,10 @@ public class ComputePaidRunService {
         List<Map<String,Object>> unsettled=stopped?jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state NOT IN ('SETTLED','NO_DEBIT')"
                 +" AND (state<>'BLOCKED' OR error_code IS NULL OR error_code NOT IN ('TRIAL_UNALLOCATED_BUDGET','TRIAL_UNALLOCATED_PERMIT')"
                 +" OR charge_id IS NOT NULL OR ledger_entry_id IS NOT NULL OR lease_token IS NOT NULL OR lease_until_ms IS NULL OR lease_until_ms<>0)",usage):Collections.emptyList();
+        if (!unsettled.isEmpty() && "NOT_AUTHORIZED".equals(session.get("risk_code"))) {
+            jdbc.update("UPDATE vls_compute_paid_run SET state='STOPPING',error_code='NOT_AUTHORIZED' WHERE run_id=? AND state IN ('RUNNING','STARTING','STOPPING')", id);
+            return;
+        }
         boolean sshPreparationTail=stopped&&!unsettled.isEmpty()&&("SSH_PREPARATION_FAILED".equals(session.get("risk_code"))
             ||!jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND state='BLOCKED' AND error_code IN ('SSH_PREPARATION_FAILED',?)",usage,ComputeBillingSettlementService.RELEASED_SSH_PREPARATION_TAIL).isEmpty());
         if(sshPreparationTail&&session.get("funding_expires_at_ms")!=null&&number(session,"funding_expires_at_ms")>System.currentTimeMillis()) {
@@ -766,7 +831,19 @@ public class ComputePaidRunService {
                 &&jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=?",text(original,"instance_key")).isEmpty())
                 available=!recoverableJobs(nodes.get(Long.valueOf(text(original,"node_id"))),original).isEmpty();
         }catch(RuntimeException unavailable){available=false;}
-        return new View(row,BillingSnapshot.read(text(row,"quote_snapshot"),json),charged.toString(),remaining,available,jobs,recoverySource(row),diagnostics);
+        View result = new View(row,BillingSnapshot.read(text(row,"quote_snapshot"),json),charged.toString(),remaining,available,jobs,recoverySource(row),diagnostics);
+        if ("STOPPING".equals(result.state) || "RELEASING".equals(result.state)) {
+            List<Map<String,Object>> stopped = jdbc.queryForList(
+                "SELECT s.risk_code FROM vls_compute_usage u JOIN vls_compute_billing_session s ON s.usage_id=u.id"
+                + " WHERE u.id=? AND u.tenant_id=? AND u.opening_user_id=? AND u.payer_account_ref=?"
+                + " AND s.tenant_id=u.tenant_id AND s.opening_user_id=u.opening_user_id AND s.merchant_id=? AND s.payer_user_id=?"
+                + " AND u.state='STOPPED' AND u.billing_end_at IS NOT NULL AND s.safety_state='STOP_CONFIRMED' AND s.physical_stop_observed_ms>0",
+                result.usageId,row.get("tenant_id"),row.get("opening_user_id"),row.get("platform_subject"),row.get("merchant_id"),row.get("payer_user_id"));
+            result.physicallyStopped = !stopped.isEmpty();
+            result.settlementAuthorizationRequired = result.physicallyStopped && "STOPPING".equals(result.state)
+                && "NOT_AUTHORIZED".equals(stopped.get(0).get("risk_code"));
+        }
+        return result;
     }
 
     private BillingDiagnostics billingDiagnostics(Map<String,Object> row) {

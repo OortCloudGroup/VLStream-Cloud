@@ -10,6 +10,7 @@ package com.ruoyi.web.controller.compat.tenant;
 
 import com.ruoyi.common.utils.redis.RedisUtils;
 import cn.hutool.crypto.digest.DigestUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,12 @@ public class PlatformTenantSessionStore {
 
     private static final String KEY_PREFIX = "vls:platform-tenant-session:";
     private static final String PLATFORM_TOKEN_KEY_PREFIX = "vls:platform-token-local:";
+
+    private final String namespace;
+
+    public PlatformTenantSessionStore(@Value("${token.platform-session-namespace:}") String namespace) {
+        this.namespace = namespace.isEmpty() ? "" : namespace + ":";
+    }
 
     public PlatformTenantSession get(String localToken) {
         return RedisUtils.getCacheObject(key(localToken));
@@ -51,10 +58,10 @@ public class PlatformTenantSessionStore {
     }
 
     private String key(String localToken) {
-        return KEY_PREFIX + localToken;
+        return KEY_PREFIX + namespace + localToken;
     }
 
     private String platformTokenKey(String platformToken) {
-        return PLATFORM_TOKEN_KEY_PREFIX + DigestUtil.sha256Hex(platformToken);
+        return PLATFORM_TOKEN_KEY_PREFIX + namespace + DigestUtil.sha256Hex(platformToken);
     }
 }

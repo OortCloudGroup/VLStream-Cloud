@@ -103,6 +103,16 @@ class NewApiBillingClientTest {
         Fixture client = new Fixture(); client.body = "{\"user_id\":123,\"balance_quota\":10,\"held_quota\":\"0\",\"available_quota\":\"10\"}";
         assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.balance("123").status);
     }
+    @Test void onlyExactUserAuthorizationRejectionCanTriggerExplicitConsentFallback() {
+        Fixture client = new Fixture();client.code=403;client.body="{\"error\":\"NOT_AUTHORIZED\"}";
+        assertEquals("USER_GRANT_REQUIRED",client.balance("123").errorCode);
+        client.code=401;assertEquals("MERCHANT_AUTHENTICATION_FAILED",client.balance("123").errorCode);
+        client.code=403;client.body="{\"error\":\"INVALID_API_KEY\"}";
+        assertEquals("MERCHANT_AUTHENTICATION_FAILED",client.balance("123").errorCode);
+        client.body="{}";assertEquals("MERCHANT_AUTHENTICATION_FAILED",client.balance("123").errorCode);
+        client.code=503;client.body="{\"error\":\"NOT_AUTHORIZED\"}";
+        assertEquals(ExternalBillingGateway.Status.UNKNOWN,client.balance("123").status);
+    }
     @Test void referenceIsEncodedAsSinglePathSegment() {
         Fixture client = new Fixture(); client.byReference("vls:session:0");
         assertEquals("/api/v1/external-billing/charges/by-reference/vls%3Asession%3A0", client.path);

@@ -1,5 +1,8 @@
 // UI copy only: inventory names, identifiers and unknown diagnostics stay unchanged.
 export const computeEnglish = {
+  '授权并继续结算': 'Authorize and settle',
+  '已关机，结算待授权': 'Powered off. Billing authorization required.',
+  '请确认平台计费授权，以结算关机前的用量并释放剩余冻结余额。': 'Confirm billing authorization to settle usage before shutdown and release the unused balance.',
   '管理': 'Manage',
   '加载失败，请刷新重试': 'Loading failed. Refresh and try again.',
   '将向厂商申请实例启停，可能产生费用或启动失败；停止不保证停止计费。请确认已核对实例与停机模式。': 'An instance start or stop will be requested from the provider. Charges may apply and startup may fail; stopping does not guarantee billing stops. Confirm that you have checked the instance and shutdown mode.',

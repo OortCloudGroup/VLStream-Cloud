@@ -20,4 +20,5 @@ export const quoteComputePaidRun = nodeId => call(`/nodes/${computePathPart(node
 export const quoteComputeArchiveRecovery = sourceRunId => call(`/runs/${computePathPart(sourceRunId)}/archive-recovery-quote`, 'post')
 export const listComputePaidRuns = () => call('/runs')
 export const acceptComputePaidRun = runId => call(`/runs/${computePathPart(runId)}/accept`, 'post', { acceptBillingPermissions: true })
+export const resumeComputeSettlement = runId => call(`/runs/${computePathPart(runId)}/resume-settlement`, 'post', { acceptBillingPermissions: true })
 export const stopComputePaidRun = runId => call(`/runs/${computePathPart(runId)}/stop`, 'post')

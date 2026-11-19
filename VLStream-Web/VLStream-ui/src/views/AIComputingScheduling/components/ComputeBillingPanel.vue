@@ -11,11 +11,11 @@
     <el-alert v-if="capabilities.unavailableReason" type="info" :title="uiText(capabilities.unavailableReason)" :closable="false" show-icon />
     <el-alert v-if="error" type="warning" :title="uiText(error)" :closable="false" show-icon />
     <div v-for="run in (inlineActions ? visibleRuns : [])" :key="run.runId" class="paid-run" :data-run-id="run.runId">
-      <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ uiText(paidRunState(run.state)) }}</span><small>{{ phrase('已结算 {amount} {unit}', { amount: run.chargedQuota, unit: run.quotaUnit }) }}<template v-if="run.remainingQuota !== null"> · {{ phrase('待释放/可抵扣 {amount} {unit}', { amount: run.remainingQuota, unit: run.quotaUnit }) }}</template></small><small v-if="run.archiveRecovery">{{ uiText('本次为付费归档恢复，仅取回原任务产物，不重新训练。') }}</small><small v-if="run.archiveRecoveryAvailable">{{ uiText('原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。') }}</small><el-alert v-if="run.errorCode || run.startFailureCode" :type="paidRunErrorPresentation(run).type" :title="uiText(paidRunErrorPresentation(run).message)" :closable="false" show-icon /></div>
+      <div><strong>{{ resourceName(run.nodeId) }}</strong><span>{{ uiText(paidRunState(run)) }}</span><small>{{ phrase('已结算 {amount} {unit}', { amount: run.chargedQuota, unit: run.quotaUnit }) }}<template v-if="run.remainingQuota !== null"> · {{ phrase('待释放/可抵扣 {amount} {unit}', { amount: run.remainingQuota, unit: run.quotaUnit }) }}</template></small><small v-if="run.archiveRecovery">{{ uiText('本次为付费归档恢复，仅取回原任务产物，不重新训练。') }}</small><small v-if="run.archiveRecoveryAvailable">{{ uiText('原任务产物仍待归档；恢复需要确认新的报价和冻结额度。原产物保留在原实例，仍受供应商磁盘保留期限限制。') }}</small><el-alert v-if="settlementErrors[run.runId]" type="warning" :title="uiText(settlementErrors[run.runId])" :closable="false" show-icon /><el-alert v-else-if="run.errorCode || run.startFailureCode" :type="paidRunErrorPresentation(run).type" :title="uiText(paidRunErrorPresentation(run).message)" :closable="false" show-icon /></div>
       <div class="run-actions">
         <el-button v-if="showArchiveRecovery(run)" :disabled="!capabilities.paidAdmissionEnabled" :loading="busy === `archive:${recoverySourceId(run)}`" @click="recoverArchive(run)">{{ uiText(recoveryActionLabel(run)) }}</el-button>
         <el-button v-if="run.state === 'RUNNING' && !run.archiveRecovery" @click="prepareTraining(run)">{{ uiText('检查环境并前往训练') }}</el-button>
-        <el-button v-if="paidRunActive(run)" type="danger" plain :loading="busy === run.runId" @click="stop(run)">{{ uiText('停止并结算') }}</el-button>
+        <el-button v-if="paidRunActive(run) && !run.physicallyStopped" type="danger" plain :loading="busy === run.runId" @click="stop(run)">{{ uiText('停止并结算') }}</el-button>
       </div>
     </div>
   </section>
@@ -27,7 +27,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { Refresh, Wallet } from '@element-plus/icons-vue'
-import { getComputeBillingCapabilities, checkComputeBillingAccount, quoteComputePaidRun, quoteComputeArchiveRecovery, listComputePaidRuns, acceptComputePaidRun, stopComputePaidRun } from '@/api/computeBilling'
+import { getComputeBillingCapabilities, checkComputeBillingAccount, quoteComputePaidRun, quoteComputeArchiveRecovery, listComputePaidRuns, acceptComputePaidRun, stopComputePaidRun, resumeComputeSettlement } from '@/api/computeBilling'
 import { refreshComputeHealth } from '@/api/compute'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent } from '@/utils/computePlatformAuth'
@@ -39,6 +39,8 @@ const router = useRouter()
 const capabilities = ref({ accountAvailable: false, paidAdmissionEnabled: false })
 const canReadRuns = () => capabilities.value.identityAvailable ?? capabilities.value.accountAvailable
 const account = ref(null), runs = ref([]), busy = ref(''), error = ref('')
+const settlementRetryAt = new Map()
+const settlementErrors = ref({})
 let submittedRunId = null
 const recoveryAttempts = ref({})
 const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run)))
@@ -50,7 +52,7 @@ const balanceParts = computed(() => {
 })
 let active = true, polling = false, timer, revision = 0
 let identity = captureComputeIdentity()
-const reset = () => { revision++; submittedRunId = null; account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
+const reset = () => { revision++; settlementRetryAt.clear(); settlementErrors.value = {}; submittedRunId = null; account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
 const current = (snapshot, epoch) => {
   if (!active || epoch !== revision) return false
   try { snapshot.assertCurrent(); return true } catch { reset(); return false }
@@ -74,6 +76,33 @@ const observeRecoveryAttempts = rows => {
     }
   }
 }
+// Only the original payer's authenticated session can renew a missing grant.
+const settleStoppedRuns = async (snapshot, epoch) => {
+  const pending = runs.value.filter(run => run.state === 'STOPPING' && run.physicallyStopped && run.settlementAuthorizationRequired)
+  for (const id of settlementRetryAt.keys()) {
+    if (!pending.some(run => run.runId === id)) {
+      settlementRetryAt.delete(id)
+      delete settlementErrors.value[id]
+    }
+  }
+  for (const { runId } of pending) {
+    if (!current(snapshot, epoch)) return
+    if (Date.now() < (settlementRetryAt.get(runId) || 0)) continue
+    settlementRetryAt.set(runId, Date.now() + 60000)
+    try {
+      const { data } = await resumeComputeSettlement(runId)
+      if (!current(snapshot, epoch)) return
+      delete settlementErrors.value[runId]
+      if (data?.runId === runId) {
+        runs.value = runs.value.map(run => run.runId === runId ? data : run)
+        emit('changed')
+      }
+    } catch (failure) {
+      if (!current(snapshot, epoch)) return
+      settlementErrors.value[runId] = failure?.data?.msg || failure?.message || '操作尚未确认，请查看原单状态。'
+    }
+  }
+}
 const refreshRuns = async () => {
   if (!active || polling) return
   const snapshot = captureComputeIdentity(), epoch = revision
@@ -87,6 +116,7 @@ const refreshRuns = async () => {
         error.value = paidRunErrorPresentation(submitted)?.message || '本次开机已取消，请重新选择可用资源。'
         submittedRunId = null
       }
+      await settleStoppedRuns(snapshot, epoch)
     }
   }
   catch { current(snapshot, epoch) /* Background polling keeps the last known orders; explicit actions report their own errors. */ }
@@ -180,7 +210,7 @@ const prepareTraining = run => execute(run.runId, async (proof, valid) => {
 })
 const activeRun = nodeId => visibleRuns.value.find(run => String(run.nodeId) === String(nodeId))
 const startLabel = nodeId => paidStartLabel(nodeId, runs.value)
-defineExpose({ start, stop, prepareTraining, activeRun, startLabel, busy })
+defineExpose({ start, stop, settlementErrors, prepareTraining, activeRun, startLabel, busy })
 onMounted(async () => {
   const epoch = revision
   try {

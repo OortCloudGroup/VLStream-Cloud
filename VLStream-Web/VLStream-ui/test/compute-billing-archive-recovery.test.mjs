@@ -4,19 +4,20 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 import * as Vue from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel } from '../src/utils/computeBillingPresentation.mjs'
 
 const source = readFileSync(new URL('../src/views/AIComputingScheduling/components/ComputeBillingPanel.vue', import.meta.url), 'utf8')
 const compiled = compileScript(parse(source).descriptor, { id: 'archive-recovery-test' }).content
 const executable = compiled.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '').replace('export default', 'return')
 const create = new Function('__deps', `
+  const Refresh = {}, Wallet = {};
   const uiText = value => value;
   const phrase = (value, params) => value.replace(/\\{(\\w+)\\}/g, (_, key) => String(params[key]));
   const {computed,onMounted,onUnmounted,ref,useRouter,ElMessageBox,getComputeBillingCapabilities,
     checkComputeBillingAccount,quoteComputePaidRun,quoteComputeArchiveRecovery,listComputePaidRuns,
-    acceptComputePaidRun,stopComputePaidRun,refreshComputeHealth,captureComputeIdentity,
+    acceptComputePaidRun,stopComputePaidRun,resumeComputeSettlement,refreshComputeHealth,captureComputeIdentity,
     requireComputePlatformAuthorization,isComputeAuthorizationCurrent,billingCurrency,paidRunState,
-    paidRunActive,paidRunErrorPresentation,paidRunQuoteText,window,setInterval,clearInterval}=__deps;
+    paidRunActive,paidRunErrorPresentation,paidRunQuoteText,paidStartLabel,window,setInterval,clearInterval}=__deps;
   ${executable}
 `)
 const template = compileTemplate({ source: parse(source).descriptor.template.content, id: 'billing-presentation-test' })
@@ -27,6 +28,7 @@ const render = new Function('Vue', template.code
 const renderPanel = async instance => {
   const bindings = Object.fromEntries(Object.entries(instance).map(([key, value]) => [key,
     value && Object.prototype.hasOwnProperty.call(value, 'value') ? value.value : value]))
+  bindings.inlineActions = true // Match the component's default prop in this direct setup harness.
   const app = Vue.createSSRApp({ setup: () => bindings, render })
   app.component('el-alert', { props: ['title', 'type'], render() { return Vue.h('aside', { 'data-alert-type': this.type }, this.title) } })
   app.component('el-button', { props: ['disabled'], render() { return Vue.h('button', { disabled: this.disabled }, this.$slots.default?.()) } })
@@ -42,7 +44,7 @@ const original = () => ({ runId: 'source-1', nodeId: '-6000', state: 'COMPLETED'
 const quote = () => ({ ...original(), runId: 'recovery-1', state: 'QUOTED', archiveRecoveryAvailable: false, archiveRecovery: true, archiveRecoverySourceRunId: 'source-1', archiveRecoveryJobIds: ['job-1'], reserveQuota: '5', maximumRunSeconds: 60, hourlyPrice: '13.00', currency: 'CNY', quoteUntilMs: Date.now() + 60000 })
 
 function harness(options = {}) {
-  const calls = { capabilities: 0, list: 0, account: 0, normalQuote: 0, recoveryQuote: [], accept: [], stop: [], health: 0, confirmations: [], route: [], proof: 0 }
+  const calls = { capabilities: 0, list: 0, account: 0, normalQuote: 0, recoveryQuote: [], accept: [], stop: [], resume: [], health: 0, confirmations: [], route: [], proof: 0 }
   const mounts = [], unmounts = [], events = new Map(), timers = [], emitted = []
   let identity = 1, rows = [original()]
   const deps = {
@@ -51,17 +53,18 @@ function harness(options = {}) {
     useRouter: () => ({ push: async value => { calls.route.push(value) } }),
     ElMessageBox: { confirm: async (...args) => { calls.confirmations.push(args); return options.confirm ? options.confirm(...args) : 'confirm' }, alert: async () => {} },
     getComputeBillingCapabilities: async () => { calls.capabilities++; return { data: options.capabilities || { accountAvailable: true, paidAdmissionEnabled: options.enabled !== false } } },
-    checkComputeBillingAccount: async () => { calls.account++; return { data: {} } },
+    checkComputeBillingAccount: async () => { calls.account++; return options.account ? options.account() : { data: {} } },
     quoteComputePaidRun: async () => { calls.normalQuote++; return { data: quote() } },
     quoteComputeArchiveRecovery: async id => { calls.recoveryQuote.push(id); return options.quote ? options.quote(id) : { data: quote() } },
     listComputePaidRuns: async () => { calls.list++; return { data: rows } },
     acceptComputePaidRun: async id => { calls.accept.push(id); return options.accept ? options.accept(id) : { data: { ...quote(), state: 'FUNDING' } } },
+    resumeComputeSettlement: async id => { calls.resume.push(id); return options.resume ? options.resume(id) : {} },
     stopComputePaidRun: async id => { calls.stop.push(id); return {} },
     refreshComputeHealth: async () => { calls.health++; return { data: 'fixture' } },
     captureComputeIdentity: () => { const current = identity; return { assertCurrent() { if (current !== identity) throw Error('fixture identity changed') } } },
     requireComputePlatformAuthorization: async () => { calls.proof++; return options.proof ? options.proof() : { identity, platformToken: 'fixture-proof' } },
     isComputeAuthorizationCurrent: proof => proof.identity === identity,
-    billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText,
+    billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel,
     window: { addEventListener: (name, fn) => events.set(name, fn), removeEventListener: name => events.delete(name) },
     setInterval: fn => { timers.push(fn); return timers.length }, clearInterval() {}
   }
@@ -84,6 +87,59 @@ test('mount and polling read capabilities/runs only; pending archive never autom
   assert.equal(h.calls.normalQuote, 0)
   assert.deepEqual(h.calls.recoveryQuote, [])
   assert.deepEqual(h.calls.accept, [])
+})
+
+test('balance query uses default consent without another confirmation or paid operation', async () => {
+  const pending = defer()
+  const h = harness({ account: () => pending.promise })
+  await h.mount()
+  const started = h.instance.checkAccount()
+  await flush()
+  assert.equal(h.calls.account, 1)
+  assert.equal(h.calls.normalQuote, 0)
+  assert.deepEqual(h.calls.accept, [])
+  pending.resolve({ data: { availableQuota: '10' } })
+  await started
+  assert.equal(h.calls.normalQuote, 0)
+  assert.equal(h.calls.accept.length, 0)
+  assert.equal(h.calls.confirmations.length, 0)
+})
+
+test('failed balance query cannot reach paid quote or accept', async () => {
+  const h = harness({ account: async () => { throw Error('billing grant revoked') } })
+  await h.mount()
+  await h.instance.checkAccount()
+  assert.equal(h.calls.normalQuote, 0)
+  assert.deepEqual(h.calls.accept, [])
+  assert.equal(h.instance.error.value, 'billing grant revoked')
+})
+
+test('a confirmed stopped order resumes once on polling without another user action', async () => {
+  const h = harness()
+  const run = { ...original(), state: 'STOPPING', physicallyStopped: true, settlementAuthorizationRequired: true, archiveRecoveryAvailable: false }
+  h.setRows([run])
+  await h.mount()
+  const html = await renderPanel(h.instance)
+  assert.match(html, /已关机，结算处理中/)
+  assert.doesNotMatch(html, /授权并继续结算/)
+  assert.doesNotMatch(html, /停止并结算/)
+  assert.deepEqual(h.calls.resume, [run.runId])
+  h.timers[0]()
+  await flush()
+  assert.deepEqual(h.calls.resume, [run.runId])
+  assert.deepEqual(h.calls.stop, [])
+  assert.deepEqual(h.calls.accept, [])
+})
+
+test('completed automatic settlement removes the active run and refreshes market availability', async () => {
+  const run = { ...original(), state: 'STOPPING', physicallyStopped: true, settlementAuthorizationRequired: true }
+  const h = harness({ resume: async () => ({ data: { ...run, state: 'COMPLETED', settlementAuthorizationRequired: false } }) })
+  h.setRows([run])
+  await h.mount()
+  assert.equal(h.instance.activeRun(run.nodeId), undefined)
+  assert.equal(h.instance.startLabel(run.nodeId), '付费开机')
+  assert.deepEqual(h.emitted, [['changed']])
+  assert.deepEqual(h.calls.confirmations, [])
 })
 
 test('missing merchant configuration is explained without contacting the account or hiding the balance entry', async () => {
@@ -135,15 +191,16 @@ test('explicit identity unavailability prevents original run polling even if an 
 })
 
 test('configured billing starts only after current platform authorization and explicit quote confirmation', async () => {
-  const confirmation = defer(), h = harness({ confirm: (_message, title) => title === '平台余额' ? 'confirm' : confirmation.promise })
+  const confirmation = defer(), h = harness({ confirm: () => confirmation.promise })
   await h.mount()
   const action = h.instance.start({ id: '-6000', paidAdmissionEnabled: true })
   await flush()
   assert.equal(h.calls.proof, 1)
   assert.equal(h.calls.normalQuote, 1)
   assert.deepEqual(h.calls.accept, [])
-  assert.equal(h.calls.confirmations[0][1], '平台余额')
-  assert.match(h.calls.confirmations[1][0], /13.00 CNY/)
+  assert.equal(h.calls.confirmations.length, 1)
+  assert.equal(h.calls.confirmations[0][1], '确认开机吗？')
+  assert.match(h.calls.confirmations[0][0], /￥13.00/)
   confirmation.resolve('confirm')
   await action
   assert.deepEqual(h.calls.accept, ['recovery-1'])
@@ -173,7 +230,8 @@ test('the panel keeps active reconciliation warnings and hides completed release
   h.setRows([{ ...original(), state: 'RELEASING', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: 'RELEASE_RECEIPT_PENDING' }])
   await h.mount()
   const pending = await renderPanel(h.instance)
-  assert.match(pending, /data-alert-type="warning"[^>]*>状态确认暂未完成.*当前资源被占用/)
+  assert.match(pending, /data-alert-type="warning"[^>]*>状态确认暂未完成.*官方当前算力规格暂无库存/)
+  assert.doesNotMatch(pending, /当前资源被占用/)
   assert.match(pending, /停止并结算/)
   assert.doesNotMatch(pending, /已完成释放/)
   h.setRows([{ ...original(), state: 'CANCELLED', archiveRecoveryAvailable: false, startFailureCode: 'NO_STOCK', errorCode: null }])
@@ -208,7 +266,7 @@ test('completed history without recovery is hidden while active recovery stays v
   const active = { ...quote(), state: 'RUNNING' }
   h.setRows([...recent, { ...original(), runId: 'old-complete', archiveRecoveryAvailable: false }, original(), active])
   await h.mount()
-  assert.deepEqual(h.instance.visibleRuns.value.map(run => run.runId), ['source-1', 'recovery-1'])
+  assert.deepEqual(h.instance.visibleRuns.value.map(run => run.runId), ['recovery-1'])
   assert.deepEqual(h.calls.recoveryQuote, [])
   assert.deepEqual(h.calls.accept, [])
 })

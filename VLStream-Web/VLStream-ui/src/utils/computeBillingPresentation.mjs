@@ -16,7 +16,7 @@ const labels = {
   QUOTED: '待确认开机', FUNDING: '正在预冻结', STARTING: '厂商开机处理中', RUNNING: '实例运行中', STOPPING: '实例关机处理中',
   CANCELLING: '正在取消开机', RELEASING: '正在释放未消费余额', COMPLETED: '已停止并完成结算', CANCELLED: '已取消并完成释放'
 }
-const confirmedStopped = run => run?.billingDiagnostics?.usageState === 'STOPPED'
+const confirmedStopped = run => run?.physicallyStopped === true || run?.billingDiagnostics?.usageState === 'STOPPED'
   && run.billingDiagnostics.safetyState === 'STOP_CONFIRMED'
   && run.billingDiagnostics.stopObservedMs > 0 && run.billingDiagnostics.billingEndMs > 0
 export const paidRunState = value => {
@@ -37,6 +37,7 @@ export function paidStartLabel(nodeId, runs = []) {
 }
 
 export function paidRunErrorPresentation(run) {
+  if (run?.settlementAuthorizationRequired) return { message: '实例已关机，系统正在核对本次费用和释放剩余冻结余额，完成后自动解除占用。', type: 'warning' }
   if (!run?.errorCode && !run?.startFailureCode) return null
   if (run.state === 'CANCELLED' && run.chargedQuota === '0' && run.remainingQuota === '0'
     && ['OWNER_ADOPTED_ORIGINAL_RELEASE', 'ADMIN_ADOPTED_ORIGINAL_RELEASE'].includes(run.errorCode)) {

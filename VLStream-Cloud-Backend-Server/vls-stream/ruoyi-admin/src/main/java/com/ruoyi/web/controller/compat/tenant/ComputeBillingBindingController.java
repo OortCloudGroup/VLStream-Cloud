@@ -69,8 +69,30 @@ public class ComputeBillingBindingController {
         if(request==null||!request.acceptBillingPermissions)throw new ServiceException("请先确认平台余额查询与GPU计费权限");
         NewApiBillingClient client=merchantClient();
         BillingPayer payer=newOperationPayer(client);
-        try{return R.data(accounts.check(payer,client,client.config(),true));}
-        catch(IllegalStateException unavailable){throw new ServiceException("BILLING_NOT_AUTHORIZED".equals(unavailable.getMessage())?"平台尚未接受当前账户的计费授权，请稍后重试":"平台余额暂未确认，请稍后重试");}
+        com.fasterxml.jackson.databind.JsonNode config=client.config();
+        return R.data(checkAcceptedAccount(payer,client,config));
+    }
+    /** Only explicit balance/start actions enter this flow; page polling and original-order recovery never grant. */
+    private ComputeBillingAccountService.Account checkAcceptedAccount(BillingPayer payer,NewApiBillingClient client,
+                                                                      com.fasterxml.jackson.databind.JsonNode config) {
+        try {
+            try { return accounts.check(payer,client,config,true); }
+            catch(IllegalStateException missing) {
+                if(!"BILLING_NOT_AUTHORIZED".equals(missing.getMessage()))throw missing;
+                authorization.acceptBillingPermissions(client,payer);
+                return accounts.check(payer,client,config,true);
+            }
+        } catch(IllegalStateException unavailable){throw accountFailure(unavailable);}
+    }
+    private ServiceException accountFailure(IllegalStateException failure) {
+        String code=failure.getMessage();
+        if("BILLING_GRANT_REVOKED".equals(code))return new ServiceException("您已撤销 VLS 计费授权，请在平台账户设置中重新授权");
+        if("BILLING_GRANT_SCOPES_MISSING".equals(code))return new ServiceException("VLS 计费授权范围不完整，请在平台账户设置中确认余额查询和 GPU 计费权限");
+        if("BILLING_MERCHANT_AUTH_FAILED".equals(code))return new ServiceException("平台计费商户认证失败，请联系管理员检查商户凭据与权限");
+        if("BILLING_NOT_AUTHORIZED".equals(code))return new ServiceException("平台计费授权尚未生效，请在平台账户设置中检查 VLS 授权");
+        if("BILLING_GRANT_UNCONFIRMED".equals(code))return new ServiceException("平台计费授权结果暂未确认，请稍后重新查询余额");
+        if("BILLING_IDENTITY_CHANGED".equals(code))return new ServiceException("平台账户已变化，请重新登录后查询余额");
+        return new ServiceException("平台余额暂未确认，请稍后重试");
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/nodes/{nodeId}/quote")
@@ -99,11 +121,7 @@ public class ComputeBillingBindingController {
 
     /** Explicit paid-start action: the current wallet balance determines this order's funding window. */
     private String availableQuota(BillingPayer payer,NewApiBillingClient client,com.fasterxml.jackson.databind.JsonNode config){
-        try{return accounts.check(payer,client,config,true).getAvailableQuota();}
-        catch(IllegalStateException unavailable){
-            throw new ServiceException("BILLING_NOT_AUTHORIZED".equals(unavailable.getMessage())
-                ?"平台尚未接受当前账户的计费授权，请先同意计费权限后重试":"平台余额暂未确认，请稍后重试");
-        }
+        return checkAcceptedAccount(payer,client,config).getAvailableQuota();
     }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/accept")
@@ -113,12 +131,27 @@ public class ComputeBillingBindingController {
         ComputePaidRunService.View original=paidRuns.get(runId,payer);
         if("QUOTED".equals(original.getState())){
             paidRuns.requireQuoteOrigin(runId,payer);
-            ComputeBillingAccountService.Account account=accounts.check(payer,client,client.config(),true);
+            ComputeBillingAccountService.Account account=checkAcceptedAccount(payer,client,client.config());
             if(new java.math.BigInteger(account.getAvailableQuota()).compareTo(new java.math.BigInteger(original.getReserveQuota()))<0)
                 throw new ServiceException("平台可用余额不足，请充值后重新确认本次开机");
         }
         return R.data(paidRuns.accept(runId,payer));
     }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
+    @PostMapping("/runs/{runId}/resume-settlement")
+    public R<ComputePaidRunService.View> resumeSettlement(@PathVariable String runId,@RequestBody AccountCheck request) {
+        if (request == null || !request.acceptBillingPermissions) throw new ServiceException("请先确认原订单计费授权");
+        NewApiBillingClient client = merchantClient();
+        BillingPayer payer = authorization.billingPayer(client);
+        ComputePaidRunService.View original = paidRuns.get(runId,payer);
+        if (!original.isSettlementAuthorizationRequired()) return R.data(original);
+        paidRuns.requireQuoteOrigin(runId,payer);
+        settlements.requireBoundOrigin(original.getUsageId());
+        try { authorization.acceptBillingPermissions(client,payer); }
+        catch (IllegalStateException failure) { throw accountFailure(failure); }
+        return R.data(paidRuns.resumeAuthorizedSettlement(runId,payer,client));
+    }
+
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:menu:compute-market")
     @PostMapping("/runs/{runId}/stop")
     public R<ComputePaidRunService.View> stop(@PathVariable String runId,@RequestBody(required=false) ComputeOriginalReleaseService.Request request){
