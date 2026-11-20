@@ -149,7 +149,7 @@ import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
 import { logoutModelHubSession } from '@/api/modelHubUser'
 import { getCloudPlatformUserPath } from '@/utils/modelHubAuth'
-import { getTenantMode, getUserTenants } from '@/api/system/localAuth'
+import { getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
 import { isLocalEventRoute } from '@/utils/localEventAccess.mjs'
 import { filterMenuRoutes } from '@/utils/menuAccess.mjs'
@@ -981,8 +981,7 @@ onMounted(async () => {
 
   try {
     try {
-      const modeResponse = await getTenantMode()
-      tenantMode.value = modeResponse?.data?.tenantType || modeResponse?.data?.data?.tenantType || 'single'
+      tenantMode.value = await authManager.getTenantMode()
     } catch (error) {
       tenantMode.value = 'single'
       console.warn('获取租户模式失败，继续使用单租户菜单:', error?.message)

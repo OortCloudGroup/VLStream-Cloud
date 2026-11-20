@@ -26,6 +26,11 @@ const normalizeApiResponse = (response) => {
   return response?.data || response
 }
 
+// Only reuse server-verified navigation data in this tab.
+const navigationInfoTtlMs = 60_000
+let verifiedNavigationInfo
+let verifiedTenantMode
+
 // All AuthManager instances share identity changes (layout, router and login).
 export class AuthManager {
   constructor() {
@@ -33,6 +38,7 @@ export class AuthManager {
   }
 
   invalidatePendingIdentity() {
+    verifiedNavigationInfo = undefined
     advanceIdentityRevision()
     this.validatedPlatformToken = ''
   }
@@ -207,8 +213,19 @@ export class AuthManager {
     const identity = this.getIdentitySnapshot()
     const token = this.getCurrentToken()
     if (!token) return null
+    const localSessionOnly = Boolean(options.localSessionOnly)
+    const cached = verifiedNavigationInfo
+    if (cached && cached.expiresAt > Date.now() && cached.localSessionOnly === localSessionOnly
+        && this.isIdentityCurrent(cached.identity)) return cached.userInfo
+
     const userInfo = await this.verifyToken(token, options)
-    if (userInfo) return this.isIdentityCurrent(identity) ? userInfo : null
+    if (userInfo) {
+      if (!this.isIdentityCurrent(identity)) return null
+      if (Array.isArray(userInfo.permissions)) {
+        verifiedNavigationInfo = { identity, localSessionOnly, userInfo, expiresAt: Date.now() + navigationInfoTtlMs }
+      }
+      return userInfo
+    }
     this.clearIdentityTokens(identity)
     return null
   }
@@ -262,11 +279,14 @@ export class AuthManager {
   }
 
   async getTenantMode() {
+    const revision = getIdentityRevision()
+    if (verifiedTenantMode?.revision === revision) return verifiedTenantMode.mode
     try {
       const response = normalizeApiResponse(await getTenantMode())
       const mode = response?.data?.tenantType
       if (mode !== 'single' && mode !== 'multi') throw new Error('服务未返回有效租户模式')
-      return saveTenantMode(mode)
+      if (revision === getIdentityRevision()) verifiedTenantMode = { revision, mode: saveTenantMode(mode) }
+      return mode
     } catch (error) {
       const cached = sessionStorage.getItem('vlsTenantMode')
       if (cached === 'single' || cached === 'multi') return cached

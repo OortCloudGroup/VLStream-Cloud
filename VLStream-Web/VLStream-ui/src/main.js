@@ -32,10 +32,12 @@ import '@/assets/wvp/compat.scss'
 import '@/assets/style/polish.scss'
 import { installWvpCompat } from '@/utils/wvpCompat'
 import { capturePendingModelHubCallback } from '@/utils/modelHubAuth'
+import { initializeLocalPlatformRealm } from '@/utils/localPlatformRealm'
 
 window.$crudCommon = crudCommon;
 
 // OortCloud and VLStream accessToken parameter; in main before .
+initializeLocalPlatformRealm()
 capturePendingModelHubCallback()
 
 // VLStream token apaas

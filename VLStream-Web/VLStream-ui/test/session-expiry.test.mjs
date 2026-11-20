@@ -271,7 +271,9 @@ try {
     await guard(computeRoute, route, value => { nextResult = value })
     check(nextResult === undefined && menuAccessState.menuPermissions.value.includes('vls:menu:compute-market')
       && calls.some(url => url.endsWith('/user/info')), mode + ' real user-info permissions did not allow page')
+    const verifiedCalls = calls.length
     await guard(roleRoute, computeRoute, value => { nextResult = value })
+    check(calls.length === verifiedCalls, mode + ' menu navigation repeated session verification')
     check(nextResult?.path === '/workspace' && vls.getLocalSessionToken() === 'fixture-local', mode + ' denied route did not preserve session')
   }
 
