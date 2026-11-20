@@ -106,7 +106,7 @@ public class DataTestConfiguration {
             statement.execute("DROP TABLE IF EXISTS vls_dataset_cleanup");
             statement.execute("DROP TABLE IF EXISTS vls_model_class_snapshot");
             statement.execute("DROP TABLE IF EXISTS vls_dataset_conversion_guard");
-            String cleanup = new String(Files.readAllBytes(backend.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_017__dataset_cleanup_and_model_classes.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
+            String cleanup = new String(Files.readAllBytes(backend.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_017__dataset_cleanup_and_model_classes.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
             for (String sql : cleanup.split(";")) if (!sql.trim().isEmpty()) statement.execute(sql);
             for (String table : new String[]{"vls_dataset_version", "vls_annotation_instance", "vls_annotation_label", "vls_annotation_image", "vls_algorithm_annotation"}) statement.execute("DROP TABLE IF EXISTS " + table);
             for (String table : new String[]{"vls_algorithm_annotation", "vls_annotation_image", "vls_annotation_label", "vls_annotation_instance"}) {
@@ -116,7 +116,7 @@ public class DataTestConfiguration {
             }
             statement.execute("INSERT INTO vls_algorithm_annotation (id, tenant_id, annotation_name, annotation_type, annotation_rules) VALUES (10, 'tenant-a', 'legacy', 'object_detection', '{\"rule\":\"legacy\"}')");
             statement.execute("INSERT INTO vls_annotation_image (id, annotation_id, image_name, original_name, local_path) VALUES (15, 10, 'legacy.png', 'legacy.png', 'legacy.png')");
-            String migration = new String(Files.readAllBytes(backend.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_011__data_sample_management.sql")), StandardCharsets.UTF_8);
+            String migration = new String(Files.readAllBytes(backend.resolve("ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_011__data_sample_management.sql")), StandardCharsets.UTF_8);
             // Remove SQL line comments before splitting, because comments may contain semicolons.
             migration = migration.replaceAll("(?m)^--.*$", "");
             for (String sql : migration.split(";")) if (!sql.trim().isEmpty()) statement.execute(sql);

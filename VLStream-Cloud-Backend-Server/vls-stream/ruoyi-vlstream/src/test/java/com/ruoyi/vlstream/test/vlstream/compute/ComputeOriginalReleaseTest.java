@@ -61,7 +61,7 @@ class ComputeOriginalReleaseTest {
         assertEquals("platform-test",trustedOwner.getPlatformUserId());assertEquals("13",f.payer.userId);
         manager=new DataSourceTransactionManager(f.jdbc.getDataSource());beans=new DefaultListableBeanFactory();
         try(java.sql.Connection c=f.jdbc.getDataSource().getConnection()) {
-            ScriptUtils.executeSqlScript(c,new FileSystemResource(Paths.get("../ruoyi-admin/src/main/resources/db/migration/V1_2_0_054__compute_corrective_refund_intents.sql")));
+            ScriptUtils.executeSqlScript(c,new FileSystemResource(Paths.get("../ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_054__compute_corrective_refund_intents.sql")));
         }
         run=fixture.accepted();fixture.queued(run);
         Map<String,Object> row=f.jdbc.queryForMap("SELECT * FROM vls_compute_paid_run WHERE run_id=?",run);

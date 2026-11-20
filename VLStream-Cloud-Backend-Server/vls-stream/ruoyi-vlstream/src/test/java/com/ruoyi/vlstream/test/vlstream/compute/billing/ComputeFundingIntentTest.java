@@ -36,7 +36,7 @@ class ComputeFundingIntentTest {
         Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Actual migration source root required");
-        Path migration = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_052__compute_funding_intents.sql");
+        Path migration = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_052__compute_funding_intents.sql");
         try (java.sql.Connection c = fixture.jdbc.getDataSource().getConnection()) {
             ScriptUtils.executeSqlScript(c, new FileSystemResource(migration.toFile()));
             ScriptUtils.executeSqlScript(c, new FileSystemResource(migration.resolveSibling("V1_2_0_053__compute_funding_hold_recovery.sql").toFile()));

@@ -52,7 +52,7 @@ class ComputeTrialRefundTest {
         jdbc.execute("CREATE TABLE vls_cloud_training_job(id VARCHAR(36),node_id BIGINT,public_instance_key VARCHAR(64),job_state VARCHAR(32))");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(root!=null&&!Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();assertNotNull(root);
         for(String migration:new String[]{"048__compute_billing_slices","049__compute_billing_coordination","052__compute_funding_intents","053__compute_funding_hold_recovery","054__compute_corrective_refund_intents","056__compute_paid_run_orchestration"})
-            try(java.sql.Connection c=ds.getConnection()){ScriptUtils.executeSqlScript(c,new FileSystemResource(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_"+migration+".sql")));}
+            try(java.sql.Connection c=ds.getConnection()){ScriptUtils.executeSqlScript(c,new FileSystemResource(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_"+migration+".sql")));}
         properties=new ExternalBillingProperties();
         properties.setBaseUrl(ComputeBillingTrialGuard.TARGET);properties.setMerchantId("vls");properties.setApiKey("fixture-merchant-token");properties.getTrial().setRunId(run);
         String expiry=Instant.now().plusSeconds(3600).toString();

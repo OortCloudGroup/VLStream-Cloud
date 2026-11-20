@@ -172,3 +172,4 @@ sms:
   signName: 测试
   # 腾讯专用
   sdkAppId:
+spring.flyway.locations: classpath:db/migration/release

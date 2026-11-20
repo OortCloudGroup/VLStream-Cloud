@@ -33,7 +33,7 @@ class LlmAuthorizationPersistenceTest {
         JdbcDataSource source = new JdbcDataSource();
         source.setURL("jdbc:h2:mem:llm-" + UUID.randomUUID() + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
         jdbc = new JdbcTemplate(source);
-        String sql = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/V1_2_0_006__algorithm_llm_review.sql")), StandardCharsets.UTF_8);
+        String sql = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_006__algorithm_llm_review.sql")), StandardCharsets.UTF_8);
         jdbc.execute(sql.substring(0, sql.indexOf(';')).replaceAll("(?s)\\) ENGINE=.*", ")"));
         for (String column : new String[] {"platform_user_id varchar(128)", "platform_user_name varchar(200)", "authorized_at datetime"}) {
             jdbc.execute("ALTER TABLE vls_llm_provider ADD " + column);
