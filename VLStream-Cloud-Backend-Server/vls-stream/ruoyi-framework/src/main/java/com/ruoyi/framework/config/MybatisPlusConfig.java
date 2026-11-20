@@ -15,7 +15,6 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.ruoyi.framework.handler.CreateAndUpdateMetaObjectHandler;
 import com.ruoyi.framework.config.properties.TokenProperties;
 import org.mybatis.spring.annotation.MapperScan;
@@ -45,7 +44,7 @@ public class MybatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(tenantLineHandler));
+        interceptor.addInnerInterceptor(new TrainingPageTenantInterceptor(tenantLineHandler));
 // // data Process
 //        interceptor.addInnerInterceptor(dataPermissionInterceptor());
         //

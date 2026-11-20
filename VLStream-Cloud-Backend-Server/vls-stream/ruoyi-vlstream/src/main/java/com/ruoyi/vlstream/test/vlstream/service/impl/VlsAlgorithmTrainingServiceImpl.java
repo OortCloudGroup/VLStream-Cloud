@@ -11,6 +11,7 @@ package com.ruoyi.vlstream.test.vlstream.service.impl;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.LoginHelper;
 import javax.annotation.Resource;
@@ -73,6 +74,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 			if(vlsAlgorithmTraining.getTrainStatus()!=null)query.eq("train_status",vlsAlgorithmTraining.getTrainStatus().getCode());
 		}
 		query.orderByDesc("create_time","id");
+		// Count the same visibility-filtered rows without parsing the nested predicates again.
+		if (page instanceof Page) {
+			((Page<?>) page).setOptimizeCountSql(false);
+		}
 		return page.setRecords(baseMapper.selectVlsAlgorithmTrainingPage(page,vlsAlgorithmTraining,query));
 	}
 

@@ -2959,14 +2959,12 @@ const onTrainingIdentityChanged = () => {
   terminalOutput.value = ''; publicationState.value = ''; trainingBackendReady.value = false
   isTraining.value = false; finalizingTrainingTasks.clear()
   selectedDatasets.value = []; selectedDatasetIds.value = []
-  loadTrainingData(); loadComputeNodes()
+  loadTrainingData()
 }
 
 onMounted(async () => {
   window.addEventListener('modelHubAuthChanged', onTrainingIdentityChanged)
   loadTrainingData()
-  loadAlgorithmOptions()
-  loadComputeNodes()
   try {
     const draft = JSON.parse(sessionStorage.getItem(computeDraftKey) || 'null')
     sessionStorage.removeItem(computeDraftKey)
