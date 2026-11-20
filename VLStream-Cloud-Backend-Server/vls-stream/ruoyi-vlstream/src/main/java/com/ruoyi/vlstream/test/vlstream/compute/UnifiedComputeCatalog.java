@@ -2,6 +2,8 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 /** The platform owns supply. An authenticated encrypted snapshot only recovers existing work. */
@@ -26,6 +29,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 @Slf4j
 public class UnifiedComputeCatalog {
+    private static final int APPLICATION_DENIED = 4001;
     private final ComputeCatalogProperties properties;
     private final ConfiguredComputeRegistry registry;
     private final ComputeCredentialCipher cipher;
@@ -43,7 +47,9 @@ public class UnifiedComputeCatalog {
             Path file = snapshotPath();
             if (Files.isRegularFile(file) && Files.size(file) <= 16000000) {
                 JsonNode saved = json.readTree(cipher.decrypt(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)));
-                apply(saved, false);
+                if (!callerFingerprint().equals(saved.path("callerFingerprint").asText("")))
+                    throw new IllegalArgumentException("Catalog snapshot belongs to a different application identity");
+                apply(saved.path("catalog"), false);
             }
         } catch (Exception invalid) {
             registry.catalogUnavailable();
@@ -68,45 +74,71 @@ public class UnifiedComputeCatalog {
         lastAttempt = System.currentTimeMillis();
         try {
             JsonNode document = fetch();
-            if (document.path("code").asInt() != 200 || !document.path("data").path("resources").isArray()
-                || !document.path("data").path("versions").isArray()) throw new IllegalArgumentException("Invalid execution catalog");
-            // Validate and persist before publishing. A restart can always recover the same approved revisions.
-            registry.installCatalog(resources(document, "resources"), resources(document, "versions"), true, () -> {
-                try { persist(document); }
-                catch (Exception failure) { throw new IllegalStateException("Compute catalog snapshot could not be persisted"); }
-            });
+            if (document.path("code").asInt() == APPLICATION_DENIED) {
+                revokeAssignment();
+                return;
+            }
+            apply(document, true);
         } catch (Exception unavailable) {
             registry.catalogUnavailable();
+            if (unavailable instanceof HttpStatusCodeException) {
+                int status = ((HttpStatusCodeException) unavailable).getRawStatusCode();
+                if (status == 401 || status == 403) revokeAssignment();
+            }
             log.warn("Compute catalog refresh unavailable, type={}", unavailable.getClass().getSimpleName());
         }
     }
 
-    private void apply(JsonNode document, boolean fresh) throws Exception {
-        registry.installCatalog(resources(document, "resources"), resources(document, "versions"), fresh);
+    private void revokeAssignment() {
+        registry.catalogUnavailable();
+        properties.assignEnvironment(null);
+        try { persist(json.createObjectNode().put("code", APPLICATION_DENIED)); }
+        catch (Exception unavailable) {
+            log.warn("Compute catalog revocation snapshot unavailable, type={}", unavailable.getClass().getSimpleName());
+        }
     }
 
-    private List<ConfiguredComputeProperties.Resource> resources(JsonNode document, String field) throws Exception {
+    private void apply(JsonNode document, boolean fresh) throws Exception {
+        JsonNode data = document.path("data");
+        String environment = data.path("executionEnvironment").asText("");
+        String appId = data.path("executionAppId").asText("");
+        if (document.path("code").asInt() != 200 || !data.path("resources").isArray() || !data.path("versions").isArray()
+                || !environment.matches("[A-Za-z0-9_-]{1,64}") || blank(appId)
+                || !appId.equals(properties.getDeployment().getAppId())) {
+            throw new IllegalArgumentException("Invalid execution catalog assignment");
+        }
+        String previous = properties.getEnvironmentId();
+        if (previous != null && !previous.equals(environment)) throw new IllegalArgumentException("Execution environment changed");
+        List<ConfiguredComputeProperties.Resource> current = resources(document, "resources", environment);
+        List<ConfiguredComputeProperties.Resource> history = resources(document, "versions", environment);
+        properties.assignEnvironment(environment);
+        try {
+            registry.installCatalog(current, history, fresh, () -> {
+                if (fresh) try { persist(document); }
+                catch (Exception failure) { throw new IllegalStateException("Compute catalog snapshot could not be persisted", failure); }
+            });
+        } catch (Exception failure) {
+            properties.assignEnvironment(previous);
+            throw failure;
+        }
+    }
+
+    private List<ConfiguredComputeProperties.Resource> resources(JsonNode document, String field, String environment) throws Exception {
         List<ConfiguredComputeProperties.Resource> result = new ArrayList<>();
         for (JsonNode source : document.path("data").path(field)) {
             ConfiguredComputeProperties.Resource resource = json.treeToValue(source, ConfiguredComputeProperties.Resource.class);
             if (resource.getExecutionRevision() < 1) throw new IllegalArgumentException("Execution revision required");
             resource.setRuntimeResolved(true); resource.setBasePrivateKeyFile(resource.getPrivateKeyFile());
             resource.setBasePublicKeyFingerprint(resource.getPublicKeyFingerprint());
-            ConfiguredComputeProperties.EnvironmentRuntime selected = null;
-            for (ConfiguredComputeProperties.EnvironmentRuntime runtime : resource.getEnvironmentRuntimes()) {
-                if (properties.getEnvironmentId().equals(runtime.getEnvironmentId())) {
-                    if (selected != null) throw new IllegalArgumentException("Duplicate execution environment");
-                    selected = runtime;
-                }
-            }
-            resource.setEnvironmentAvailable(selected != null);
-            if (selected == null) {
-                resource.setPythonPath("/unconfigured/python"); resource.setWorkDir("/unconfigured");
-            } else {
-                resource.setPythonPath(selected.getPythonPath()); resource.setWorkDir(selected.getWorkDir());
-                if (selected.getPrivateKeyFile() != null && !selected.getPrivateKeyFile().isEmpty()) resource.setPrivateKeyFile(selected.getPrivateKeyFile());
-                if (selected.getPublicKeyFingerprint() != null && !selected.getPublicKeyFingerprint().isEmpty()) resource.setPublicKeyFingerprint(selected.getPublicKeyFingerprint());
-            }
+            if (resource.getEnvironmentRuntimes().size() != 1)
+                throw new IllegalArgumentException("Expected a single authorized execution environment");
+            ConfiguredComputeProperties.EnvironmentRuntime selected = resource.getEnvironmentRuntimes().get(0);
+            if (!environment.equals(selected.getEnvironmentId()))
+                throw new IllegalArgumentException("Resource is outside the assigned execution environment");
+            resource.setEnvironmentAvailable(true);
+            resource.setPythonPath(selected.getPythonPath()); resource.setWorkDir(selected.getWorkDir());
+            if (!blank(selected.getPrivateKeyFile())) resource.setPrivateKeyFile(selected.getPrivateKeyFile());
+            if (!blank(selected.getPublicKeyFingerprint())) resource.setPublicKeyFingerprint(selected.getPublicKeyFingerprint());
             result.add(resource);
         }
         return result;
@@ -150,10 +182,18 @@ public class UnifiedComputeCatalog {
         Path file = snapshotPath(); Files.createDirectories(file.getParent());
         Path temporary = Files.createTempFile(file.getParent(), "compute-catalog-", ".tmp");
         try {
-            Files.write(temporary, cipher.encrypt(json.writeValueAsString(document)).getBytes(StandardCharsets.UTF_8));
+            ObjectNode scoped = json.createObjectNode().put("callerFingerprint", callerFingerprint());
+            scoped.set("catalog", document);
+            Files.write(temporary, cipher.encrypt(json.writeValueAsString(scoped)).getBytes(StandardCharsets.UTF_8));
             try { Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE); }
             catch (AtomicMoveNotSupportedException unsupported) { Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING); }
         } finally { Files.deleteIfExists(temporary); }
+    }
+
+    private String callerFingerprint() {
+        ModelHubProperties deployment = properties.getDeployment();
+        return ModelArtifactObjectStore.hash(deployment.getBaseUrl().trim().replaceAll("/+$", "")
+            + "\n" + deployment.getAppId() + "\n" + deployment.getSecretKey());
     }
 
     private Path snapshotPath() { return Paths.get(properties.getSnapshotFile()).toAbsolutePath().normalize(); }

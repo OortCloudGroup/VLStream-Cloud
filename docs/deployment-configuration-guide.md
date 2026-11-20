@@ -68,6 +68,8 @@ java -jar ruoyi-admin/target/apaas-workflowforms.jar --spring.profiles.active=pr
 
 训练、设备下发和视频功能还需要 SSH/GPU、MQTT、FFmpeg、RTSP/WebRTC 等额外服务。
 
+接入统一平台公司 GPU 时，部署者配置 deployment 地址和本部署的服务应用凭据即可。服务器归属、Python 和目录由平台管理员在能力中心「算力」维护。具体步骤见[公司算力统一平台管理](CONFIGURED_COMPANY_COMPUTE.md)。
+
 ## 4. 后端基础配置
 
 ### 4.1 服务端口

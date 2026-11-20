@@ -276,31 +276,14 @@ public class UnifiedComputeCatalogTest {
         assertEquals(frozen, registry.snapshot(registry.resolve(-6000L)).get("targetFingerprint"));
     }
 
-    @Test void foreignProfileUsesItsOwnKeyReferenceFallbackAcrossEnvironments() throws Exception {
-        ConfiguredComputeProperties.Resource original = official(1); original.setExecutionRevision(0);
-        original.setPrivateKeyFile(""); original.setPublicKeyFingerprint("");
-        original.setPythonPath("/root/vm/bin/python"); original.setWorkDir("/root/vm/work");
-        ConfiguredComputeProperties legacy = new ConfiguredComputeProperties(); legacy.setResources(Collections.singletonList(original));
-        ConfiguredComputeRegistry yaml = new ConfiguredComputeRegistry(legacy, new ComputeTrustedSelfAssetsProperties(), json, jdbc); yaml.initialize();
-        String fingerprint = String.valueOf(yaml.snapshot(yaml.resolve(-6000L)).get("targetFingerprint"));
-        ObjectNode frozen = json.createObjectNode().put("targetFingerprint", fingerprint).put("executionRevision", 1).put("executionEnvironment", "vm");
-        jdbc.update("INSERT INTO vls_compute_paid_run VALUES(-6000,?,'original-instance','usage-1')", json.createObjectNode().set("configuredResource", frozen).toString());
-        ConfiguredComputeProperties.Resource platform = official(1); platform.setPrivateKeyFile(""); platform.setPublicKeyFingerprint("");
+    @Test void directoryCannotAssignOneMachineToTwoEnvironments() throws Exception {
+        ConfiguredComputeProperties.Resource platform = official(1);
         ConfiguredComputeProperties.EnvironmentRuntime vm = new ConfiguredComputeProperties.EnvironmentRuntime();
-        vm.setEnvironmentId("vm"); vm.setPythonPath(original.getPythonPath()); vm.setWorkDir(original.getWorkDir());
+        vm.setEnvironmentId("vm"); vm.setPythonPath("/root/vm/bin/python"); vm.setWorkDir("/root/vm/work");
         platform.setEnvironmentRuntimes(Arrays.asList(platform.getEnvironmentRuntimes().get(0), vm));
-        ObjectNode document = document(platform);
-        for (String field : Arrays.asList("resources", "versions")) {
-            ObjectNode value = (ObjectNode) document.path("data").path(field).get(0);
-            value.put("privateKeyFile", "");
-            ((ObjectNode) value.path("environmentRuntimes").get(0)).put("privateKeyFile", "C:/fixture/local_key");
-            ((ObjectNode) value.path("environmentRuntimes").get(0)).put("publicKeyFingerprint", "SHA256:" + String.join("", Collections.nCopies(43, "a")));
-        }
         UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
-        List<ConfiguredComputeProperties.Resource> current = ReflectionTestUtils.invokeMethod(client, "resources", document, "resources");
-        List<ConfiguredComputeProperties.Resource> versions = ReflectionTestUtils.invokeMethod(client, "resources", document, "versions");
-        assertDoesNotThrow(() -> registry.installCatalog(current, versions, true));
-        assertEquals("C:/fixture/local_key", registry.definition(registry.resolve(-6000L)).getPrivateKeyFile());
+        assertThrows(IllegalArgumentException.class,
+            () -> ReflectionTestUtils.invokeMethod(client, "resources", document(platform), "resources", "localhost"));
     }
 
     @Test void refreshWaitsForAdmissionTransactionThenRetainsItsCommittedSnapshot() throws Exception {
@@ -346,6 +329,10 @@ public class UnifiedComputeCatalogTest {
             failure.set(true); catalog.refresh(); assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
             registry = registry(); new UnifiedComputeCatalog(properties, registry, cipher, json).start();
             assertEquals("192.168.55.10", registry.resolve(-300L).getHost()); assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+            properties.getDeployment().setSecretKey("different-caller-secret");
+            properties.assignEnvironment(null);
+            registry = registry(); new UnifiedComputeCatalog(properties, registry, cipher, json).start();
+            assertTrue(registry.published().isEmpty()); assertNull(properties.getEnvironmentId());
         } finally { server.stop(0); }
     }
 
@@ -366,7 +353,10 @@ public class UnifiedComputeCatalogTest {
         properties.getDeployment().setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
         try {
             new UnifiedComputeCatalog(properties, registry, cipher, json).refresh();
-            assertTrue(gatewayAccepted.get()); assertFalse(Files.exists(snapshot));
+            assertTrue(gatewayAccepted.get()); assertTrue(Files.exists(snapshot));
+            assertNull(properties.getEnvironmentId());
+            assertEquals(4001, json.readTree(cipher.decrypt(new String(Files.readAllBytes(snapshot), StandardCharsets.UTF_8)))
+                .path("catalog").path("code").asInt());
             assertEquals(value.getHost(), registry.resolve(-300L).getHost());
             assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
         } finally { server.stop(0); }
@@ -392,21 +382,22 @@ public class UnifiedComputeCatalogTest {
         } finally { server.stop(0); }
     }
 
-    @Test void resourceWithoutCurrentEnvironmentDoesNotRejectOtherMachines() throws Exception {
+    @Test void invalidDirectoryCannotGrantAccessToAnotherEnvironmentsMachine() throws Exception {
         ConfiguredComputeProperties.Resource first = resource(1), vmOnly = resource(1);
         vmOnly.setCode("vm-only-gpu"); vmOnly.setNodeId(-301L); vmOnly.setAssetId("vm-only-asset"); vmOnly.setHost("192.168.55.11");
         vmOnly.setLegacyNodeIds(Collections.emptyList()); vmOnly.getEnvironmentRuntimes().get(0).setEnvironmentId("vm");
         ObjectNode document = document(first); ((com.fasterxml.jackson.databind.node.ArrayNode) document.path("data").path("resources")).add(executionJson(vmOnly));
         ((com.fasterxml.jackson.databind.node.ArrayNode) document.path("data").path("versions")).add(executionJson(vmOnly));
-        properties.setSnapshotFile(testDirectory().resolve("catalog.snapshot").toString());
-        Files.write(Paths.get(properties.getSnapshotFile()), cipher.encrypt(document.toString()).getBytes(StandardCharsets.UTF_8));
-        new UnifiedComputeCatalog(properties, registry, cipher, json).start();
-        assertEquals(2, registry.published().size()); assertEquals("/unconfigured", registry.resolve(-301L).getWorkDir());
-        assertFalse(registry.resolve(-301L).isCatalogAdmissionAllowed()); assertEquals("/work/vls/localhost", registry.resolve(-300L).getWorkDir());
+        UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
+        assertThrows(IllegalArgumentException.class, () -> ReflectionTestUtils.invokeMethod(client, "apply", document, false));
+        assertTrue(registry.published().isEmpty());
+        assertNull(properties.getEnvironmentId());
     }
 
     ObjectNode document(ConfiguredComputeProperties.Resource resource) {
         ObjectNode document = json.createObjectNode(); document.put("code", 200); ObjectNode data = document.putObject("data");
+        data.put("executionAppId", "catalog-app");
+        data.put("executionEnvironment", resource.getEnvironmentRuntimes().get(0).getEnvironmentId());
         data.putArray("resources").add(executionJson(resource)); data.putArray("versions").add(executionJson(resource)); return document;
     }
     ObjectNode executionJson(ConfiguredComputeProperties.Resource resource) {

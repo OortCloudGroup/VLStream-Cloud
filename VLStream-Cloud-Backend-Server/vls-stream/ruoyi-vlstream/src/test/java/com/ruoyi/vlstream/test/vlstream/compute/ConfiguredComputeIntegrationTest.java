@@ -103,6 +103,7 @@ public class ConfiguredComputeIntegrationTest {
         com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties modelHub = new com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties();
         modelHub.setBaseUrl("https://model-hub.invalid");
         ComputeCatalogProperties catalog = new ComputeCatalogProperties(modelHub);
+        catalog.assignEnvironment("localhost");
         ReflectionTestUtils.setField(registry, "catalogProperties", catalog);
         assertTrue(catalog.configured());
         registry.initialize();
@@ -174,6 +175,11 @@ public class ConfiguredComputeIntegrationTest {
         assertNotNull(build);
         org.springframework.core.env.StandardEnvironment environment=new org.springframework.core.env.StandardEnvironment();
         for(org.springframework.core.env.PropertySource<?> source:new org.springframework.boot.env.YamlPropertySourceLoader().load("company-yml",new org.springframework.core.io.FileSystemResource(build.resolve("ruoyi-admin/src/main/resources/application.yml").toFile())))environment.getPropertySources().addLast(source);
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("VLS_MODEL_HUB_BASE_URL", "https://initial-deployment.example");
+        credentials.put("VLS_MODEL_HUB_APP_ID", "fixture-app");
+        credentials.put("VLS_MODEL_HUB_SECRET_KEY", "fixture-secret");
+        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("fixture-credentials", credentials));
         com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties deployment=org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vls.model-hub",org.springframework.boot.context.properties.bind.Bindable.of(com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties.class)).get();
         ComputeCatalogProperties bound=new ComputeCatalogProperties(deployment);
         org.springframework.boot.context.properties.bind.Binder.get(environment).bind("vlstream.compute.catalog",org.springframework.boot.context.properties.bind.Bindable.ofInstance(bound));
@@ -190,7 +196,7 @@ public class ConfiguredComputeIntegrationTest {
         assertNull(environment.getProperty("vlstream.compute.catalog.base-url"));
         assertNull(environment.getProperty("vlstream.compute.catalog.app-id"));
         assertNull(environment.getProperty("vlstream.compute.catalog.secret-key"));
-        assertEquals("localhost",bound.getEnvironmentId());assertTrue(bound.getSnapshotFile().endsWith("compute-catalog.snapshot"));
+        assertNull(bound.getEnvironmentId());assertTrue(bound.getSnapshotFile().endsWith("compute-catalog.snapshot"));
         assertFalse(json.writeValueAsString(new ComputeNode()).contains("catalogDefinition"));
     }
     @Test void approvedHostReferenceReusesExistingAssetAndMissingAssetCannotAdvertiseSupply() {

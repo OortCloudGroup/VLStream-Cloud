@@ -29,10 +29,8 @@ public class CloudDeviceService {
 
     @org.springframework.beans.factory.annotation.Value("${token.tenant-type:single}")
     private String executionMode;
-    @org.springframework.beans.factory.annotation.Value("${vlstream.compute.shared-pool.environment-id:}")
-    private String executionEnvironment;
-
     String executionScope() {
+        String executionEnvironment = queue.executionEnvironment();
         if (executionEnvironment == null || !executionEnvironment.matches("[A-Za-z0-9_-]{1,64}")
                 || !("single".equals(executionMode) || "multi".equals(executionMode)))
             throw new ServiceException("云端检测执行环境标识未配置");

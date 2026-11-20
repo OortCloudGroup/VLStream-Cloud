@@ -45,13 +45,14 @@ class CloudAiExecutionScopeTest {
     }
 
     @Test void executionIdentityIsServerOwnedAndRejectsMissingEnvironment() {
-        CloudAiService service = new CloudAiService(null,null,null,null,null,null,null);
-        ReflectionTestUtils.setField(service,"executionEnvironment","localhost");
+        com.ruoyi.vlstream.test.vlstream.compute.ComputeSharedQueueService queue = mock(com.ruoyi.vlstream.test.vlstream.compute.ComputeSharedQueueService.class);
+        CloudAiService service = new CloudAiService(null,null,null,null,queue,null,null);
+        when(queue.executionEnvironment()).thenReturn("localhost");
         ReflectionTestUtils.setField(service,"executionMode","single");
         assertEquals("localhost:single",service.executionScope());
         ReflectionTestUtils.setField(service,"executionMode","multi");
         assertEquals("localhost:multi",service.executionScope());
-        ReflectionTestUtils.setField(service,"executionEnvironment","");
+        when(queue.executionEnvironment()).thenReturn(null);
         assertThrows(RuntimeException.class,service::executionScope);
     }
 }

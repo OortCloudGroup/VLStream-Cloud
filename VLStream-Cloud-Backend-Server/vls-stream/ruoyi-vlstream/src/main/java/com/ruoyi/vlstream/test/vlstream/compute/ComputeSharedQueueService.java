@@ -29,6 +29,7 @@ public class ComputeSharedQueueService {
     private final ObjectMapper json;
 
     public boolean isShared(ComputeNode node) { return MODE.equals(node.getSchedulingMode()); }
+    public String executionEnvironment() { return properties.getEnvironmentId(); }
     public boolean authenticated() { return !viewer().isEmpty(); }
     String pythonCommand(ComputeNode node) {
         return (isShared(node)||declaredCompany(node)?"env -u PYTHONHOME PYTHONPATH='' PYTHONNOUSERSITE=1 ":"")+quote(node.getPythonPath());
@@ -159,7 +160,7 @@ public class ComputeSharedQueueService {
     }
     private Map<String,Object> gpu(CloudTrainingJob job,ComputeNode node) throws IOException {
         JsonNode shared=json.readTree(job.getOptionsJson()).path("sharedQueue");
-        if (!properties.getEnvironmentId().equals(shared.path("environment").asText()) || !job.getId().equals(shared.path("jobId").asText()) || !Objects.equals(job.getPublicOwnerSubject(),shared.path("owner").asText()))
+        if (!Objects.equals(properties.getEnvironmentId(), shared.path("environment").asText()) || !job.getId().equals(shared.path("jobId").asText()) || !Objects.equals(job.getPublicOwnerSubject(),shared.path("owner").asText()))
             throw new IOException("共享任务环境或归属快照已变化");
         Map<String,Object> gpu=new LinkedHashMap<>();gpu.put("gpuIndex",shared.path("gpuIndex").asInt(-1));gpu.put("gpuUuid",shared.path("gpuUuid").asText());return gpu;
     }
