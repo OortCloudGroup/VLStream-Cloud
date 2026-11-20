@@ -21,9 +21,10 @@
       <div v-if="detail.task.taskState === 'CONFIRMING' || detail.task.bulkTotal" class="bulk-summary"><span>{{ $tp('批量确认：{processed} / {total}，采用 {accepted} 张，{conflicts} 张需人工检查', { processed: detail.task.bulkProcessed || 0, total: detail.task.bulkTotal || 0, accepted: detail.task.bulkAccepted || 0, conflicts: detail.task.bulkConflicts || 0 }) }}</span><el-progress v-if="detail.task.taskState === 'CONFIRMING'" :percentage="Math.min(100, Math.round((detail.task.bulkProcessed || 0) * 100 / Math.max(1, detail.task.bulkTotal || 1)))" /></div>
       <div v-if="active && detail.task.taskState !== 'CONFIRMING' && detail.round.progressTotal" class="bulk-summary"><span>{{ detail.round.progressStage === 'TRAINING' ? $tp('本轮模型训练') : $tp('生成预标注') }}：{{ detail.round.progressCurrent || 0 }} / {{ detail.round.progressTotal }}</span><el-progress :percentage="Math.min(100, Math.round((detail.round.progressCurrent || 0) * 100 / detail.round.progressTotal))" /></div>
       <el-alert v-if="active" :title="detail.task.taskState === 'QUEUED' ? $tp('已进入 GPU 队列，等待前序训练或智能标注任务结束。') : $tp('正在处理本轮数据。可以离开页面，后台将继续运行。')" type="info" :closable="false" />
-      <div class="actions task-actions"><el-button @click="showLogs">{{ $tp('查看日志') }}</el-button><el-button v-if="detail.task.taskState === 'FAILED'" :disabled="busy" type="primary" @click="perform(retrySmartTask)">{{ $tp('重试本轮') }}</el-button>
+      <div v-if="!['COMPLETED', 'CANCELLED', 'CANCEL_REQUESTED'].includes(detail.task.taskState)" class="actions task-actions">
+        <el-button v-if="detail.task.taskState === 'FAILED'" :disabled="busy" type="primary" @click="perform(retrySmartTask)">{{ $tp('重试本轮') }}</el-button>
         <template v-if="detail.task.taskState === 'REVIEW'"><el-button v-if="detail.task.mode === 'active'" :disabled="busy || detail.pendingHard > 0 || detail.task.roundNumber >= detail.maxRounds || !detail.counts.ACCEPTED" @click="next">{{ $tp('继续下一轮') }}</el-button><el-button type="primary" :disabled="busy" @click="finish">{{ $tp('完成任务') }}</el-button></template>
-        <el-button v-if="!['COMPLETED', 'CANCELLED', 'CANCEL_REQUESTED'].includes(detail.task.taskState)" :disabled="busy" type="danger" plain @click="cancel">{{ $tp('取消任务') }}</el-button>
+        <el-button :disabled="busy" type="danger" plain @click="cancel">{{ $tp('取消任务') }}</el-button>
       </div>
       <template v-if="['REVIEW', 'COMPLETED'].includes(detail.task.taskState)">
         <div class="filters"><el-select v-model="query.state" @change="loadPredictions"><el-option :label="$tp('待确认')" value="PENDING" /><el-option :label="$tp('已确认')" value="ACCEPTED" /><el-option :label="$tp('已跳过')" value="SKIPPED" /><el-option :label="$tp('全部结果')" value="" /></el-select><el-checkbox v-if="detail.task.mode === 'active'" v-model="query.hardOnly" @change="loadPredictions">{{ $tp('仅看本轮难例（待处理 {count}）', { count: detail.pendingHard }) }}</el-checkbox><el-button v-if="detail.task.taskState === 'REVIEW'" :disabled="busy || !confirmable.length" @click="batchConfirm">{{ $tp('确认本页可用结果（{count}）', { count: confirmable.length }) }}</el-button><el-button v-if="detail.task.taskState === 'REVIEW'" type="primary" :disabled="busy || !detail.counts.PENDING" @click="confirmRoundPredictions">{{ $tp('确认本轮已通过标注') }}</el-button></div>
@@ -85,7 +86,6 @@
       <template #footer><el-button :disabled="busy" @click="creating = false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="busy" :disabled="!ready" @click="create">{{ $tp('创建并入队') }}</el-button></template>
     </el-dialog>
     <SmartAnnotationReview :item="reviewItem" :annotation-type="detail?.task.annotationType || 'object_detection'" :labels="detail?.labels || []" :saving="busy" @close="reviewItem = null" @save="saveReview" />
-    <el-dialog v-model="logsOpen" :title="$tp('本轮运行日志')" width="85vw"><el-button :disabled="busy" @click="showLogs">{{ $tp('刷新日志') }}</el-button><pre class="logs">{{ logs }}</pre></el-dialog>
   </div>
 </template>
 
@@ -96,7 +96,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listDataProjects } from '@/api/dataManagement'
-import { listSmartTasks, smartOptions, createSmartTask, getSmartTask, smartPredictions, getSmartPrediction, reviewSmartPrediction, confirmSmartBatch, confirmAllSmartPredictions, nextSmartRound, finishSmartTask, retrySmartTask, cancelSmartTask, smartTaskLogs } from '@/api/smartAnnotation'
+import { listSmartTasks, smartOptions, createSmartTask, getSmartTask, smartPredictions, getSmartPrediction, reviewSmartPrediction, confirmSmartBatch, confirmAllSmartPredictions, nextSmartRound, finishSmartTask, retrySmartTask, cancelSmartTask } from '@/api/smartAnnotation'
 import SmartAnnotationReview from './components/SmartAnnotationReview.vue'
 import TrainingComputeSelector from './components/TrainingComputeSelector.vue'
 import { listComputeSelection } from '@/api/compute'
@@ -109,7 +109,6 @@ const datasets = ref([]); const options = ref(null); const sourceKey = ref('')
 const datasetsLoading = ref(false)
 const datasetNeedsGeneration = ref(false)
 const predictions = ref([]); const predictionTotal = ref(0); const reviewItem = ref(null)
-const logsOpen = ref(false); const logs = ref('')
 const form = reactive({ datasetId: '', computeNodeId: '', taskName: '', mode: 'active', confidence: 0.25, epochs: 20, reviewSize: 50 })
 const activeLearning = computed(() => form.mode === 'active')
 const computeNodes = ref([]); const computeLoading = ref(false)
@@ -276,14 +275,13 @@ const perform = operation => run(async () => { await operation(detail.value.task
 const next = () => run(async () => { await ElMessageBox.confirm(uiText('使用当前已确认标注训练下一轮模型，并重新筛选剩余图片。未确认结果不会用于训练。'), uiText('继续主动学习')); await nextSmartRound(detail.value.task.id); predictions.value = []; await refresh() })
 const finish = () => run(async () => { await ElMessageBox.confirm(uiText('完成任务并保存数据集版本。未确认结果会保留在任务记录中，不会自动写入正式标注。'), uiText('完成智能标注')); await finishSmartTask(detail.value.task.id); await refresh() })
 const cancel = () => run(async () => { await ElMessageBox.confirm(uiText('取消当前智能标注任务，已确认标注保留。运行中的本任务进程将停止，等待节点确认后释放使用权。'), uiText('取消智能标注'), { type: 'warning' }); await cancelSmartTask(detail.value.task.id); await refresh() })
-const showLogs = () => run(async () => { logsOpen.value = true; logs.value = await smartTaskLogs(detail.value.task.id) })
 let timer
 onMounted(async () => { if (route.query.task) await enter(String(route.query.task)); else await refresh(); timer = setInterval(() => { if (active.value && !busy.value && !reviewItem.value) refresh() }, 5000) })
 onBeforeUnmount(() => { computeSequence++; clearInterval(timer) })
 </script>
 
 <style scoped>
-.smart-page{padding:24px;max-width:1600px;margin:auto}.smart-heading,.actions,.task-summary,.filters{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.smart-heading{justify-content:space-between;margin-bottom:24px}.smart-heading h2{margin:8px 0}.smart-heading p,.hint{color:var(--el-text-color-secondary);font-size:13px}.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}.mode-cards>div{padding:18px 22px;border:1px solid var(--el-border-color);border-radius:10px;background:var(--el-bg-color)}.mode-cards h3{margin-top:0}.mode-cards p{line-height:1.7;color:var(--el-text-color-secondary)}.el-table{margin-top:20px}.el-pagination{margin-top:20px;justify-content:flex-end}.task-summary{padding:18px;border:1px solid var(--el-border-color);border-radius:10px;margin-bottom:20px}.task-actions{margin:20px 0}.filters .el-select{width:160px}.prediction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}.prediction-card{overflow:hidden;border:1px solid var(--el-border-color);border-radius:9px;cursor:pointer;background:var(--el-bg-color)}.prediction-card .image{height:170px;position:relative;background:#142333}.prediction-card img{width:100%;height:100%;object-fit:contain}.hard-tag{position:absolute;left:8px;top:8px}.prediction-description{padding:12px;display:flex;flex-direction:column;gap:8px}.prediction-description strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prediction-description span{font-size:12px;color:var(--el-text-color-secondary)}.round-history{margin-top:28px}.label-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.logs{white-space:pre-wrap;word-break:break-word;background:#102032;color:#d1e2f4;padding:16px;max-height:60vh;overflow:auto;font-size:12px}@media(max-width:700px){.smart-page{padding:14px}.mode-cards{grid-template-columns:1fr}.prediction-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.smart-page{padding:24px;max-width:1600px;margin:auto}.smart-heading,.actions,.task-summary,.filters{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.smart-heading{justify-content:space-between;margin-bottom:24px}.smart-heading h2{margin:8px 0}.smart-heading p,.hint{color:var(--el-text-color-secondary);font-size:13px}.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}.mode-cards>div{padding:18px 22px;border:1px solid var(--el-border-color);border-radius:10px;background:var(--el-bg-color)}.mode-cards h3{margin-top:0}.mode-cards p{line-height:1.7;color:var(--el-text-color-secondary)}.el-table{margin-top:20px}.el-pagination{margin-top:20px;justify-content:flex-end}.task-summary{padding:18px;border:1px solid var(--el-border-color);border-radius:10px;margin-bottom:20px}.task-actions{margin:20px 0}.filters .el-select{width:160px}.prediction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}.prediction-card{overflow:hidden;border:1px solid var(--el-border-color);border-radius:9px;cursor:pointer;background:var(--el-bg-color)}.prediction-card .image{height:170px;position:relative;background:#142333}.prediction-card img{width:100%;height:100%;object-fit:contain}.hard-tag{position:absolute;left:8px;top:8px}.prediction-description{padding:12px;display:flex;flex-direction:column;gap:8px}.prediction-description strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prediction-description span{font-size:12px;color:var(--el-text-color-secondary)}.round-history{margin-top:28px}.label-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}@media(max-width:700px){.smart-page{padding:14px}.mode-cards{grid-template-columns:1fr}.prediction-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .dataset-option {
   display: flex;
   align-items: baseline;
