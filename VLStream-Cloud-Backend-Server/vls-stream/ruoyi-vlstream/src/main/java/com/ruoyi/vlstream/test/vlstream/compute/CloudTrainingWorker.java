@@ -227,12 +227,12 @@ public class CloudTrainingWorker {
                     if(paidArchives.hasCheckpoint(job) && !paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
                 }
                 archive(job, connection, result);
-                if (job.isAnnotation()) importAnnotationResults(job, connection, result);
+                boolean autoConfirm = job.isAnnotation() && importAnnotationResults(job, connection, result);
                 if(company) {
                     String classes=new TrainingDatasetLayout(job.getAnnotationType(),data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir()+"/dataset");
                     sharedQueue.release(connection,node,job,result,ModelArtifactObjectStore.hash(classes));
                 }
-                finish(job, "COMPLETED", "PT 和类别文件已校验并回存平台", job.modelKey());
+                finish(job, "COMPLETED", "PT 和类别文件已校验并回存平台", job.modelKey(), autoConfirm);
             } else if ("FAILED".equals(state) || "CANCELLED".equals(state)) {
                 if(company)sharedQueue.release(connection,node,job,result,null);
                 finish(job, state, limited(result.path("message").asText("训练进程结束")), null);
@@ -330,7 +330,7 @@ public class CloudTrainingWorker {
     private boolean cancelled(CloudTrainingJob job) {
         return jdbc.queryForObject("SELECT cancel_requested FROM vls_cloud_training_job WHERE tenant_id=? AND id=?", Boolean.class, job.getTenantId(), job.getId());
     }
-    private void importAnnotationResults(CloudTrainingJob job, ComputeSsh.Connection connection, JsonNode result) throws IOException {
+    private boolean importAnnotationResults(CloudTrainingJob job, ComputeSsh.Connection connection, JsonNode result) throws IOException {
         String sha=result.path("predictionsSha256").asText(); long size=result.path("predictionsSize").asLong();
         if(!sha.matches("[a-f0-9]{64}") || size<1 || size>64*1024*1024)throw new IOException("预标注结果缺少有效摘要或超过限制");
         Path root=Paths.get(tempDir);Files.createDirectories(root);
@@ -340,7 +340,11 @@ public class CloudTrainingWorker {
             if(Files.size(local)!=size || !digest(local).equals(sha))throw new IOException("预标注结果传输校验失败");
             JsonNode predictions=json.readTree(local.toFile());
             if(!result.path("sha256").asText().equals(predictions.path("modelSha256").asText()) || !job.getAnnotationType().equals(predictions.path("annotationType").asText()))throw new IOException("预标注结果与模型或任务类型不匹配");
-            annotationWorker.getObject().importComputeResults(job.getSmartRoundId(),predictions,job.modelKey(),result.path("sha256").asText());
+            boolean autoConfirm = json.readTree(job.getOptionsJson()).path("autoConfirm").asBoolean(false)
+                && predictions.path("autoConfirm").isBoolean() && predictions.path("autoConfirm").asBoolean();
+            annotationWorker.getObject().importComputeResults(job.getSmartRoundId(), predictions, job.modelKey(),
+                result.path("sha256").asText(), autoConfirm);
+            return autoConfirm;
         } finally { Files.deleteIfExists(local); }
     }
     private void phase(CloudTrainingJob job, String state, String message, int progress, int epoch) {
@@ -355,12 +359,16 @@ public class CloudTrainingWorker {
     }
 
     private void finish(CloudTrainingJob job, String state, String message, String model) {
+        finish(job, state, message, model, false);
+    }
+
+    private void finish(CloudTrainingJob job, String state, String message, String model, boolean autoConfirm) {
         new TransactionTemplate(transactions).execute(tx -> {
             boolean success = "COMPLETED".equals(state);
             String trainingState = success ? "completed" : "CANCELLED".equals(state) ? "stop" : "failed";
             jdbc.update("UPDATE vls_cloud_training_job SET job_state=?,message=?,progress=CASE WHEN ?='COMPLETED' THEN 100 ELSE progress END,update_time=NOW() WHERE tenant_id=? AND id=?", state, message, state, job.getTenantId(), job.getId());
             jdbc.update("UPDATE vls_container_instance SET instance_status=?,stop_time=NOW(),error_message=? WHERE tenant_id=? AND id=?", success ? "completed" : "CANCELLED".equals(state) ? "cancelled" : "error", success ? null : message, job.getTenantId(), job.getContainerRecordId());
-            if (job.isAnnotation()) annotations.finished(job,state,message);
+            if (job.isAnnotation()) annotations.finished(job,state,message,autoConfirm);
             else jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=CASE WHEN ?='completed' THEN 100 ELSE progress END,error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
             return null;
         });

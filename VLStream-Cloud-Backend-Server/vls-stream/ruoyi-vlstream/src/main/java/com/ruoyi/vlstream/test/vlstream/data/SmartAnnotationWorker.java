@@ -138,12 +138,12 @@ public class SmartAnnotationWorker {
         String modelPath = result.path("modelPath").asText(); String sha = result.path("modelSha256").asText();
         String expected = round.getWorkDirectory() + ("active".equals(task.getMode()) ? "/training/weights/best.pt" : "/source.pt");
         if (!expected.equals(modelPath) || !sha.matches("[0-9a-f]{64}")) throw new ServiceException("智能标注模型产物校验失败");
-        importResults(round, task, result, modelPath, sha, true);
+        importResults(round, task, result, modelPath, sha, true, false);
     }
 
     /** Node jobs import only verified objects and stay non-reviewable until lease release. */
     @Transactional(rollbackFor = Exception.class)
-    public void importComputeResults(Long roundId, JsonNode result, String modelPath, String sha) {
+    public void importComputeResults(Long roundId, JsonNode result, String modelPath, String sha, boolean autoConfirm) {
         SmartAnnotationRound round = service.round(roundId);
         SmartAnnotationTask task = service.task(round.getTaskId());
         data.lockDatasetForTask(task.getDatasetId());
@@ -153,10 +153,10 @@ public class SmartAnnotationWorker {
             return;
         }
         if ("CANCEL_REQUESTED".equals(task.getTaskState())) return;
-        importResults(round, task, result, modelPath, sha, false);
+        importResults(round, task, result, modelPath, sha, false, autoConfirm);
     }
 
-    private void importResults(SmartAnnotationRound round, SmartAnnotationTask task, JsonNode result, String modelPath, String sha, boolean ready) {
+    private void importResults(SmartAnnotationRound round, SmartAnnotationTask task, JsonNode result, String modelPath, String sha, boolean ready, boolean autoConfirm) {
         DatasetSnapshot snapshot = service.snapshot(task, round);
         Map<Long, AnnotationImage> pending = SmartAnnotationService.unannotated(snapshot).stream().collect(Collectors.toMap(AnnotationImage::getId, s -> s));
         Map<String, Long> labelNames = new HashMap<>();
@@ -187,15 +187,24 @@ public class SmartAnnotationWorker {
             SmartAnnotationCandidate candidate = new SmartAnnotationCandidate(); candidate.setTenantId(data.tenant()); candidate.setTaskId(task.getId());
             candidate.setRoundId(round.getId()); candidate.setImageId(imageId); candidate.setBoxesJson(data.writeJson(boxes)); candidate.setReviewState("PENDING");
             candidate.setSummaryJson(data.writeJson(AnnotationPayloads.summary(boxes)));
+            if (autoConfirm) {
+                try { service.confirmationBoxes(task, boxes, true); }
+                catch (ServiceException pendingReview) { candidate.setReviewError(pendingReview.getMessage()); }
+            }
             candidate.setImageWidth(width); candidate.setImageHeight(height);
             candidate.setUncertainty(boxes.isEmpty() ? 1 : 1 - boxes.stream().mapToDouble(b -> b.getConfidence()).average().orElse(0));
             candidate.setHardExample(0); parsed.add(candidate);
         }
         if (!seen.equals(pending.keySet())) throw new ServiceException("推理结果不完整，不能进入确认阶段");
         parsed.sort(Comparator.comparing(SmartAnnotationCandidate::getUncertainty).reversed().thenComparing(SmartAnnotationCandidate::getImageId));
-        for (int i = 0; i < parsed.size(); i++) {
-            if ("active".equals(task.getMode()) && i < task.getReviewSize()) parsed.get(i).setHardExample(1);
-            candidates.insert(parsed.get(i));
+        int hardExamples = 0;
+        for (SmartAnnotationCandidate candidate : parsed) {
+            if ("active".equals(task.getMode()) && hardExamples < task.getReviewSize()
+                && (!autoConfirm || candidate.getReviewError() != null)) {
+                candidate.setHardExample(1);
+                hardExamples++;
+            }
+            candidates.insert(candidate);
         }
         round.setModelPath(modelPath); round.setModelSha256(sha); round.setPredictedCount(parsed.size()); rounds.updateById(round);
         if (ready) state(task, round, "REVIEW", null);

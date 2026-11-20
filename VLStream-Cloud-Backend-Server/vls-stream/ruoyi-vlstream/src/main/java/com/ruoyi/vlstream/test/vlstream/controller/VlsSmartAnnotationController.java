@@ -5,8 +5,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.ruoyi.vlstream.test.vlstream.data.*;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 @RestController
@@ -30,6 +34,15 @@ public class VlsSmartAnnotationController {
     @PostMapping("/{id}/confirm") public R<Boolean> confirm(@PathVariable Long id, @Valid @RequestBody SmartAnnotationRequests.ConfirmBatch request) { service.confirmBatch(id, request.getIds()); return R.data(true); }
     @PostMapping("/{id}/confirm-all") public R<Boolean> confirmAll(@PathVariable Long id) { service.confirmAll(id); return R.data(true); }
     @GetMapping("/{id}/predictions/{candidateId}") public R<Map<String, Object>> prediction(@PathVariable Long id, @PathVariable Long candidateId) { return R.data(service.prediction(id, candidateId)); }
+    @GetMapping("/{id}/predictions/{candidateId}/content")
+    public void predictionImage(@PathVariable Long id, @PathVariable Long candidateId, HttpServletResponse response) throws IOException {
+        try (InputStream image = service.predictionImage(id, candidateId)) {
+            response.setContentType("application/octet-stream");
+            response.setHeader("Cache-Control", "private, no-store");
+            response.setHeader("X-Content-Type-Options", "nosniff");
+            StreamUtils.copy(image, response.getOutputStream());
+        }
+    }
     @PostMapping("/{id}/next") public R<Boolean> next(@PathVariable Long id) { service.next(id); return R.data(true); }
     @PostMapping("/{id}/finish") public R<Boolean> finish(@PathVariable Long id) { service.finish(id); return R.data(true); }
     @PostMapping("/{id}/retry") public R<Boolean> retry(@PathVariable Long id) { service.retry(id); return R.data(true); }

@@ -186,6 +186,31 @@ class SmartAnnotationIntegrationTest {
         assertEquals("PENDING", sql.getMapper(SmartAnnotationCandidateMapper.class).selectById(a.getId()).getReviewState());
     }
 
+    @Test void automaticConfirmationPersistsEligibleImagesAndPreservesPendingAndExistingLabels() {
+        Long eligibleImage = image(1), pendingImage = image(2), editedImage = image(3);
+        SmartAnnotationTask task = create("model");
+        SmartAnnotationCandidate eligible = prediction(task, eligibleImage, label);
+        SmartAnnotationCandidate pending = prediction(task, pendingImage, label);
+        SmartAnnotationCandidate edited = prediction(task, editedImage, label);
+        jdbc.update("UPDATE vls_smart_annotation_candidate SET review_error='low confidence' WHERE id=?", pending.getId());
+        jdbc.update("INSERT INTO vls_annotation_instance (tenant_id,annotation_id,image_id,label_id,annotation_type,annotation_data,is_deleted) "
+            + "VALUES ('tenant-a',?,?,?,'rect','{\"x\":4,\"y\":4,\"width\":10,\"height\":10}',0)", dataset, editedImage, label);
+        jdbc.update("UPDATE vls_smart_annotation_task SET task_state='AUTO_CONFIRMING',bulk_total=2 WHERE id=?", task.getId());
+        SmartAnnotationCandidateMapper candidates = sql.getMapper(SmartAnnotationCandidateMapper.class);
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+
+        assertEquals("REVIEW", smart.task(task.getId()).getTaskState());
+        assertEquals(1, smart.task(task.getId()).getBulkAccepted());
+        assertEquals(1, smart.task(task.getId()).getBulkConflicts());
+        assertEquals("ACCEPTED", candidates.selectById(eligible.getId()).getReviewState());
+        assertEquals("PENDING", candidates.selectById(pending.getId()).getReviewState());
+        assertEquals("PENDING", candidates.selectById(edited.getId()).getReviewState());
+        List<AnnotationInstance> annotations = data.snapshot(dataset).getInstances();
+        assertEquals(2, annotations.size());
+        assertTrue(annotations.stream().anyMatch(instance -> editedImage.equals(instance.getImageId())
+            && instance.getAnnotationData().contains("\"x\":4")));
+    }
+
     @Test void tenantIsolationAndDuplicateDatasetTaskAreEnforced() {
         image(1); SmartAnnotationTask task = create("model");
         assertThrows(ServiceException.class, () -> create("model"));

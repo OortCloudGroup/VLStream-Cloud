@@ -1,11 +1,16 @@
 package com.ruoyi.vlstream.test.vlstream.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.mapper.*;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.*;
 import com.ruoyi.vlstream.test.vlstream.service.*;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockHttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -19,6 +24,7 @@ class SmartAnnotationServiceTest {
     SmartAnnotationCandidateMapper candidates;
     VlsAnnotationInstanceMapper instances;
     IVlsAnnotationInstanceService annotations;
+    DataMediaStorage storage;
     SmartAnnotationService service;
     SmartAnnotationTask task;
     SmartAnnotationRound round;
@@ -28,8 +34,9 @@ class SmartAnnotationServiceTest {
     @BeforeEach void setup() {
         data = mock(DataManagementService.class); tasks = mock(SmartAnnotationTaskMapper.class); rounds = mock(SmartAnnotationRoundMapper.class);
         candidates = mock(SmartAnnotationCandidateMapper.class); instances = mock(VlsAnnotationInstanceMapper.class); annotations = mock(IVlsAnnotationInstanceService.class);
+        storage = mock(DataMediaStorage.class);
         service = new SmartAnnotationService(data, tasks, rounds, candidates, mock(VlsAlgorithmModelMapper.class), mock(VlsAlgorithmMapper.class), instances,
-            annotations, mock(GpuTrainingSchedulerService.class), mock(DataMediaStorage.class), new ObjectMapper());
+            annotations, mock(GpuTrainingSchedulerService.class), storage, new ObjectMapper());
         when(data.tenant()).thenReturn("tenant-a");
         task = new SmartAnnotationTask(); task.setId(1L); task.setDatasetId(10L); task.setRoundNumber(1); task.setTaskState("REVIEW"); task.setConfidence(.25);
         round = new SmartAnnotationRound(); round.setId(2L); round.setVersionId(20L); round.setTaskId(1L);
@@ -67,6 +74,28 @@ class SmartAnnotationServiceTest {
 
     @Test void labelIdIsSerializedAsStringWithoutPrecisionLoss() throws Exception {
         assertTrue(new ObjectMapper().writeValueAsString(box()).contains("\"labelId\":\"2000000000000000001\""));
+    }
+
+    @Test void streamsCandidateImageThroughTheAuthorizedTask() throws Exception {
+        image.setMediaType("image");
+        byte[] bytes = { 1, 2, 3, 4 };
+        when(storage.read("image.png")).thenReturn(new ByteArrayInputStream(bytes));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        new com.ruoyi.vlstream.test.vlstream.controller.VlsSmartAnnotationController(service, null).predictionImage(1L, 3L, response);
+        assertArrayEquals(bytes, response.getContentAsByteArray());
+        assertEquals("application/octet-stream", response.getContentType());
+        assertEquals("private, no-store", response.getHeader("Cache-Control"));
+        verify(candidates).selectOne(argThat(query -> {
+            String sql = query.getSqlSegment();
+            return sql.contains("tenant_id") && sql.contains("task_id") && sql.contains("round_id") && sql.contains("id =");
+        }));
+        verify(data).sample(10L, 30L);
+    }
+
+    @Test void cannotStreamImageOutsideTheCurrentCandidateScope() {
+        when(candidates.selectOne(any())).thenReturn(null);
+        assertThrows(ServiceException.class, () -> service.predictionImage(1L, 99L));
+        verifyNoInteractions(storage);
     }
 
     @Test void onlyExplicitReviewWritesFormalAnnotations() {
@@ -146,6 +175,14 @@ class SmartAnnotationServiceTest {
         assertEquals("ACCEPTED", candidate.getReviewState());
     }
 
+    @Test void automaticConfirmationChecksWeakCandidatesBeforeDeduplicating() {
+        SmartAnnotationRequests.Box higher = box(), lower = box();
+        lower.setConfidence(.1);
+        ServiceException error = assertThrows(ServiceException.class,
+            () -> service.confirmationBoxes(task, Arrays.asList(higher, lower), true));
+        assertTrue(error.getMessage().contains("低置信度"));
+    }
+
     @Test void batchRejectsCrossClassOverlapWhileManualConfirmationCanRetainIt() throws Exception {
         SmartAnnotationRequests.Box first = box(), second = box(); second.setLabelId(2000000000000000002L);
         predictionBoxes(first, second);
@@ -208,19 +245,68 @@ class SmartAnnotationServiceTest {
     }
     @Test void computeResultImportIsIdempotentAndDoesNotPublishReviewOrFormalLabels() throws Exception {
         SmartAnnotationWorker worker=computeImporter();
-        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest");
-        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest");
+        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest",false);
+        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest",false);
         verify(candidates,times(1)).insert(any(SmartAnnotationCandidate.class));
         assertEquals("RUNNING",task.getTaskState());assertEquals(1,round.getPredictedCount());verifyNoInteractions(annotations);
     }
+
+    @Test void automaticImportPrechecksEntireImagesWithoutWritingFormalLabels() {
+        SmartAnnotationWorker worker = computeImporter();
+        task.setMode("active");
+        task.setReviewSize(5);
+        List<AnnotationImage> samples = new ArrayList<>(Collections.singletonList(image));
+        for (long id = 31L; id <= 34L; id++) {
+            AnnotationImage sample = new AnnotationImage();
+            sample.setId(id);
+            samples.add(sample);
+        }
+        data.readSnapshot("snapshot").setSamples(samples);
+        ObjectNode result = new ObjectMapper().createObjectNode().put("autoConfirm", true);
+        ArrayNode predictions = result.putArray("predictions");
+        addPrediction(predictions, 30L, "car", .8, .1);
+        addPrediction(predictions, 31L, "car");
+        addPrediction(predictions, 32L, "car", .25);
+        addPrediction(predictions, 33L, "car", .8);
+        addPrediction(predictions, 34L, "unmapped", .8);
+
+        worker.importComputeResults(2L, result, "cloud-training/10/job/weights/best.pt", "digest", true);
+
+        ArgumentCaptor<SmartAnnotationCandidate> inserted = ArgumentCaptor.forClass(SmartAnnotationCandidate.class);
+        verify(candidates, times(5)).insert(inserted.capture());
+        Map<Long, SmartAnnotationCandidate> byImage = new HashMap<>();
+        for (SmartAnnotationCandidate row : inserted.getAllValues()) {
+            byImage.put(row.getImageId(), row);
+            assertEquals("PENDING", row.getReviewState());
+        }
+        assertEquals(2, service.boxes(byImage.get(30L).getBoxesJson()).size());
+        assertTrue(byImage.get(30L).getReviewError().contains("低置信度"));
+        assertTrue(byImage.get(31L).getReviewError().contains("没有预测结果"));
+        assertTrue(byImage.get(32L).getReviewError().contains("低置信度"));
+        assertTrue(byImage.get(34L).getReviewError().contains("选择"));
+        assertNull(byImage.get(33L).getReviewError());
+        assertEquals(0, byImage.get(33L).getHardExample());
+        assertEquals(1, byImage.get(30L).getHardExample());
+        assertEquals("RUNNING", task.getTaskState());
+        verifyNoInteractions(annotations);
+    }
+
+    private void addPrediction(ArrayNode predictions, long imageId, String className, double... scores) {
+        ArrayNode boxes = predictions.addObject().put("imageId", Long.toString(imageId)).put("width", 100).put("height", 80).putArray("boxes");
+        for (int i = 0; i < scores.length; i++) {
+            boxes.addObject().put("className", className).put("x", 10 + i * 40).put("y", 10).put("width", 30).put("height", 20)
+                .put("confidence", scores[i]);
+        }
+    }
+
     @Test void computeResultWithUnknownImageIsRejectedBeforeCandidateWrites() throws Exception {
         SmartAnnotationWorker worker=computeImporter();
-        assertThrows(ServiceException.class,()->worker.importComputeResults(2L,computeResult(999L),"cloud-training/10/job/weights/best.pt","digest"));
+        assertThrows(ServiceException.class,()->worker.importComputeResults(2L,computeResult(999L),"cloud-training/10/job/weights/best.pt","digest",true));
         verify(candidates,never()).insert(any(SmartAnnotationCandidate.class));
     }
     @Test void cancelledComputeTaskDoesNotAdoptLatePredictions() throws Exception {
         SmartAnnotationWorker worker=computeImporter();task.setTaskState("CANCEL_REQUESTED");
-        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest");
+        worker.importComputeResults(2L,computeResult(30L),"cloud-training/10/job/weights/best.pt","digest",true);
         verify(candidates,never()).insert(any(SmartAnnotationCandidate.class));verifyNoInteractions(annotations);
     }
 }

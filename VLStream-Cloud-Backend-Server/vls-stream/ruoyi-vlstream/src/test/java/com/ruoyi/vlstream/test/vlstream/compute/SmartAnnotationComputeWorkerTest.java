@@ -2,8 +2,10 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.vlstream.test.vlstream.data.*;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AnnotationLabel;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
 import com.ruoyi.vlstream.test.vlstream.service.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.ObjectProvider;
@@ -48,28 +50,87 @@ class SmartAnnotationComputeWorkerTest {
         when(objects.archive(anyString(),anyString(),any())).thenReturn(true);
         when(objects.find(job.modelKey())).thenReturn(new ModelArtifactObjectStore.StoredArtifact("fixture","pt","best.pt",10,repeatA()));
         when(objects.find(ModelClassFileService.storagePath(job.modelKey()))).thenReturn(new ModelArtifactObjectStore.StoredArtifact("fixture","classes","data.yaml",yaml.getBytes(StandardCharsets.UTF_8).length,ModelArtifactObjectStore.hash(yaml)));
-        predictions=("{\"annotationType\":\"object_detection\",\"modelSha256\":\""+repeatA()+"\",\"predictions\":[]}").getBytes(StandardCharsets.UTF_8);
-        success=json.readTree("{\"state\":\"SUCCEEDED\",\"sha256\":\""+repeatA()+"\",\"size\":10,\"predictionsSha256\":\""+ModelArtifactObjectStore.hash(new String(predictions,StandardCharsets.UTF_8))+"\",\"predictionsSize\":"+predictions.length+"}");
-        when(connection.execute(contains(" status "),eq(45))).thenReturn("VLS_CLOUD="+success);
+        stubPredictionArtifact(null);
         doAnswer(call->{Files.write(call.getArgument(1),predictions);return null;}).when(connection).downloadBounded(eq("/fixture/job/results.json"),any(Path.class),eq(64L*1024*1024));
     }
     private String repeatA(){return String.join("",Collections.nCopies(64,"a"));}
-    @Test void importsVerifiedResultsBeforeReleaseThenPublishesReview() throws Exception {
+
+    private void stubPredictionArtifact(JsonNode autoConfirm) throws Exception {
+        ObjectNode artifact = json.createObjectNode().put("annotationType", "object_detection").put("modelSha256", repeatA());
+        artifact.putArray("predictions");
+        if (autoConfirm != null) artifact.set("autoConfirm", autoConfirm);
+        String contents = json.writeValueAsString(artifact);
+        predictions = contents.getBytes(StandardCharsets.UTF_8);
+        success = json.createObjectNode().put("state", "SUCCEEDED").put("sha256", repeatA()).put("size", 10)
+            .put("predictionsSha256", ModelArtifactObjectStore.hash(contents)).put("predictionsSize", predictions.length);
+        when(connection.execute(contains(" status "), eq(45))).thenReturn("VLS_CLOUD=" + success);
+    }
+
+    private void assertPublishesAfterImport(boolean autoConfirm) throws Exception {
         ReflectionTestUtils.invokeMethod(worker,"process",job);
         org.mockito.InOrder order=inOrder(importer,shared,annotations);
-        order.verify(importer).importComputeResults(eq(2L),any(),eq(job.modelKey()),eq(repeatA()));
+        order.verify(importer).importComputeResults(eq(2L),any(),eq(job.modelKey()),eq(repeatA()),eq(autoConfirm));
         order.verify(shared).release(eq(connection),eq(node),eq(job),any(),anyString());
-        order.verify(annotations).finished(job,"COMPLETED","PT 和类别文件已校验并回存平台");
+        order.verify(annotations).finished(job,"COMPLETED","PT 和类别文件已校验并回存平台",autoConfirm);
+    }
+
+    @Test void importsVerifiedResultsBeforeReleaseThenPublishesReview() throws Exception {
+        assertPublishesAfterImport(false);
         verify(jdbc,never()).update(contains("UPDATE vls_algorithm_training"),any(),any(),any(),any(),any(),any(),any());
     }
+
+    @Test void verifiedOptInEnablesAutomaticConfirmationAfterRelease() throws Exception {
+        job.setOptionsJson("{\"autoConfirm\":true}");
+        stubPredictionArtifact(json.getNodeFactory().booleanNode(true));
+        assertPublishesAfterImport(true);
+    }
+
+    @Test void resultMarkerAloneCannotEnableAutomaticConfirmation() throws Exception {
+        stubPredictionArtifact(json.getNodeFactory().booleanNode(true));
+        assertPublishesAfterImport(false);
+    }
+
+    @Test void optedInJobWithOldRunnerResultPublishesManualReview() throws Exception {
+        job.setOptionsJson("{\"autoConfirm\":true}");
+        assertPublishesAfterImport(false);
+    }
+
+    @Test void newNodeJobsFreezeAutomaticConfirmationAndThreshold() throws Exception {
+        ComputeNodeService nodes = mock(ComputeNodeService.class);
+        when(nodes.requireReady(10L)).thenReturn(node);
+        IVlsContainerInstanceService containers = mock(IVlsContainerInstanceService.class);
+        when(containers.saveTaskRecord(any())).thenAnswer(call -> {
+            call.<ContainerInstance>getArgument(0).setId(3L);
+            return true;
+        });
+        SmartAnnotationTask task = new SmartAnnotationTask();
+        task.setTenantId("tenant");
+        task.setDatasetId(20L);
+        task.setComputeNodeId(10L);
+        task.setAnnotationType("object_detection");
+        task.setModelPath("@preset/fixture");
+        task.setConfidence(.37);
+        SmartAnnotationRound round = new SmartAnnotationRound();
+        round.setId(2L);
+        round.setVersionId(30L);
+        new SmartAnnotationComputeService(jdbc, nodes, shared, containers, json, objects).enqueue(task, round, new DatasetSnapshot());
+
+        org.mockito.ArgumentCaptor<String> options = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(jdbc).update(contains("INSERT INTO vls_cloud_training_job"), any(), eq("tenant"), eq(2L), eq(10L), eq(3L), eq(20L),
+            eq(30L), eq("object_detection"), any(), eq("@preset/fixture"), options.capture(), any(), isNull(), isNull(), isNull());
+        JsonNode frozen = json.readTree(options.getValue());
+        assertTrue(frozen.path("autoConfirm").isBoolean() && frozen.path("autoConfirm").booleanValue());
+        assertEquals(.37, frozen.path("confidence").doubleValue());
+    }
+
     @Test void corruptPredictionsRetainLeaseAndNeverPublishReview() throws Exception {
         predictions="corrupt".getBytes(StandardCharsets.UTF_8);
         assertThrows(Exception.class,()->ReflectionTestUtils.invokeMethod(worker,"process",job));
         verifyNoInteractions(importer);verify(shared,never()).release(any(),any(),any(),any(),any());
-        verify(annotations,never()).finished(any(),any(),any());
+        verify(annotations,never()).finished(any(),any(),any(),anyBoolean());
     }
     @Test void importFailureRetainsLeaseForIdempotentRetry() throws Exception {
-        doThrow(new com.ruoyi.common.exception.ServiceException("import failed")).when(importer).importComputeResults(anyLong(),any(),anyString(),anyString());
+        doThrow(new com.ruoyi.common.exception.ServiceException("import failed")).when(importer).importComputeResults(anyLong(),any(),anyString(),anyString(),anyBoolean());
         assertThrows(Exception.class,()->ReflectionTestUtils.invokeMethod(worker,"process",job));
         verify(shared,never()).release(any(),any(),any(),any(),any());
     }
@@ -78,6 +139,6 @@ class SmartAnnotationComputeWorkerTest {
         ReflectionTestUtils.invokeMethod(worker,"process",job);
         verify(shared).release(eq(connection),eq(node),eq(job),argThat(result->"CANCELLED".equals(result.path("state").asText())),isNull());
         verify(connection,never()).execute(anyString(),anyInt());verifyNoInteractions(importer);
-        verify(annotations).finished(job,"CANCELLED","训练已取消");
+        verify(annotations).finished(job,"CANCELLED","训练已取消",false);
     }
 }

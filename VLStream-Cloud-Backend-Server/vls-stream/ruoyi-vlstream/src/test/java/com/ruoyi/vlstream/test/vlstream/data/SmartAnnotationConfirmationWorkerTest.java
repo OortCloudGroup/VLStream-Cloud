@@ -23,7 +23,7 @@ class SmartAnnotationConfirmationWorkerTest {
         SmartAnnotationTask task = new SmartAnnotationTask(); task.setId(1L); task.setDatasetId(10L); task.setTaskState("CONFIRMING");
         SmartAnnotationRound round = new SmartAnnotationRound(); round.setId(2L);
         SmartAnnotationCandidate candidate = new SmartAnnotationCandidate(); candidate.setId(3L); candidate.setReviewState("PENDING");
-        when(service.task(1L)).thenReturn(task); when(service.current(task)).thenReturn(round);
+        when(service.task(1L)).thenReturn(task); when(service.taskForUpdate(1L)).thenReturn(task); when(service.current(task)).thenReturn(round);
         when(service.scope()).thenReturn(new QueryWrapper<>()); when(data.tenant()).thenReturn("tenant-a");
         when(candidates.selectOne(any())).thenReturn(candidate);
         when(service.batchReviewBoxes(task, candidate)).thenThrow(new ServiceException("不同类别的目标框高度重叠，请逐图检查后确认"));

@@ -72,11 +72,15 @@ class CloudTrainingQueueFailureTest {
         ComputeNodeService nodes = mock(ComputeNodeService.class);
         ComputeSsh ssh = mock(ComputeSsh.class);
         CloudTrainingJob foreign = job("foreign", 1L);
-        foreign.setOptionsJson("{\"configuredResource\":{\"executionEnvironment\":\"production\"},"
-            + "\"sharedQueue\":{\"environment\":\"production\"}}");
+        foreign.setOptionsJson("{\"configuredResource\":{\"executionEnvironment\":\"localhost\"},"
+            + "\"sharedQueue\":{\"environment\":\"localhost\"}}");
         when(jdbc.query(contains("LIMIT 1"), any(RowMapper.class), eq(10L)))
             .thenReturn(Collections.singletonList(foreign));
         CloudTrainingWorker worker = worker(jdbc, nodes, ssh);
+        ComputeCatalogProperties catalog = (ComputeCatalogProperties) ReflectionTestUtils.getField(worker, "catalogProperties");
+        catalog.assignEnvironment("local-dev");
+        ComputeSharedQueueProperties queue = (ComputeSharedQueueProperties) ReflectionTestUtils.getField(worker, "sharedQueueProperties");
+        ReflectionTestUtils.setField(queue, "catalog", catalog);
         worker.tick(10L);
         verify(nodes, never()).get(anyLong());
         verifyNoInteractions(ssh);
@@ -160,7 +164,9 @@ class CloudTrainingQueueFailureTest {
             mock(RemoteModelArtifactService.class), new ObjectMapper());
         ModelHubProperties deployment = new ModelHubProperties();
         deployment.setBaseUrl("http://127.0.0.1:8406");
-        ReflectionTestUtils.setField(worker, "catalogProperties", new ComputeCatalogProperties(deployment));
+        ComputeCatalogProperties catalog = new ComputeCatalogProperties(deployment);
+        catalog.assignEnvironment("localhost");
+        ReflectionTestUtils.setField(worker, "catalogProperties", catalog);
         ComputeSharedQueueProperties shared = new ComputeSharedQueueProperties();
         shared.setEnvironmentId("localhost");
         ReflectionTestUtils.setField(worker, "sharedQueueProperties", shared);

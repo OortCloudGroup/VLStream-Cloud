@@ -53,6 +53,7 @@ class RunnerTest(unittest.TestCase):
         self.source.write_bytes(b'original-checkpoint')
         self.config = dict(model=str(self.source), mode='model', epochs=2, workers=0, confidence=.25,
                            images=[dict(id='2102255841364148226', path='images/predict/example.png')])
+        self.inference_confidence = None
         Detector.trained = []
         Detector.task = 'detect'
 
@@ -68,7 +69,10 @@ class RunnerTest(unittest.TestCase):
             Detector.trained.append(kwargs)
             weights = Path(output) / 'weights/best.pt'; weights.parent.mkdir(parents=True); weights.write_bytes(b'trained-checkpoint'); return weights
         def predict(model, path, confidence, **kwargs):
-            return 100, 80, [dict(className='car', x=10, y=20, width=40, height=50, confidence=.8)]
+            self.inference_confidence = confidence
+            boxes = [dict(className='car', x=10, y=20, width=40, height=50, confidence=score)
+                     for score in (.8, .1, .03) if score >= confidence]
+            return 100, 80, boxes
         with patch.object(runner, 'load_model', load), patch.object(runner, 'train', train), patch.object(runner, 'predict', predict): runner.run(str(path))
         return json.loads((self.root / 'results.json').read_text(encoding='utf-8'))
 
@@ -80,6 +84,25 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual('car', result['predictions'][0]['boxes'][0]['className'])
         self.assertEqual(64, len(result['modelSha256']))
         self.assertEqual([], Detector.trained)
+        self.assertEqual(.25, self.inference_confidence)
+        self.assertNotIn('autoConfirm', result)
+
+    def test_auto_confirm_keeps_weak_candidates_and_marks_result(self):
+        self.config['autoConfirm'] = True
+        for threshold, expected_confidence, expected_scores in ((.25, .05, [.8, .1]), (.05, .025, [.8, .1, .03])):
+            with self.subTest(threshold=threshold):
+                self.config['confidence'] = threshold
+                result = self.execute()
+                self.assertIs(True, result['autoConfirm'])
+                self.assertEqual(expected_confidence, self.inference_confidence)
+                self.assertEqual(expected_scores, [box['confidence'] for box in result['predictions'][0]['boxes']])
+
+    def test_explicitly_disabled_auto_confirm_preserves_prediction_threshold(self):
+        self.config['autoConfirm'] = False
+        result = self.execute()
+        self.assertEqual(.25, self.inference_confidence)
+        self.assertNotIn('autoConfirm', result)
+        self.assertEqual([.8], [box['confidence'] for box in result['predictions'][0]['boxes']])
 
     def test_active_learning_uses_new_best_checkpoint(self):
         self.config['mode'] = 'active'

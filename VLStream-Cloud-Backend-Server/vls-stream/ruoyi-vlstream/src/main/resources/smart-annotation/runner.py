@@ -51,9 +51,14 @@ def run(config_path):
                            epochs=config['epochs'], batch=4, size=640, workers=config['workers'], device=config.get('device', '0'), progress=progress)
     model = load_model(kind, str(model_path), cache)
     print('VLS_STAGE=PREDICTING', flush=True)
+    confidence = config['confidence']
+    auto_confirm = config.get('autoConfirm') is True
+    if auto_confirm:
+        # Keep weaker candidates for review. The server applies the confirmation threshold.
+        confidence = min(0.05, confidence / 2)
     predictions = []
     for index, item in enumerate(config['images']):
-        width, height, boxes = predict(model, root / item['path'], config['confidence'], device=config.get('device', '0'))
+        width, height, boxes = predict(model, root / item['path'], confidence, device=config.get('device', '0'))
         predictions.append(dict(imageId=str(item['id']), width=int(width), height=int(height), boxes=boxes, uncertainty=uncertainty(boxes)))
         progress('PREDICTING', index + 1, len(config['images']))
         print('VLS_PROGRESS={}/{}'.format(index + 1, len(config['images'])), flush=True)
@@ -61,7 +66,10 @@ def run(config_path):
     with model_path.open('rb') as weights:
         for chunk in iter(lambda: weights.read(1024 * 1024), b''):
             digest.update(chunk)
-    atomic_json(root / 'results.json', dict(modelPath=str(model_path), modelSha256=digest.hexdigest(), annotationType=kind, predictions=predictions))
+    results = dict(modelPath=str(model_path), modelSha256=digest.hexdigest(), annotationType=kind, predictions=predictions)
+    if auto_confirm:
+        results['autoConfirm'] = True
+    atomic_json(root / 'results.json', results)
     print('VLS_STAGE=COMPLETED', flush=True)
 
 

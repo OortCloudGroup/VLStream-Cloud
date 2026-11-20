@@ -22,9 +22,11 @@ class SmartAnnotationComputeServiceTest {
         jdbc=new JdbcTemplate(new DriverManagerDataSource("jdbc:h2:mem:smart"+System.nanoTime()+";MODE=MySQL;DB_CLOSE_DELAY=-1","sa",""));
         jdbc.execute("CREATE TABLE vls_cloud_training_job(id VARCHAR(36),tenant_id VARCHAR(64),training_id BIGINT,smart_round_id BIGINT,node_id BIGINT,container_record_id BIGINT,dataset_id BIGINT,version_id BIGINT,annotation_type VARCHAR(32),snapshot_json CLOB,base_model VARCHAR(2000),options_json CLOB,run_dir VARCHAR(2000),public_instance_key VARCHAR(200),public_claim_id VARCHAR(100),public_owner_subject VARCHAR(100),job_state VARCHAR(20) DEFAULT 'QUEUED',cancel_requested INT DEFAULT 0,progress INT DEFAULT 0,message VARCHAR(500),log_tail CLOB,create_time TIMESTAMP DEFAULT NOW(),update_time TIMESTAMP)");
         jdbc.execute("CREATE TABLE vls_smart_annotation_round(id BIGINT,tenant_id VARCHAR(64),task_id BIGINT,work_directory VARCHAR(2000),round_state VARCHAR(20),error_message VARCHAR(500))");
-        jdbc.execute("CREATE TABLE vls_smart_annotation_task(id BIGINT,tenant_id VARCHAR(64),task_state VARCHAR(20),error_message VARCHAR(500))");
+        jdbc.execute("CREATE TABLE vls_smart_annotation_task(id BIGINT,tenant_id VARCHAR(64),task_state VARCHAR(20),error_message VARCHAR(500),"
+            + "bulk_cursor BIGINT,bulk_total INT,bulk_processed INT,bulk_accepted INT,bulk_conflicts INT,bulk_error VARCHAR(500))");
+        jdbc.execute("CREATE TABLE vls_smart_annotation_candidate(round_id BIGINT,tenant_id VARCHAR(64),review_state VARCHAR(20),review_error VARCHAR(500),is_deleted INT)");
         jdbc.update("INSERT INTO vls_smart_annotation_round(id,tenant_id,task_id) VALUES(2,'tenant',1)");
-        jdbc.update("INSERT INTO vls_smart_annotation_task VALUES(1,'tenant','QUEUED',NULL)");
+        jdbc.update("INSERT INTO vls_smart_annotation_task(id,tenant_id,task_state) VALUES(1,'tenant','QUEUED')");
         nodes=mock(ComputeNodeService.class);shared=mock(ComputeSharedQueueService.class);
         IVlsContainerInstanceService containers=mock(IVlsContainerInstanceService.class);
         when(containers.saveTaskRecord(any())).thenAnswer(call->{com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance c=call.getArgument(0);c.setId(3L);return true;});
@@ -44,6 +46,7 @@ class SmartAnnotationComputeServiceTest {
         service.enqueue(task,round,new DatasetSnapshot());
         CloudTrainingJob job=job();assertNull(job.getTrainingId());assertEquals(2L,job.getSmartRoundId());assertEquals("owner",job.getPublicOwnerSubject());
         assertEquals(kind,job.getAnnotationType());assertTrue(job.isAnnotation());
+        assertTrue(new ObjectMapper().readTree(job.getOptionsJson()).path("autoConfirm").asBoolean());
         assertEquals(ComputeSharedQueueService.MODE,new ObjectMapper().readTree(job.getOptionsJson()).path("sharedQueue").path("mode").asText());
         verify(nodes).lockServer(10L);verify(shared).verifyBaseModel(task.getModelPath(),kind,"owner");
     }
@@ -71,12 +74,29 @@ class SmartAnnotationComputeServiceTest {
         jdbc.update("UPDATE vls_smart_annotation_task SET task_state='CANCEL_REQUESTED'");
         service.cancel(task,2L);service.phase(job,"RUNNING","running");
         assertTrue(job().isCancelRequested());assertEquals("CANCEL_REQUESTED",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
-        service.finished(job,"COMPLETED",null);
+        service.finished(job,"COMPLETED",null,true);
         assertEquals("CANCELLED",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
     }
     @Test void resultBecomesReviewableOnlyAtQueueCompletion() {
         service.enqueue(task,round,new DatasetSnapshot());CloudTrainingJob job=job();
         service.phase(job,"ARCHIVING","archiving");assertEquals("RUNNING",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
-        service.finished(job,"COMPLETED",null);assertEquals("REVIEW",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
+        service.finished(job,"COMPLETED",null,false);assertEquals("REVIEW",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
+    }
+    @Test void onlyEligibleCurrentRoundPredictionsStartAutomaticConfirmation() {
+        service.enqueue(task,round,new DatasetSnapshot());CloudTrainingJob job=job();
+        jdbc.update("INSERT INTO vls_smart_annotation_candidate VALUES "
+            + "(2,'tenant','PENDING',NULL,0),(2,'tenant','PENDING','low confidence',0),"
+            + "(2,'tenant','ACCEPTED',NULL,0),(2,'tenant','PENDING',NULL,1),"
+            + "(2,'other','PENDING',NULL,0),(3,'tenant','PENDING',NULL,0)");
+        service.finished(job,"COMPLETED",null,true);
+        assertEquals("AUTO_CONFIRMING",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
+        assertEquals(1,jdbc.queryForObject("SELECT bulk_total FROM vls_smart_annotation_task",Integer.class));
+        assertEquals(0,jdbc.queryForObject("SELECT bulk_processed FROM vls_smart_annotation_task",Integer.class));
+    }
+    @Test void noEligiblePredictionsLeavesTaskOpenForManualReview() {
+        service.enqueue(task,round,new DatasetSnapshot());CloudTrainingJob job=job();
+        jdbc.update("INSERT INTO vls_smart_annotation_candidate VALUES (2,'tenant','PENDING','low confidence',0)");
+        service.finished(job,"COMPLETED",null,true);
+        assertEquals("REVIEW",jdbc.queryForObject("SELECT task_state FROM vls_smart_annotation_task",String.class));
     }
 }

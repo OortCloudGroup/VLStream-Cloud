@@ -49,6 +49,7 @@ public class SmartAnnotationComputeService {
         options.put("computeNodeName", node.getName());
         options.put("workload", "smart_annotation"); options.put("mode", task.getMode()); options.put("epochs", task.getEpochs());
         options.put("confidence", task.getConfidence()); options.put("workers", 0);
+        options.put("autoConfirm", true);
         if (company) options.put("sharedQueue", shared.configuration(node,id,owner));
         if (node.isConfigurationManaged()) options.put("configuredResource", nodes.configurationSnapshot(node));
         try {
@@ -79,11 +80,28 @@ public class SmartAnnotationComputeService {
         jdbc.update("UPDATE vls_smart_annotation_round SET round_state=?,error_message=NULL WHERE tenant_id=? AND id=? AND round_state<>'REVIEW'",mapped,job.getTenantId(),job.getSmartRoundId());
         jdbc.update("UPDATE vls_smart_annotation_task SET task_state=?,error_message=NULL WHERE tenant_id=? AND id=(SELECT task_id FROM vls_smart_annotation_round WHERE id=? AND tenant_id=?) AND task_state<>'CANCEL_REQUESTED'",mapped,job.getTenantId(),job.getSmartRoundId(),job.getTenantId());
     }
-    public void finished(CloudTrainingJob job, String state, String message) {
+    public void finished(CloudTrainingJob job, String state, String message, boolean autoConfirm) {
         if ("COMPLETED".equals(state)) {
             Integer cancelled=jdbc.queryForObject("SELECT COUNT(*) FROM vls_smart_annotation_task WHERE tenant_id=? AND task_state='CANCEL_REQUESTED' AND id=(SELECT task_id FROM vls_smart_annotation_round WHERE id=? AND tenant_id=?)",Integer.class,job.getTenantId(),job.getSmartRoundId(),job.getTenantId());
             state=cancelled!=null && cancelled>0?"CANCELLED":"REVIEW";
             message=null;
+        }
+        if (autoConfirm && "REVIEW".equals(state)) {
+            Integer eligible = jdbc.queryForObject("SELECT COUNT(*) FROM vls_smart_annotation_candidate "
+                + "WHERE tenant_id=? AND round_id=? AND review_state='PENDING' AND is_deleted=0 AND (review_error IS NULL OR review_error='')",
+                Integer.class, job.getTenantId(), job.getSmartRoundId());
+            if (eligible != null && eligible > 0) {
+                int updated = jdbc.update("UPDATE vls_smart_annotation_task SET task_state='AUTO_CONFIRMING',error_message=NULL,"
+                    + "bulk_cursor=0,bulk_total=?,bulk_processed=0,bulk_accepted=0,bulk_conflicts=0,bulk_error=NULL "
+                    + "WHERE tenant_id=? AND task_state IN ('RUNNING','PREPARING','QUEUED') "
+                    + "AND id=(SELECT task_id FROM vls_smart_annotation_round WHERE id=? AND tenant_id=?)",
+                    eligible, job.getTenantId(), job.getSmartRoundId(), job.getTenantId());
+                if (updated > 0) {
+                    jdbc.update("UPDATE vls_smart_annotation_round SET round_state='REVIEW',error_message=NULL WHERE tenant_id=? AND id=?",
+                        job.getTenantId(), job.getSmartRoundId());
+                    return;
+                }
+            }
         }
         jdbc.update("UPDATE vls_smart_annotation_round SET round_state=?,error_message=? WHERE tenant_id=? AND id=?",state,message,job.getTenantId(),job.getSmartRoundId());
         jdbc.update("UPDATE vls_smart_annotation_task SET task_state=?,error_message=? WHERE tenant_id=? AND id=(SELECT task_id FROM vls_smart_annotation_round WHERE id=? AND tenant_id=?)",state,message,job.getTenantId(),job.getSmartRoundId(),job.getTenantId());
