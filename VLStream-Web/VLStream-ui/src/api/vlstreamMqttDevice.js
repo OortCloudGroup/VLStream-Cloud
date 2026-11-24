@@ -18,9 +18,10 @@ export const getMqttDevicePage = params => request({
   }
 })
 
-export const getMqttDeviceStreams = deviceRowId => request({
+export const getMqttDeviceStreams = (deviceRowId, { silentError = false } = {}) => request({
   url: `/vlstream/device/${deviceRowId}/streams`,
-  method: 'get'
+  method: 'get',
+  silentError
 })
 
 export const getMqttDeviceDetail = (deviceRowId, options = {}) => request({
@@ -29,11 +30,11 @@ export const getMqttDeviceDetail = (deviceRowId, options = {}) => request({
   silentError: options.silentError === true
 })
 
-// The square receives only online state and channel labels, never original source URLs.
-export const getMqttSquareStatus = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-status`, method: 'get' })
-export const getMqttSquareStreams = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-streams`, method: 'get' })
+// Status and stream listings omit original source URLs. The square handles failures in the affected tile.
+export const getMqttSquareStatus = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-status`, method: 'get', silentError: true })
+export const getMqttSquareStreams = deviceRowId => request({ url: `/vlstream/device/${deviceRowId}/square-streams`, method: 'get', silentError: true })
 export const createMqttSquarePreview = (deviceRowId, streamId) => request({
-  url: `/vlstream/device/${deviceRowId}/square-preview`, method: 'post', data: { streamId }
+  url: `/vlstream/device/${deviceRowId}/square-preview`, method: 'post', data: { streamId }, silentError: true
 })
 
 export const deployMqttDeviceFirmware = (deviceRowId, firmwareId) => request({
@@ -47,10 +48,11 @@ export const cancelMqttDeviceFirmwareTask = (deviceRowId, requestId) => request(
   method: 'post'
 })
 
-export const createMqttDevicePreview = (deviceRowId, streamId) => request({
+export const createMqttDevicePreview = (deviceRowId, streamId, { silentError = false } = {}) => request({
   url: `/vlstream/device/${deviceRowId}/preview`,
   method: 'post',
-  data: { streamId }
+  data: { streamId },
+  silentError
 })
 
 export const getMqttDeviceMediaStatus = () => request({

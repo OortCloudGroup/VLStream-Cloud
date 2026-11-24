@@ -69,7 +69,7 @@ async function connect() {
         // original query-authorized details in device management; keep that guard.
         if ((cause?.response?.data?.msg || cause?.message) !== '仅RTSP/RTMP流需要通过ZLM预览') throw cause
         if (current !== generation) return
-        const device = (await getCustomDevice(source.rowId)).data || {}
+        const device = (await getCustomDevice(source.rowId, { silentError: props.compactStatus })).data || {}
         const type = getCustomStreamType(device.streamUrl)
         if (!['cameraRTC', 'hls', 'flv', 'video', 'http'].includes(type)) throw cause
         response = { playMode: 'DIRECT', url: device.streamUrl }
@@ -79,10 +79,11 @@ async function connect() {
       lease = session
       if (session) unregisterLease = registerPreviewSession({ base: '/custom/device', deviceId: session.deviceId, id: session.id })
     } else {
-      response = (await request({ url: `/onvif/device/${source.rowId}/square-playback`, method: 'post' })).data || {}
+      const options = { silentError: props.compactStatus }
+      response = (await request({ url: `/onvif/device/${source.rowId}/square-playback`, method: 'post', ...options })).data || {}
       if (current !== generation) return
       if (response.playMode === 'PUSH') {
-        response = (await startPlay(response.streamId)).data || {}
+        response = (await startPlay(response.streamId, options)).data || {}
         if (current !== generation) return
       }
     }

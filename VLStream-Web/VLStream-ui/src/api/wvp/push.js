@@ -52,9 +52,10 @@ export function start(query) {
 }
 
 // idstart
-export function startPlay(stream) {
+export function startPlay(stream, { silentError = false } = {}) {
     return request({
         url: `/api/push/startPlay/${stream}`,
         method: 'get',
+        silentError
     })
 }

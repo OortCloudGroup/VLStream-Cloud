@@ -44,14 +44,15 @@ watch(() => [props.device.id, props.device.online, retryVersion.value], async ([
       error.value = '设备离线，不允许播放'
       return
     }
-    const getStatus = props.square ? getMqttSquareStatus : getMqttDeviceDetail
-    const device = (await getStatus(id))?.data?.device
+    const requestOptions = { silentError: props.compactStatus }
+    const getStatus = () => props.square ? getMqttSquareStatus(id) : getMqttDeviceDetail(id, requestOptions)
+    const device = (await getStatus())?.data?.device
     if (current !== generation) return
     if (device?.online !== true) {
       error.value = '设备离线，不允许播放'
       return
     }
-    stopMonitor = monitorDevicePreview(async () => (await getStatus(id))?.data?.device, () => {
+    stopMonitor = monitorDevicePreview(async () => (await getStatus())?.data?.device, () => {
       generation += 1
       cameraConfig.value = null
       rtcUrl.value = ''
@@ -59,11 +60,11 @@ watch(() => [props.device.id, props.device.online, retryVersion.value], async ([
       loading.value = false
       error.value = '设备离线或状态无法确认，已停止播放'
     })
-    const streams = (await (props.square ? getMqttSquareStreams(id) : getMqttDeviceStreams(id)))?.data || []
+    const streams = (await (props.square ? getMqttSquareStreams(id) : getMqttDeviceStreams(id, requestOptions)))?.data || []
     if (current !== generation) return
     const preferred = streams.find(stream => stream.defaultStream) || streams[0]
     if (!preferred) { error.value = '设备没有上报可用视频流'; return }
-    const preview = (await (props.square ? createMqttSquarePreview(id, preferred.id) : createMqttDevicePreview(id, preferred.id)))?.data || {}
+    const preview = (await (props.square ? createMqttSquarePreview(id, preferred.id) : createMqttDevicePreview(id, preferred.id, requestOptions)))?.data || {}
     if (current !== generation) return
     if (preview.playMode === 'cameraRTC' && (preview.cameraId || preview.url)) {
       cameraConfig.value = preview.cameraId ? squareCameraRtcConfig(preview.cameraId, CAMERA_RTC_SOCKET_URL) : parseCameraRtcConfig(preview.url)

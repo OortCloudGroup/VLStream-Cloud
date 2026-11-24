@@ -85,13 +85,27 @@ test('RTSP and ONVIF failures hide internal text while keeping protocol endpoint
   assert.equal(html.includes(internalFailure), false)
   assert.equal(player.instance.error.value, internalFailure)
   assert.equal(calls[0].url, '/onvif/device/12/preview')
+  assert.equal(calls[0].silentError, true)
   await player.instance.connect('12')
   assert.equal(calls.length, 2)
   assert.equal(calls[1].method, 'post')
   player.props.compactStatus = false
   assert.ok((await player.html()).includes(internalFailure))
   assert.match(await player.html(), /重新连接/)
+  await player.instance.connect('12')
+  assert.equal(calls[2].silentError, false)
   player.close()
+})
+
+test('VLStream square status, streams and preview hand errors to the affected tile', () => {
+  const source = readFileSync(new URL('../src/api/vlstreamMqttDevice.js', import.meta.url), 'utf8')
+    .replace(/^import .*$/gm, '').replace(/^export const /gm, 'const ')
+  const createApis = new Function('request', `${source}\nreturn { getMqttSquareStatus, getMqttSquareStreams, createMqttSquarePreview, createMqttDevicePreview }`)
+  const api = createApis(config => config)
+  assert.equal(api.getMqttSquareStatus(4).silentError, true)
+  assert.equal(api.getMqttSquareStreams(4).silentError, true)
+  assert.equal(api.createMqttSquarePreview(4, 2).silentError, true)
+  assert.equal(api.createMqttDevicePreview(4, 2).silentError, false)
 })
 
 test('a late RTSP lease is still released after switching sources and cannot restore the old preview', async () => {
@@ -175,21 +189,48 @@ test('invalid CUSTOM sources show no signal without a global error toast in the 
 })
 
 test('legacy CUSTOM fallback never converts a denied management detail into square access', async () => {
-  let details = 0
+  const details = []
   const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
     { source: { protocol: 'CUSTOM', rowId: '17' }, compactStatus: true }, {
       request: async () => { throw new Error('仅RTSP/RTMP流需要通过ZLM预览') },
-      getCustomDevice: async () => { details++; throw new Error('没有设备查询权限') },
+      getCustomDevice: async (id, options) => { details.push({ id, ...options }); throw new Error('没有设备查询权限') },
       startPlay() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
       ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType: () => 'cameraRTC',
       parseCameraRtcConfig: value => value,
     })
   await flush()
-  assert.equal(details, 1)
+  assert.deepEqual(details, [{ id: '17', silentError: true }])
   assert.equal(player.instance.error.value, '没有设备查询权限')
   assert.equal(player.instance.directUrl.value, '')
   assert.equal(player.instance.directCamera.value, null)
   player.close()
+})
+
+test('ONVIF square playback and push start use the same scoped error handling', async () => {
+  for (const compactStatus of [true, false]) {
+    const calls = []
+    const player = harness('views/VideoAggregation/components/SquareProtocolDevicePlayer.vue',
+      { source: { protocol: 'ONVIF', rowId: '4', playType: '2' }, compactStatus }, {
+        request: async config => {
+          calls.push(config)
+          return { data: { playMode: 'PUSH', streamId: 'camera' } }
+        },
+        startPlay: async (stream, options) => {
+          calls.push({ stream, ...options })
+          throw new Error(internalFailure)
+        },
+        getCustomDevice() {}, ZLMRTCClient: { Events: {} }, resolveZlmPlaybackUrl: value => value,
+        ensureOPlayer() {}, createOPlayerOptions() {}, getCustomStreamType() {}, parseCameraRtcConfig() {},
+      })
+    await flush()
+    assert.deepEqual(calls, [
+      { url: '/onvif/device/4/square-playback', method: 'post', silentError: compactStatus },
+      { stream: 'camera', silentError: compactStatus },
+    ])
+    assert.equal(player.instance.error.value, internalFailure)
+    assert.match(await player.html(), compactStatus ? /无信号/ : /INTERNAL_DIAGNOSTIC/)
+    player.close()
+  }
 })
 
 test('legacy CUSTOM fallback keeps direct playback when the existing detail permission permits it', async () => {

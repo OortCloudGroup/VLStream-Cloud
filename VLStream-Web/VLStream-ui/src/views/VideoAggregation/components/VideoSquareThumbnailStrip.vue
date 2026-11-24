@@ -117,6 +117,35 @@ function mutePreview(event) {
 /* Live previews and the selected camera's captured frame use the same square viewport. */
 .thumbnail-live-player :deep(.direct-player),
 .thumbnail-live-player :deep(.oplayer-container) { width: 100%; height: 100%; min-height: 0; }
+.thumbnail-live-player :deep(.rtsp-player-container) { max-width: 100%; max-height: 100%; }
 .thumbnail-live-player :deep(video) { display: block; width: 100%; height: 100%; max-height: none; object-fit: cover; }
+.thumbnail-live-player :deep(.el-loading-mask) {
+    z-index: 1;
+    background: rgb(8 12 18 / 86%);
+    backdrop-filter: none;
+}
+.thumbnail-live-player :deep(.el-loading-spinner) {
+    inset: 0;
+    margin: 0;
+    display: grid;
+    place-items: center;
+}
+/* Keep a full ring visible even if a slow frame stalls the animation. */
+.thumbnail-live-player :deep(.el-loading-spinner .circular) {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #65768d;
+    border-top-color: #83c7ff;
+    border-radius: 50%;
+    animation: thumbnail-spin 1s linear infinite;
+}
+.thumbnail-live-player :deep(.el-loading-spinner .path) { display: none; }
+@keyframes thumbnail-spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .thumbnail-live-player :deep(.el-loading-spinner .circular) { animation: none; }
+}
 .thumbnail-name { z-index: 2; }
 </style>

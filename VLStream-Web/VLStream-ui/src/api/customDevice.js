@@ -8,7 +8,8 @@
 import request, { downloadWvp } from '@/utils/wvpRequest'
 
 export const listCustomDevices = params => request({ url: '/custom/device/list', method: 'get', params })
-export const getCustomDevice = id => request({ url: `/custom/device/${id}`, method: 'get' })
+export const getCustomDevice = (id, { silentError = false } = {}) =>
+  request({ url: `/custom/device/${id}`, method: 'get', silentError })
 export const addCustomDevice = data => request({ url: '/custom/device', method: 'post', data })
 export const updateCustomDevice = data => request({ url: '/custom/device', method: 'put', data })
 export const deleteCustomDevices = ids => request({ url: `/custom/device/${ids}`, method: 'delete' })
