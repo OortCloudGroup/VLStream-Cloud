@@ -17,6 +17,7 @@ import com.ruoyi.framework.config.properties.SecurityProperties;
 import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.web.controller.compat.BladeTokenUserStore;
 import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
+import com.ruoyi.web.controller.config.WebMvcConfigToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -97,6 +98,9 @@ public class PlatformAccessTokenExchangeFilter extends OncePerRequestFilter {
             if (StringUtils.isNotBlank(contextPath) && path.startsWith(contextPath)) {
                 path = path.substring(contextPath.length());
             }
+        }
+        if (WebMvcConfigToken.isPublicFileRead(request.getMethod(), path)) {
+            return true;
         }
         if (securityProperties.getExcludes() != null) {
             for (String pattern : securityProperties.getExcludes()) {

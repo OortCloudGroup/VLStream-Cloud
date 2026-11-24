@@ -28,12 +28,8 @@ public class LocalSessionLifetimeInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        String path = request.getServletPath();
-        if (path == null || path.isEmpty()) {
-            path = request.getRequestURI().substring(request.getContextPath().length());
-        }
         if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())
-                || WebMvcConfigToken.isPublicMarketRead(request.getMethod(), path)) {
+                || WebMvcConfigToken.isPublicRead(request.getMethod(), WebMvcConfigToken.requestPath(request))) {
             return true;
         }
         StpUtil.checkLogin();

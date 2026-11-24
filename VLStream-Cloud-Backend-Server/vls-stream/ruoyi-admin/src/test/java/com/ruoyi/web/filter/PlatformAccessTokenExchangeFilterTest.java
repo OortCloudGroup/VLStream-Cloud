@@ -15,6 +15,9 @@ import com.ruoyi.web.controller.compat.BladeTokenUserStore;
 import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -25,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -63,8 +67,10 @@ class PlatformAccessTokenExchangeFilterTest {
         assertEquals(200, response.getStatus());
     }
 
-    @Test
-    void exchangeFailureReturnsJsonUnauthorizedInsteadOfReachingBusinessApi() throws Exception {
+    @ParameterizedTest
+    @CsvSource({"GET, /blade-system/user/info", "POST, /system/oss/upload",
+        "POST, /system/oss/public/ec930076-e000-4dc0-a2bd-081d84ec8b2a"})
+    void exchangeFailureReturnsJsonUnauthorizedInsteadOfReachingBusinessApi(String method, String path) throws Exception {
         TokenProperties properties = new TokenProperties();
         properties.setTenantType("multi");
         SecurityProperties security = new SecurityProperties();
@@ -73,7 +79,7 @@ class PlatformAccessTokenExchangeFilterTest {
         MultiTenantAuthService authService = mock(MultiTenantAuthService.class);
         PlatformAccessTokenExchangeFilter filter = new PlatformAccessTokenExchangeFilter(
             properties, security, tokenUserStore, authService);
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/blade-system/user/info");
+        MockHttpServletRequest request = new MockHttpServletRequest(method, path);
         request.addHeader("AccessToken", "bad-platform-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -121,5 +127,28 @@ class PlatformAccessTokenExchangeFilterTest {
             passed.set(TokenHeaderResolver.resolve((javax.servlet.http.HttpServletRequest) req)));
         assertEquals("fixture-local", passed.get());
         verifyNoInteractions(auth);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"GET", "HEAD"})
+    void publicFileLinksSkipPlatformExchangeEvenWithAnUnknownToken(String method) throws Exception {
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("multi");
+        BladeTokenUserStore users = mock(BladeTokenUserStore.class);
+        MultiTenantAuthService auth = mock(MultiTenantAuthService.class);
+        PlatformAccessTokenExchangeFilter filter = new PlatformAccessTokenExchangeFilter(properties,
+            new SecurityProperties(), users, auth);
+        String path = "/system/oss/public/ec930076-e000-4dc0-a2bd-081d84ec8b2a";
+        MockHttpServletRequest request = new MockHttpServletRequest(method, "/vls" + path);
+        request.setContextPath("/vls");
+        request.addHeader("Authorization", "Bearer fixture-unknown");
+        request.addHeader("tenantId", "old-tenant");
+        FilterChain downstream = mock(FilterChain.class);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, downstream);
+
+        verify(downstream).doFilter(request, response);
+        verifyNoInteractions(users, auth);
     }
 }

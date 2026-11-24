@@ -35,6 +35,9 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         TenantContextHolder.clear();
+        if (WebMvcConfigToken.isPublicFileRead(request.getMethod(), WebMvcConfigToken.requestPath(request))) {
+            return true;
+        }
         if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())) {
             TenantContextHolder.setTenantId(tokenProperties.getSingleTenantId());
             return true;
