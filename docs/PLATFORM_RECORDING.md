@@ -24,6 +24,8 @@ python3 -m venv /opt/recording-venv
 
 Docker 部署必须在 **VLS backend 镜像内**安装上述环境，不能只安装在宿主机或其他容器中。为录像目录挂载持久卷，并确保运行 Java 的用户可创建目录、写入文件和执行 Python。仅升级 JAR 不会自动安装这些依赖；后续重建或更换 backend 镜像时也必须保留它们。
 
+公司 Harbor 的 x86 后端镜像使用 [apaas-vls-server Dockerfile](../deploy/harbor/apaas-vls-server/Dockerfile)。使用这份文件构建时，将 Spring Boot 可执行包以 `apaas-vls-server.jar` 放在构建上下文根目录。镜像内置录像依赖，并预设 `PLATFORM_RECORDING_PYTHON=/opt/recording-venv/bin/python`。更新依赖版本时，同步修改录像模块的 `requirements.txt`、这份 Dockerfile 和构建机服务目录的 Dockerfile；构建脚本直接读取构建机上的文件。
+
 ## 运行配置
 
 以下是 Spring 配置项，也可以用环境变量设置。例如在现有 Compose 的 `services.backend` 中合并以下内容（路径须与镜像及持久卷对应）：

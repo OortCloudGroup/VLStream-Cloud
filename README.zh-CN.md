@@ -363,7 +363,7 @@ VLS 独立 CPU 转换容器，PT 回存后自动生成 Hi3519DV500 OM，回存 M
 `VLSTREAM_ATC_SOC_VERSION` 和 `VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT`。这些路径属于实际执行转换的主机，
 不会自动指向 VLS 应用服务器。
 
-独立容器使用 `deploy/release/compose.om.yaml`，通过 `VLSTREAM_OM_CONVERSION_ENABLED` 启用，
+后端默认启用 OM 转换队列，可设置 `VLSTREAM_OM_CONVERSION_ENABLED=false` 关闭。独立转换容器使用 `deploy/release/compose.om.yaml` 部署，
 需要单独挂载合法取得的 SVP/ATC 工具包。完整前置条件、启动命令、支持的模型及故障恢复见
 [自动 OM 转换指南](./docs/OM_CONVERSION.md)。上述旧 SSH 路径配置只用于默认主机转换链，
 不会代替独立容器配置；旧链仍会尝试 OM 转换，失败不删除 PT。

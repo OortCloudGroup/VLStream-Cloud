@@ -47,7 +47,7 @@ OM_CONVERTER_IMAGE=vlstream-om-converter:hi3519dv500
 docker compose -f compose.yaml -f compose.override.yaml -f compose.om.yaml up -d --no-deps backend om-converter
 ```
 
-如果没有 `compose.override.yaml`，省略该参数。后端更新需包含 Flyway `V1_2_0_029__om_conversion_queue.sql`；正常启动自动执行，不手工建表。转换默认关闭，叠加文件会设置 `VLSTREAM_OM_CONVERSION_ENABLED=true` 并为后端和转换容器挂载同一个 `om-work` 卷。
+如果没有 `compose.override.yaml`，省略该参数。后端更新需包含 Flyway `V1_2_0_029__om_conversion_queue.sql`；正常启动自动执行，不手工建表。VLS 默认启用转换队列，叠加文件部署转换容器并为其与后端挂载同一个 `om-work` 卷。没有部署转换容器的环境可以给后端设置 `VLSTREAM_OM_CONVERSION_ENABLED=false`，避免历史或新增任务排队等待。
 
 ## 工作方式与故障恢复
 
