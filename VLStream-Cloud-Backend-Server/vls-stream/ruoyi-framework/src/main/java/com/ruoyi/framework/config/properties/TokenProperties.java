@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class TokenProperties {
     private String tenantType = "single";
     private String singleTenantId = "000000";
+    private boolean multiTenantGatewayCredentialsRequired = true;
     private String multiTenantVerifyTokenAddress;
     private String multiTenantAdminUserUrl;
     private String multiTenantUserTenantsUrl;

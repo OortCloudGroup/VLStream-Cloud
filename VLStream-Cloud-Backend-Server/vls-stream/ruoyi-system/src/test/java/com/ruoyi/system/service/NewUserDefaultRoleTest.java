@@ -1,7 +1,9 @@
 package com.ruoyi.system.service;
 
+import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.system.domain.SysUserRoleView;
 import com.ruoyi.system.mapper.*;
 import com.ruoyi.system.service.impl.SysUserServiceImpl;
@@ -18,10 +20,11 @@ import static org.mockito.Mockito.*;
 @Tag("dev")
 class NewUserDefaultRoleTest {
     private final SysUserMapper users = mock(SysUserMapper.class);
+    private final SysRoleMapper roles = mock(SysRoleMapper.class);
     private final SysUserRoleViewMapper userRoles = mock(SysUserRoleViewMapper.class);
     private final DefaultMemberRoleService defaults = mock(DefaultMemberRoleService.class);
     private final SysUserServiceImpl service = new SysUserServiceImpl(users, mock(SysDeptMapper.class),
-        mock(SysRoleMapper.class), mock(SysPostMapper.class), userRoles, mock(SysUserPostMapper.class), defaults);
+        roles, mock(SysPostMapper.class), userRoles, mock(SysUserPostMapper.class), defaults);
 
     private SysUser user() {
         SysUser user = new SysUser(); user.setUserId("fixture-new-user"); user.setUserName("fixture");
@@ -47,6 +50,41 @@ class NewUserDefaultRoleTest {
         SysUser user = user(); assertTrue(service.registerUser(user));
         verify(defaults).assignIfMissing(user);
         verify(userRoles).insertBatch(any(Collection.class));
+    }
+
+    @Test
+    void verifiedPlatformMemberDoesNotNeedAnExistingLocalSession() {
+        SysUser user = user();
+        user.setPlatformUserId("platform-user");
+        user.setTenantId("verified-tenant");
+        user.setRoleIds(new String[] {"42"});
+        SysRole memberRole = new SysRole();
+        memberRole.setRoleId("42");
+        when(roles.selectById("42")).thenReturn(memberRole);
+        TenantContextHolder.setTenantId("verified-tenant");
+        try {
+            assertEquals(1, service.insertVerifiedPlatformUser(user));
+            verify(defaults).requireOrdinaryRole(memberRole);
+            verify(userRoles).insertBatch(any(Collection.class));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    @Test
+    void verifiedPlatformMemberCannotBeInsertedIntoAnotherTenant() {
+        SysUser user = user();
+        user.setPlatformUserId("platform-user");
+        user.setTenantId("other-tenant");
+        user.setRoleIds(new String[] {"42"});
+        TenantContextHolder.setTenantId("verified-tenant");
+        try {
+            assertThrows(ServiceException.class, () -> service.insertVerifiedPlatformUser(user));
+            verifyNoInteractions(roles);
+            verify(users, never()).insert(user);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     @Test

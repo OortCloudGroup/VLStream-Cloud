@@ -27,6 +27,7 @@ import com.ruoyi.common.exception.user.CaptchaException;
 import com.ruoyi.common.exception.user.CaptchaExpireException;
 import com.ruoyi.common.exception.user.UserException;
 import com.ruoyi.common.helper.LoginHelper;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.ServletUtils;
@@ -100,11 +101,17 @@ public class SysLoginService {
         if (isLoginBlockedStatus(user.getStatus())) {
             throw new UserException("user.blocked", user.getUserName());
         }
-        LoginUser loginUser = buildLoginUser(user);
-        LoginHelper.loginByDevice(loginUser, DeviceType.PC);
-        recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, "统一平台登录成功");
-        recordLoginInfo(user.getUserId(), user.getUserName());
-        return StpUtil.getTokenValue();
+        String previousTenant = TenantContextHolder.getTenantId();
+        try {
+            TenantContextHolder.setTenantId(user.getTenantId());
+            LoginUser loginUser = buildLoginUser(user);
+            LoginHelper.loginByDevice(loginUser, DeviceType.PC);
+            recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, "统一平台登录成功");
+            recordLoginInfo(user.getUserId(), user.getUserName());
+            return StpUtil.getTokenValue();
+        } finally {
+            TenantContextHolder.setTenantId(previousTenant);
+        }
     }
 
     public String smsLogin(String phonenumber, String smsCode) {

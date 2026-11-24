@@ -135,6 +135,9 @@ public interface ISysUserService extends IService<SysUser> {
      */
     int insertUser(SysUser user);
 
+    /** Creates an SSO user after the platform identity has been verified. */
+    int insertVerifiedPlatformUser(SysUser user);
+
     /**
      * userinfo
      *

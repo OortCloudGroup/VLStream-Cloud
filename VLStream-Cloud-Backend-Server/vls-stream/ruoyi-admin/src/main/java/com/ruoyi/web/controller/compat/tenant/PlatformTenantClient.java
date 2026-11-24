@@ -18,7 +18,9 @@ import com.ruoyi.framework.config.properties.TokenProperties;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.List;
 
 /**
@@ -34,6 +36,9 @@ public class PlatformTenantClient {
     }
 
     public PlatformGatewayHeaders resolveGatewayHeaders(HttpServletRequest request) {
+        if (!tokenProperties.isMultiTenantGatewayCredentialsRequired()) {
+            return new PlatformGatewayHeaders();
+        }
         String requestType = firstHeader(request, "requestType", "requesttype");
         String appId = firstHeader(request, "appId", "appid");
         String secretKey = firstHeader(request, "secretKey", "secretkey");
@@ -117,20 +122,26 @@ public class PlatformTenantClient {
         if (StringUtils.isBlank(url)) {
             throw new PlatformTenantCallException(PlatformTenantCallException.Kind.CONFIGURATION, null, null, null);
         }
-        if (headers == null) {
+        boolean requireGatewayCredentials = tokenProperties.isMultiTenantGatewayCredentialsRequired();
+        if (requireGatewayCredentials && headers == null) {
+            throw new PlatformTenantCallException(PlatformTenantCallException.Kind.CONFIGURATION, null, null, null);
+        }
+        if (!requireGatewayCredentials && (StringUtils.isBlank(platformToken) || !isClusterServiceUrl(url))) {
             throw new PlatformTenantCallException(PlatformTenantCallException.Kind.CONFIGURATION, null, null, null);
         }
         int timeout = Math.max(tokenProperties.getMultiTenantConnectTimeoutMillis(),
             tokenProperties.getMultiTenantReadTimeoutMillis());
-        try (HttpResponse httpResponse = HttpRequest.post(url)
+        HttpRequest request = HttpRequest.post(url)
             .header("Content-Type", "application/json")
-            .header("requesttype", headers.getRequestType())
-            .header("appid", headers.getAppId())
-            .header("secretkey", headers.getSecretKey())
             .header("accesstoken", platformToken)
             .body(body.toString())
-            .timeout(timeout)
-            .execute()) {
+            .timeout(timeout);
+        if (requireGatewayCredentials) {
+            request.header("requesttype", headers.getRequestType())
+                .header("appid", headers.getAppId())
+                .header("secretkey", headers.getSecretKey());
+        }
+        try (HttpResponse httpResponse = request.execute()) {
             if (!httpResponse.isOk()) {
                 throw new PlatformTenantCallException(PlatformTenantCallException.Kind.HTTP_STATUS,
                     httpResponse.getStatus(), null, null);
@@ -157,6 +168,19 @@ public class PlatformTenantClient {
             throw exception;
         } catch (Exception exception) {
             throw new PlatformTenantCallException(PlatformTenantCallException.Kind.TRANSPORT, null, null, exception);
+        }
+    }
+
+    private static boolean isClusterServiceUrl(String url) {
+        try {
+            URI endpoint = URI.create(url);
+            String scheme = endpoint.getScheme();
+            String host = endpoint.getHost();
+            return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+                && host != null && host.toLowerCase(Locale.ROOT).endsWith(".svc.cluster.local")
+                && endpoint.getUserInfo() == null && endpoint.getFragment() == null;
+        } catch (IllegalArgumentException exception) {
+            return false;
         }
     }
 

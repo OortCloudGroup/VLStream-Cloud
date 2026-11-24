@@ -33,6 +33,7 @@ import com.ruoyi.common.core.service.UserService;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.DataBaseHelper;
 import com.ruoyi.common.helper.LoginHelper;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.common.utils.StreamUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.SysPost;
@@ -298,6 +299,23 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             validateAssignedRoles(user.getRoleIds(), currentActor());
         }
         defaultMemberRoles.assignIfMissing(user);
+        return insertNewUser(user);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int insertVerifiedPlatformUser(SysUser user) {
+        String[] roleIds = user.getRoleIds();
+        if (StringUtils.isBlank(user.getPlatformUserId()) || StringUtils.isBlank(user.getTenantId())
+            || !user.getTenantId().equals(TenantContextHolder.getTenantId())
+            || roleIds == null || roleIds.length != 1 || StringUtils.isBlank(roleIds[0])) {
+            throw new ServiceException("平台成员缺少可信租户身份或默认角色");
+        }
+        defaultMemberRoles.requireOrdinaryRole(roleMapper.selectById(roleIds[0]));
+        return insertNewUser(user);
+    }
+
+    private int insertNewUser(SysUser user) {
         // Add userinfo
         int rows = baseMapper.insert(user);
         if (rows <= 0) {

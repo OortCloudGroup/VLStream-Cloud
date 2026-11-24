@@ -82,7 +82,7 @@ public class MultiTenantShadowUserService {
             user.setCreateBy("platform-sso");
             user.setRoleIds(new String[] {tenantRole.getRoleId()});
             try {
-                userService.insertUser(user);
+                userService.insertVerifiedPlatformUser(user);
             } catch (DuplicateKeyException duplicateKeyException) {
                 SysUser concurrentUser = findShadowUser(tenantId, platformUserId);
                 if (concurrentUser == null) {
