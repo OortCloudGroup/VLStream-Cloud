@@ -11,7 +11,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import com.ruoyi.vlstream.test.vlstream.service.LlmAnnotationProviderService;
 
 @RestController
 @SaCheckPermission("vls:menu:smart-annotation")
@@ -21,12 +23,20 @@ public class VlsSmartAnnotationController {
     private final SmartAnnotationService service;
     private final SmartAnnotationWorker worker;
 
-    @GetMapping public R<IPage<SmartAnnotationTask>> list(@RequestParam(required = false) Long datasetId, @RequestParam(defaultValue = "1") int page) { return R.data(service.list(datasetId, page)); }
+    @GetMapping
+    public R<IPage<SmartAnnotationTask>> list(@RequestParam(required = false) Long datasetId, @RequestParam(defaultValue = "1") int page,
+                                             @RequestParam(name = "mode", defaultValue = "compute") String mode) {
+        return R.data(service.list(datasetId, page, mode));
+    }
     @GetMapping("/options/{datasetId}")
     public R<Map<String, Object>> options(@PathVariable Long datasetId, @RequestParam(defaultValue = "false") boolean forActiveLearning) {
         return R.data(service.options(datasetId, forActiveLearning));
     }
     @PostMapping public R<SmartAnnotationTask> create(@Valid @RequestBody SmartAnnotationRequests.Create request) { return R.data(service.create(request)); }
+    @GetMapping("/llm/providers")
+    public R<List<LlmAnnotationProviderService.ProviderOption>> llmProviders() { return R.data(service.llmProviders()); }
+    @GetMapping("/llm/providers/{id}/models")
+    public R<List<String>> llmModels(@PathVariable Long id) { return R.data(service.llmModels(id)); }
     @GetMapping("/{id}") public R<Map<String, Object>> detail(@PathVariable Long id) { return R.data(service.detail(id)); }
     @GetMapping("/{id}/predictions") public R<Map<String, Object>> predictions(@PathVariable Long id, @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "PENDING") String state, @RequestParam(defaultValue = "false") boolean hardOnly) { return R.data(service.predictions(id, page, state, hardOnly)); }

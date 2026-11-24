@@ -9,6 +9,8 @@ const call = async (path = '', method = 'get', data, params, signal) => {
 export const listSmartTasks = params => call('', 'get', undefined, params)
 export const smartOptions = (datasetId, forActiveLearning = false) =>
   call(`/options/${datasetId}`, 'get', undefined, forActiveLearning ? { forActiveLearning: true } : undefined)
+export const listSmartLlmProviders = () => call('/llm/providers')
+export const listSmartLlmModels = providerId => call(`/llm/providers/${encodeURIComponent(providerId)}/models`)
 export const createSmartTask = data => call('', 'post', data)
 export const getSmartTask = id => call(`/${id}`)
 export const smartPredictions = (id, params, signal) => call(`/${id}/predictions`, 'get', undefined, params, signal)

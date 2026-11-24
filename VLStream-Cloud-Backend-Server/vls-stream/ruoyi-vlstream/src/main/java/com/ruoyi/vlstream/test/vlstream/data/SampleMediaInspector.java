@@ -1,6 +1,7 @@
 package com.ruoyi.vlstream.test.vlstream.data;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.twelvemonkeys.imageio.plugins.jpeg.JPEGImageReader;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
@@ -62,7 +63,7 @@ public class SampleMediaInspector {
                 int width = reader.getWidth(0), height = reader.getHeight(0);
                 if ((long) width * height > 40000000L) throw new ServiceException("图片像素数不能超过 4000 万");
                 List<String> warnings = new ArrayList<>();
-                reader.addIIOReadWarningListener((source, warning) -> warnings.add(warning));
+                collectDecodeWarnings(reader, warnings);
                 BufferedImage image = reader.read(0);
                 if (image == null || !warnings.isEmpty()) throw new ServiceException("图片数据不完整或解码出现异常");
                 result.setMediaType("image");
@@ -118,7 +119,8 @@ public class SampleMediaInspector {
                 if (!("jpg".equals(extension) ? "jpeg" : extension).equals(format)) throw new ServiceException("文件格式与扩展名不符");
                 int width = reader.getWidth(0), height = reader.getHeight(0);
                 if ((long) width * height > 40000000L) throw new ServiceException("图片像素超过 4000 万，请缩小分辨率后导入");
-                List<String> warnings = new ArrayList<>(); reader.addIIOReadWarningListener((source, warning) -> warnings.add(warning));
+                List<String> warnings = new ArrayList<>();
+                collectDecodeWarnings(reader, warnings);
                 BufferedImage image = reader.read(0);
                 if (image == null || !warnings.isEmpty()) throw new ServiceException("图片内容损坏或不完整");
                 result.setMediaType("image"); result.setContentType("image/" + format); result.setWidth(width); result.setHeight(height);
@@ -190,6 +192,18 @@ public class SampleMediaInspector {
 
     private static String ascii(byte[] bytes, int start, int size) {
         return new String(bytes, start, size, StandardCharsets.US_ASCII);
+    }
+
+    private void collectDecodeWarnings(ImageReader reader, List<String> warnings) {
+        reader.addIIOReadWarningListener((source, warning) -> {
+            // These two JPEG notices describe color conversion. All structural/decoder warnings still fail validation.
+            if (source instanceof JPEGImageReader
+                && ("ICC profile is Perceptual, ignoring, treating as Display class".equals(warning)
+                || "No embedded ICC color profile, defaulting to \"generic\" CMYK ICC profile. Colors may look incorrect.".equals(warning))) {
+                return;
+            }
+            warnings.add(warning);
+        });
     }
 
     private double focus(BufferedImage image) {

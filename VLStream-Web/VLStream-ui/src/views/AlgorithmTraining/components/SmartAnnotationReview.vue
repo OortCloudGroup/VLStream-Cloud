@@ -3,8 +3,9 @@
     <template v-if="item">
       <div class="review-heading"><span>{{ item.imageName }}</span><span>{{ item.width }} × {{ item.height }} · {{ $tp(typeNames[annotationType]) }}</span></div>
       <el-alert v-if="item.predictionQuality?.classConflict" :title="$tp('模型给出了类别不同且高度重叠的框，请核对类别及框的位置后确认。')" type="warning" :closable="false" show-icon />
+      <el-alert v-if="llm && item.candidate.reviewError" :title="item.candidate.reviewError" type="warning" :closable="false" show-icon class="review-warning" />
       <p v-if="item.predictionQuality?.suppressedCount">{{ $tp('已合并 {count} 个同类重叠框，保留置信度最高的预测。', { count: item.predictionQuality.suppressedCount }) }}</p>
-      <PixelAnnotationEditor v-if="annotationType !== 'object_detection'" ref="pixelEditor" :kind="annotationType" :image-url="item.previewUrl" :width="item.width" :height="item.height" :regions="boxes" :labels="labels" :disabled="saving" @change="dirty = true" />
+      <PixelAnnotationEditor v-if="annotationType !== 'object_detection'" ref="pixelEditor" :kind="annotationType" :image-url="item.previewUrl" :width="item.width" :height="item.height" :regions="boxes" :labels="labels" :disabled="saving" :llm="llm" @change="dirty = true" />
       <div v-else class="review-workspace">
         <div class="review-canvas">
           <p>{{ $tp('拖动空白处新增框；点击框选择，可拖动移动，也可在右侧调整坐标和大小。') }}</p>
@@ -20,7 +21,7 @@
         <aside class="review-boxes">
           <el-select v-model="newLabel" :disabled="saving" :placeholder="$tp('新画框使用的标签')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
           <div v-for="(box, index) in boxes" :key="index" class="box-form" :class="{ selected: selected === index }" @click="selected = index">
-            <div class="box-heading"><strong>{{ $tp('目标') }} {{ index + 1 }}</strong><span>{{ box.confidence == null ? $tp('手工新增') : `${Math.round(box.confidence * 100)}%` }}</span><el-button link type="danger" :disabled="saving" @click.stop="remove(index)">{{ $tp('删除') }}</el-button></div>
+            <div class="box-heading"><strong>{{ $tp('目标') }} {{ index + 1 }}</strong><span>{{ confidenceLabel(box) }}</span><el-button link type="danger" :disabled="saving" @click.stop="remove(index)">{{ $tp('删除') }}</el-button></div>
             <p v-if="box.className" class="model-label">{{ $tp('模型类别：') }}{{ box.className }}</p>
             <el-select v-model="box.labelId" :disabled="saving" :placeholder="$tp('请选择对应标签')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
             <div class="coordinates"><label v-for="field in fields" :key="field.key">{{ field.name }}<el-input-number v-model="box[field.key]" :disabled="saving" :min="field.min" :max="field.key === 'x' || field.key === 'width' ? item.width : item.height" :precision="1" :controls="false" /></label></div>
@@ -39,7 +40,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PixelAnnotationEditor from './PixelAnnotationEditor.vue'
 
-const props = defineProps({ item: { type: Object, default: null }, labels: { type: Array, default: () => [] }, saving: Boolean, annotationType: { type: String, default: 'object_detection' }, title: { type: String, default: '确认预标注' }, allowSkip: { type: Boolean, default: true } })
+const props = defineProps({ item: { type: Object, default: null }, labels: { type: Array, default: () => [] }, saving: Boolean, llm: Boolean, annotationType: { type: String, default: 'object_detection' }, title: { type: String, default: '确认预标注' }, allowSkip: { type: Boolean, default: true } })
 const emit = defineEmits(['close', 'save'])
 const boxes = ref([])
 const selected = ref(-1)
@@ -61,6 +62,11 @@ watch(() => props.item, item => {
 })
 watch(boxes, () => { dirty.value = true }, { deep: true, flush: 'sync' })
 const labelName = box => props.labels.find(label => String(label.id) === box.labelId)?.name || box.className || uiText('未选择标签')
+const confidenceLabel = box => {
+  if (box.confidence == null) return uiText(props.llm ? '无模型分数' : '手工新增')
+  const score = `${Math.round(box.confidence * 100)}%`
+  return props.llm ? uiText('模型估计 {score}', { score }) : score
+}
 const point = event => {
   const p = surface.value.createSVGPoint()
   p.x = event.clientX; p.y = event.clientY
@@ -121,4 +127,5 @@ const submit = skip => {
 
 <style scoped>
 .review-heading,.box-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.review-heading{margin-bottom:12px}.review-workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}.review-canvas{min-width:0;background:#152333;padding:14px;border-radius:8px;color:#c6d3e2}.review-canvas p{margin:0 0 12px;font-size:12px}.review-canvas svg{width:100%;max-height:52vh;display:block;touch-action:none;cursor:crosshair;user-select:none}.review-boxes{max-height:58vh;overflow:auto}.box-form{border:1px solid var(--el-border-color);padding:12px;margin-top:12px;border-radius:7px}.box-form.selected{border-color:#e6a23c}.model-label{font-size:12px;color:var(--el-text-color-secondary)}.coordinates{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.coordinates label{font-size:12px}.coordinates .el-input-number{width:100%}@media(max-width:800px){.review-workspace{grid-template-columns:1fr}.review-boxes{max-height:32vh}}
+.review-warning { margin-bottom: 12px; }
 </style>

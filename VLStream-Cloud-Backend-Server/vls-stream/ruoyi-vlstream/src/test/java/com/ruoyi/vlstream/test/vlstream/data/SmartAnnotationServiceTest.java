@@ -39,12 +39,13 @@ class SmartAnnotationServiceTest {
             annotations, mock(GpuTrainingSchedulerService.class), storage, new ObjectMapper());
         when(data.tenant()).thenReturn("tenant-a");
         task = new SmartAnnotationTask(); task.setId(1L); task.setDatasetId(10L); task.setRoundNumber(1); task.setTaskState("REVIEW"); task.setConfidence(.25);
+        task.setTenantId("tenant-a");
         round = new SmartAnnotationRound(); round.setId(2L); round.setVersionId(20L); round.setTaskId(1L);
         candidate = new SmartAnnotationCandidate(); candidate.setId(3L); candidate.setImageId(30L); candidate.setReviewState("PENDING");
         image = new AnnotationImage(); image.setId(30L); image.setLocalPath("image.png"); image.setContentSha256("hash"); image.setMediaWidth(100); image.setMediaHeight(80);
         when(tasks.selectOne(any())).thenReturn(task); when(rounds.selectOne(any())).thenReturn(round); when(candidates.selectOne(any())).thenReturn(candidate);
         when(data.sample(10L, 30L)).thenReturn(image);
-        AlgorithmAnnotation project = new AlgorithmAnnotation(); project.setAnnotationType("object_detection"); when(data.project(10L)).thenReturn(project);
+        AlgorithmAnnotation project = new AlgorithmAnnotation(); project.setAnnotationType("object_detection"); project.setTenantId("tenant-a"); when(data.project(10L)).thenReturn(project);
         DatasetSnapshot snapshot = new DatasetSnapshot(); snapshot.setSamples(Collections.singletonList(image));
         DatasetVersion version = new DatasetVersion(); version.setSnapshotJson("snapshot");
         when(data.version(10L, 20L)).thenReturn(version); when(data.readSnapshot("snapshot")).thenReturn(snapshot);

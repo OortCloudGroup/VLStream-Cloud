@@ -22,4 +22,7 @@ public class SmartAnnotationCandidate extends TenantEntity {
     private Double uncertainty;
     private Integer hardExample;
     private String reviewState;
+    @com.fasterxml.jackson.annotation.JsonIgnore private String llmInputSha256;
+    @com.fasterxml.jackson.annotation.JsonIgnore private String llmClaimToken;
+    @com.fasterxml.jackson.annotation.JsonIgnore private java.util.Date llmClaimUntil;
 }

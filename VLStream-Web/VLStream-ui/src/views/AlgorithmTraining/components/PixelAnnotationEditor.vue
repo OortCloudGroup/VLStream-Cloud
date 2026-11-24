@@ -1,7 +1,13 @@
 <template>
   <div v-if="kind === 'image_classification'" class="classification-editor">
     <img :src="imageUrl" :alt="$tp('待分类图片')" />
-    <aside><h3>{{ $tp('整图类别') }}</h3><p>{{ $tp('为这张图片选择一个类别。') }}</p><el-select v-model="classification" :disabled="disabled" :placeholder="$tp('选择类别')" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select><p v-if="regions[0]?.className">{{ $tp('模型建议：') }}{{ regions[0].className }} · {{ Math.round((regions[0].confidence || 0) * 100) }}%</p></aside>
+    <aside><h3>{{ $tp('整图类别') }}</h3><p>{{ $tp('为这张图片选择一个类别。') }}</p><el-select v-model="classification" :disabled="disabled" :placeholder="$tp('选择类别')" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+      <p v-if="regions[0]?.className">
+        {{ $tp('模型建议：') }}{{ regions[0].className }} ·
+        <template v-if="llm">{{ regions[0].confidence == null ? $tp('无模型分数') : $tp('模型估计 {score}', { score: `${Math.round(regions[0].confidence * 100)}%` }) }}</template>
+        <template v-else>{{ Math.round((regions[0].confidence || 0) * 100) }}%</template>
+      </p>
+    </aside>
   </div>
   <div v-else class="pixel-editor" v-loading="loading">
     <div class="pixel-main">
@@ -26,7 +32,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
-const props = defineProps({ kind: { type: String, required: true }, imageUrl: { type: String, required: true }, width: { type: Number, required: true }, height: { type: Number, required: true }, regions: { type: Array, default: () => [] }, labels: { type: Array, default: () => [] }, disabled: Boolean })
+const props = defineProps({ kind: { type: String, required: true }, imageUrl: { type: String, required: true }, width: { type: Number, required: true }, height: { type: Number, required: true }, regions: { type: Array, default: () => [] }, labels: { type: Array, default: () => [] }, disabled: Boolean, llm: Boolean })
 const emit = defineEmits(['change'])
 const semantic = computed(() => props.kind === 'semantic_segmentation')
 const canvas = ref(null); const entries = ref([]); const selected = ref(-1); const newLabel = ref('')

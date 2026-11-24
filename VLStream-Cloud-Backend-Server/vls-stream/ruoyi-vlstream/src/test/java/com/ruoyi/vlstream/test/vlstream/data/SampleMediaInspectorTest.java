@@ -8,6 +8,8 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,6 +31,27 @@ class SampleMediaInspectorTest {
         assertThrows(ServiceException.class, () -> inspector.inspect("fake.jpg", png));
         assertThrows(ServiceException.class, () -> inspector.inspect("bad.png", Arrays.copyOf(png, png.length - 5)));
         assertThrows(ServiceException.class, () -> inspector.inspect("bad.mp4", new byte[]{0, 0, 1, 0, 'm', 'd', 'a', 't'}));
+    }
+
+    @Test void decodesCmykJpegFromStorageAndImport(@org.junit.jupiter.api.io.TempDir Path directory) throws Exception {
+        byte[] cmyk;
+        try (InputStream stream = getClass().getResourceAsStream("/sample-cmyk.jpg")) {
+            assertNotNull(stream);
+            cmyk = org.springframework.util.StreamUtils.copyToByteArray(stream);
+        }
+        Path file = Files.write(directory.resolve("sample-cmyk.jpg"), cmyk);
+        SampleMediaInspector.Inspection stored = inspector.inspect("sample-cmyk.jpg", cmyk);
+        SampleMediaInspector.Inspection imported = inspector.inspectFile("sample-cmyk.jpg", file);
+        assertEquals(64, stored.getWidth());
+        assertEquals(80, stored.getHeight());
+        assertEquals("image/jpeg", stored.getContentType());
+        assertEquals(stored.getSha256(), imported.getSha256());
+        assertEquals(stored.getFocusScore(), imported.getFocusScore());
+        assertThrows(ServiceException.class, () -> inspector.inspect("truncated.jpg", Arrays.copyOf(cmyk, cmyk.length - 2)));
+        byte[] damagedScan = Arrays.copyOf(cmyk, cmyk.length / 2);
+        damagedScan[damagedScan.length - 2] = (byte) 0xff;
+        damagedScan[damagedScan.length - 1] = (byte) 0xd9;
+        assertThrows(ServiceException.class, () -> inspector.inspect("damaged-scan.jpg", damagedScan));
     }
 
     @Test void rejectsAudioOnlyAndTruncatedVideoContainers() throws Exception {

@@ -2,10 +2,13 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import vm from 'node:vm'
+import { canAccessPage, filterMenuRoutes } from '../src/utils/menuAccess.mjs'
 
 const component = await readFile(new URL('../src/views/AlgorithmTraining/SmartAnnotation.vue', import.meta.url), 'utf8')
 const readiness = component.slice(component.indexOf('const ready ='), component.indexOf('const boxCount ='))
 const actions = component.slice(component.indexOf('const datasetDisabled ='), component.indexOf('const openReview ='))
+const eligibility = component.slice(component.indexOf('const confirmable ='), component.indexOf('const canReview ='))
+const navigation = component.slice(component.indexOf('const refresh ='), component.indexOf('const leave ='))
 
 const generated = { id: '2122504598019956737', annotationName: '已生成', annotationType: 'object_detection', datasetGenerated: true }
 const ungenerated = { id: '2122504598019956738', annotationName: '待生成', annotationType: 'object_detection', datasetGenerated: false }
@@ -13,13 +16,24 @@ const ungenerated = { id: '2122504598019956738', annotationName: '待生成', an
 function harness(overrides = {}) {
   const ref = value => ({ value })
   const computed = fn => ({ get value() { return fn() } })
-  const requests = { projects: [], options: [], create: [], errors: [] }
-  const form = { datasetId: '', computeNodeId: '10', taskName: '', mode: 'active' }
+  const requests = { projects: [], options: [], create: [], errors: [], compute: 0, list: [], destinations: [] }
+  const form = { datasetId: '', computeNodeId: '10', taskName: '', mode: 'active', providerId: '', modelName: '', prompt: '', llmConfidence: 0.50 }
+  const provider = { id: '2122504598019956740', name: 'OortCloud', modelName: 'vision-default' }
+  const llmProviders = ref([])
   const state = {
     form, computed, activeLearning: computed(() => form.mode === 'active'),
     datasets: ref([]), datasetsLoading: ref(false), datasetNeedsGeneration: ref(false), creating: ref(false),
     options: ref(null), sourceKey: ref(''), detail: ref(null),
     computeLoading: ref(false), selectedCompute: ref({ schedulable: true }),
+    props: { llmOnly: false }, disposed: false,
+    loading: ref(false), tasks: ref([]), taskPage: ref(1), taskTotal: ref(0), unfilteredTaskPage: ref(false),
+    listSmartTasks: async params => { requests.list.push(params); return { records: [], total: 0 } },
+    llmProviders, llmModels: ref([]),
+    llmProvidersLoading: ref(false), llmModelsLoading: ref(false),
+    llmProviderError: ref(''), llmModelError: ref(''),
+    llmProviderName: computed(() => llmProviders.value.find(item => item.id === form.providerId)?.name),
+    listSmartLlmProviders: async () => [provider],
+    listSmartLlmModels: async () => ['vision-default', 'vision-alternative'],
     typeNames: { object_detection: '物体检测' },
     listDataProjects: async query => {
       requests.projects.push(query)
@@ -38,8 +52,9 @@ function harness(overrides = {}) {
       }
     },
     handleError: error => requests.errors.push(error),
-    route: { query: {} }, router: { replace: async () => {} },
-    loadCompute: async () => {}, getSmartTask: async () => ({}),
+    route: { query: {} }, router: { replace: async target => { requests.destinations.push(target) } },
+    loadCompute: async () => { requests.compute++ }, getSmartTask: async () => ({}),
+    resetPredictionQuery: () => {}, showPredictions: () => false,
     run: operation => operation(),
     createSmartTask: async payload => { requests.create.push(payload); return { id: '501' } },
     uiText: value => value, ElMessage: { success: () => {} },
@@ -48,7 +63,8 @@ function harness(overrides = {}) {
   const handlers = vm.runInNewContext(`(() => {
     ${readiness}
     ${actions}
-    return { ready, datasetDisabled, searchDatasets, loadOptions, changeMode, openCreate, create }
+    ${navigation}
+    return { ready, datasetDisabled, searchDatasets, loadOptions, changeDataset, changeMode, openCreate, create, refresh, enter }
   })()`, state)
   return { state, requests, ...handlers }
 }
@@ -195,4 +211,119 @@ test('results for a previous selection cannot clear a newer generated selection'
   assert.equal(ui.state.form.datasetId, generated.id)
   assert.equal(ui.state.datasetNeedsGeneration.value, false)
   assert.equal(ui.state.options.value.datasetGenerated, true)
+})
+
+test('LLM task submits the selected model directly without GPU fields', async () => {
+  const ui = harness({
+    route: { query: { dataset: ungenerated.id } },
+    computeLoading: { value: true }, selectedCompute: { value: null }
+  })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  assert.equal(ui.requests.compute, 0)
+  assert.equal(ui.requests.projects[0].includeGeneratedStatus, false)
+  assert.deepEqual(ui.requests.options, [{ id: ungenerated.id, forActiveLearning: false }])
+  assert.equal(ui.state.form.modelName, 'vision-default')
+  ui.state.form.modelName = 'vision-alternative'
+  ui.state.form.prompt = '  Check labels carefully.  '
+  assert.equal(ui.ready.value, true)
+  await ui.create()
+  assert.deepEqual({ ...ui.requests.create[0] }, {
+    datasetId: ungenerated.id, taskName: '待生成 - 大模型标注', mode: 'llm',
+    providerId: '2122504598019956740', modelName: 'vision-alternative', prompt: 'Check labels carefully.', confidence: 0.5
+  })
+  assert.equal(ui.requests.compute, 0)
+})
+
+test('LLM catalog failure retains the configured model when switching datasets', async () => {
+  const ui = harness({
+    route: { query: { dataset: ungenerated.id } },
+    listSmartLlmModels: async () => { throw new Error('catalog unavailable') }
+  })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  assert.equal(ui.state.form.modelName, 'vision-default')
+  assert.ok(ui.state.llmModelError.value)
+  assert.equal(ui.ready.value, true)
+  ui.state.form.datasetId = generated.id
+  await ui.changeDataset()
+  assert.equal(ui.ready.value, true)
+})
+
+test('LLM page confirmation requires a strict finite score and excludes manual-review candidates', () => {
+  const row = (id, confidence, manualReview = false) => ({
+    candidate: { id, reviewState: 'PENDING', boxesJson: JSON.stringify([{ labelId: '1', confidence }]) },
+    predictionQuality: { manualReview }
+  })
+  const predictions = [row('threshold', 0.85), row('above', 0.9), row('low', 0.8), row('missing', null), row('manual', 0.99, true), row('string', '0.99')]
+  const confirmable = vm.runInNewContext(`(() => { ${eligibility}; return confirmable })()`, {
+    computed: fn => ({ get value() { return fn() } }),
+    predictions: { value: predictions }, llmTask: { value: true }, detail: { value: { task: { confidence: 0.85 } } }
+  })
+  assert.deepEqual(confirmable.value.map(item => item.candidate.id), ['above'])
+})
+
+test('each annotation entry requests its own task mode while preserving the dataset filter', async () => {
+  const ordinary = harness({ route: { query: { dataset: generated.id } } })
+  const model = harness({ props: { llmOnly: true }, route: { query: { dataset: ungenerated.id } } })
+  await ordinary.refresh()
+  await model.refresh()
+  assert.deepEqual({ ...ordinary.requests.list[0] }, { datasetId: generated.id, page: 1, mode: 'compute' })
+  assert.deepEqual({ ...model.requests.list[0] }, { datasetId: ungenerated.id, page: 1, mode: 'llm' })
+})
+
+test('mixed responses cannot display another annotation mode in either task list', async () => {
+  const records = [
+    { id: 'active-task', mode: 'active' },
+    { id: 'specified-model-task', mode: 'model' },
+    { id: 'large-model-task', mode: 'llm' }
+  ]
+  const listSmartTasks = async () => ({ records, total: records.length })
+  const ordinary = harness({ listSmartTasks })
+  const model = harness({ props: { llmOnly: true }, listSmartTasks })
+  await ordinary.refresh()
+  await model.refresh()
+  assert.deepEqual(ordinary.state.tasks.value.map(row => row.id), ['active-task', 'specified-model-task'])
+  assert.deepEqual(model.state.tasks.value.map(row => row.id), ['large-model-task'])
+  assert.equal(ordinary.state.unfilteredTaskPage.value, true)
+  assert.equal(model.state.unfilteredTaskPage.value, true)
+})
+
+test('an incompatible server page containing no matching tasks still allows later pages to be reached', async () => {
+  const ui = harness({
+    listSmartTasks: async ({ page }) => ({
+      records: page === 1 ? [{ id: 'llm-task', mode: 'llm' }] : [{ id: 'compute-task', mode: 'active' }],
+      total: 21
+    })
+  })
+  await ui.refresh()
+  assert.deepEqual(ui.state.tasks.value, [])
+  assert.equal(ui.state.taskTotal.value, 21)
+  ui.state.taskPage.value = 2
+  await ui.refresh()
+  assert.deepEqual(ui.state.tasks.value.map(row => row.id), ['compute-task'])
+  assert.equal(ui.state.taskTotal.value, 21)
+  assert.equal(ui.state.unfilteredTaskPage.value, true)
+})
+
+test('a task link entered from its former URL opens the matching annotation page', async () => {
+  const ui = harness({
+    getSmartTask: async id => ({ task: { id, mode: 'llm' } }),
+    route: { query: { dataset: ungenerated.id } }
+  })
+  await ui.enter('501')
+  const [destination] = ui.requests.destinations
+  assert.equal(destination.path, '/llm-smart-annotation')
+  assert.deepEqual({ ...destination.query }, { dataset: ungenerated.id, task: '501' })
+  assert.equal(ui.state.detail.value, null)
+})
+
+test('LLM annotation navigation shares the annotation grant without granting provider management', () => {
+  const path = '/llm-smart-annotation'
+  const grant = ['vls:menu:smart-annotation']
+  assert.equal(canAccessPage(path, []), false)
+  assert.equal(canAccessPage(path, ['vls:menu:llm-provider-management']), false)
+  assert.equal(canAccessPage(path, grant), true)
+  assert.equal(canAccessPage('/llm-provider-management', grant), false)
+  assert.deepEqual(filterMenuRoutes([{ path: '/training', children: [{ path }] }], grant)[0].children, [{ path }])
 })

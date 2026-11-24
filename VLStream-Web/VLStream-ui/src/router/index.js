@@ -288,6 +288,12 @@ const routes = [
         meta: { title: '智能标注', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
       },
       {
+        path: '/llm-smart-annotation',
+        name: 'LlmSmartAnnotation',
+        component: () => import('@/views/AlgorithmTraining/LlmSmartAnnotation.vue'),
+        meta: { title: '大模型标注', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
+      },
+      {
         path: '/algorithm-standard',
         name: 'AlgorithmStandard',
         component: () => import('@/views/AlgorithmTraining/AlgorithmStandard.vue'),

@@ -4,6 +4,9 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.LlmProvider;
 import lombok.Data;
@@ -18,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -28,17 +32,33 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Minimal OpenAI-compatible multimodal chat client. */
 @Service
 @RequiredArgsConstructor
 public class OpenAiVisionClient {
 
+	public static final int MAX_ANNOTATION_IMAGE_BYTES = 8 * 1024 * 1024;
+	private static final int MAX_ANNOTATION_RESPONSE_BYTES = 2 * 1024 * 1024;
+	private static final int MAX_ANNOTATION_CONTENT_CHARS = 1024 * 1024;
+	private static final JsonFactory ANNOTATION_JSON = new JsonFactory().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
+
 	private final LlmApiKeyCipher apiKeyCipher;
 
 	/** Read the provider's actual model catalogue without exposing its stored key. */
 	public List<String> listModels(LlmProvider provider) {
+		return listModels(provider, false);
+	}
+
+	List<String> listAnnotationModels(LlmProvider provider) {
+		return listModels(provider, true);
+	}
+
+	private List<String> listModels(LlmProvider provider, boolean annotation) {
 		if (provider == null || !Boolean.TRUE.equals(provider.getEnabled())) {
 			throw new ServiceException("大模型配置不存在或已禁用");
 		}
@@ -49,19 +69,21 @@ public class OpenAiVisionClient {
 			String base = StringUtils.removeEnd(StringUtils.trim(provider.getBaseUrl()), "/");
 			base = StringUtils.removeEnd(base, "/chat/completions");
 			connection = (HttpURLConnection) new URL(base + "/models").openConnection();
+			if (annotation) connection.setInstanceFollowRedirects(false);
 			connection.setConnectTimeout(15000);
 			connection.setReadTimeout(15000);
 			connection.setRequestProperty("Authorization", "Bearer " + key);
 			int status = connection.getResponseCode();
 			if (status < 200 || status >= 300) throw new ServiceException("加载模型列表失败，HTTP " + status);
-			JSONArray models = JSONUtil.parseObj(read(connection.getInputStream())).getJSONArray("data");
+			String response = annotation ? readAnnotationResponse(connection.getInputStream()) : read(connection.getInputStream());
+			JSONArray models = JSONUtil.parseObj(response).getJSONArray("data");
 			if (models == null) throw new ServiceException("模型列表响应格式不正确");
-			List<String> names = new ArrayList<String>();
+			Set<String> names = new LinkedHashSet<>();
 			for (int i = 0; i < models.size(); i++) {
 				String name = models.getJSONObject(i).getStr("id");
-				if (StringUtils.isNotBlank(name) && !names.contains(name)) names.add(name);
+				if (StringUtils.isNotBlank(name)) names.add(name);
 			}
-			return names;
+			return new ArrayList<>(names);
 		} catch (ServiceException exception) {
 			throw exception;
 		} catch (Exception exception) {
@@ -85,6 +107,99 @@ public class OpenAiVisionClient {
 			throw new ServiceException("大模型配置不存在或已禁用");
 		}
 		return parseTestResponse(post(provider, prompt, images));
+	}
+
+	/** Sends original pixels for dataset geometry and returns the provider's raw text. */
+	String annotate(LlmProvider provider, String model, String prompt, byte[] image) {
+		if (image == null || image.length == 0 || image.length > MAX_ANNOTATION_IMAGE_BYTES) {
+			throw new ServiceException("智能标注图片为空或超过 8 MiB");
+		}
+		if (StringUtils.isBlank(prompt) || prompt.length() > 32768) {
+			throw new ServiceException("智能标注提示词为空或超过处理限制");
+		}
+		String mimeType = annotationMimeType(image);
+		HttpURLConnection connection = null;
+		int timeoutMillis = Math.max(5, Math.min(defaultInt(provider.getTimeoutSeconds(), 120), 600)) * 1000;
+		try {
+			String apiKey = resolveApiKey(provider);
+			if (StringUtils.isBlank(apiKey)) throw new ServiceException("大模型 API Key 未配置");
+			byte[] body = requestBody(model, prompt, Collections.singletonList(image), mimeType)
+				.getBytes(StandardCharsets.UTF_8);
+			connection = (HttpURLConnection) new URL(completionsUrl(provider.getBaseUrl())).openConnection();
+			connection.setInstanceFollowRedirects(false);
+			connection.setConnectTimeout(timeoutMillis);
+			connection.setReadTimeout(timeoutMillis);
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			// Streaming mode keeps HttpURLConnection from replaying a paid POST.
+			connection.setFixedLengthStreamingMode(body.length);
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+			try (OutputStream output = connection.getOutputStream()) {
+				output.write(body);
+			}
+			int status = connection.getResponseCode();
+			if (status < 200 || status >= 300) {
+				String message = "智能标注模型接口返回 HTTP " + status;
+				if (status >= 500) message += "，上游执行情况未知";
+				throw new ServiceException(message, status);
+			}
+			JSONArray choices = JSONUtil.parseObj(readAnnotationResponse(connection.getInputStream())).getJSONArray("choices");
+			if (choices == null || choices.size() != 1) throw new ServiceException("智能标注模型响应缺少单条结果");
+			JSONObject choice = choices.getJSONObject(0);
+			String finishReason = choice.getStr("finish_reason");
+			if ("length".equals(finishReason) || "content_filter".equals(finishReason)) {
+				throw new ServiceException("智能标注模型输出被截断或过滤");
+			}
+			Object content = choice.getByPath("message.content");
+			if (!(content instanceof String) || StringUtils.isBlank((String) content)
+				|| ((String) content).length() > MAX_ANNOTATION_CONTENT_CHARS) {
+				throw new ServiceException("智能标注模型未返回有效文本或输出超过处理限制");
+			}
+			return (String) content;
+		} catch (ServiceException exception) {
+			throw exception;
+		} catch (SocketTimeoutException exception) {
+			throw new ServiceException("智能标注模型请求超时，上游执行情况未知");
+		} catch (Exception exception) {
+			throw new ServiceException("智能标注模型通信失败或返回格式无效，上游执行情况未知");
+		} finally {
+			if (connection != null) connection.disconnect();
+		}
+	}
+
+	private String readAnnotationResponse(InputStream stream) throws IOException {
+		try (InputStream input = stream; ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			byte[] buffer = new byte[8192];
+			int count;
+			while ((count = input.read(buffer)) != -1) {
+				if (output.size() + count > MAX_ANNOTATION_RESPONSE_BYTES) {
+					throw new ServiceException("智能标注模型响应超过处理限制");
+				}
+				output.write(buffer, 0, count);
+			}
+			String response = new String(output.toByteArray(), StandardCharsets.UTF_8);
+			try (JsonParser parser = ANNOTATION_JSON.createParser(response)) {
+				if (parser.nextToken() != JsonToken.START_OBJECT) throw new ServiceException("智能标注模型响应格式无效");
+				int depth = 1;
+				JsonToken token;
+				while ((token = parser.nextToken()) != null) {
+					if (depth == 0) throw new ServiceException("智能标注模型响应格式无效");
+					if (token.isStructStart() && ++depth > 64) throw new ServiceException("智能标注模型响应的嵌套层级超过限制");
+					if (token.isStructEnd()) depth--;
+				}
+			}
+			return response;
+		}
+	}
+
+	private String annotationMimeType(byte[] image) {
+		String detected = imageMimeType(image);
+		if (!"image/jpeg".equals(detected)) return detected;
+		if (image.length >= 3 && (image[0] & 0xff) == 0xff && (image[1] & 0xff) == 0xd8 && (image[2] & 0xff) == 0xff) {
+			return detected;
+		}
+		throw new ServiceException("智能标注仅支持 JPEG、PNG 或 WebP 图片");
 	}
 
 	private String post(LlmProvider provider, String prompt, List<byte[]> images) {
@@ -143,17 +258,21 @@ public class OpenAiVisionClient {
 	}
 
 	String requestBody(String model, String prompt, List<byte[]> images) {
+		return requestBody(model, prompt, images, null);
+	}
+
+	private String requestBody(String model, String prompt, List<byte[]> images, String originalImageMimeType) {
 		JSONArray content = new JSONArray();
 		JSONObject text = new JSONObject();
 		text.set("type", "text");
 		text.set("text", prompt);
 		content.add(text);
 		for (byte[] image : images == null ? new ArrayList<byte[]>() : images) {
-			EncodedImage encodedImage = encodeImage(image);
+			EncodedImage encodedImage = originalImageMimeType == null ? encodeImage(image) : new EncodedImage(originalImageMimeType, image);
 			JSONObject imageUrl = new JSONObject();
 			imageUrl.set("url", "data:" + encodedImage.getMimeType() + ";base64,"
 				+ Base64.getEncoder().encodeToString(encodedImage.getBytes()));
-			imageUrl.set("detail", "low");
+			imageUrl.set("detail", originalImageMimeType == null ? "low" : "high");
 			JSONObject imageContent = new JSONObject();
 			imageContent.set("type", "image_url");
 			imageContent.set("image_url", imageUrl);
@@ -166,6 +285,7 @@ public class OpenAiVisionClient {
 		body.set("model", model);
 		body.set("temperature", 0);
 		body.set("stream", false);
+		if (originalImageMimeType != null) body.set("max_tokens", 16384);
 		JSONArray messages = new JSONArray();
 		messages.add(message);
 		body.set("messages", messages);

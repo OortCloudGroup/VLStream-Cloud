@@ -11,12 +11,15 @@ public final class SmartAnnotationRequests {
     @Data
     public static class Create {
         @NotNull private Long datasetId;
-        @NotNull private Long computeNodeId;
+        private Long computeNodeId;
         @NotBlank @Size(max = 100) private String taskName;
-        @NotNull @Pattern(regexp = "active|model") private String mode;
-        @NotNull @Pattern(regexp = "algorithm|model|round|system") private String sourceType;
-        @NotNull private Long sourceId;
-        @NotNull @DecimalMin("0.05") @DecimalMax("0.95") private Double confidence = 0.25;
+        @NotNull @Pattern(regexp = "active|model|llm") private String mode;
+        @Pattern(regexp = "algorithm|model|round|system") private String sourceType;
+        private Long sourceId;
+        private Long providerId;
+        @Size(max = 200) private String modelName;
+        @Size(max = 2000) private String prompt;
+        @DecimalMin("0.05") @DecimalMax("0.95") private Double confidence;
         @Min(1) @Max(100) private int epochs = 20;
         @Min(1) @Max(500) private int reviewSize = 50;
     }

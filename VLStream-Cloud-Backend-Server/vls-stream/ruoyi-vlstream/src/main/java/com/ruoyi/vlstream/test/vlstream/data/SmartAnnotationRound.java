@@ -23,5 +23,6 @@ public class SmartAnnotationRound extends TenantEntity {
     private String progressStage;
     private Integer progressCurrent;
     private Integer progressTotal;
+    private Integer llmFailedCount;
     private String errorMessage;
 }

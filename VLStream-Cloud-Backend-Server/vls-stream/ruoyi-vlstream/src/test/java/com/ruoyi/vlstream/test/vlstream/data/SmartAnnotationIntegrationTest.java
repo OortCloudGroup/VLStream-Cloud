@@ -30,6 +30,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -42,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("dev")
-@EnabledIfEnvironmentVariable(named = "VLS_DATA_TEST_JDBC", matches = "jdbc:mysql://127\\.0\\.0\\.1:33316/vls_data_test_smart\\?.*")
+@EnabledIfEnvironmentVariable(named = "VLS_DATA_TEST_JDBC", matches = "jdbc:mysql://127\\.0\\.0\\.1:33316/vls_data_test_smart(?:_[a-zA-Z0-9_]+)?\\?.*")
 class SmartAnnotationIntegrationTest {
     static AnnotationConfigApplicationContext context;
     SmartAnnotationService smart;
@@ -88,6 +90,8 @@ class SmartAnnotationIntegrationTest {
             for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
         }
         jdbc.execute("ALTER TABLE vls_smart_annotation_task ADD COLUMN compute_node_id BIGINT NULL");
+        String vision = new String(Files.readAllBytes(migrations.resolve("V1_2_0_077__smart_annotation_vision_api.sql")), StandardCharsets.UTF_8);
+        for (String statement : vision.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
     }
 
     Long image(int number) {
@@ -217,6 +221,255 @@ class SmartAnnotationIntegrationTest {
         TenantContextHolder.setTenantId("tenant-b");
         assertThrows(ServiceException.class, () -> smart.task(task.getId()));
         assertEquals(0, smart.list(null, 1).getTotal());
+    }
+
+    @Test void taskListsFilterBeforePaginationAndDefaultToCompute() throws Exception {
+        List<Object[]> rows = new ArrayList<>();
+        for (int i = 0; i < 43; i++) {
+            String mode = i < 21 ? (i % 2 == 0 ? "active" : "model") : "llm";
+            rows.add(new Object[]{1000 + i, "tenant-a", dataset, "list-" + i, mode,
+                "llm".equals(mode) ? "llm" : "system", "Vision or GPU", "object_detection"});
+        }
+        jdbc.batchUpdate("INSERT INTO vls_smart_annotation_task "
+            + "(id,tenant_id,dataset_id,task_name,mode,source_type,source_id,model_name,model_path,annotation_type,task_state) "
+            + "VALUES (?,?,?,?,?,?,0,?,'',?,'COMPLETED')", rows);
+
+        MockMvc api = MockMvcBuilders.standaloneSetup(new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class))).build();
+        String path = "/vlsData/smart-annotation";
+        api.perform(get(path))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(21))
+            .andExpect(jsonPath("$.data.records.length()").value(20))
+            .andExpect(jsonPath("$.data.records[?(@.mode == 'llm')]").isEmpty());
+        api.perform(get(path).param("mode", "compute").param("page", "2"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(21))
+            .andExpect(jsonPath("$.data.records.length()").value(1))
+            .andExpect(jsonPath("$.data.records[0].mode").value("active"));
+        api.perform(get(path).param("mode", "llm").param("datasetId", dataset.toString()).param("page", "2"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(22))
+            .andExpect(jsonPath("$.data.records.length()").value(2))
+            .andExpect(jsonPath("$.data.records[0].mode").value("llm"))
+            .andExpect(jsonPath("$.data.records[1].mode").value("llm"));
+    }
+
+    @Test void teammateCanReadAndConfirmComputeResultsButOtherTenantCannotAccessTask() {
+        Long sample = image(1);
+        SmartAnnotationTask task = create("model");
+        SmartAnnotationCandidate candidate = prediction(task, sample, label);
+        jdbc.update("UPDATE vls_smart_annotation_task SET create_user='101', error_message='private diagnostic' WHERE id=?", task.getId());
+        asMember("101", () -> assertEquals(task.getId(), smart.list(dataset, 1, "compute").getRecords().get(0).getId()));
+        asMember("102", () -> {
+            assertEquals(task.getId(), smart.list(dataset, 1, "compute").getRecords().get(0).getId());
+            SmartAnnotationTask detail = (SmartAnnotationTask) smart.detail(task.getId()).get("task");
+            assertEquals(task.getId(), detail.getId());
+            assertNotEquals("private diagnostic", detail.getErrorMessage());
+            assertNull(detail.getComputeNodeId());
+            assertEquals(1L, smart.predictions(task.getId(), 1, "PENDING", false).get("total"));
+            SmartAnnotationRequests.Review review = new SmartAnnotationRequests.Review();
+            review.setBoxes(smart.boxes(candidate.getBoxesJson()));
+            smart.review(task.getId(), candidate.getId(), review);
+            smart.finish(task.getId());
+            assertEquals("COMPLETED", smart.task(task.getId()).getTaskState());
+            assertEquals(1, data.snapshot(dataset).getInstances().size());
+        });
+        for (String otherTenant : Arrays.asList("tenant-b", "TENANT-A")) {
+            TenantContextHolder.setTenantId(otherTenant);
+            asMember("102", () -> {
+                assertEquals(0, smart.list(null, 1, "compute").getTotal());
+                assertThrows(ServiceException.class, () -> smart.detail(task.getId()));
+                assertThrows(ServiceException.class, () -> smart.prediction(task.getId(), candidate.getId()));
+                assertThrows(ServiceException.class, () -> smart.cancel(task.getId()));
+            });
+        }
+    }
+
+    @Test void teammateCanRetryAndCancelVisionTaskUsingItsTenantProvider() throws Exception {
+        Long sample = visionImage(1);
+        LlmAnnotationProviderService provider = visionProvider();
+        SmartAnnotationTask task = createVision();
+        jdbc.update("UPDATE vls_smart_annotation_task SET create_user='101', task_state='FAILED' WHERE id=?", task.getId());
+        jdbc.update("UPDATE vls_smart_annotation_round SET round_state='FAILED', llm_failed_count=1, progress_current=1 WHERE task_id=?", task.getId());
+        jdbc.update("UPDATE vls_smart_annotation_candidate SET review_state='FAILED' WHERE image_id=?", sample);
+        asMember("102", () -> {
+            assertEquals(task.getId(), smart.list(dataset, 1, "llm").getRecords().get(0).getId());
+            smart.retry(task.getId());
+            assertEquals("QUEUED", visionState(sample));
+            smart.cancel(task.getId());
+            assertEquals("CANCELLED", smart.task(task.getId()).getTaskState());
+            assertEquals("CANCELLED", visionState(sample));
+        });
+        verify(provider).verifyBinding(eq("tenant-a"), eq(400L), eq("vision-test"), anyString());
+    }
+
+    @Test void visionThresholdAndRetryPreserveAcceptedAndManualCandidates() throws Exception {
+        Long high = visionImage(1), equal = visionImage(2), low = visionImage(3), unscored = visionImage(4), failed = visionImage(5);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(eq("tenant-a"), eq(400L), eq("vision-test"), anyString(), anyString(), any(byte[].class)))
+            .thenReturn(visionBox("0.92"), visionBox("0.50"), visionBox("0.40"), visionBox("null"), "{}", visionBox("0.98"));
+
+        SmartAnnotationTask task = createVision();
+        assertNull(task.getComputeNodeId());
+        assertEquals("llm", task.getSourceType());
+        assertEquals(0.50, task.getConfidence());
+        assertEquals(task.getId(), smart.list(dataset, 1, "llm").getRecords().get(0).getId());
+        assertTrue(smart.list(dataset, 1, "compute").getRecords().isEmpty());
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+        for (int i = 0; i < 5; i++) worker.advance(task.getId());
+        assertEquals("AUTO_CONFIRMING", smart.task(task.getId()).getTaskState());
+        assertEquals(1, smart.current(task).getLlmFailedCount());
+        assertEquals(5, smart.current(task).getProgressCurrent());
+        assertEquals("FAILED", visionState(failed));
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        assertEquals("ACCEPTED", visionState(high));
+        assertEquals("PENDING", visionState(equal));
+        assertEquals("PENDING", visionState(low));
+        assertEquals("PENDING", visionState(unscored));
+        assertThrows(ServiceException.class, () -> smart.confirmAll(task.getId()));
+
+        smart.retry(task.getId());
+        assertEquals(4, smart.current(task).getProgressCurrent());
+        worker.advance(task.getId());
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        assertEquals("ACCEPTED", visionState(failed));
+        assertEquals("PENDING", visionState(equal));
+        assertEquals(2, data.snapshot(dataset).getInstances().size());
+        assertEquals(0, smart.current(task).getLlmFailedCount());
+        SmartAnnotationCandidate correction = sql.getMapper(SmartAnnotationCandidateMapper.class).selectOne(
+            smart.<SmartAnnotationCandidate>scope().eq("image_id", equal));
+        SmartAnnotationRequests.Review review = new SmartAnnotationRequests.Review();
+        review.setBoxes(smart.boxes(correction.getBoxesJson()));
+        smart.review(task.getId(), correction.getId(), review);
+        smart.review(task.getId(), correction.getId(), review);
+        smart.finish(task.getId());
+        assertEquals("COMPLETED", smart.task(task.getId()).getTaskState());
+        assertEquals(3, data.snapshot(dataset).getInstances().size());
+        verify(provider, times(6)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+    }
+
+    @Test void visionRateLimitStopsQueueAndExpiredClaimDoesNotReplay() throws Exception {
+        Long interrupted = visionImage(1), limited = visionImage(2), neverSubmitted = visionImage(3);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class)))
+            .thenThrow(new ServiceException("模型请求过多", 429));
+        SmartAnnotationTask task = createVision();
+        jdbc.update("UPDATE vls_smart_annotation_candidate SET review_state='RUNNING', llm_claim_token=?, llm_claim_until=? WHERE image_id=?",
+            UUID.randomUUID().toString(), new Date(1000), interrupted);
+        jdbc.update("UPDATE vls_smart_annotation_task SET task_state='RUNNING' WHERE id=?", task.getId());
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+
+        worker.advance(task.getId());
+        verify(provider, never()).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+        assertEquals("FAILED", visionState(interrupted));
+        worker.advance(task.getId());
+        assertEquals("FAILED", visionState(limited));
+        assertEquals("FAILED", visionState(neverSubmitted));
+        assertEquals("FAILED", smart.task(task.getId()).getTaskState());
+        assertEquals(3, smart.current(task).getLlmFailedCount());
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        verify(provider, times(1)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"image_classification", "object_detection", "instance_segmentation", "semantic_segmentation"})
+    void visionResultEntersExistingTrainingFormat(String type) throws Exception {
+        jdbc.update("UPDATE vls_algorithm_annotation SET annotation_type=? WHERE id=?", type, dataset);
+        Long sample = visionImage(1);
+        LlmAnnotationProviderService provider = visionProvider();
+        String raw;
+        if ("image_classification".equals(type)) {
+            raw = "{\"label\":\"L1\",\"confidence\":0.94}";
+        } else if ("object_detection".equals(type)) {
+            raw = visionBox("0.94");
+        } else {
+            String outline = "semantic_segmentation".equals(type) ? "[[0,0],[100,0],[100,80],[0,80]]" : "[[10,10],[70,10],[70,65],[10,65]]";
+            String holes = "semantic_segmentation".equals(type) ? "[]" : "[[[20,20],[40,20],[40,50],[20,50]]]";
+            raw = "{\"regions\":[{\"label\":\"L1\",\"confidence\":0.94,\"parts\":[{\"outer\":" + outline + ",\"holes\":" + holes + "}]}]}";
+        }
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class))).thenReturn(raw);
+        SmartAnnotationTask task = createVision();
+        context.getBean(SmartAnnotationLlmWorker.class).advance(task.getId());
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        assertEquals("ACCEPTED", visionState(sample));
+        assertEquals(1L, ((Map<?, ?>) smart.detail(task.getId()).get("counts")).get("ACCEPTED"));
+        smart.finish(task.getId());
+        DatasetSnapshot snapshot = data.snapshot(dataset);
+        assertEquals(1, snapshot.getInstances().size());
+        assertFalse(new TrainingDatasetLayout(type, snapshot.getLabels()).annotations(sample, "train", snapshot.getInstances(), 100, 80).isEmpty());
+    }
+
+    @Test void incompleteVisionSemanticMaskWaitsDespiteHighConfidence() throws Exception {
+        jdbc.update("UPDATE vls_algorithm_annotation SET annotation_type='semantic_segmentation' WHERE id=?", dataset);
+        Long sample = visionImage(1);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class)))
+            .thenReturn("{\"regions\":[{\"label\":\"L1\",\"confidence\":0.99,\"parts\":[{\"outer\":[[0,0],[20,0],[20,20],[0,20]],\"holes\":[]}]}]}");
+        SmartAnnotationTask task = createVision();
+        context.getBean(SmartAnnotationLlmWorker.class).advance(task.getId());
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        assertEquals("REVIEW", smart.task(task.getId()).getTaskState());
+        assertEquals("PENDING", visionState(sample));
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        SmartAnnotationCandidate candidate = sql.getMapper(SmartAnnotationCandidateMapper.class).selectOne(
+            smart.<SmartAnnotationCandidate>scope().eq("image_id", sample));
+        assertTrue(candidate.getReviewError().contains("未归类"));
+        assertFalse(smart.boxes(candidate.getBoxesJson()).isEmpty());
+    }
+
+    @Test void cancelledVisionTaskDiscardsLateResults() throws Exception {
+        Long late = visionImage(1); Long queued = visionImage(2);
+        LlmAnnotationProviderService provider = visionProvider();
+        SmartAnnotationTask task = createVision();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class))).thenAnswer(call -> {
+            cancelAsCreator(task);
+            return visionBox("0.97");
+        });
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+        worker.advance(task.getId());
+        worker.advance(task.getId());
+        assertEquals("CANCELLED", smart.task(task.getId()).getTaskState());
+        assertEquals("CANCELLED", visionState(late));
+        assertEquals("CANCELLED", visionState(queued));
+        assertEquals(0, smart.current(task).getPredictedCount());
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        verify(provider, times(1)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+    }
+
+    private LlmAnnotationProviderService visionProvider() {
+        LlmAnnotationProviderService provider = context.getBean(LlmAnnotationProviderService.class);
+        reset(provider);
+        when(provider.bind("tenant-a", 400L, "vision-test")).thenReturn(
+            new LlmAnnotationProviderService.Binding("vision-test", String.join("", Collections.nCopies(64, "a"))));
+        return provider;
+    }
+
+    private SmartAnnotationTask createVision() {
+        SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create();
+        request.setDatasetId(dataset);
+        request.setTaskName("Vision integration");
+        request.setMode("llm");
+        request.setProviderId(400L);
+        request.setModelName("vision-test");
+        return smart.create(request);
+    }
+
+    private Long visionImage(int number) throws Exception {
+        Long id = image(number);
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        java.awt.image.BufferedImage bitmap = new java.awt.image.BufferedImage(100, 80, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        bitmap.setRGB(0, 0, number);
+        javax.imageio.ImageIO.write(bitmap, "png", bytes);
+        byte[] file = bytes.toByteArray();
+        context.getBean(DataMediaStorage.class).put("image-" + number + ".png", file, "image/png");
+        jdbc.update("UPDATE vls_annotation_image SET content_sha256=? WHERE id=?", org.apache.commons.codec.digest.DigestUtils.sha256Hex(file), id);
+        return id;
+    }
+
+    private String visionState(Long imageId) {
+        return jdbc.queryForObject("SELECT review_state FROM vls_smart_annotation_candidate WHERE image_id=?", String.class, imageId);
+    }
+
+    private String visionBox(String confidence) {
+        return "{\"boxes\":[{\"label\":\"L1\",\"box\":[10,10,50,50],\"confidence\":" + confidence + "}]}";
     }
 
     @Test void activeTaskPreventsDestructiveDatasetCleanup() {
@@ -354,15 +607,21 @@ class SmartAnnotationIntegrationTest {
     private void cancelAsCreator(SmartAnnotationTask task) {
         long creator = 101L;
         jdbc.update("UPDATE vls_smart_annotation_task SET create_user=? WHERE id=?", creator, task.getId());
+        asMember(Long.toString(creator), () -> smart.cancel(task.getId()));
+    }
+
+    private void asMember(String userId, Runnable operation) {
         SaTokenContext previous = SaManager.getSaTokenContext();
         MockHttpServletRequest request = new MockHttpServletRequest();
         SaManager.setSaTokenContext(new SaTokenContextForThreadLocal());
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         try {
             SaTokenContextForThreadLocalStorage.setBox(new SaRequestForServlet(request),
                 new SaResponseForServlet(new MockHttpServletResponse()), new SaStorageForServlet(request));
-            SaHolder.getStorage().set(LoginHelper.USER_KEY, Long.toString(creator));
-            smart.cancel(task.getId());
+            SaHolder.getStorage().set(LoginHelper.USER_KEY, userId);
+            operation.run();
         } finally {
+            RequestContextHolder.resetRequestAttributes();
             SaTokenContextForThreadLocalStorage.clearBox();
             SaManager.setSaTokenContext(previous);
         }
@@ -370,6 +629,14 @@ class SmartAnnotationIntegrationTest {
 
     @org.springframework.boot.test.context.TestConfiguration
     public static class Config extends DataTestConfiguration {
+        @Bean JdbcTemplate jdbcTemplate(DataSource source) { return new JdbcTemplate(source); }
+        @Bean LlmAnnotationProviderService llmAnnotationProviderService() { return mock(LlmAnnotationProviderService.class); }
+        @Bean SmartAnnotationLlmWorker llmWorker(SqlSessionTemplate sql, SmartAnnotationService service, DataManagementService data, DataMediaStorage storage,
+            LlmAnnotationProviderService provider, ObjectMapper json, org.springframework.transaction.PlatformTransactionManager tx) {
+            return new SmartAnnotationLlmWorker(sql.getMapper(SmartAnnotationTaskMapper.class), sql.getMapper(SmartAnnotationRoundMapper.class),
+                sql.getMapper(SmartAnnotationCandidateMapper.class), sql.getMapper(VlsAnnotationInstanceMapper.class), service, data, storage,
+                provider, new LlmAnnotationAdapter(json), tx);
+        }
         @Bean DatasetAnnotationEditor editor(DataManagementService data, DataMediaStorage storage, IVlsAnnotationInstanceService annotations, ObjectMapper json, SampleMediaInspector inspector) {
             return new DatasetAnnotationEditor(data, storage, annotations, json, inspector);
         }
@@ -395,7 +662,11 @@ class SmartAnnotationIntegrationTest {
             ReflectionTestUtils.setField(result, "annotationLabelService", mock(IVlsAnnotationLabelService.class));
             return result;
         }
-        @Bean com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService compute() { return mock(com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService.class); }
+        @Bean com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService compute() {
+            com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService service = mock(com.ruoyi.vlstream.test.vlstream.compute.SmartAnnotationComputeService.class);
+            when(service.execution(any(), any())).thenAnswer(call -> Collections.singletonMap("canReadDiagnostics", LoginHelper.getUserId() == null));
+            return service;
+        }
         @Bean SmartAnnotationService smart(SqlSessionTemplate sql, DataManagementService data, DataMediaStorage storage, IVlsAnnotationInstanceService annotations, ObjectMapper json) {
             VlsAlgorithmModelMapper models = mock(VlsAlgorithmModelMapper.class); AlgorithmModel model = new AlgorithmModel(); model.setId(100L); model.setVersion(1); model.setModelName("Test detector"); model.setModelPath("/data/work/model.pt");
             when(models.selectOne(any())).thenReturn(model);

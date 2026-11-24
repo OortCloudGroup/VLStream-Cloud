@@ -66,6 +66,7 @@ const routeAliases = {
   '/gbmanger/node/addMediaServer/index': ['/gbmanger/node'],
   '/gbmanger/node/updateMediaServer/index': ['/gbmanger/node'],
   '/dataset-annotation': ['/data-management'],
+  '/llm-smart-annotation': ['/smart-annotation'],
   '/algorithm-training-platform': trainingPlatformPages,
   '/ssh-connection': ['/compute-management'],
   '/monitoring-alarm': ['/event-management'],

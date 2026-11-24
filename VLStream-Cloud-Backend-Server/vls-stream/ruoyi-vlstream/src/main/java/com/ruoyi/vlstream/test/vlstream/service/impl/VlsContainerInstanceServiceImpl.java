@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * instance service
@@ -45,12 +46,25 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 			publicAccess.prepareContainerCreate(row);
 		return super.save(row);
 	}
+	@Transactional(rollbackFor = Exception.class)
 	@Override public boolean saveTaskRecord(ContainerInstance row) {
 		if(publicAccess==null)throw new com.ruoyi.common.exception.ServiceException("缺少可信任务记录创建上下文");
 		publicAccess.prepareTaskRecord(row);
 		// The three schedulers construct this record, after persisted owner/type validation.
 		// Do not clear HTTP context or route this through manual DTO creation.
-		return super.save(row);
+		String taskCreator = row.getCreateUser();
+		if (!super.save(row)) return false;
+		// The insert audit handler records the submitting member. The worker association
+		// still needs the original task creator, while update_user keeps the submitter audit.
+		if ("smart_annotation".equals(row.getInstanceType()) && !Objects.equals(taskCreator, row.getCreateUser())) {
+			int updated = baseMapper.update(null, new UpdateWrapper<ContainerInstance>().eq("id", row.getId())
+				.eq("tenant_id", row.getTenantId()).eq("instance_type", row.getInstanceType())
+				.eq("training_task_id", row.getTrainingTaskId()).eq("create_user", row.getCreateUser())
+				.set("create_user", taskCreator));
+			if (updated != 1) throw new com.ruoyi.common.exception.ServiceException("保存智能标注任务归属失败");
+			row.setCreateUser(taskCreator);
+		}
+		return true;
 	}
 	@Override public void requireTaskExecution(ContainerInstance row) {
 		if(publicAccess==null)throw new com.ruoyi.common.exception.ServiceException("缺少可信调度上下文");

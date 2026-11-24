@@ -20,6 +20,9 @@ public class SmartAnnotationTask extends TenantEntity {
     private String sourceType;
     @JsonSerialize(using = ToStringSerializer.class) private Long sourceId;
     private String modelName;
+    @JsonIgnore private String llmProviderFingerprint;
+    private String llmPrompt;
+    private Integer llmPromptVersion;
     @JsonIgnore private String modelPath;
     private String taskState;
     private Integer roundNumber;

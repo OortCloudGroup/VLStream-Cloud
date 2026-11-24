@@ -251,7 +251,11 @@ public class SmartAnnotationWorker {
     public String logs(Long taskId) {
         SmartAnnotationTask task = service.task(taskId);
         SmartAnnotationRound round = service.current(task);
+        if ("llm".equals(task.getMode())) return String.format("视觉大模型 %s\n已处理 %d / %d，生成候选 %d，失败 %d%s",
+            task.getModelName(), round.getProgressCurrent(), round.getProgressTotal(), round.getPredictedCount(), round.getLlmFailedCount(),
+            task.getErrorMessage() == null ? "" : "\n" + task.getErrorMessage());
         if (task.getComputeNodeId()!=null) return compute.logs(task,round.getId());
+        if (!service.isCreator(task)) throw new ServiceException("本轮执行日志仅任务创建成员可查看", 403);
         if (round.getWorkDirectory() == null) return "等待GPU资源，尚未准备本轮文件";
         try (Connection connection = connect(); InputStream input = connection.channel.get(round.getWorkDirectory() + "/run.log")) {
             byte[] content = limited(input, 2 * 1024 * 1024);

@@ -3,6 +3,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.vlstream.test.vlstream.data.*;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsContainerInstanceService;
@@ -23,10 +24,11 @@ public class SmartAnnotationComputeService {
     private final ObjectMapper json;
     private final ModelArtifactObjectStore objects;
 
-    public void enqueue(SmartAnnotationTask task, SmartAnnotationRound round, DatasetSnapshot snapshot) {
+    public void enqueue(SmartAnnotationTask task, SmartAnnotationRound round, DatasetSnapshot snapshot, String executionUserId) {
+        if (executionUserId == null || executionUserId.isEmpty()) throw new ServiceException("缺少可信算力执行身份", 403);
         nodes.lockServer(task.getComputeNodeId());
         ComputeNode node = nodes.requireReady(task.getComputeNodeId());
-        String owner = nodes.trainingSubject(node, String.valueOf(task.getCreateUser()));
+        String owner = nodes.trainingSubject(node, executionUserId);
         boolean company = nodes.isCompanyShared(node);
         ComputePublicInventoryService.Instance claim = null;
         if (!company && ("PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey() != null)) claim = nodes.publicInventory().training(node);
@@ -47,6 +49,7 @@ public class SmartAnnotationComputeService {
         if (!containers.saveTaskRecord(container)) throw new ServiceException("保存智能标注执行记录失败");
         Map<String,Object> options = new LinkedHashMap<>();
         options.put("computeNodeName", node.getName());
+        options.put("executionUserId", executionUserId);
         options.put("workload", "smart_annotation"); options.put("mode", task.getMode()); options.put("epochs", task.getEpochs());
         options.put("confidence", task.getConfidence()); options.put("workers", 0);
         options.put("autoConfirm", true);
@@ -64,16 +67,48 @@ public class SmartAnnotationComputeService {
         jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,update_time=NOW() WHERE tenant_id=? AND smart_round_id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')",task.getTenantId(),roundId);
     }
     public Map<String,Object> execution(SmartAnnotationTask task, Long roundId) {
-        List<Map<String,Object>> rows=jdbc.queryForList("SELECT job_state AS state,message,progress,options_json FROM vls_cloud_training_job WHERE tenant_id=? AND smart_round_id=? ORDER BY create_time DESC LIMIT 1",task.getTenantId(),roundId);
-        if(rows.isEmpty())return Collections.emptyMap();
-        Map<String,Object> result=rows.get(0);
-        try { result.put("nodeName",json.readTree(String.valueOf(result.remove("options_json"))).path("computeNodeName").asText()); }
-        catch(java.io.IOException error) { result.remove("options_json"); }
-        return result;
+        List<Map<String,Object>> rows = jdbc.query("SELECT job_state, message, progress, options_json FROM vls_cloud_training_job "
+            + "WHERE tenant_id=? AND smart_round_id=? ORDER BY create_time DESC,container_record_id DESC LIMIT 1",
+            (row, index) -> {
+                JsonNode options = readOptions(row.getString("options_json"));
+                boolean canReadDiagnostics = canReadDiagnostics(task, options);
+                Map<String,Object> result = new LinkedHashMap<>();
+                result.put("state", row.getString("job_state"));
+                result.put("progress", row.getInt("progress"));
+                result.put("canReadDiagnostics", canReadDiagnostics);
+                if (canReadDiagnostics) {
+                    result.put("message", row.getString("message"));
+                    result.put("nodeName", options.path("computeNodeName").asText());
+                }
+                return result;
+            }, task.getTenantId(), roundId);
+        if (rows.isEmpty()) return Collections.emptyMap();
+        return rows.get(0);
     }
+
     public String logs(SmartAnnotationTask task, Long roundId) {
-        List<String> rows=jdbc.queryForList("SELECT log_tail FROM vls_cloud_training_job WHERE tenant_id=? AND smart_round_id=? ORDER BY create_time DESC LIMIT 1",String.class,task.getTenantId(),roundId);
-        return rows.isEmpty() || rows.get(0)==null?"等待所选算力节点调度":rows.get(0);
+        List<String> rows = jdbc.query("SELECT log_tail, options_json FROM vls_cloud_training_job "
+            + "WHERE tenant_id=? AND smart_round_id=? ORDER BY create_time DESC,container_record_id DESC LIMIT 1",
+            (row, index) -> {
+                if (!canReadDiagnostics(task, readOptions(row.getString("options_json"))))
+                    throw new ServiceException("本轮执行日志仅本次执行成员可查看", 403);
+                return row.getString("log_tail");
+            }, task.getTenantId(), roundId);
+        return rows.isEmpty() ? "等待所选算力节点调度" : Objects.toString(rows.get(0), "等待所选算力节点调度");
+    }
+
+    private JsonNode readOptions(String options) {
+        if (options == null) return null;
+        try { return json.readTree(options); }
+        catch (java.io.IOException invalid) { return null; }
+    }
+
+    private boolean canReadDiagnostics(SmartAnnotationTask task, JsonNode options) {
+        String viewer = LoginHelper.getUserId();
+        if (viewer == null || options == null || !options.isObject()) return false;
+        JsonNode executionUser = options.get("executionUserId");
+        // Before collaboration, only the task creator could enqueue a round.
+        return viewer.equals(executionUser == null ? task.getCreateUser() : executionUser.textValue());
     }
     public void phase(CloudTrainingJob job, String state, String message) {
         String mapped="ARCHIVING".equals(state)?"RUNNING":state;

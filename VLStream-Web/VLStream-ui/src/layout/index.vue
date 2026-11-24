@@ -640,6 +640,7 @@ const menuRoutesMap = {
       children: [
         { path: '/data-management', meta: { title: '数据集管理', icon: '算法标注' } },
         { path: '/smart-annotation', meta: { title: '智能标注', icon: '算法标注' } },
+        { path: '/llm-smart-annotation', meta: { title: '大模型标注', icon: '算法标注' } },
         { path: '/algorithm-standard', meta: { title: '算法标注', icon: '算法标注' } },
         { path: '/algorithm-training', meta: { title: '算法训练', icon: '算法训练' } },
         { path: '/algorithm-model', meta: { title: '算法模型', icon: '算法模型' } }
@@ -1390,25 +1391,27 @@ const handleUserTokenUpdated = async (event) => {
 .app-sidebar-stats {
   flex: 0 0 auto;
   margin: 8px 12px 16px;
-  padding: 8px 16px;
-  border: 0;
-  border-radius: 18px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(237, 244, 255, 0.58));
-  backdrop-filter: blur(20px) saturate(145%);
-  -webkit-backdrop-filter: blur(20px) saturate(145%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 6px 20px rgba(45, 65, 110, 0.07);
+  padding: 7px 15px;
+  border: 1px solid rgb(155 174 203 / 25%);
+  border-radius: 16px;
+  background: #f1f5fb;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 92%), 0 3px 10px rgb(45 65 110 / 8%);
   box-sizing: border-box;
 }
-@supports not (backdrop-filter: blur(1px)) {
-  .app-sidebar-stats { background: #f5f8fd; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-sidebar-stats {
+    background: linear-gradient(155deg, rgb(255 255 255 / 68%), rgb(225 235 249 / 58%));
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    backdrop-filter: blur(12px) saturate(130%);
+  }
 }
 .app-sidebar-stats:empty { display: none; }
 .app-sidebar-stats .device-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
-.app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 30px; gap: 8px; text-align: left; }
+.app-sidebar-stats .stat-item { display: flex; align-items: center; justify-content: flex-start; min-height: 24px; gap: 8px; text-align: left; }
 .app-sidebar-stats .stat-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
 .app-sidebar-stats .stat-icon img { width: 20px; height: 20px; }
 .app-sidebar-stats .stat-content { display: flex; align-items: center; gap: 2px; }
-.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: var(--el-text-color-secondary); white-space: nowrap; }
+.app-sidebar-stats .stat-label { font-size: 12px; line-height: 18px; color: var(--el-text-color-regular); white-space: nowrap; }
 .app-sidebar-stats .stat-value { font-size: 13px; line-height: 18px; font-weight: 600; color: #1f2533; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* 折叠成 64px 图标条时隐藏统计，避免压住菜单图标 */
 .layout-sidebar.is-collapsed .app-sidebar-stats { display: none; }
