@@ -57,7 +57,7 @@
               </el-radio-group>
             </div>
             <div class="searchHeight_out flexRowAC">
-              <search-height-box keyword="keyword" :placeholder="$tp('搜索')" :data="searchData" @handle="searchResetFn" />
+              <search-height-box inline keyword="keyword" :placeholder="$tp('搜索')" :data="searchData" @handle="searchResetFn" />
               <EventColumnSettings v-model="eventColumns" @reset="resetEventColumns" />
               <export-excel-pdf :item="exportOptions" :busy="listLoading || deleting" @handle="format => eventExportRef.open(format)" />
             </div>

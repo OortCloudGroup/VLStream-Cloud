@@ -15,7 +15,7 @@
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
-  <div ref="target" class="searchHeightOut">
+  <div ref="target" class="searchHeightOut" :class="{ 'searchHeightOut--inline': inline }">
     <div class="searchHeight">
       <el-input
         v-model="form[props.keyword]"
@@ -23,13 +23,22 @@
         clearable
         class="hei_input"
         :placeholder="props.placeholder"
-        @focus="isfocus=true,islarge=true"
-        @mouseenter="isfocus=true,islarge=true"
+        @focus="expandSearch"
+        @mouseenter="expandSearch"
+        @keydown.enter="inline && !$event.isComposing && searchFn()"
       >
-        <template #prefix>
+        <template v-if="!inline" #prefix>
           <el-icon v-if="!islarge">
             <Search />
           </el-icon>
+        </template>
+        <template v-if="inline" #suffix>
+          <button v-popover="popoverRef" type="button" class="inline-search-action" :aria-label="$tp('高级搜索')">
+            <oort-svg-icon name="searchHeight" width="14" height="14" />
+          </button>
+          <button type="button" class="inline-search-action" :aria-label="$tp('搜索')" @click="searchFn">
+            <el-icon><Search /></el-icon>
+          </button>
         </template>
       </el-input>
       <template v-if="islarge">
@@ -50,7 +59,7 @@
       popper-class="popoverRefHeight"
       trigger="click"
       virtual-triggering
-      :persistent="islarge"
+      :persistent="inline || islarge"
     >
       <el-form class="searchBox" :model="form" :rules="rulesTemp">
         <el-form-item v-for="(item,i) in dataTemp" :key="i" class="flexRowAC" :prop="item.value">
@@ -135,6 +144,7 @@ import { reactive, ref, watch } from 'vue'
 import { QuestionFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
+  inline: Boolean,
   placeholder: {
     type: String,
     default: '搜索'
@@ -174,6 +184,12 @@ let visible = ref<boolean>(false)
 let isfocus = ref<boolean>(false)
 let islarge = ref<boolean>(false)
 
+const expandSearch = () => {
+  if (props.inline) return
+  isfocus.value = true
+  islarge.value = true
+}
+
 const blurFn = async() => {
   setTimeout(() => {
     if (!visible.value) {
@@ -184,7 +200,7 @@ const blurFn = async() => {
 }
 
 //
-const searchFn = (val) => {
+const searchFn = (val?: boolean | MouseEvent) => {
   let reset = false
   if (val === true) reset = true
   emits('handle', form, reset)
@@ -378,6 +394,34 @@ watch(() => props.data, (val) => {
       background: var(--el-color-primary-hb);
       fill: var(--el-color-primary) !important;
     }
+  }
+}
+
+.searchHeightOut--inline {
+  min-width: 0;
+  width: 280px;
+
+  :deep(.hei_input) {
+    width: 100%;
+  }
+}
+
+.inline-search-action {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--el-text-color-regular);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--el-color-primary-hb);
+    color: var(--el-color-primary);
   }
 }
 
