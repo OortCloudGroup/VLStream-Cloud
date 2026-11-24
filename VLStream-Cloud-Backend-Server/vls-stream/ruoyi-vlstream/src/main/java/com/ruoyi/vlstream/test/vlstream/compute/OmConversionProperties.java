@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "vlstream.om-conversion")
 public class OmConversionProperties {
-    private boolean enabled = false;
+    private boolean enabled = true;
     private String workDir = "/app/om-work";
 }

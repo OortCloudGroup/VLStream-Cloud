@@ -49,7 +49,10 @@ class OmConversionServiceTest {
     }
     @Test void disabledOptionalServiceDoesNotTouchBusinessData() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        OmConversionService service = new OmConversionService(new OmConversionProperties(), jdbc, mock(PlatformTransactionManager.class),
+        OmConversionProperties properties = new OmConversionProperties();
+        assertTrue(properties.isEnabled());
+        properties.setEnabled(false);
+        OmConversionService service = new OmConversionService(properties, jdbc, mock(PlatformTransactionManager.class),
             mock(IVlsAlgorithmTrainingService.class), mock(DataManagementService.class), mock(DatasetConversionGuard.class),
             mock(TrainingDatasetArtifactService.class), mock(ModelArtifactObjectStore.class), new ObjectMapper());
         assertThrows(ServiceException.class, () -> service.enqueue(1L, true));
