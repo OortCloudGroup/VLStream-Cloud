@@ -9,7 +9,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
-/** Optional adapter for the independently deployed anonymous market; adds only safe dated price display fields for an exact verified instance. */
+/** Adds the display-only company offers to the anonymous market. */
 @Aspect
 @Component
 @ConditionalOnClass(name = "com.ruoyi.vlstream.test.vlstream.compute.ComputePublicMarketService")

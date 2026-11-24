@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
@@ -175,17 +176,39 @@ public class ComputeSharedQueueService {
             command(connection,node,"register",payload);
         }
     }
-    public void release(ComputeSsh.Connection connection,ComputeNode node,CloudTrainingJob job,JsonNode result,String classesSha) throws IOException {
-        Map<String,Object> acknowledgement=new LinkedHashMap<>();String state=result.path("state").asText();
-        if("SUCCEEDED".equals(state)) {acknowledgement.put("state","ARCHIVED");acknowledgement.put("ptSha256",result.path("sha256").asText());acknowledgement.put("size",result.path("size").asLong());acknowledgement.put("classesSha256",classesSha);}
-        else acknowledgement.put("state",state);
-        Map<String,Object> payload=new LinkedHashMap<>();payload.put("gpu",gpu(job,node));payload.put("ticket",ticket(job));payload.put("acknowledgement",acknowledgement);
-        command(connection,node,"release",payload);
+    public JsonNode release(ComputeSsh.Connection connection, ComputeNode node, CloudTrainingJob job, JsonNode result, String classesSha) throws IOException {
+        String state = result.path("state").asText();
+        ObjectNode acknowledgement = json.createObjectNode();
+        if ("SUCCEEDED".equals(state)) {
+            acknowledgement.put("state", "ARCHIVED").put("ptSha256", result.path("sha256").asText())
+                .put("size", result.path("size").asLong()).put("classesSha256", classesSha);
+        } else {
+            acknowledgement.put("state", state);
+        }
+        if (!"DONE".equals(workspaceCommand(connection, node, "release", job, acknowledgement).path("state").asText()))
+            throw new IOException("共享节点未确认任务终态");
+        return acknowledgement;
+    }
+
+    void cleanupWorkspace(ComputeSsh.Connection connection, ComputeNode node, CloudTrainingJob job, JsonNode acknowledgement) throws IOException {
+        if (!"CLEANED".equals(workspaceCommand(connection, node, "cleanup", job, acknowledgement).path("state").asText()))
+            throw new IOException("共享节点未确认工作目录清理");
+    }
+
+    private JsonNode workspaceCommand(ComputeSsh.Connection connection, ComputeNode node, String action,
+                                      CloudTrainingJob job, JsonNode acknowledgement) throws IOException {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("gpu", gpu(job, node));
+        payload.put("ticket", ticket(job));
+        payload.put("acknowledgement", acknowledgement);
+        return command(connection, node, action, payload);
     }
     private JsonNode command(ComputeSsh.Connection connection,ComputeNode node,String action,Map<String,Object> payload) throws IOException {
         requireTarget(node);
         if (node.isPlatformCatalogManaged()) payload.put("queueRoot", node.getCatalogDefinition().getQueueRoot());
-        String script=node.getWorkDir()+"/.vls-shared-queue-v1.py";
+        // Older workers share this host but do not know the cleanup protocol.
+        String script = node.getWorkDir() + ("release".equals(action) || "cleanup".equals(action)
+            ? "/.vls-shared-queue-finalization-v1.py" : "/.vls-shared-queue-v1.py");
         try(java.io.InputStream input=new org.springframework.core.io.ClassPathResource("training/gpu_shared_queue.py").getInputStream()) {
             String source=new String(org.springframework.util.StreamUtils.copyToByteArray(input),StandardCharsets.UTF_8);
             String temporary=script+"."+java.util.UUID.randomUUID().toString()+".tmp";
@@ -193,7 +216,8 @@ public class ComputeSharedQueueService {
             connection.execute("mv -- "+quote(temporary)+" "+quote(script),20);
         }
         String encoded=Base64.getEncoder().encodeToString(json.writeValueAsBytes(payload));
-        String output=connection.execute(pythonCommand(node)+" "+quote(script)+" "+quote(action)+" "+quote(encoded),45);
+        String output=connection.execute(pythonCommand(node)+" "+quote(script)+" "+quote(action)+" "+quote(encoded),
+            "cleanup".equals(action) ? 120 : 45);
         int marker=output.lastIndexOf("VLS_SHARED=");if(marker<0)throw new IOException("共享节点未返回队列确认");
         return json.readTree(output.substring(marker+11).trim());
     }

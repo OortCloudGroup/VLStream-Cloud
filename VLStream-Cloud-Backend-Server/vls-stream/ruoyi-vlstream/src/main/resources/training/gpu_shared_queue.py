@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -109,6 +110,36 @@ def confirmed_exit(root):
     finally:
         if descriptor is not None:
             os.close(descriptor)
+
+
+def cleanup_paths(ticket):
+    root = Path(ticket['runDir'])
+    if (str(root) != ticket['runDir'] or not re.fullmatch('[a-f0-9]{16}', root.parent.name)
+            or ('runRoot' not in ticket and root.parent.parent not in
+                {Path(base) / ticket['environment'] for base in RUN_BASES})
+            or root.parent.resolve() != root.parent):
+        raise ValueError('Invalid workspace cleanup scope')
+    return root, root.with_name('.vls-cleanup-' + ticket['jobId'])
+
+
+def workspace_identity(path, *, require_safe=True):
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return None
+    unsafe_permissions = info.st_mode & 0o002 or (info.st_mode & 0o020 and info.st_gid != os.getegid())
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or unsafe_permissions:
+        if require_safe:
+            raise ValueError('Workspace directory identity is unsafe')
+        return None
+    return [info.st_dev, info.st_ino]
+
+
+def reject_workspace_mounts(path):
+    for line in Path('/proc/self/mountinfo').read_text().splitlines():
+        mount = re.sub(r'\\([0-7]{3})', lambda part: chr(int(part[1], 8)), line.split()[4])
+        if mount == str(path) or mount.startswith(str(path) + '/'):
+            raise ValueError('Workspace contains a mount; cleanup deferred')
 
 
 class Registry:
@@ -255,6 +286,16 @@ class Registry:
         if result.get('eventCount') != len(events) or acknowledgement.get('eventCount') != len(events) or set(acknowledged) != {event['id'] for event in events}:
             raise ValueError('Detection evidence has not been archived; lease retained')
 
+    @staticmethod
+    def verify_training_archive(root, acknowledgement):
+        if not re.fullmatch('[a-f0-9]{64}', acknowledgement.get('ptSha256', '')) or type(acknowledgement.get('size')) is not int or acknowledgement['size'] < 1:
+            raise ValueError('Verified PT archive acknowledgement missing')
+        result = read_json(root / 'result.json')
+        if result.get('state') != 'SUCCEEDED' or result.get('sha256') != acknowledgement.get('ptSha256') or result.get('size') != acknowledgement.get('size'):
+            raise ValueError('Successful task archive acknowledgement does not match its result')
+        if not re.fullmatch('[a-f0-9]{64}', acknowledgement.get('classesSha256', '')):
+            raise ValueError('Verified classes archive acknowledgement missing')
+
     def release(self, ticket, acknowledgement):
         with self.locked() as state:
             requested = validate_ticket(ticket)
@@ -277,13 +318,7 @@ class Registry:
             root = Path(row['runDir'])
             with confirmed_exit(root):
                 if acknowledgement.get('state') == 'ARCHIVED':
-                    if not re.fullmatch('[a-f0-9]{64}', acknowledgement.get('ptSha256', '')) or type(acknowledgement.get('size')) is not int or acknowledgement['size'] < 1:
-                        raise ValueError('Verified PT archive acknowledgement missing')
-                    result = read_json(root / 'result.json')
-                    if result.get('state') != 'SUCCEEDED' or result.get('sha256') != acknowledgement.get('ptSha256') or result.get('size') != acknowledgement.get('size'):
-                        raise ValueError('Successful task archive acknowledgement does not match its result')
-                    if not re.fullmatch('[a-f0-9]{64}', acknowledgement.get('classesSha256', '')):
-                        raise ValueError('Verified classes archive acknowledgement missing')
+                    self.verify_training_archive(root, acknowledgement)
                 elif acknowledgement.get('state') == 'DETECTION_ARCHIVED':
                     self.verify_detection_archive(root, acknowledgement)
                 elif acknowledgement.get('state') in ('FAILED', 'CANCELLED'):
@@ -295,10 +330,97 @@ class Registry:
                 else:
                     raise ValueError('Unsupported shared task acknowledgement')
                 row.update(state='DONE', acknowledgement=dict(acknowledgement))
+                if acknowledgement['state'] in ('ARCHIVED', 'FAILED', 'CANCELLED'):
+                    row['workspaceIdentity'] = workspace_identity(root, require_safe=False)
                 if state['active'] == key:
                     state['active'] = None
                 self.persist(state)
                 return self.view(state, key)
+
+    def verify_historical_workspace(self, root, row):
+        """Older DONE tickets do not record the released directory inode."""
+        config = read_json(root / 'job.json')
+        shared = config.get('sharedQueue', {})
+        ticket_fields = ('environment', 'jobId', 'owner')
+        if (shared.get('mode') != MODE or config.get('gpuIndex') != self.gpu['gpuIndex']
+                or shared.get('gpuUuid') != self.gpu['gpuUuid']
+                or any(shared.get(field) != row[field] for field in ticket_fields)):
+            raise ValueError('Historical workspace identity is not verifiable')
+        acknowledgement = row['acknowledgement']
+        if acknowledgement['state'] == 'ARCHIVED':
+            self.verify_training_archive(root, acknowledgement)
+        elif read_json(root / 'result.json').get('state') != acknowledgement['state']:
+            raise ValueError('Historical workspace terminal result does not match its acknowledgement')
+
+    def cleanup(self, ticket, acknowledgement):
+        if not isinstance(acknowledgement, dict) or acknowledgement.get('state') not in ('ARCHIVED', 'FAILED', 'CANCELLED'):
+            raise ValueError('Unsupported workspace cleanup acknowledgement')
+        key = validate_ticket(ticket)
+        root, quarantine = cleanup_paths(ticket)
+        with self.locked() as state:
+            original = workspace_identity(root)
+            pending = workspace_identity(quarantine)
+            if key not in state['tickets'] and acknowledgement == {'state': 'CANCELLED'} and original is None and pending is None:
+                return dict(state='CLEANED')
+            self.require_ticket(state, ticket)
+            row = state['tickets'][key]
+            if (row.get('runRoot') != ticket.get('runRoot') or row['state'] != 'DONE'
+                    or row.get('acknowledgement') != acknowledgement):
+                raise ValueError('Workspace cleanup requires the released terminal acknowledgement')
+            progress = row.get('workspaceCleanup')
+            if progress not in (None, 'PENDING', 'CLEANED'):
+                raise ValueError('Invalid workspace cleanup progress')
+            if original is None and pending is None:
+                if progress != 'CLEANED':
+                    if root.parent.exists():
+                        descriptor = os.open(str(root.parent), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                        try:
+                            os.fsync(descriptor)
+                        finally:
+                            os.close(descriptor)
+                    self.finish_cleanup(state, row)
+                return dict(state='CLEANED')
+            if progress == 'CLEANED' or (pending is not None and (progress != 'PENDING' or original is not None)):
+                raise ValueError('Released workspace was recreated or its quarantine is inconsistent')
+            path, identity = (root, original) if pending is None else (quarantine, pending)
+            with confirmed_exit(path):
+                if workspace_identity(path) != identity:
+                    raise ValueError('Workspace identity changed during cleanup')
+                if 'workspaceIdentity' not in row and progress is None:
+                    self.verify_historical_workspace(root, row)
+                    row['workspaceIdentity'] = identity
+                if row.get('workspaceIdentity') != identity:
+                    raise ValueError('Released workspace identity changed')
+                reject_workspace_mounts(path)
+                if not shutil.rmtree.avoids_symlink_attacks:
+                    raise ValueError('Symlink-safe recursive cleanup is unavailable')
+                descriptor = os.open(str(root.parent), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                try:
+                    parent = Path('/proc/self/fd') / str(descriptor)
+                    if workspace_identity(parent / path.name) != identity:
+                        raise ValueError('Workspace parent identity changed')
+                    if progress is None:
+                        row['workspaceCleanup'] = 'PENDING'
+                        self.persist(state)
+                    if pending is None:
+                        if workspace_identity(parent / quarantine.name) is not None:
+                            raise ValueError('Workspace quarantine already exists')
+                        os.rename(root.name, quarantine.name, src_dir_fd=descriptor, dst_dir_fd=descriptor)
+                        os.fsync(descriptor)
+                    if workspace_identity(parent / quarantine.name) != identity:
+                        raise ValueError('Workspace quarantine identity changed')
+                    reject_workspace_mounts(quarantine)
+                    shutil.rmtree(str(parent / quarantine.name))
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+            self.finish_cleanup(state, row)
+            return dict(state='CLEANED')
+
+    def finish_cleanup(self, state, row):
+        row.pop('workspaceIdentity', None)
+        row['workspaceCleanup'] = 'CLEANED'
+        self.persist(state)
 
 
 def context(config, run_dir):
@@ -329,6 +451,8 @@ def main():
         value = registry.inspect(payload.get('ticket'))
     elif action == 'release':
         value = registry.release(payload['ticket'], payload['acknowledgement'])
+    elif action == 'cleanup':
+        value = registry.cleanup(payload['ticket'], payload['acknowledgement'])
     else:
         raise ValueError('Unknown shared queue action')
     print('VLS_SHARED=' + json.dumps(value, ensure_ascii=False))

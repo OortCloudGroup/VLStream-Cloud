@@ -23,16 +23,19 @@ import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmTrainingController;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmModelMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmTrainingMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO;
+import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmTrainingService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsContainerInstanceService;
 import com.ruoyi.vlstream.test.vlstream.service.RemoteTrainingService;
 import com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService;
 import com.ruoyi.vlstream.test.vlstream.service.impl.VlsAlgorithmTrainingServiceImpl;
+import com.ruoyi.vlstream.test.vlstream.service.impl.VlsAlgorithmModelServiceImpl;
 import com.ruoyi.vlstream.test.vlstream.data.DataManagementService;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -139,6 +142,8 @@ class ComputeSharedQueueIntegrationTest {
         jdbc.execute("CREATE TABLE IF NOT EXISTS vls_smart_annotation_task(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),create_user BIGINT,is_deleted INT DEFAULT 0)");
         jdbc.execute("CREATE TABLE IF NOT EXISTS vls_smart_annotation_round(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),task_id BIGINT,is_deleted INT DEFAULT 0)");
         jdbc.execute("CREATE TABLE IF NOT EXISTS vls_algorithm_model(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_id BIGINT)");
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='vls_algorithm_model' AND column_name='model_name'", Integer.class, SCHEMA) == 0)
+            jdbc.execute("ALTER TABLE vls_algorithm_model ADD COLUMN model_name VARCHAR(100), ADD COLUMN create_time DATETIME DEFAULT CURRENT_TIMESTAMP, ADD COLUMN is_deleted INT DEFAULT 0");
         System.out.println("Shared SQL fixture: " + SCHEMA + ", MySQL " + jdbc.queryForObject("SELECT VERSION()", String.class));
     }
 
@@ -318,7 +323,7 @@ class ComputeSharedQueueIntegrationTest {
         }
     }
 
-    @Test void nullOwnerAndUnsupportedEnvironmentNeverGrantSharedReads() {
+    @Test void nullOwnerAndOtherOrInvalidEnvironmentsNeverGrantSharedReads() {
         job(1, "PLATFORM", ComputeSharedQueueService.MODE, "tenant-a", "alice", null, SHARED, "QUEUED");
         shared(2, "tenant-a", "alice", "localhost");
         for (String owner : Arrays.asList(null, "", " ")) {
@@ -336,7 +341,11 @@ class ComputeSharedQueueIntegrationTest {
         jdbc.update("UPDATE vls_cloud_training_job SET public_owner_subject=NULL WHERE training_id=1");
         denied(1); visible(2);
         assertEquals(1, mine.page(1, 20, null, null, null, null).getTotal(), "Frozen shared mode still protects ownerless data after node removal");
-        properties.setEnvironmentId("unsupported"); assertEquals("", shared.viewer());
+        properties.setEnvironmentId("other-environment");
+        assertEquals(nativeOwner("other-environment", "tenant-a", "alice"), shared.viewer());
+        denied(1); denied(2); visible();
+        properties.setEnvironmentId("invalid environment");
+        assertEquals("", shared.viewer());
         denied(1); denied(2); visible();
     }
 
@@ -595,13 +604,17 @@ class ComputeSharedQueueIntegrationTest {
     }
 
     private SqlSession pageSession() throws Exception {
+        return pageSession(VlsAlgorithmTrainingMapper.class);
+    }
+
+    private SqlSession pageSession(Class<?> mapper) throws Exception {
         MybatisConfiguration configuration=new MybatisConfiguration();
         configuration.setMapUnderscoreToCamelCase(true);
         configuration.setEnvironment(new Environment("shared-consumer-only",new JdbcTransactionFactory(),jdbc.getDataSource()));
         MybatisPlusInterceptor paging=new MybatisPlusInterceptor();
         paging.addInnerInterceptor(new PaginationInnerInterceptor(com.baomidou.mybatisplus.annotation.DbType.MYSQL));
         configuration.addInterceptor(paging);
-        String resource=VlsAlgorithmTrainingMapper.class.getName().replace('.','/')+".xml";
+        String resource=mapper.getName().replace('.','/')+".xml";
         try(InputStream input=getClass().getClassLoader().getResourceAsStream(resource)) {
             assertNotNull(input); new XMLMapperBuilder(input,configuration,resource,configuration.getSqlFragments()).parse();
         }
@@ -617,6 +630,54 @@ class ComputeSharedQueueIntegrationTest {
 
     private List<Long> pageIds(IPage<AlgorithmTrainingVO> page) {
         List<Long> ids=new ArrayList<>(); for(AlgorithmTrainingVO row:page.getRecords())ids.add(row.getId()); return ids;
+    }
+
+    @Test void actualModelPageSharesTenantImportsAndKeepsTrainingModelsPersonal() throws Exception {
+        shared(1, "tenant-a", "alice", "localhost");
+        shared(2, "tenant-a", "bob", "localhost");
+        job(3, "PRIVATE", ComputeSharedQueueService.EXCLUSIVE, "tenant-a", "alice", ssoOwner("platform-alice"), "{}", "COMPLETED");
+        jdbc.update("INSERT INTO vls_algorithm_model(id,tenant_id,model_name,is_deleted) VALUES (101,'tenant-a','team import',0),(102,'tenant-b','other tenant import',0),(103,'tenant-a','deleted import',1)");
+        jdbc.update("UPDATE vls_algorithm_model SET create_time='2026-01-01 00:00:00'");
+
+        try (SqlSession session = pageSession(VlsAlgorithmModelMapper.class)) {
+            VlsAlgorithmModelServiceImpl service = new VlsAlgorithmModelServiceImpl();
+            ReflectionTestUtils.setField(service, "baseMapper", session.getMapper(VlsAlgorithmModelMapper.class));
+            ReflectionTestUtils.setField(service, "publicAccess", access);
+            AlgorithmModelVO filter = new AlgorithmModelVO();
+            filter.setTenantId("tenant-b");
+            filter.setCreateUser("bob");
+            IPage<AlgorithmModelVO> alice = service.selectVlsAlgorithmModelPage(new Page<>(1, 2), filter);
+            assertEquals(3, alice.getTotal());
+            assertEquals(Arrays.asList(30003L, 30001L), modelPageIds(alice));
+            assertEquals(Collections.singletonList(101L), modelPageIds(service.selectVlsAlgorithmModelPage(new Page<>(2, 2), filter)));
+            assertDoesNotThrow(() -> access.model(101L));
+
+            actor("bob", "tenant-a", "localhost");
+            platformUser.set("platform-bob");
+            assertEquals(Arrays.asList(30002L, 101L), modelPageIds(service.selectVlsAlgorithmModelPage(new Page<>(1, 20), filter)));
+            assertDoesNotThrow(() -> access.model(101L));
+            assertThrows(ServiceException.class, () -> access.model(30001L));
+            assertThrows(ServiceException.class, () -> access.model(30003L));
+            assertThrows(ServiceException.class, () -> access.model(102L));
+            filter.setTrainingId(2L);
+            assertEquals(Collections.singletonList(30002L), modelPageIds(service.selectVlsAlgorithmModelPage(new Page<>(1, 20), filter)));
+            filter.setTrainingId(1L);
+            assertEquals(0, service.selectVlsAlgorithmModelPage(new Page<>(1, 20), filter).getTotal());
+            filter.setTrainingId(null);
+            filter.setModelName("team");
+            assertEquals(Collections.singletonList(101L), modelPageIds(service.selectVlsAlgorithmModelPage(new Page<>(1, 20), filter)));
+
+            actor("bob", "tenant-b", "localhost");
+            filter.setModelName(null);
+            assertEquals(Collections.singletonList(102L), modelPageIds(service.selectVlsAlgorithmModelPage(new Page<>(1, 20), filter)));
+            assertThrows(ServiceException.class, () -> access.model(101L));
+        }
+    }
+
+    private List<Long> modelPageIds(IPage<AlgorithmModelVO> page) {
+        List<Long> ids = new ArrayList<>();
+        for (AlgorithmModelVO row : page.getRecords()) ids.add(row.getId());
+        return ids;
     }
 
     @Test void actualPrimaryMapperPageUsesUnifiedGuardCountPaginationAndBoundRequestFilters() throws Exception {
@@ -772,6 +833,18 @@ class ComputeSharedQueueIntegrationTest {
         jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,training_id,container_record_id,public_owner_subject,options_json) VALUES('wrong-type','tenant-a',999,20,'anything','{}')");
         assertThrows(ServiceException.class,()->access.container(20L));assertTrue(filtered("vls_container_instance",null,true).isEmpty());
         jdbc.update("DELETE FROM vls_cloud_training_job WHERE id='wrong-type'");jdbc.update("UPDATE vls_smart_annotation_round SET is_deleted=1 WHERE id=30");assertThrows(ServiceException.class,()->access.container(20L));assertTrue(filtered("vls_container_instance",null,true).isEmpty());
+    }
+    @Test void annotationTaskCreatorCannotReadContainerFromTeammatesComputeAttempt() {
+        actor("101","tenant-a","localhost");platformUser.set(null);
+        jdbc.update("INSERT INTO vls_smart_annotation_task(id,tenant_id,create_user) VALUES(10,'tenant-a',101)");
+        jdbc.update("INSERT INTO vls_smart_annotation_round(id,tenant_id,task_id) VALUES(30,'tenant-a',10)");
+        jdbc.update("INSERT INTO vls_container_instance(id,tenant_id,create_user,instance_type,training_task_id) VALUES(20,'tenant-a','101','smart_annotation',30)");
+        jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,smart_round_id,container_record_id,options_json) VALUES('annotation','tenant-a',30,20,'{}')");
+        access.container(20L);
+        assertEquals(Collections.singletonList(20L), filtered("vls_container_instance",null,true));
+        jdbc.update("UPDATE vls_cloud_training_job SET options_json=? WHERE id='annotation'", "{\"executionUserId\":\"102\"}");
+        assertThrows(ServiceException.class, () -> access.container(20L));
+        assertTrue(filtered("vls_container_instance",null,true).isEmpty());
     }
     @Test void generatedQueuedLogMustMatchOwnedPersistedTrainingContainerAndTenant() {
         org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(new MockHttpServletRequest()));

@@ -17,7 +17,7 @@
 | 训练过程 | `R/job.json`、`state.json`、`result.json`、`progress.json`、`run.lock`、`cancel.request` 和 `training.log/launcher.log` 在 GPU 本地；GPU 全局锁在 `/tmp/.vlstream-gpu-<index>.lock`。 | `cloud_training_runner.py:46`、`:98`、`:127`；`CloudTrainingWorker.java:102` |
 | 模型/checkpoint与指标 | 输出在 `R/output`，最终目标固定 `output/weights/best.pt`，有 `args.yaml/vls-metrics.json`。YOLO 设置 save=True，但平台没有上传中间 checkpoint；语义分割只保存网络最佳权重，没有持久化优化器/随机状态恢复契约。 | `four_task_runtime.py:177`、`:191`、`:272` |
 | 最终回存 | 从 GPU 取回本轮 best.pt，校验远端结果中的大小/摘要；类别文件由同一冻结快照生成。两项经过对象存储上传、回读及 READY 确认后才 COMPLETED。模型逻辑 key 是 `cloud-training/<nodeId>/<jobId>/weights/best.pt`，物理对象是 `models/<tenantHash>/<pathHash>/<sha256>/<fileName>`。 | `CloudTrainingWorker.java:169`；`ModelArtifactObjectStore.java:63`、`:83`；`CloudTrainingJob.java:25` |
-| 日志与清理 | 轮询只把最后最多 32768 字节日志同步到 DB `log_tail`；没有全日志/checkpoint/指标包归档。成功、失败或取消只更新 DB 状态，未清理 GPU 的 R。平台临时文件清理不等于 GPU 清理。 | `cloud_training_runner.py:64`；`CloudTrainingWorker.java:118`、`:193` |
+| 日志与清理 | 轮询把日志尾部同步到 DB `log_tail`。公司免费共享 GPU 的训练与智能标注终态会登记本轮 R 的清理请求。成功须先回存并核验模型和类别、导入预测，取消或失败须确认退出。完成清理后再提交已启用的 Deployment 占用释放。 | `CloudTrainingWorker.java`、`SharedTrainingWorkspaceCleanup.java`、`gpu_shared_queue.py` |
 
 对象存储的实际桶/供应商由部署配置决定，本次没有读取配置密钥或验证线上桶。
 
@@ -38,17 +38,17 @@
 
 ## 当前能称为什么，以及最小后续方案
 
-当前已经做到“平台有可复用数据集包，成功模型经校验回存”；成功结果使用不再依赖 GPU 保留 best.pt。当前**未做到可随时销毁的无状态训练节点**：运行状态、回存源、失败中间结果和完整日志仍依赖原 GPU 盘；没有安全清理状态、全日志回存或断点 checkpoint 回存。
+平台保留可复用数据集包、已校验的成功模型、类别及已导入的预测结果。免费共享批任务会核对退出证明、冻结目录身份和队列终态凭据，仅清理本轮工作目录。清理失败会持久重试。完成前继续保留归档所需的源文件，公共环境及预置模型缓存可继续复用。日常查询保留日志尾部，完整原始日志和中间 checkpoint 不属于归档内容。
 
 建议下一独立阶段先做“公司持有环境/缓存＋每任务临时工作区”的最小闭环，而不预设用户长期租盘：
 
-1. 把成功必要产物与需要保留的日志明确归档，确认 READY 后将任务标记为可清理；回存失败继续保留工作区，不能误报可重分配。
-2. 建立只针对本轮 R 的安全清理及证明，锁内核对无活跃任务、不跟随链接、不删 W/envs、W/models 或其他任务目录；该方案尚未实现，本次没有执行删除。
+1. 旧任务目录需要单独核验任务归档、退出及目录证据，当前自动清理只处理已记录清理请求的任务。
+2. 私人节点按其自身的数据生命周期管理。已开通付费公共实例在停机和所有权释放流程中清理已登记工作区。
 3. 首版故障明确重新训练、不中断点续训；若以后需要续训，再增加周期 checkpoint、优化器/随机状态、上传校验和恢复状态，避免把 best.pt 当完整 checkpoint。
 4. 公司公共库存全平台可发现；公共库存阶段 `.039` 已持久化免费实例的跨卡可信 SSO 用户占用和用户级任务/模型访问校验，每卡队列保留，没有放宽全局租户隔离。用过工作区或历史任务无清理证明时隔离；当前没有安全清理执行器，付费占用拒绝。实际供应商库存同步仍待接入，未合成任何已购机器或未来卡数。
 5. 按已确认方案不转收磁盘费。后续只需完成约定产物清单、回存自动重试/准确失败状态与节点隔离，不配置转人工客服；修复性补传、环境维护和清理由平台承担，不能冒用用户新扣款。支付同事可先做稳定个人余额/幂等扣款/查单/后台鉴权契约。
 
-这些是后续建议，不代表本轮已提供清理、迁移、自动停机、收费或真实供应商联调。当前没有登记虚构的“20多台”实例或未来四张 P100，也没有读取用户提供的 AutoDL 凭据。
+未进行现有生产目录的清理、真实 GPU 或供应商联调。
 
 ## 证据索引
 

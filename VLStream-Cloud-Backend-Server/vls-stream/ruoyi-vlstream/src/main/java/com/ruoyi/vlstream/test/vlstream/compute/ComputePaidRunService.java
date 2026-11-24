@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 /** Durable product workflow. Supplier HTTP is performed only by the existing power outbox.
@@ -45,6 +46,8 @@ public class ComputePaidRunService {
     private ComputePaidArchiveRecoveryService archiveRecovery;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private ComputeOriginalReleaseService originalRelease;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private ComputeExecutionCoordinator executionCoordinator;
     @org.springframework.beans.factory.annotation.Autowired
     private ComputeBillingTrialGuard trialGuard;
     @org.springframework.beans.factory.annotation.Autowired
@@ -291,6 +294,7 @@ public class ComputePaidRunService {
             BillingSnapshot snapshot=BillingSnapshot.read(text(row,"quote_snapshot"),json);
             ComputeBillingRate rate=readRate(parse(snapshot.json).path("accepted_rate").toString());rate.validate(Instant.now());
             if(nodes.officialConfigured(node))nodes.ensureOfficialIdentity(node);
+            prepareCentralLease(node, row, archive);
             nodes.publicInventory().claimPaid(node,actor(payer));
             jdbc.update("UPDATE vls_compute_paid_run SET active_instance_key=? WHERE run_id=?",node.getPublicInstanceKey(),runId);
             String usage=ledger.reserve(ComputeBillingLedgerService.serverKey(node.getId()),payer.tenantId,payer.actorId,payer.platformSubject,rate,false,text(row,"start_operation_id"));
@@ -302,6 +306,30 @@ public class ComputePaidRunService {
             return null;
         });
         return get(runId,payer);
+    }
+
+    private void prepareCentralLease(ComputeNode node, Map<String,Object> run, boolean archive) {
+        if (!node.isPlatformCatalogManaged() || executionCoordinator == null) return;
+        String id = text(run, "run_id"), rootId = id;
+        Map<String,Object> original = archive ? row(recoverySource(run), true) : Collections.emptyMap();
+        String inherited = text(original, "central_lease_root_run_id");
+        if (inherited != null) rootId = inherited;
+        List<Map<String,Object>> held = jdbc.queryForList("SELECT run_id,central_lease_scope,central_lease_node_id "
+            + "FROM vls_compute_paid_run WHERE instance_key=? AND run_id=central_lease_root_run_id "
+            + "AND central_lease_release_queued_ms IS NULL FOR UPDATE", node.getPublicInstanceKey());
+        if (inherited == null && !held.isEmpty()) throw new ServiceException("原算力占用尚未安全释放，请等待原单收尾");
+        if (!executionCoordinator.managed()) {
+            if (inherited != null) throw new ServiceException("原统一算力占用服务暂不可用");
+            return;
+        }
+        String scope = executionCoordinator.scopeFingerprint();
+        if (scope == null || !scope.matches("[a-f0-9]{64}")) throw new ServiceException("统一算力占用服务身份暂不可用");
+        if (inherited != null && (held.size() != 1 || !rootId.equals(text(held.get(0), "run_id"))
+                || !scope.equals(text(held.get(0), "central_lease_scope"))
+                || !node.getId().toString().equals(text(held.get(0), "central_lease_node_id"))))
+            throw new ServiceException("原归档任务的统一算力占用无法核对");
+        jdbc.update("UPDATE vls_compute_paid_run SET central_lease_node_id=?,central_lease_scope=?,central_lease_root_run_id=? WHERE run_id=?",
+            node.getId(),scope,rootId,id);
     }
 
     public View get(String id,BillingPayer payer){return view(owned(id,payer,false));}
@@ -441,6 +469,45 @@ public class ComputePaidRunService {
     @Scheduled(fixedDelay=5000,initialDelay=30000)
     public void scan() {
         for(String run:jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key IS NOT NULL AND worker_lease_until_ms<? ORDER BY update_time LIMIT 50",String.class,System.currentTimeMillis()))tick(run);
+        try { scanCentralReleases(); }
+        catch (RuntimeException pending) {
+            log.warn("Paid compute lease release scan pending exceptionType={}",pending.getClass().getSimpleName());
+        }
+    }
+    void scanCentralReleases() {
+        if (executionCoordinator == null || !executionCoordinator.managed()) return;
+        String scope = executionCoordinator.scopeFingerprint();
+        if (scope == null) return;
+        for (String rootId : jdbc.queryForList("SELECT r.run_id FROM vls_compute_paid_run r "
+                + "JOIN vls_compute_public_instance p ON p.instance_key=r.instance_key AND p.workspace_dirty=0 "
+                + "WHERE r.central_lease_scope=? AND r.run_id=r.central_lease_root_run_id "
+                + "AND r.central_lease_release_queued_ms IS NULL AND r.state IN ('CANCELLED','COMPLETED') "
+                + "AND NOT EXISTS (SELECT 1 FROM vls_compute_paid_run a WHERE a.active_instance_key=r.instance_key) "
+                + "AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job j WHERE j.public_instance_key=r.instance_key "
+                + "AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED')) ORDER BY r.update_time LIMIT 50", String.class, scope)) {
+            try {
+                tx.execute(status -> {
+                    Map<String,Object> root = row(rootId, true);
+                    if (!terminal(text(root, "state")) || root.get("active_instance_key") != null
+                            || root.get("central_lease_release_queued_ms") != null
+                            || !scope.equals(text(root, "central_lease_scope"))) return null;
+                    String instance = text(root, "instance_key");
+                    if (!jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=? FOR UPDATE", instance).isEmpty())
+                        return null;
+                    ComputePublicInventoryService inventory = nodes.publicInventory();
+                    inventory.releaseCompleted(instance, text(root, "platform_subject"));
+                    ComputeNode node = new ComputeNode();
+                    node.setPublicInstanceKey(instance);
+                    ComputePublicInventoryService.Instance proof = inventory.read(node, true);
+                    if (proof == null || !"FREE".equals(proof.getPublicState()) || proof.isWorkspaceDirty()) return null;
+                    executionCoordinator.enqueueRelease(Long.valueOf(text(root, "central_lease_node_id")), "paid:" + rootId, scope);
+                    jdbc.update("UPDATE vls_compute_paid_run SET central_lease_release_queued_ms=? WHERE run_id=?", System.currentTimeMillis(),rootId);
+                    return null;
+                });
+            } catch (RuntimeException pending) {
+                log.warn("Paid compute lease release pending run={} exceptionType={}",rootId,pending.getClass().getSimpleName());
+            }
+        }
     }
     public void tick(String id) {
         // Scope selection survives expiry/disable so the original run can still stop/clean up.
@@ -488,12 +555,16 @@ public class ComputePaidRunService {
             if(expired)jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=COALESCE(risk_code,'RUN_WINDOW_EXPIRED') WHERE usage_id=?",usage);
             // Cancel a provably unsent hold before recovery could claim it for transport.
             if((expired||"CANCELLING".equals(state)||number(pending,"stop_requested")!=0)&&cancelUnsubmittedHold(run))return;
+            if (pendingCentralLease(run)) {
+                if (expired || number(pending,"stop_requested") != 0 || !"FUNDING".equals(state) || !acquireCentralLease(run)) return;
+            }
         }
         ComputeFundingIntentService.Intent hold=recovery.advance(holdId,System.currentTimeMillis());
         if(ComputeFundingIntentService.REJECTED.equals(hold.state)&&hold.holdId==null&&hold.receipt==null) {
             tx.execute(status->{
                 ledger.startFailed(usage);
-                jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLED',active_instance_key=NULL,error_code='FUNDING_REJECTED' WHERE run_id=?",id);return null;
+                jdbc.update("UPDATE vls_compute_paid_run SET state='CANCELLED',active_instance_key=NULL,error_code='FUNDING_REJECTED' WHERE run_id=?",id);
+                return null;
             });return;
         }
         if(ComputeFundingIntentService.CONFLICT.equals(hold.state)||ComputeFundingIntentService.REJECTED.equals(hold.state)) {
@@ -516,8 +587,7 @@ public class ComputePaidRunService {
             jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code IS NULL THEN 'RUN_WINDOW_EXPIRED' ELSE risk_code END WHERE usage_id=?",usage);
             session.put("stop_requested",1);
         }
-        boolean physicallyStopped="STOPPED".equals(observedUsage.get("state"))&&observedUsage.get("billing_end_at")!=null
-            &&"STOP_CONFIRMED".equals(session.get("safety_state"))&&number(session,"physical_stop_observed_ms")>0;
+        boolean physicallyStopped=physicallyStopped(observedUsage, session);
         if(!physicallyStopped&&configuredPower!=null&&("STARTING".equals(state)||"RUNNING".equals(state)||"STOPPING".equals(state))) {
             ComputeNode controlled=lifecycle.controlledNode(usage);
             officialPowerControl=nodes.officialConfigured(controlled);
@@ -581,6 +651,8 @@ public class ComputePaidRunService {
         boolean neverStarted=("CANCELLING".equals(state)||"START_FAILED".equals(text(observedUsage,"state")))&&observedUsage.get("billing_start_at")==null;
         boolean stopped="STOP_CONFIRMED".equals(text(session,"safety_state"))&&observedUsage.get("billing_end_at")!=null;
         if(!neverStarted&&!stopped)return;
+        if (run.get("central_lease_node_id") != null && !physicallyStopped(observedUsage, session)
+                && !(neverStarted && noRunningIntervalConfirmed(run, observedUsage))) return;
         // Cancellation is not proof that an uncertain hold never committed. Keep the usage
         // claim until the original funding outcome and any required release are confirmed.
         if(stopped&&number(session,"metered_until_ms")<number(session,"last_running_ms")) {
@@ -656,6 +728,44 @@ public class ComputePaidRunService {
         } catch (RuntimeException ignored) {
             // The order is settled; an unverified claim stays owned for the explicit release path.
         }
+    }
+
+    private boolean acquireCentralLease(Map<String,Object> run) {
+        String scope = text(run, "central_lease_scope");
+        if (executionCoordinator == null || !executionCoordinator.managed() || scope == null || !scope.equals(executionCoordinator.scopeFingerprint()))
+            throw new ServiceException("原统一算力占用服务身份暂不可用");
+        String rootId = text(run, "central_lease_root_run_id");
+        if (rootId == null) throw new IllegalStateException("Original compute lease order is missing");
+        Long nodeId = Long.valueOf(text(run, "central_lease_node_id"));
+        ComputeNode node = tx.execute(status -> lifecycle.controlledNode(text(run, "usage_id")));
+        if (node == null || !nodeId.equals(node.getId()) || !node.isPlatformCatalogManaged())
+            throw new ServiceException("原统一算力占用节点暂不可用");
+        String id = text(run, "run_id");
+        if (!executionCoordinator.acquire(node, "paid:" + rootId)) {
+            jdbc.update("UPDATE vls_compute_paid_run SET error_code='COMPUTE_LEASE_WAITING' WHERE run_id=? AND state='FUNDING'", id);
+            return false;
+        }
+        return jdbc.update("UPDATE vls_compute_paid_run SET central_lease_acquired_ms=?,error_code=NULL WHERE run_id=? "
+            + "AND state='FUNDING' AND active_instance_key IS NOT NULL AND central_lease_node_id=? AND central_lease_scope=?",
+            System.currentTimeMillis(),id,nodeId,scope)==1;
+    }
+
+    private static boolean pendingCentralLease(Map<String,Object> run) {
+        return run.get("central_lease_node_id") != null && run.get("central_lease_acquired_ms") == null;
+    }
+
+    private static boolean physicallyStopped(Map<String,Object> usage, Map<String,Object> session) {
+        return "STOPPED".equals(usage.get("state")) && usage.get("billing_end_at") != null
+            && "STOP_CONFIRMED".equals(session.get("safety_state")) && session.get("physical_stop_observed_ms") != null
+            && number(session, "physical_stop_observed_ms") > 0;
+    }
+
+    private static boolean noRunningIntervalConfirmed(Map<String,Object> run, Map<String,Object> usage) {
+        String start = text(run, "power_start_state");
+        return ("PREPARED".equals(start) && run.get("power_start_attempt_ms") == null)
+            || Arrays.asList("CANCELLED", "REJECTED", "REJECTED_NO_STOCK").contains(start)
+            || ("START_FAILED".equals(usage.get("state")) && usage.get("stop_observed_at") != null
+                && "ACCEPTED".equals(run.get("power_stop_state")) && run.get("power_stop_attempt_ms") != null);
     }
     private Map<String,Object> usage(String id) {
         return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=?",(rs,index)-> {

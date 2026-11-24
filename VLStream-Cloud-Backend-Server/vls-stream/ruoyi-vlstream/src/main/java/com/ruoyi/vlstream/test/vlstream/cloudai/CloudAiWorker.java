@@ -9,10 +9,13 @@ import com.ruoyi.vlstream.test.vlstream.service.CloudAiEvidenceStore;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StreamUtils;
 import javax.annotation.PreDestroy;
 import java.io.*;
@@ -38,6 +41,8 @@ public class CloudAiWorker {
     private final ConfiguredComputeRegistry configured;
     private final ComputeSharedQueueService queue;
     private final ComputeSsh ssh;
+    @Autowired private PlatformTransactionManager transactions;
+    @Autowired(required = false) private ComputeExecutionCoordinator executionCoordinator;
     private final String worker = UUID.randomUUID().toString();
     private final Set<String> active = ConcurrentHashMap.newKeySet();
     private final ExecutorService executor = Executors.newFixedThreadPool(4, runnable -> {
@@ -60,6 +65,7 @@ public class CloudAiWorker {
     private void reconcile(String id) {
         String previous = TenantContextHolder.getTenantId();
         Map<String,Object> run = null;
+        Long deploymentNodeId = null;
         String phase = "RESOURCE";
         try {
             run = jdbc.queryForMap("SELECT * FROM vls_cloud_ai_run WHERE id=? AND lease_owner=?", id, worker);
@@ -67,17 +73,35 @@ public class CloudAiWorker {
             int dispatched = ((Number) run.get("dispatched")).intValue();
             boolean cancel = CloudAiService.flag(run.get("cancel_requested"));
             Long end = run.get("planned_end") == null ? null : ((Number) run.get("planned_end")).longValue();
-            if (dispatched < 2 && (cancel || end != null && end <= System.currentTimeMillis())) {
-                terminal(id, cancel ? "CANCELLED" : "SKIPPED", cancel ? "在执行前停止" : "排队期间执行窗口已结束", System.currentTimeMillis()); return;
-            }
             ObjectNode snapshot = (ObjectNode) service.read(String.valueOf(run.get("snapshot_json")));
             if (!service.executionScope().equals(snapshot.path("executionScope").asText())) return;
-            ComputeNode node = nodes.get(((Number) run.get("node_id")).longValue());
+            Long nodeId = ((Number) run.get("node_id")).longValue();
+            boolean shared = snapshot.path("shared").asBoolean();
+            boolean coordinated = executionCoordinator != null && executionCoordinator.managed();
+            if (executionCoordinator != null)
+                deploymentNodeId = sharedCatalogNode(snapshot);
+            if (dispatched < 2 && (cancel || end != null && end <= System.currentTimeMillis())) {
+                if (deploymentNodeId == null && coordinated && shared) deploymentNodeId = configured.canonicalId(nodeId);
+                terminal(id, cancel ? "CANCELLED" : "SKIPPED", cancel ? "在执行前停止" : "排队期间执行窗口已结束", System.currentTimeMillis(), deploymentNodeId);
+                return;
+            }
+            ComputeNode node = nodes.get(nodeId);
             if (!Objects.equals(snapshot.path("resource").path("targetFingerprint").asText(), configured.snapshot(node).get("targetFingerprint"))
                     || !Objects.equals(snapshot.path("managementOwner").asText(""), Objects.toString(node.getManagementOwnerSubject(), "")))
                 throw new IOException("RESOURCE_IDENTITY_CHANGED");
             String root = node.getWorkDir() + "/" + ModelArtifactObjectStore.hash(String.valueOf(run.get("tenant_id"))).substring(0,16) + "/" + id;
             if (run.get("run_dir") != null && !root.equals(run.get("run_dir"))) throw new IOException("RUN_DIRECTORY_CHANGED");
+            if (deploymentNodeId != null && (!node.isPlatformCatalogManaged() || !deploymentNodeId.equals(node.getId())))
+                throw new IOException("RESOURCE_IDENTITY_CHANGED");
+            if (coordinated && node.isPlatformCatalogManaged()) {
+                if (!shared || !queue.isShared(node)) throw new IOException("RESOURCE_IDENTITY_CHANGED");
+                deploymentNodeId = node.getId();
+                phase = "GPU_LEASE";
+                if (!executionCoordinator.acquire(node, executionRef(id))) {
+                    jdbc.update("UPDATE vls_cloud_ai_run SET message='统一平台算力正被占用，等待任务释放' WHERE id=? AND lease_owner=?", id, worker);
+                    return;
+                }
+            }
             phase = "GPU_CONNECT";
             try (ComputeSsh.Connection connection = ssh.open(node)) {
                 String python = python(connection, node);
@@ -111,8 +135,8 @@ public class CloudAiWorker {
                     detail.toString(), nullableLong(detail,"startedAt"), nullableLong(detail,"heartbeatAt"), id, worker);
                 if (CloudAiService.TERMINAL.contains(status) && state.path("exited").asBoolean()) {
                     for(JsonNode camera:snapshot.path("cameras"))sources.release(camera.path("grantId").asText(),String.valueOf(run.get("tenant_id")),String.valueOf(run.get("actor_id")),id);
-                    if (snapshot.path("shared").asBoolean()) release(connection, python, root, state);
-                    terminal(id, status, state.path("message").asText("执行已结束"), state.path("endedAt").asLong(System.currentTimeMillis()));
+                    if (shared) release(connection, python, root, state);
+                    terminal(id, status, state.path("message").asText("执行已结束"), state.path("endedAt").asLong(System.currentTimeMillis()), deploymentNodeId);
                 } else {
                     if (!Arrays.asList("QUEUED","PREPARING","RUNNING","DEGRADED","STOPPING","UNKNOWN").contains(status)) status = "UNKNOWN";
                     jdbc.update("UPDATE vls_cloud_ai_run SET state=?,message=? WHERE id=? AND lease_owner=?",
@@ -121,6 +145,10 @@ public class CloudAiWorker {
             }
         } catch (Exception error) {
             // No third-party message/stack trace here: SSH / FFmpeg errors can contain credentials.
+            if ("GPU_LEASE".equals(phase)) {
+                jdbc.update("UPDATE vls_cloud_ai_run SET message='统一平台算力使用权待确认，后台将重试' WHERE id=? AND lease_owner=?", id, worker);
+                return;
+            }
             if (error instanceof com.ruoyi.common.exception.ServiceException
                 && Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE, ((com.ruoyi.common.exception.ServiceException) error).getCode())) {
                 jdbc.update("UPDATE vls_cloud_ai_run SET message='统一平台算力原执行目录待恢复，保留任务等待同步' WHERE id=? AND lease_owner=?", id, worker);
@@ -130,7 +158,7 @@ public class CloudAiWorker {
             if (admitted != null && admitted >= 2) jdbc.update("UPDATE vls_cloud_ai_run SET state='UNKNOWN',message='执行或证据归档状态待确认，后台将重试；不会重复启动或提前释放GPU' WHERE id=? AND lease_owner=?", id, worker);
             else terminal(id, "FAILED", "RESOURCE".equals(phase) ? "执行资源校验失败，请核对当前后台的YAML资源绑定与运行快照"
                 : "GPU_CONNECT".equals(phase) ? "GPU连接失败，请核对后台SSH身份与网络"
-                : "准备失败，请核对检测运行环境、模型归档和摄像机授权", System.currentTimeMillis());
+                : "准备失败，请核对检测运行环境、模型归档和摄像机授权", System.currentTimeMillis(), deploymentNodeId);
             log.warn("Cloud AI reconciliation {} at {}: {}", id, phase, error.getClass().getSimpleName());
         } finally {
             if (previous == null) TenantContextHolder.clear(); else TenantContextHolder.setTenantId(previous);
@@ -210,8 +238,24 @@ public class CloudAiWorker {
     private void release(ComputeSsh.Connection connection, String python, String root, JsonNode state) throws IOException {
         command(connection,python,root,"release",null);
     }
-    private void terminal(String id, String state, String message, long endedAt) {
-        jdbc.update("UPDATE vls_cloud_ai_run SET state=?,message=?,ended_at=? WHERE id=? AND lease_owner=?",state,message,endedAt,id,worker);
+    private String executionRef(String id) { return "cloudai:" + id; }
+
+    private void terminal(String id, String state, String message, long endedAt, Long releasedNodeId) {
+        String sql = "UPDATE vls_cloud_ai_run SET state=?,message=?,ended_at=? WHERE id=? AND lease_owner=?";
+        if (releasedNodeId == null) {
+            jdbc.update(sql, state, message, endedAt, id, worker);
+            return;
+        }
+        new TransactionTemplate(transactions).executeWithoutResult(tx -> {
+            if (jdbc.update(sql, state, message, endedAt, id, worker) == 1)
+                executionCoordinator.enqueueRelease(releasedNodeId, executionRef(id));
+        });
+    }
+
+    static Long sharedCatalogNode(JsonNode snapshot) {
+        JsonNode resource = snapshot.path("resource");
+        if (!snapshot.path("shared").asBoolean() || !resource.path("executionRevision").isIntegralNumber()) return null;
+        return Long.valueOf(resource.path("nodeId").asText());
     }
     private static Long nullableLong(JsonNode value, String key) { return value.path(key).isNumber() ? value.path(key).asLong() : null; }
     private static void putAtomic(ComputeSsh.Connection connection, String path, String value) throws IOException {

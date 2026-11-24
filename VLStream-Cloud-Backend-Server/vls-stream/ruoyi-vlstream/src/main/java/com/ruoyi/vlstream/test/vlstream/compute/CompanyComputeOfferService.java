@@ -22,6 +22,7 @@ public class CompanyComputeOfferService {
         + " AND n.provider=c.provider AND n.provider_instance_id=c.provider_instance_id";
     private static final String PUBLISHED = LINKED + " WHERE c.published=1 AND n.resource_scope='PLATFORM'";
     public static final String PENDING = "待配置SSH身份；收费待开通。";
+    private static final BigDecimal OFFICIAL_DISPLAY_PRICE = new BigDecimal("13.00");
 
     @Data
     public static class Record {
@@ -126,6 +127,12 @@ public class CompanyComputeOfferService {
             resource.setGpuModel(displayText(node.getGpuModel(),"GPU"));
             resource.setProvider(node.getProvider());resource.setScope("PLATFORM");
             resource.setBillingType("POINTS");resource.setSchedulingMode("INSTANCE_EXCLUSIVE");
+            if (hasOfficialDisplayPrice(node)) {
+                resource.setUserHourlyPrice(OFFICIAL_DISPLAY_PRICE.toPlainString());
+                resource.setPriceCurrency("CNY");
+                resource.setPriceUnit("PER_INSTANCE_HOUR");
+                resource.setPricePolicy("VLS_FIXED");
+            }
             resource.setClaimState("PENDING_CONFIGURATION");
             resource.setPowerState("UNKNOWN");resource.setCapacityState("UNKNOWN");resource.setHealthState("UNTESTED");
             resource.setCanManage(canPublish(node));
@@ -140,14 +147,16 @@ public class CompanyComputeOfferService {
         List<Object> parameters = new java.util.ArrayList<>();
         String filter = publishedFilter(parameters); parameters.add(limit); parameters.add(offset);
         return jdbc.query("SELECT n.id,n.name,n.gpu_model,n.billing_type,n.points_per_hour,"
-            + "n.provider,n.server_group,n.provider_gpu_amount" + filter + " ORDER BY c.offer_code LIMIT ? OFFSET ?", (rs, index) -> {
+            + "n.provider,n.provider_product,n.provider_instance_id" + filter + " ORDER BY c.offer_code LIMIT ? OFFSET ?", (rs, index) -> {
                 ComputeNode node = new BeanPropertyRowMapper<>(ComputeNode.class).mapRow(rs, index);
                 ComputePublicMarketService.Offer offer = new ComputePublicMarketService.Offer();
                 offer.setName(displayText(node.getName(), "GPU resource"));
                 offer.setGpuModel(displayText(node.getGpuModel(), "GPU"));
                 offer.setBillingType("POINTS");
                 BigDecimal price = node.getPointsPerHour();
-                if ("POINTS".equals(node.getBillingType()) && price != null && price.signum() >= 0) {
+                if (hasOfficialDisplayPrice(node)) {
+                    ComputePublicMarketService.projectFixedPrice(offer, OFFICIAL_DISPLAY_PRICE, "CNY");
+                } else if ("POINTS".equals(node.getBillingType()) && price != null && price.signum() >= 0) {
                     offer.setPrice(price);
                     offer.setPriceUnit("POINTS_PER_HOUR");
                 }
@@ -155,9 +164,15 @@ public class CompanyComputeOfferService {
                 offer.setPowerState("UNKNOWN");
                 offer.setHealthState("UNKNOWN");
                 offer.setAvailability("PAID_DISABLED");
-                ComputePublicMarketService.referencePrice(offer, node);
                 return offer;
             }, parameters.toArray());
+    }
+
+    /** Advertised price of the original display-only company offer. Quotes use the execution catalog. */
+    private static boolean hasOfficialDisplayPrice(ComputeNode node) {
+        return Long.valueOf(792022144331380001L).equals(node.getId()) && "autodl".equals(node.getProvider())
+            && "AUTODL_PRO".equals(node.getProviderProduct()) && "pro-7920a22db144".equals(node.getProviderInstanceId())
+            && "POINTS".equals(node.getBillingType());
     }
 
     static String displayText(String value,String fallback) {

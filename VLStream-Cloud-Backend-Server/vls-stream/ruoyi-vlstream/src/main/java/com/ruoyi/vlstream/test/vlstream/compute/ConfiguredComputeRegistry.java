@@ -305,8 +305,12 @@ public class ConfiguredComputeRegistry {
     private ActiveIdentity activeIdentity(Long id, List<Long> ids, JdbcTemplate reads) {
         ActiveIdentity active = new ActiveIdentity();
         String where = "node_id IN (" + placeholders(ids.size()) + ")";
-        for (Map<String, Object> row : reads.queryForList("SELECT options_json FROM vls_cloud_training_job WHERE " + where
-            + " AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')", ids.toArray())) active.add(row.get("options_json"), "configuredResource");
+        // Read active jobs and terminal jobs awaiting cleanup in one snapshot: the terminal transition and
+        // the cleanup request commit together, and both need the original execution target.
+        for (Map<String, Object> row : reads.queryForList("SELECT j.options_json FROM vls_cloud_training_job j WHERE j." + where
+            + " AND (j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') OR EXISTS ("
+            + "SELECT 1 FROM vls_shared_training_workspace_cleanup c WHERE c.job_id=j.id))", ids.toArray()))
+            active.add(row.get("options_json"), "configuredResource");
         for (String table : Arrays.asList("vls_cloud_ai_run", "vls_cloud_device_run"))
             for (Map<String, Object> row : reads.queryForList("SELECT snapshot_json FROM " + table + " WHERE " + where
                 + " AND state NOT IN ('COMPLETED','FAILED','CANCELLED','SKIPPED')", ids.toArray())) active.add(row.get("snapshot_json"), "resource");
@@ -485,6 +489,7 @@ public class ConfiguredComputeRegistry {
     /** Hold persisted work until its explicit YAML identity is restored. Never infer process exit. */
     public static final int UNAVAILABLE = 48010;
     static final String CATALOG_NODE_UNAVAILABLE = "统一平台算力目录暂未解析到本轮绑定节点，任务保留等待目录同步";
+    static final String LEGACY_NODE_UNAVAILABLE = "自有算力未绑定有效的 YAML 受信资产，请管理员核对配置";
     static ServiceException unavailable(String message) { return new ServiceException(message, UNAVAILABLE); }
     public synchronized boolean contains(Long id) {
         return aliases.containsKey(id) || catalogProperties != null && catalogProperties.configured() && id != null && id < -1;
@@ -523,9 +528,9 @@ public class ConfiguredComputeRegistry {
         ComputeNode original = resources.get(canonicalId(id));
         if (original == null) throw unavailable(catalogProperties != null && catalogProperties.configured()
             ? CATALOG_NODE_UNAVAILABLE
-            : "自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
+            : LEGACY_NODE_UNAVAILABLE);
         if(official(original))return resolveOfficial(original);
-        if (original.getHost()==null) throw unavailable("自有算力未绑定有效的 YAML 受信资产，请管理员核对配置");
+        if (original.getHost()==null) throw unavailable(LEGACY_NODE_UNAVAILABLE);
         // A reserved ID must never silently alias a persisted third-party/private node.
         List<Object> parameters=new ArrayList<>(queueIds(id));
         parameters.add(original.getHost());parameters.add(original.getPort());parameters.add(original.getGpuIndex());

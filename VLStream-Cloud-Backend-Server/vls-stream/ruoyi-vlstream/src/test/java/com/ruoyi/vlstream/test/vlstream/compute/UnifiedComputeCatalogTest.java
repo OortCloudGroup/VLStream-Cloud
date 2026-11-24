@@ -1,6 +1,7 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.vlstream.test.vlstream.config.ModelHubProperties;
 import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
@@ -13,6 +14,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -35,6 +37,7 @@ public class UnifiedComputeCatalogTest {
         jdbc = new JdbcTemplate(source);
         jdbc.execute("CREATE TABLE vls_compute_node(id BIGINT,host VARCHAR(253),port INT,gpu_index INT,provider VARCHAR(32),provider_instance_id VARCHAR(100))");
         jdbc.execute("CREATE TABLE vls_cloud_training_job(id VARCHAR(40),node_id BIGINT,options_json TEXT,run_dir TEXT,job_state VARCHAR(32))");
+        jdbc.execute("CREATE TABLE vls_shared_training_workspace_cleanup(job_id VARCHAR(40) PRIMARY KEY)");
         jdbc.execute("CREATE TABLE vls_cloud_ai_run(node_id BIGINT,snapshot_json TEXT,state VARCHAR(32))");
         jdbc.execute("CREATE TABLE vls_cloud_device_run(node_id BIGINT,snapshot_json TEXT,state VARCHAR(32))");
         jdbc.execute("CREATE TABLE vls_compute_paid_run(node_id BIGINT,quote_snapshot TEXT,active_instance_key VARCHAR(100),usage_id VARCHAR(40))");
@@ -127,6 +130,33 @@ public class UnifiedComputeCatalogTest {
         assertEquals(1, registry.resolve(-300L).getConfigurationRevision()); assertEquals(old.getHost(), registry.resolve(-300L).getHost());
         jdbc.update("UPDATE vls_cloud_training_job SET job_state='COMPLETED'"); install(second, first, second);
         assertEquals("192.168.55.11", registry.resolve(-300L).getHost()); registry.requireAdmission(registry.resolve(-300L));
+    }
+
+    @Test void terminalJobPinsItsOriginalTargetUntilWorkspaceCleanupCompletes() throws Exception {
+        ConfiguredComputeProperties.Resource first = resource(1);
+        install(first, first);
+        ComputeNode original = registry.resolve(-300L);
+        active(original);
+        jdbc.update("UPDATE vls_cloud_training_job SET job_state='COMPLETED' WHERE id='active'");
+        jdbc.update("INSERT INTO vls_shared_training_workspace_cleanup(job_id) VALUES ('active')");
+
+        ConfiguredComputeProperties.Resource second = resource(2);
+        second.setHost("192.168.55.11");
+        install(second, first, second);
+        assertEquals(original.getHost(), registry.resolve(-300L).getHost());
+        assertThrows(RuntimeException.class, () -> registry.requireAdmission(original));
+
+        registry = registry();
+        install(second, first, second);
+        assertEquals(1, registry.resolve(-300L).getConfigurationRevision());
+        assertEquals(original.getHost(), registry.resolve(-300L).getHost());
+
+        jdbc.update("DELETE FROM vls_shared_training_workspace_cleanup WHERE job_id='active'");
+        install(second, first, second);
+        ComputeNode replacement = registry.resolve(-300L);
+        assertEquals(2, replacement.getConfigurationRevision());
+        assertEquals("192.168.55.11", replacement.getHost());
+        assertDoesNotThrow(() -> registry.requireAdmission(replacement));
     }
 
     @Test void deletionAndDisableBlockAdmissionWhileOriginalTargetRemainsAvailable() throws Exception {
@@ -283,7 +313,7 @@ public class UnifiedComputeCatalogTest {
         platform.setEnvironmentRuntimes(Arrays.asList(platform.getEnvironmentRuntimes().get(0), vm));
         UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
         assertThrows(IllegalArgumentException.class,
-            () -> ReflectionTestUtils.invokeMethod(client, "resources", document(platform), "resources", "localhost"));
+            () -> ReflectionTestUtils.invokeMethod(client, "apply", document(platform), false));
     }
 
     @Test void refreshWaitsForAdmissionTransactionThenRetainsItsCommittedSnapshot() throws Exception {
@@ -392,6 +422,167 @@ public class UnifiedComputeCatalogTest {
         assertThrows(IllegalArgumentException.class, () -> ReflectionTestUtils.invokeMethod(client, "apply", document, false));
         assertTrue(registry.published().isEmpty());
         assertNull(properties.getEnvironmentId());
+    }
+
+    @Test void workUpLegacyCatalogPublishesTwoFreeNodesAndTheExistingPaidNode() throws Exception {
+        ConfiguredComputeProperties.Resource first = resource(3), second = resource(2), paid = official(2);
+        first.setCode("company-first-gpu"); first.setNodeId(-173L);
+        second.setCode("company-second-gpu"); second.setNodeId(-99L); second.setHost("192.168.55.11");
+        second.setAssetId("asset-second-gpu"); second.setLegacyNodeIds(Collections.singletonList(301L));
+        ObjectNode legacy = legacyDocument(first, second, paid);
+        ArrayNode versions = (ArrayNode) legacy.path("data").path("versions");
+        versions.add(executionJson(first).put("executionRevision", 1));
+        versions.add(executionJson(first).put("executionRevision", 2));
+        versions.add(executionJson(second).put("executionRevision", 1));
+        versions.add(executionJson(paid).put("executionRevision", 1));
+        HttpServer server = serveCatalog(new AtomicReference<>(legacy));
+        try {
+            new UnifiedComputeCatalog(properties, registry, cipher, json).refresh();
+            assertEquals("localhost", properties.getEnvironmentId());
+            registry.requireAdmission(registry.resolve(-173L));
+            registry.requireAdmission(registry.resolve(-99L));
+            assertEquals(0, new java.math.BigDecimal("13").compareTo(new java.math.BigDecimal(registry.resolve(-6000L).getUserHourlyPrice())));
+            assertEquals(3, registry.published().size());
+        } finally { server.stop(0); }
+    }
+
+    @Test void authenticatedLegacyCatalogKeepsOnlyTheCommonProfileAndRecoversDuringOutage() throws Exception {
+        ConfiguredComputeProperties.Resource first = resource(2), second = resource(1), paid = official(1);
+        second.setCode("company-second-gpu"); second.setNodeId(-301L); second.setHost("192.168.55.11");
+        second.setAssetId("asset-second-gpu"); second.setLegacyNodeIds(Collections.singletonList(301L));
+        paid.setEnvironmentRuntimes(Arrays.asList(vmRuntime(), paid.getEnvironmentRuntimes().get(0)));
+        ConfiguredComputeProperties.Resource unpublished = resource(1);
+        unpublished.setCode("unpublished-vm-gpu"); unpublished.setNodeId(-302L); unpublished.setHost("192.168.55.12");
+        unpublished.setAssetId("unpublished-vm-asset"); unpublished.setLegacyNodeIds(Collections.singletonList(302L));
+        unpublished.setPublished(false); unpublished.setEnvironmentRuntimes(Collections.singletonList(vmRuntime()));
+        ConfiguredComputeProperties.Resource foreignHistory = resource(1);
+        foreignHistory.setLegacyNodeIds(Collections.singletonList(880L));
+        foreignHistory.setEnvironmentRuntimes(Collections.singletonList(vmRuntime()));
+        ObjectNode legacy = legacyDocument(first, second, paid, unpublished);
+        ((ArrayNode) legacy.path("data").path("versions")).add(executionJson(foreignHistory));
+        AtomicReference<ObjectNode> response = new AtomicReference<>(legacy);
+        HttpServer server = serveCatalog(response);
+        try {
+            new UnifiedComputeCatalog(properties, registry, cipher, json).refresh();
+            assertEquals("localhost", properties.getEnvironmentId());
+            registry.requireAdmission(registry.resolve(-300L)); registry.requireAdmission(registry.resolve(301L));
+            assertEquals("/work/vls/localhost", registry.resolve(-6000L).getWorkDir());
+            assertEquals(3, registry.published().size());
+            assertThrows(RuntimeException.class, () -> registry.resolve(-302L));
+            assertThrows(RuntimeException.class, () -> registry.resolve(880L));
+
+            response.set(null);
+            registry = registry();
+            properties.assignEnvironment(null);
+            new UnifiedComputeCatalog(properties, registry, cipher, json).start();
+            assertEquals("localhost", properties.getEnvironmentId());
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+            assertEquals("192.168.55.11", registry.resolve(-301L).getHost());
+        } finally { server.stop(0); }
+    }
+
+    @Test void ambiguousOrPartiallyUpgradedCatalogDoesNotEnableLegacyAdmission() throws Exception {
+        ConfiguredComputeProperties.Resource first = resource(1);
+        first.setEnvironmentRuntimes(Arrays.asList(first.getEnvironmentRuntimes().get(0), vmRuntime()));
+        UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
+        assertThrows(IllegalArgumentException.class,
+            () -> ReflectionTestUtils.invokeMethod(client, "apply", legacyDocument(first), false));
+        ObjectNode partial = document(resource(1));
+        ((ObjectNode) partial.path("data")).remove("executionAppId");
+        assertThrows(IllegalArgumentException.class, () -> ReflectionTestUtils.invokeMethod(client, "apply", partial, false));
+        assertTrue(registry.published().isEmpty());
+        assertNull(properties.getEnvironmentId());
+    }
+
+    @Test void modernAssignmentCannotDowngradeAcrossRefreshRevocationOrRestart() throws Exception {
+        ConfiguredComputeProperties.Resource first = resource(1);
+        ObjectNode modern = document(first);
+        ObjectNode legacy = legacyDocument(first);
+        AtomicReference<ObjectNode> response = new AtomicReference<>(modern);
+        HttpServer server = serveCatalog(response);
+        try {
+            UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
+            client.refresh();
+            registry.requireAdmission(registry.resolve(-300L));
+            response.set(legacy);
+            client.refresh();
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+
+            registry = registry();
+            properties.assignEnvironment(null);
+            client = new UnifiedComputeCatalog(properties, registry, cipher, json);
+            client.start();
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+            response.set(json.createObjectNode().put("code", 4001));
+            client.refresh();
+            assertNull(properties.getEnvironmentId());
+
+            response.set(legacy);
+            registry = registry();
+            new UnifiedComputeCatalog(properties, registry, cipher, json).start();
+            assertTrue(registry.published().isEmpty());
+        } finally { server.stop(0); }
+    }
+
+    @Test void coordinationRemainsRequiredOnRestartAndRejectsAnUncoordinatedDirectory() throws Exception {
+        ConfiguredComputeProperties.Resource resource = resource(8);
+        ObjectNode coordinated = document(resource);
+        ((ObjectNode) coordinated.path("data")).put("leaseCoordination", "deployment-v1");
+        AtomicReference<ObjectNode> response = new AtomicReference<>(coordinated);
+        HttpServer server = serveCatalog(response);
+        try {
+            UnifiedComputeCatalog client = new UnifiedComputeCatalog(properties, registry, cipher, json);
+            client.refresh();
+            assertTrue(properties.usesDeploymentLeases());
+            registry.requireAdmission(registry.resolve(-300L));
+            response.set(document(resource));
+            client.refresh();
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+
+            registry = registry();
+            properties.assignEnvironment(null);
+            ReflectionTestUtils.setField(properties, "leaseCoordination", false);
+            new UnifiedComputeCatalog(properties, registry, cipher, json).start();
+            assertTrue(properties.usesDeploymentLeases());
+            assertFalse(registry.resolve(-300L).isCatalogAdmissionAllowed());
+        } finally { server.stop(0); }
+    }
+
+    private ConfiguredComputeProperties.EnvironmentRuntime vmRuntime() {
+        ConfiguredComputeProperties.EnvironmentRuntime vm = new ConfiguredComputeProperties.EnvironmentRuntime();
+        vm.setEnvironmentId("vm"); vm.setPythonPath("/root/vm/bin/python"); vm.setWorkDir("/root/vm/work");
+        return vm;
+    }
+
+    private HttpServer serveCatalog(AtomicReference<ObjectNode> response) throws Exception {
+        Path snapshot = testDirectory().resolve("legacy.snapshot");
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/compute/v1/executionCatalog", exchange -> {
+            boolean authenticated = "POST".equals(exchange.getRequestMethod())
+                && "app".equals(exchange.getRequestHeaders().getFirst("requesttype"))
+                && "catalog-app".equals(exchange.getRequestHeaders().getFirst("appid"))
+                && "catalog-app-secret".equals(exchange.getRequestHeaders().getFirst("secretkey"));
+            ObjectNode document = response.get();
+            byte[] body = document == null ? new byte[0] : document.toString().getBytes(StandardCharsets.UTF_8);
+            int status = document == null ? 503 : 200;
+            exchange.sendResponseHeaders(authenticated ? status : 403, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        }); server.start();
+        properties.setSnapshotFile(snapshot.toString());
+        properties.getDeployment().setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
+        return server;
+    }
+
+    private ObjectNode legacyDocument(ConfiguredComputeProperties.Resource... resources) {
+        ObjectNode document = json.createObjectNode().put("code", 200);
+        ObjectNode data = document.putObject("data");
+        ArrayNode current = data.putArray("resources"), versions = data.putArray("versions");
+        for (ConfiguredComputeProperties.Resource resource : resources) {
+            current.add(executionJson(resource));
+            versions.add(executionJson(resource));
+        }
+        return document;
     }
 
     ObjectNode document(ConfiguredComputeProperties.Resource resource) {

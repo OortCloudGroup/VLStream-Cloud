@@ -32,6 +32,7 @@ import static org.mockito.Mockito.*;
 /** No compute-node rows, real application journals/ownership, H2 and explicit supplier/wallet fixtures. */
 @Tag("dev")
 class ConfiguredOfficialRunIntegrationTest {
+    static final String LEASE_SCOPE=String.join("", Collections.nCopies(64,"a"));
     ComputePaidRunIntegrationTest f;
     JdbcTemplate jdbc;
     ConfiguredComputeProperties properties;
@@ -76,6 +77,95 @@ class ConfiguredOfficialRunIntegrationTest {
     void running(String id){queued(id);f.runs.tick(id);assertEquals("RUNNING",f.runs.get(id,f.payer).getState());}
     void settle(String id){String usage=f.runs.get(id,f.payer).getUsageId();f.coordinator.tick(usage,f.lifecycle);for(String ref:jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice",String.class))f.settlements.dispatch(ref);}
     void finish(String id){f.runs.stop(id,f.payer);f.runs.tick(id);f.runs.tick(id);settle(id);for(int i=0;i<5;i++)f.runs.tick(id);}
+
+    ComputeExecutionCoordinator enableCentralLease() throws Exception {
+        Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        while(root!=null&&!Files.exists(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_079__paid_run_compute_execution_lease.sql")))root=root.getParent();
+        assertNotNull(root);
+        try(java.sql.Connection connection=jdbc.getDataSource().getConnection()) {
+            ScriptUtils.executeSqlScript(connection,new FileSystemResource(root.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_079__paid_run_compute_execution_lease.sql").toFile()));
+        }
+        jdbc.execute("CREATE ALIAS GET_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.acquireLock'");
+        jdbc.execute("CREATE ALIAS RELEASE_LOCK FOR 'com.ruoyi.vlstream.test.vlstream.compute.ConfiguredComputeIntegrationTest.releaseLock'");
+        for(String table:Arrays.asList("vls_cloud_ai_run","vls_cloud_device_run"))
+            jdbc.execute("CREATE TABLE "+table+"(node_id BIGINT,state VARCHAR(32),snapshot_json TEXT)");
+        jdbc.execute("ALTER TABLE vls_cloud_training_job ADD COLUMN options_json TEXT");
+        resource.setExecutionRevision(1);
+        registry.initialize();
+        ComputeCatalogProperties catalog=mock(ComputeCatalogProperties.class);
+        when(catalog.configured()).thenReturn(true);
+        when(catalog.getEnvironmentId()).thenReturn("localhost");
+        when(catalog.getMaximumAgeMillis()).thenReturn(60000L);
+        ReflectionTestUtils.setField(registry,"catalogProperties",catalog);
+        ReflectionTestUtils.setField(registry,"catalogFresh",true);
+        ReflectionTestUtils.setField(registry,"catalogCheckedAt",System.currentTimeMillis());
+        ComputeExecutionCoordinator leases=mock(ComputeExecutionCoordinator.class);
+        when(leases.managed()).thenReturn(true);
+        when(leases.scopeFingerprint()).thenReturn(LEASE_SCOPE);
+        when(leases.acquire(any(ComputeNode.class),anyString())).thenReturn(true);
+        ReflectionTestUtils.setField(f.runs,"executionCoordinator",leases);
+        return leases;
+    }
+
+    @Test void occupiedOrUnreachableCentralLeaseNeverFundsAndCancellationQueuesTheOriginalRef() throws Exception {
+        ComputeExecutionCoordinator leases=enableCentralLease();
+        String id=accepted();
+        assertEquals(-6000L,jdbc.queryForObject("SELECT central_lease_node_id FROM vls_compute_paid_run WHERE run_id=?",Long.class,id));
+        assertEquals(id,jdbc.queryForObject("SELECT central_lease_root_run_id FROM vls_compute_paid_run WHERE run_id=?",String.class,id));
+        assertEquals(0,f.wallet.holdPosts);
+        when(leases.acquire(any(ComputeNode.class),eq("paid:"+id))).thenReturn(false)
+            .thenThrow(new com.ruoyi.common.exception.ServiceException("fixture unavailable"));
+        f.runs.tick(id);
+        assertEquals("COMPUTE_LEASE_WAITING",f.runs.get(id,f.payer).getErrorCode());
+        f.runs.tick(id);
+        assertEquals("FUNDING",f.runs.get(id,f.payer).getState());
+        assertEquals(0,f.wallet.holdPosts);
+        verify(f.supplier,never()).submit(any(),anyString(),anyString());
+        f.runs.stop(id,f.payer);
+        assertEquals("CANCELLED",f.runs.get(id,f.payer).getState());
+        f.runs.scanCentralReleases();
+        f.runs.scanCentralReleases();
+        verify(leases).enqueueRelease(-6000L,"paid:"+id,LEASE_SCOPE);
+        assertNotNull(jdbc.queryForObject("SELECT central_lease_release_queued_ms FROM vls_compute_paid_run WHERE run_id=?",Long.class,id));
+        assertEquals(0,f.wallet.holdPosts);
+    }
+
+    @Test void paidLeaseWaitsForPhysicalStopSettlementAndCleanWorkspace() throws Exception {
+        ComputeExecutionCoordinator leases=enableCentralLease();
+        String id=accepted();
+        when(leases.acquire(any(ComputeNode.class),eq("paid:"+id))).thenAnswer(call->{
+            assertEquals(0,f.wallet.holdPosts);
+            assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            return true;
+        });
+        running(id);
+        assertNotNull(jdbc.queryForObject("SELECT central_lease_acquired_ms FROM vls_compute_paid_run WHERE run_id=?",Long.class,id));
+        f.runs.scanCentralReleases();
+        verify(leases,never()).enqueueRelease(anyLong(),anyString(),anyString());
+        jdbc.update("UPDATE vls_compute_public_instance SET workspace_dirty=1");
+        f.runs.stop(id,f.payer);
+        f.runs.tick(id);f.runs.tick(id);
+        assertEquals("STOPPED",f.wallet.power);
+        assertTrue(f.wallet.remaining()>0);
+        f.runs.scanCentralReleases();
+        verify(leases,never()).enqueueRelease(anyLong(),anyString(),anyString());
+        settle(id);for(int i=0;i<5;i++)f.runs.tick(id);
+        assertEquals("COMPLETED",f.runs.get(id,f.payer).getState());
+        assertEquals(0,f.wallet.remaining());
+        f.runs.scanCentralReleases();
+        verify(leases,never()).enqueueRelease(anyLong(),anyString(),anyString());
+        jdbc.update("UPDATE vls_compute_public_instance SET workspace_dirty=0");
+        doThrow(new IllegalStateException("fixture outbox write failed")).doNothing()
+            .when(leases).enqueueRelease(-6000L,"paid:"+id,LEASE_SCOPE);
+        f.runs.scanCentralReleases();
+        assertNull(jdbc.queryForObject("SELECT central_lease_release_queued_ms FROM vls_compute_paid_run WHERE run_id=?",Long.class,id));
+        assertEquals("OCCUPIED",nodes.publicInventory().read(node(),false).getPublicState());
+        f.runs.scanCentralReleases();
+        f.runs.scanCentralReleases();
+        verify(leases,times(2)).enqueueRelease(-6000L,"paid:"+id,LEASE_SCOPE);
+        assertEquals("FREE",nodes.publicInventory().read(node(),false).getPublicState());
+        verify(leases).acquire(any(ComputeNode.class),eq("paid:"+id));
+    }
 
     @Test void mysqlDatetimeObjectsAreNormalizedByTheDriversTypedTimestampInBothConsumers() throws Exception {
         java.time.LocalDateTime local=java.time.LocalDateTime.of(2026,11,9,4,18,56);

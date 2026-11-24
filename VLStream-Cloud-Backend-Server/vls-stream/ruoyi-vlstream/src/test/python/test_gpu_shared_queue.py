@@ -1,4 +1,5 @@
 """Linux filesystem/process tests for the shared queue; no GPU training is simulated."""
+import base64
 import fcntl
 import hashlib
 import importlib.util
@@ -10,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import uuid
 
 SOURCE = Path(__file__).resolve().parents[2] / 'main/resources/training/gpu_shared_queue.py'
@@ -168,6 +170,163 @@ class SharedQueueTest(unittest.TestCase):
         self.registry.release(ticket, acknowledgement)
         self.registry.release(ticket, acknowledgement)
         with self.assertRaises(ValueError): self.registry.release(ticket, dict(acknowledgement, classesSha256='d' * 64))
+
+    def test_cleanup_requires_exact_done_ticket_and_keeps_other_jobs_and_shared_files(self):
+        ticket, other = self.ticket(), self.ticket('vm', 'd')
+        self.registry.register([ticket, other])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        root, quarantine = queue.cleanup_paths(ticket)
+        other_root = Path(other['runDir'])
+        other_root.mkdir(parents=True)
+        shared_file = other_root / 'original.jpg'
+        shared_file.write_text('preserved')
+        dataset = root / 'dataset'
+        dataset.mkdir()
+        (dataset / 'predict.jpg').write_text('work copy')
+        (dataset / 'reference').symlink_to(other_root, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, acknowledgement)
+        self.registry.release(ticket, acknowledgement)
+        self.assertTrue(self.registry.claim(other))
+        for changed in (dict(ticket, owner='e' * 64), dict(ticket, runDir=other['runDir'])):
+            with self.assertRaises(ValueError):
+                self.registry.cleanup(changed, acknowledgement)
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, dict(acknowledgement, classesSha256='e' * 64))
+        self.assertTrue(root.is_dir())
+        for _ in range(2):
+            self.assertEqual(self.registry.cleanup(ticket, acknowledgement), {'state': 'CLEANED'})
+        self.assertFalse(root.exists())
+        self.assertFalse(quarantine.exists())
+        self.assertEqual(shared_file.read_text(), 'preserved')
+        self.assertEqual(self.registry.inspect(ticket)['state'], 'DONE')
+        self.assertTrue(self.registry.inspect(other)['ownsLease'])
+
+    def test_cleanup_resumes_after_interrupted_removal_without_using_old_result(self):
+        ticket = self.ticket()
+        self.registry.register([ticket])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        self.registry.release(ticket, acknowledgement)
+        root, quarantine = queue.cleanup_paths(ticket)
+        pending_image = root / 'unremoved.jpg'
+        pending_image.write_text('temporary')
+
+        real_rmtree = queue.shutil.rmtree
+
+        def interrupt(path):
+            (Path(path) / 'result.json').unlink()
+            raise OSError('simulated interrupted cleanup')
+
+        with mock.patch.object(queue.shutil, 'rmtree', side_effect=interrupt) as remove:
+            remove.avoids_symlink_attacks = real_rmtree.avoids_symlink_attacks
+            with self.assertRaises(OSError):
+                self.registry.cleanup(ticket, acknowledgement)
+        self.assertFalse(root.exists())
+        self.assertTrue((quarantine / pending_image.name).exists())
+        restarted = queue.Registry(self.gpu, self.root / 'registry')
+        self.assertEqual(restarted.cleanup(ticket, acknowledgement), {'state': 'CLEANED'})
+        self.assertFalse(quarantine.exists())
+
+    def test_cleanup_rejects_live_process_and_replaced_or_symlink_directory(self):
+        ticket = self.ticket()
+        self.registry.register([ticket])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        self.registry.release(ticket, acknowledgement)
+        root = Path(ticket['runDir'])
+        with runner.lock_file(root / 'run.lock') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            with self.assertRaises(BlockingIOError):
+                self.registry.cleanup(ticket, acknowledgement)
+        original = root.with_name('moved-original')
+        root.rename(original)
+        root.symlink_to(original, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, acknowledgement)
+        root.unlink()
+        root.mkdir()
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, acknowledgement)
+        self.assertTrue((original / 'result.json').exists())
+        self.assertTrue(root.is_dir())
+
+    def test_cleanup_before_registration_only_accepts_verified_absent_cancellation(self):
+        ticket = self.ticket()
+        self.assertEqual(self.registry.cleanup(ticket, {'state': 'CANCELLED'}), {'state': 'CLEANED'})
+        root = Path(ticket['runDir'])
+        root.mkdir(parents=True)
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, {'state': 'CANCELLED'})
+        self.assertTrue(root.exists())
+
+    def test_cleanup_removes_cancelled_partial_upload_and_failed_training_outputs(self):
+        cancelled, failed = self.ticket(), self.ticket()
+        self.registry.register([cancelled, failed])
+        cancelled_root = Path(cancelled['runDir'])
+        (cancelled_root / 'dataset-preparing').mkdir(parents=True)
+        (cancelled_root / 'dataset-preparing' / 'image.jpg').write_text('partial')
+        self.registry.release(cancelled, {'state': 'CANCELLED'})
+        self.registry.claim(failed)
+        self.result(failed, 'FAILED')
+        (Path(failed['runDir']) / 'training.log').write_text('test failure')
+        self.registry.release(failed, {'state': 'FAILED'})
+        for ticket, state in ((cancelled, 'CANCELLED'), (failed, 'FAILED')):
+            self.assertEqual(self.registry.cleanup(ticket, {'state': state}), {'state': 'CLEANED'})
+            self.assertFalse(Path(ticket['runDir']).exists())
+
+    def test_cleanup_leaves_workspace_with_nested_mount_in_place(self):
+        ticket = self.ticket()
+        self.registry.register([ticket])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        self.registry.release(ticket, acknowledgement)
+        root = Path(ticket['runDir'])
+        real_read_text = queue.Path.read_text
+
+        def read_text(path, *args, **kwargs):
+            if path == Path('/proc/self/mountinfo'):
+                return '20 1 0:2 / {} rw - ext4 /dev/test rw'.format(root / 'mounted-dataset')
+            return real_read_text(path, *args, **kwargs)
+
+        with mock.patch.object(queue.Path, 'read_text', read_text):
+            with self.assertRaisesRegex(ValueError, 'contains a mount'):
+                self.registry.cleanup(ticket, acknowledgement)
+        self.assertTrue((root / 'result.json').exists())
+
+    def test_cleanup_checks_historical_job_configuration_before_deleting(self):
+        ticket = self.ticket()
+        self.registry.register([ticket])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        self.registry.release(ticket, acknowledgement)
+        with self.registry.locked() as state:
+            del state['tickets'][queue.validate_ticket(ticket)]['workspaceIdentity']
+            self.registry.persist(state)
+        root = Path(ticket['runDir'])
+        with self.assertRaises(ValueError):
+            self.registry.cleanup(ticket, acknowledgement)
+        config = dict(gpuIndex=self.gpu['gpuIndex'], sharedQueue=dict(mode=queue.MODE,
+            environment=ticket['environment'], jobId=ticket['jobId'], owner=ticket['owner'], gpuUuid=self.gpu['gpuUuid']))
+        (root / 'job.json').write_text(json.dumps(config))
+        self.assertEqual(self.registry.cleanup(ticket, acknowledgement), {'state': 'CLEANED'})
+        self.assertFalse(root.exists())
+
+    def test_cleanup_command_reports_verified_success_for_catalog_workspace(self):
+        ticket = self.ticket('catalog-prod')
+        ticket['runRoot'] = str(Path(ticket['runDir']).parents[1])
+        self.registry.register([ticket])
+        self.registry.claim(ticket)
+        acknowledgement = self.result(ticket)
+        self.registry.release(ticket, acknowledgement)
+        payload = dict(gpu=self.gpu, ticket=ticket, acknowledgement=acknowledgement,
+            queueRoot=str(self.root / 'registry'))
+        encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+        process = subprocess.run([sys.executable, '-B', str(SOURCE), 'cleanup', encoded],
+            check=True, capture_output=True, text=True)
+        self.assertEqual(json.loads(process.stdout.split('VLS_SHARED=', 1)[1]), {'state': 'CLEANED'})
+        self.assertFalse(Path(ticket['runDir']).exists())
 
     def test_live_process_and_inherited_run_lock_prevent_release(self):
         ticket = self.ticket(); self.registry.register([ticket]); self.registry.claim(ticket)

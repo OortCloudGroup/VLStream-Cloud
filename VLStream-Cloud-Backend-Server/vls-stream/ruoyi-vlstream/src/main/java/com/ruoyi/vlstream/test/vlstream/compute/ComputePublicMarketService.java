@@ -113,22 +113,13 @@ public class ComputePublicMarketService {
             || !node.getUserHourlyPrice().matches("(0|[1-9][0-9]*)(\\.[0-9]{1,12})?")) return;
         BigDecimal price = new BigDecimal(node.getUserHourlyPrice());
         if (price.signum() <= 0) return;
-        offer.setPrice(price); offer.setPriceUnit("PER_INSTANCE_HOUR");
-        offer.setUserHourlyPrice(price.toPlainString()); offer.setPriceCurrency(node.getPriceCurrency());
-        offer.setPricePolicy("VLS_FIXED");
+        projectFixedPrice(offer, price, node.getPriceCurrency());
     }
-    // Dated presentation only, never billing or a live supplier quote. Match trusted
-    // persisted identity, not public names/specifications; do not expose that identity.
-    static void referencePrice(Offer offer, ComputeNode node) {
-        if (!"POINTS".equals(offer.getBillingType()) || !"POINTS".equals(node.getBillingType()) || node.getPointsPerHour() != null
-            || !Long.valueOf(792022144331380001L).equals(node.getId())
-            || !"autodl".equals(node.getProvider())
-            || !"autodl-pro-7920a22db144".equals(node.getServerGroup())
-            || !Integer.valueOf(1).equals(node.getProviderGpuAmount())) return;
-        offer.setReferencePrice(new BigDecimal("12.92"));
-        offer.setReferenceCurrency("CNY");
-        offer.setReferenceUnit("PER_INSTANCE_HOUR");
-        offer.setReferenceDate("2026-10-19");
+
+    static void projectFixedPrice(Offer offer, BigDecimal price, String currency) {
+        offer.setPrice(price); offer.setPriceUnit("PER_INSTANCE_HOUR");
+        offer.setUserHourlyPrice(price.toPlainString()); offer.setPriceCurrency(currency);
+        offer.setPricePolicy("VLS_FIXED");
     }
     static String availability(Offer offer, boolean blocked, String instanceState, boolean dirty) {
         if ("POINTS".equals(offer.getBillingType())) return "PAID_DISABLED";

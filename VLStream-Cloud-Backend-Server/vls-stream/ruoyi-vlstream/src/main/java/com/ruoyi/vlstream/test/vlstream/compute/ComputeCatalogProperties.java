@@ -18,6 +18,9 @@ public class ComputeCatalogProperties {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private volatile String assignedEnvironmentId;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private volatile boolean leaseCoordination;
     private long refreshMillis = 15000;
     private long maximumAgeMillis = 60000;
     private String snapshotFile = "./data/security/compute-catalog.snapshot";
@@ -25,6 +28,10 @@ public class ComputeCatalogProperties {
     public String getEnvironmentId() { return assignedEnvironmentId; }
 
     void assignEnvironment(String environmentId) { assignedEnvironmentId = environmentId; }
+
+    boolean usesDeploymentLeases() { return leaseCoordination; }
+
+    void enableDeploymentLeases() { leaseCoordination = true; }
 
     public boolean configured() {
         String baseUrl = deployment.getBaseUrl();

@@ -37,6 +37,7 @@
             <el-button v-else-if="item.canClaim" type="primary" :disabled="item.billingType === 'POINTS'" :loading="operating === item.id" @click="claim(item)">{{ marketText('占用整实例') }}</el-button>
             <el-button v-else-if="item.billingType === 'POINTS'" :type="(billingPanel?.startLabel(item.id) || '付费开机') === '暂无库存' ? 'info' : 'primary'" :plain="(billingPanel?.startLabel(item.id) || '付费开机') === '暂无库存'" :title="(billingPanel?.startLabel(item.id) || '付费开机') === '暂无库存' ? marketText('官方当前算力规格暂无库存，请稍后再试。') : undefined" :disabled="!item.paidAdmissionEnabled || item.operationPending || !['FREE', 'MINE'].includes(item.claimState) || (item.powerState !== 'STOPPED' && !(item.configurationManaged && item.provider === 'autodl' && item.powerState === 'UNKNOWN'))" @click="billingPanel?.start(item)">{{ marketText((billingPanel?.startLabel(item.id) || '付费开机')) }}</el-button>
             <p v-if="item.billingType === 'POINTS' && item.paidUnavailableReason" class="price-note">{{ marketText(item.paidUnavailableReason) }}</p>
+            <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE' && ['OCCUPIED', 'OWNED', 'UNKNOWN'].includes(item.executionOccupancy)" disabled>{{ marketText(item.executionOccupancy === 'UNKNOWN' ? '状态待确认' : '占用中') }}</el-button>
             <el-button v-else-if="item.schedulingMode === 'SHARED_GPU_QUEUE'" type="primary" @click="router.push('/algorithm-training')">{{ marketText('前往训练') }}</el-button>
           </div>
         </div>

@@ -30,6 +30,12 @@ test('confirmed physical stop shows settlement progress without implying the mac
   assert.equal(paidRunState({ ...run, state: 'COMPLETED' }), '已停止并完成结算')
 })
 
+test('waiting for cross-environment occupancy does not imply that funds are reserved', () => {
+  const run = { state: 'FUNDING', errorCode: 'COMPUTE_LEASE_WAITING' }
+  assert.equal(paidRunState(run), '等待算力释放')
+  assert.equal(paidRunErrorPresentation(run).message, '服务器正被占用，释放后再开始预冻结。')
+})
+
 test('official deployment price is exact CNY per instance hour and never supplier cost times two', () => {
   const official = { configurationManaged: true, provider: 'autodl', billingType: 'POINTS', pricePolicy: 'VLS_FIXED', userHourlyPrice: '13.00', priceCurrency: 'CNY', priceUnit: 'PER_INSTANCE_HOUR', pointsPerHour: 999999 }
   assert.deepEqual(marketPricePresentation(official), { amount: '￥13.00', unit: '/整实例小时', reference: false, fixed: true })

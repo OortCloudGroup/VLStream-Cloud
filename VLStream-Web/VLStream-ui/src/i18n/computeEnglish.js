@@ -101,6 +101,8 @@ export const computeEnglish = {
   '恢复归档（付费）': 'Recover archive (paid)',
   '待确认开机': 'Awaiting startup confirmation',
   '正在预冻结': 'Reserving funds',
+  '等待算力释放': 'Waiting for the server',
+  '服务器正被占用，释放后再开始预冻结。': 'The server is in use. Funds will be reserved once it is released.',
   '厂商开机处理中': 'Provider startup in progress',
   '实例运行中': 'Instance running',
   '实例关机处理中': 'Instance shutdown in progress',

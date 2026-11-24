@@ -126,7 +126,8 @@ public class ConfiguredPaidPowerService {
                     // does resolve current control. No observed running interval
                     // means there is no evidence from which to invent a debit.
                     if(stop&&"ACCEPTED".equals(text(run,"power_stop_state"))&&run.get("power_stop_attempt_ms") instanceof Number) {
-                        jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED' WHERE id=? AND billing_start_at IS NULL AND state IN ('RESERVED','RECONCILE')",usage);
+                        jdbc.update("UPDATE vls_compute_usage SET state='START_FAILED',stop_observed_at=?,stop_evidence='OBSERVATION' "
+                            + "WHERE id=? AND billing_start_at IS NULL AND state IN ('RESERVED','RECONCILE')", java.sql.Timestamp.from(now),usage);
                     }
                     return;
                 }

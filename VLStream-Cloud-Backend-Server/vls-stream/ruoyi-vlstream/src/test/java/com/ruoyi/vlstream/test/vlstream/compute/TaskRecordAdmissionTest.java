@@ -96,8 +96,27 @@ class TaskRecordAdmissionTest {
     @Test void sharedCloudStartPersistsTrustedRecordInsideActualHttpComposition() {cloud().start(1L,request());admitted("cloud_training",1L);}
     @Test void legacyTrainingEnqueuePersistsTrustedRecordInsideActualHttpComposition() {scheduler.enqueue("detect",1L,"/fixture/dataset.yaml","@preset/detect",1,2,320);admitted("training",1L);verify(trainingMapper).updateById(argThat(row->inserted.get().getLogsPath().equals(row.getLogPath())));}
     @Test void annotationEnqueuePersistsTrustedRoundRecordInsideActualHttpComposition() {scheduler.enqueueSmartAnnotation(30L);admitted("smart_annotation",30L);access.container(20L);}
-    @Test void foreignTaskCannotUseAnyTrustedEnqueuePath() {
-        SaHolder.getStorage().set(LoginHelper.USER_KEY,"102");assertThrows(ServiceException.class,()->cloud().start(1L,request()));assertThrows(ServiceException.class,()->scheduler.enqueue("detect",1L,"/fixture/data","@preset/detect",1,2,320));assertThrows(ServiceException.class,()->scheduler.enqueueSmartAnnotation(30L));verify(mapper,never()).insert(any(ContainerInstance.class));verify(trainingMapper,never()).updateById(any(AlgorithmTraining.class));verifyNoInteractions(ssh);
+    @Test void otherMemberCannotEnqueueAnothersTrainingAndForeignTenantCannotEnqueueAnnotation() {
+        SaHolder.getStorage().set(LoginHelper.USER_KEY,"102");assertThrows(ServiceException.class,()->cloud().start(1L,request()));assertThrows(ServiceException.class,()->scheduler.enqueue("detect",1L,"/fixture/data","@preset/detect",1,2,320));
+        TenantContextHolder.setTenantId("000001");
+        assertThrows(ServiceException.class,()->scheduler.enqueueSmartAnnotation(30L));verify(mapper,never()).insert(any(ContainerInstance.class));verify(trainingMapper,never()).updateById(any(AlgorithmTraining.class));verifyNoInteractions(ssh);
+    }
+    @Test void sameTenantAnnotationEnqueueKeepsOriginalContainerOwnerAndRawAccessGuard() {
+        SaHolder.getStorage().set(LoginHelper.USER_KEY,"102");
+        when(mapper.insert(any(ContainerInstance.class))).thenAnswer(call -> {
+            ContainerInstance row = call.getArgument(0);
+            row.setId(20L);
+            row.setCreateUser(LoginHelper.getUserId());
+            row.setUpdateUser(LoginHelper.getUserId());
+            inserted.set(row);
+            return 1;
+        });
+        when(mapper.update(isNull(), any())).thenReturn(1);
+        scheduler.enqueueSmartAnnotation(30L);
+        admitted("smart_annotation",30L);
+        verify(mapper).update(isNull(), argThat(update -> update.getSqlSet().contains("create_user")));
+        assertEquals("102", inserted.get().getUpdateUser());
+        assertThrows(ServiceException.class, () -> access.container(20L));
     }
     @Test void manualDtoCannotInvokeTrustedRecordCreationOrSpoofTypeAndLink() {
         ContainerInstance forged=new ContainerInstance();forged.setInstanceType("training");forged.setTrainingTaskId(1L);forged.setServerId(3L);forged.setLogsPath("foreign.log");

@@ -106,6 +106,30 @@ class CloudTrainingQueueFailureTest {
     }
 
     @Test @SuppressWarnings("unchecked")
+    void workerMissingLegacyTargetCannotOverwriteSharedPreparingJob() throws Exception {
+        JdbcTemplate jdbc = lockedJdbc();
+        ComputeNodeService nodes = mock(ComputeNodeService.class);
+        ComputeSsh ssh = mock(ComputeSsh.class);
+        CloudTrainingJob preparing = job("shared-preparing", 1L);
+        preparing.setNodeId(-99L);
+        preparing.setOptionsJson("{\"configuredResource\":{\"code\":\"oortcloud-free-gpu-2\",\"nodeId\":\"-99\"},"
+            + "\"sharedQueue\":{\"mode\":\"SHARED_GPU_QUEUE\",\"environment\":\"localhost\"}}");
+        when(jdbc.query(contains("LIMIT 1"), any(RowMapper.class), eq(-99L))).thenReturn(Collections.singletonList(preparing));
+        when(nodes.get(-99L)).thenThrow(ConfiguredComputeRegistry.unavailable(ConfiguredComputeRegistry.LEGACY_NODE_UNAVAILABLE));
+        CloudTrainingWorker worker = worker(jdbc, nodes, ssh);
+        ReflectionTestUtils.setField(worker, "catalogProperties", new ComputeCatalogProperties(new ModelHubProperties()));
+        ComputeSharedQueueService shared = mock(ComputeSharedQueueService.class);
+        when(shared.isSharedJob(preparing)).thenReturn(true);
+        ReflectionTestUtils.setField(worker, "sharedQueue", shared);
+
+        worker.tick(-99L);
+
+        verify(nodes).get(-99L);
+        verifyNoInteractions(ssh);
+        verify(jdbc, never()).update(contains("SET message=?"), any(), any(), eq("shared-preparing"));
+    }
+
+    @Test @SuppressWarnings("unchecked")
     void localWorkerWithMissingCatalogDoesNotOverwriteRunningProgress() throws Exception {
         JdbcTemplate jdbc = lockedJdbc();
         ComputeNodeService nodes = mock(ComputeNodeService.class);
@@ -156,6 +180,44 @@ class CloudTrainingQueueFailureTest {
         verify(queue).register(connection, node, Collections.singletonList(head));
         verify(nodes, never()).verifyJob(eq(foreign), any());
         verify(nodes, never()).verifyJob(eq(tail), any());
+    }
+
+    @Test @SuppressWarnings("unchecked")
+    void deploymentOwnershipPrecedesHostQueueAndManagedModeRegistersOnlyTheHead() throws Exception {
+        JdbcTemplate jdbc = lockedJdbc();
+        ComputeNodeService nodes = mock(ComputeNodeService.class);
+        ComputeSsh ssh = mock(ComputeSsh.class);
+        ComputeSsh.Connection connection = mock(ComputeSsh.Connection.class);
+        ComputeNode node = new ComputeNode();
+        node.setId(10L);
+        node.setEnabled(true);
+        node.setPlatformCatalogManaged(true);
+        when(nodes.get(10L)).thenReturn(node);
+        when(nodes.isCompanyShared(node)).thenReturn(true);
+        when(ssh.open(node)).thenReturn(connection);
+        CloudTrainingJob head = job("local-head", 1L);
+        head.setOptionsJson("{\"sharedQueue\":{\"environment\":\"localhost\"}}");
+        when(jdbc.query(contains("LIMIT 1"), any(RowMapper.class), eq(10L))).thenReturn(Collections.singletonList(head));
+        ComputeSharedQueueService queue = mock(ComputeSharedQueueService.class);
+        when(queue.isSharedJob(head)).thenReturn(true);
+        ComputeExecutionCoordinator coordinator = mock(ComputeExecutionCoordinator.class);
+        when(coordinator.managed()).thenReturn(true);
+        when(coordinator.acquire(node, "training:local-head")).thenReturn(false, true);
+        CloudTrainingWorker worker = worker(jdbc, nodes, ssh);
+        ReflectionTestUtils.setField(worker, "sharedQueue", queue);
+        ReflectionTestUtils.setField(worker, "executionCoordinator", coordinator);
+
+        worker.tick(10L);
+        verifyNoInteractions(ssh);
+        verify(queue, never()).register(any(), any(), anyList());
+        verify(coordinator, never()).enqueueRelease(anyLong(), anyString());
+
+        worker.tick(10L);
+        org.mockito.InOrder order = inOrder(coordinator, ssh, queue);
+        order.verify(coordinator, times(2)).acquire(node, "training:local-head");
+        order.verify(ssh).open(node);
+        order.verify(queue).register(connection, node, Collections.singletonList(head));
+        verify(jdbc, never()).query(startsWith("SELECT id,tenant_id"), any(RowMapper.class), eq(10L));
     }
 
     private CloudTrainingWorker worker(JdbcTemplate jdbc, ComputeNodeService nodes, ComputeSsh ssh) {

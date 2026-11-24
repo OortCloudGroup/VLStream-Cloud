@@ -4,9 +4,10 @@ import { readFile } from 'node:fs/promises'
 import { parse, compileTemplate } from 'vue/compiler-sfc'
 import * as Vue from 'vue'
 import { renderToString } from '@vue/server-renderer'
+import { paidClaimLabel } from '../src/utils/computeBillingPresentation.mjs'
 
 const source = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
-const { marketDisplayResources } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+const { marketDisplayResources, marketPricePresentation } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
 const specificationSource = await readFile(new URL('../src/utils/computeMarketSpecifications.js', import.meta.url), 'utf8')
 const { getMarketSpecifications, formatMarketCpu } = await import('data:text/javascript;base64,' + Buffer.from(specificationSource).toString('base64'))
 const historical = Object.freeze({ id: '792022144331380001', provider: 'autodl', configurationManaged: false, configurationCode: null, serverGroup: 'autodl-pro-7920a22db144', billingType: 'POINTS', name: 'RTX 6000D' })
@@ -142,31 +143,44 @@ test('a partial official identity or incompatible GPU or billing never receives 
   }
 })
 
-test('the actual market keeps its paid startup entry and explains missing target configuration', async () => {
+test('the actual market displays the fixed RTX 6000D price independently of startup availability', async () => {
   const marketSource = await readFile(new URL('../src/views/AIComputingScheduling/ComputeMarket.vue', import.meta.url), 'utf8')
   const compiled = compileTemplate({ source: parse(marketSource).descriptor.template.content, id: 'always-available-market' })
   assert.deepEqual(compiled.errors, [])
   const render = new Function('Vue', compiled.code
     .replace(/^import \{(.*?)\} from "vue"$/gm, (_, names) => `const {${names.replace(/ as /g, ': ')}} = Vue`)
     .replace('export function render', 'function render') + '\nreturn render')(Vue)
-  for (const configured of [false, true]) {
-    const item = { ...official, claimState: 'FREE', powerState: 'UNKNOWN', paidAdmissionEnabled: configured,
-      paidUnavailableReason: configured ? null : '官方算力供应商调用身份未配置' }
+  const renderCard = item => {
     const app = Vue.createSSRApp({ setup: () => ({
       loading: false, route: { query: {} }, resources: [item], pagedResources: [item], page: 1, pageSize: 20,
       marketText: text => text, marketError: '', operating: '', marketResourceName: row => row.name,
-      getMarketSpecifications: () => null, marketPricePresentation: () => ({ amount: '13.00', unit: '/整实例小时' }),
-      load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, billingPanel: { activeRun: () => null }, router: { push() {} }
+      getMarketSpecifications: () => null, marketPricePresentation,
+      paidClaimLabel, billingPanel: { activeRun: () => null, startLabel: () => '付费开机' },
+      load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, router: { push() {} }
     }), render })
     app.component('ComputeBillingPanel', { render: () => Vue.h('section') })
     for (const name of ['el-alert', 'el-empty', 'ArrowRight', 'el-icon', 'el-pagination']) app.component(name, { render: () => Vue.h('span') })
     app.component('el-button', { props: ['disabled'], render() { return Vue.h('button', { disabled: this.disabled }, this.$slots.default?.()) } })
     app.directive('loading', { getSSRProps: () => ({}) })
-    const html = await renderToString(app)
-    assert.match(html, /付费开机/)
+    return renderToString(app)
+  }
+  for (const state of ['ready', 'missing-configuration', 'display-only']) {
+    const displayOnly = state === 'display-only'
+    const ready = state === 'ready'
+    const item = { ...(displayOnly ? historical : official), pricePolicy: 'VLS_FIXED', userHourlyPrice: '13.00',
+      priceCurrency: 'CNY', priceUnit: 'PER_INSTANCE_HOUR', claimState: displayOnly ? 'PENDING_CONFIGURATION' : 'FREE',
+      powerState: 'UNKNOWN', paidAdmissionEnabled: ready,
+      paidUnavailableReason: state === 'missing-configuration' ? '官方算力供应商调用身份未配置' : null }
+    const html = await renderCard(item)
+    assert.match(html, /￥13\.00<\/strong><small>\/整实例小时/)
+    assert.doesNotMatch(html, /价格待确认/)
     assert.match(html, /确认报价后按用量结算/)
     assert.doesNotMatch(html, /暂未开放|尚未启用|READ_ONLY|PAID|OFF/)
-    if (configured) {
+    if (displayOnly) {
+      assert.match(html, /<button[^>]*disabled[^>]*>状态待确认/)
+      assert.doesNotMatch(html, /付费开机/)
+    } else if (ready) {
+      assert.match(html, /付费开机/)
       assert.doesNotMatch(html, /<button[^>]*disabled[^>]*>付费开机/)
       assert.doesNotMatch(html, /官方算力供应商调用身份未配置/)
     } else {
@@ -174,4 +188,16 @@ test('the actual market keeps its paid startup entry and explains missing target
       assert.match(html, /官方算力供应商调用身份未配置/)
     }
   }
+  for (const [state, caption] of [['OCCUPIED', '占用中'], ['UNKNOWN', '状态待确认']]) {
+    const html = await renderCard({ ...free('-173'), schedulingMode: 'SHARED_GPU_QUEUE', executionOccupancy: state })
+    assert.match(html, new RegExp('<button[^>]*disabled[^>]*>' + caption))
+    assert.doesNotMatch(html, /前往训练/)
+  }
+  const available = await renderCard({ ...free('-173'), schedulingMode: 'SHARED_GPU_QUEUE', executionOccupancy: 'FREE' })
+  assert.match(available, /<button[^>]*>前往训练/)
+  assert.doesNotMatch(available, /<button[^>]*disabled[^>]*>前往训练/)
+  const paidOccupied = await renderCard({ ...official, claimState: 'OTHER', executionOccupancy: 'OCCUPIED',
+    pricePolicy: 'VLS_FIXED', userHourlyPrice: '13.00', priceCurrency: 'CNY', priceUnit: 'PER_INSTANCE_HOUR' })
+  assert.match(paidOccupied, /<button[^>]*disabled[^>]*>占用中/)
+  assert.match(paidOccupied, /￥13\.00/)
 })

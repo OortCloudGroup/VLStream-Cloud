@@ -168,8 +168,11 @@ class PublicComputeInventoryIntegrationTest {
         fixture.task.setCreateUser("vls-user");ComputeRequests.Start request=new ComputeRequests.Start();request.setNodeId(fixture.nodeId);request.setDatasetId(3L);
         tx(()->fixture.training.start(1L,request));
         org.springframework.jdbc.core.JdbcTemplate jdbc=CloudComputeIntegrationTest.jdbc;
-        jdbc.execute("CREATE TABLE IF NOT EXISTS vls_algorithm_model(id BIGINT PRIMARY KEY,training_id BIGINT)");jdbc.update("DELETE FROM vls_algorithm_model");
-        jdbc.update("INSERT INTO vls_algorithm_model(id,training_id) VALUES(10,1)");
+        jdbc.execute("CREATE TABLE IF NOT EXISTS vls_algorithm_model(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_id BIGINT)");
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='vls_algorithm_model' AND column_name='tenant_id'", Integer.class) == 0)
+            jdbc.execute("ALTER TABLE vls_algorithm_model ADD COLUMN tenant_id VARCHAR(64)");
+        jdbc.update("DELETE FROM vls_algorithm_model");
+        jdbc.update("INSERT INTO vls_algorithm_model(id,tenant_id,training_id) VALUES(10,'tenant-a',1)");
         jdbc.update("INSERT INTO vls_algorithm_training(id,tenant_id,train_status) VALUES(2,'tenant-a','pending')");
         ComputePublicTaskAccess access=new ComputePublicTaskAccess(jdbc,inventory);
         jdbc.update("UPDATE vls_algorithm_training SET create_user='vls-user' WHERE id IN (1,2)");

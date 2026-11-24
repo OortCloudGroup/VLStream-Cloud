@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** Public offers contain resource metadata only. SSH and provider credentials remain owner-only. */
 @Service
@@ -25,6 +26,8 @@ public class ComputeMarketService {
     private ComputePublicInventoryService publicInventory;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputeSharedQueueService sharedQueue;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeExecutionCoordinator coordinator;
     @org.springframework.beans.factory.annotation.Autowired private org.springframework.beans.factory.ObjectProvider<ComputePaidRunService> paidRuns;
     @org.springframework.beans.factory.annotation.Autowired private com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties billingProperties;
     @org.springframework.beans.factory.annotation.Autowired private ComputeBillingPolicy billingPolicy;
@@ -71,6 +74,7 @@ public class ComputeMarketService {
         private String healthState;
         private Integer taskCount;
         private String claimState;
+        private String executionOccupancy;
         private boolean requiresClaim;
         private boolean canClaim;
         private boolean canOperate;
@@ -105,6 +109,8 @@ public class ComputeMarketService {
             rows.addAll(configured.published());
         }
         long now = System.currentTimeMillis();
+        boolean coordinated = coordinator != null && coordinator.managed();
+        Map<Long, String> occupancy = coordinated ? coordinator.occupancy() : java.util.Collections.emptyMap();
         String viewer = publicInventory==null ? null : publicInventory.viewer();
         for (ComputeNode node : rows) {
             if(selection && !"PLATFORM".equals(node.getResourceScope()) && !nodes.canUsePrivate(node))continue;
@@ -159,8 +165,20 @@ public class ComputeMarketService {
             resource.setApiControl(server.stream().anyMatch(n -> powerProviders.stream().anyMatch(p -> p.supports(n))));
             resource.setOperationPending(server.stream().anyMatch(n -> n.getPowerOperationId() != null));
             resource.setProviderGpuAmount(node.getProviderGpuAmount()); resource.setActualStoppedMode(node.getActualStoppedMode()); resource.setProviderChargeType(node.getProviderChargeType());
+            if (coordinated && node.isPlatformCatalogManaged())
+                applyDeploymentOccupancy(resource, occupancy.getOrDefault(node.getId(), "UNKNOWN"));
         }
         return result;
+    }
+
+    static void applyDeploymentOccupancy(Resource resource, String state) {
+        resource.setExecutionOccupancy(state);
+        if ("FREE".equals(state) || "OWNED".equals(state)) return;
+        resource.setSchedulable(false);
+        if ("POINTS".equals(resource.getBillingType()) && !"MINE".equals(resource.getClaimState())) {
+            resource.setClaimState("OCCUPIED".equals(state) ? "OTHER" : "UNKNOWN");
+            resource.setPaidAdmissionEnabled(false);
+        }
     }
 
     /** Local configuration projection only. Payer verification, current price and HOLD are

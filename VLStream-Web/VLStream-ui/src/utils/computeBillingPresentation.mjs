@@ -21,6 +21,7 @@ const confirmedStopped = run => run?.physicallyStopped === true || run?.billingD
   && run.billingDiagnostics.stopObservedMs > 0 && run.billingDiagnostics.billingEndMs > 0
 export const paidRunState = value => {
   const state = typeof value === 'string' ? value : value?.state
+  if (state === 'FUNDING' && value?.errorCode === 'COMPUTE_LEASE_WAITING') return '等待算力释放'
   if (['STOPPING', 'RELEASING'].includes(state) && confirmedStopped(value)) return '已关机，结算处理中'
   return labels[state] || '状态待确认'
 }
@@ -38,6 +39,7 @@ export function paidStartLabel(nodeId, runs = []) {
 
 export function paidRunErrorPresentation(run) {
   if (run?.settlementAuthorizationRequired) return { message: '实例已关机，系统正在核对本次费用和释放剩余冻结余额，完成后自动解除占用。', type: 'warning' }
+  if (run?.state === 'FUNDING' && run.errorCode === 'COMPUTE_LEASE_WAITING') return { message: '服务器正被占用，释放后再开始预冻结。', type: 'warning' }
   if (!run?.errorCode && !run?.startFailureCode) return null
   if (run.state === 'CANCELLED' && run.chargedQuota === '0' && run.remainingQuota === '0'
     && ['OWNER_ADOPTED_ORIGINAL_RELEASE', 'ADMIN_ADOPTED_ORIGINAL_RELEASE'].includes(run.errorCode)) {

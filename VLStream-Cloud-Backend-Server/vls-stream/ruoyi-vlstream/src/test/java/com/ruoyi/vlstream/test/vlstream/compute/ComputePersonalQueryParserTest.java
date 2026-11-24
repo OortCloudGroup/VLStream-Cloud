@@ -58,4 +58,12 @@ class ComputePersonalQueryParserTest {
         assertTrue(parsed.contains("lc.training_id"));
         assertTrue(parsed.contains("lt.create_user"));
     }
+
+    @Test void modelDirectoryRetainsTenantScopedImportsAndTrainingGuardsThroughTenantParser() {
+        QueryWrapper<Object> query = access().filterModels(new QueryWrapper<>());
+        String parsed = parse("vls_algorithm_model", query);
+        assertTrue(parsed.contains("vls_algorithm_model.training_id IS NULL"));
+        assertTrue(parsed.contains("vls_algorithm_model.tenant_id"));
+        assertTrue(parsed.contains("SHARED_GPU_QUEUE"));
+    }
 }

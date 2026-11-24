@@ -63,6 +63,10 @@ public class CloudTrainingWorker {
     private ComputeCatalogProperties catalogProperties;
     @org.springframework.beans.factory.annotation.Autowired
     private ComputeSharedQueueProperties sharedQueueProperties;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeExecutionCoordinator executionCoordinator;
+    @org.springframework.beans.factory.annotation.Autowired
+    private SharedTrainingWorkspaceCleanup workspaceCleanup;
 
     @Scheduled(fixedDelay = 5000, initialDelay = 20000)
     public void scan() {
@@ -119,23 +123,42 @@ public class CloudTrainingWorker {
                 try {
                     if (sharedQueue!=null && sharedQueue.isSharedJob(job)) {
                         ComputeNode node=nodes.get(nodeId);
-                        List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),queueIds.toArray());
-                        List<CloudTrainingJob> ownHead = new ArrayList<>();
-                        // A foreign head keeps its place. Register only the contiguous local prefix.
-                        for (CloudTrainingJob queued : queue) {
-                            if (!ownsExecution(queued)) break;
-                            nodes.verifyJob(queued,node);
-                            ownHead.add(queued);
+                        if (managedSharedNode(node)) {
+                            nodes.verifyJob(job,node);
+                            if (!nodes.isCompanyShared(node))
+                                throw new IOException("节点调度类型与本轮冻结配置不一致，不能切换执行路径");
+                            if (!job.isCancelRequested() || !"QUEUED".equals(job.getJobState())) {
+                                if (!node.isEnabled() && "QUEUED".equals(job.getJobState())) return;
+                                sharedQueue.requireTarget(node);
+                                if (!executionCoordinator.acquire(node, executionRef(job))) {
+                                    jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",
+                                        "统一平台算力正被占用，等待任务释放", job.getTenantId(), job.getId());
+                                    return;
+                                }
+                                registerShared(node, Collections.singletonList(job));
+                            }
+                        } else {
+                            List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),queueIds.toArray());
+                            List<CloudTrainingJob> ownHead = new ArrayList<>();
+                            // A foreign head keeps its place. Register only the contiguous local prefix.
+                            for (CloudTrainingJob queued : queue) {
+                                if (!ownsExecution(queued)) break;
+                                nodes.verifyJob(queued,node);
+                                ownHead.add(queued);
+                            }
+                            registerShared(node, ownHead);
                         }
-                        try(ComputeSsh.Connection connection=ssh.open(node)) { sharedQueue.register(connection,node,ownHead); }
                     }
                     process(job);
                 }
                 catch (ServiceException e) {
                     if (Objects.equals(ConfiguredComputeRegistry.UNAVAILABLE, e.getCode())) {
-                        if (ConfiguredComputeRegistry.CATALOG_NODE_UNAVAILABLE.equals(e.getMessage())
-                            && Arrays.asList("RUNNING", "ARCHIVING", "ARCHIVE_PENDING").contains(job.getJobState())) {
-                            log.debug("Local compute catalog lookup deferred for active job {}", job.getId());
+                        boolean missingLegacyTarget = ConfiguredComputeRegistry.LEGACY_NODE_UNAVAILABLE.equals(e.getMessage())
+                            && sharedQueue != null && sharedQueue.isSharedJob(job);
+                        boolean activeCatalogJob = ConfiguredComputeRegistry.CATALOG_NODE_UNAVAILABLE.equals(e.getMessage())
+                            && Arrays.asList("RUNNING", "ARCHIVING", "ARCHIVE_PENDING").contains(job.getJobState());
+                        if (missingLegacyTarget || activeCatalogJob) {
+                            log.debug("Local compute target lookup deferred for shared or active job {}", job.getId());
                         } else {
                             jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",
                                 limited(e.getMessage()), job.getTenantId(), job.getId());
@@ -160,6 +183,20 @@ public class CloudTrainingWorker {
         finally { if (previous == null) TenantContextHolder.clear(); else TenantContextHolder.setTenantId(previous); }
     }
 
+    private boolean managedSharedNode(ComputeNode node) {
+        return node.isPlatformCatalogManaged() && executionCoordinator != null && executionCoordinator.managed();
+    }
+
+    private String executionRef(CloudTrainingJob job) {
+        return "training:" + job.getId();
+    }
+
+    private void registerShared(ComputeNode node, List<CloudTrainingJob> jobs) throws IOException {
+        try (ComputeSsh.Connection connection = ssh.open(node)) {
+            sharedQueue.register(connection, node, jobs);
+        }
+    }
+
     private boolean lock(Connection db, String sql, String name) throws java.sql.SQLException {
         try (PreparedStatement statement = db.prepareStatement(sql)) {
             statement.setString(1, name);
@@ -172,14 +209,19 @@ public class CloudTrainingWorker {
         nodes.verifyJob(job,node);
         boolean company=sharedQueue!=null && sharedQueue.isSharedJob(job);
         if(nodes.isCompanyShared(node)!=company)throw new IOException("节点调度类型与本轮冻结配置不一致，不能切换执行路径");
+        Long deploymentNodeId = company && node.isPlatformCatalogManaged() && executionCoordinator != null ? node.getId() : null;
         boolean archiveOnly=paidArchives!=null && paidArchives.hasCheckpoint(job);
         if(archiveOnly) {
             requireArchiveClaim(job,node);
             if(!paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
         }
         if (job.isCancelRequested() && "QUEUED".equals(job.getJobState())) {
-            if(company)try(ComputeSsh.Connection connection=ssh.open(node)){sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);}
-            finish(job, "CANCELLED", "训练已取消", null); return;
+            JsonNode acknowledgement = null;
+            if (company) try (ComputeSsh.Connection connection = ssh.open(node)) {
+                acknowledgement = releaseCancelled(connection, node, job);
+            }
+            finish(job, "CANCELLED", "训练已取消", null, false, deploymentNodeId, acknowledgement);
+            return;
         }
         if (!node.isEnabled() && (!node.isConfigurationManaged() || "QUEUED".equals(job.getJobState()) && !cancelled(job))) return;
         if ("QUEUED".equals(job.getJobState())) phase(job, "PREPARING", "正在上传固定版本的数据集", 0, 0);
@@ -190,8 +232,9 @@ public class CloudTrainingWorker {
             if (!"READY".equals(prepared)) {
                 if(archiveOnly)throw new IOException("原归档任务文件缺失，保留退出证明等待核对");
                 if (cancelled(job)) {
-                    if(company)sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);
-                    finish(job, "CANCELLED", "训练已取消", null); return;
+                    JsonNode acknowledgement = company ? releaseCancelled(connection, node, job) : null;
+                    finish(job, "CANCELLED", "训练已取消", null, false, deploymentNodeId, acknowledgement);
+                    return;
                 }
                 if (!"PREPARING".equals(job.getJobState())) throw new ServiceException("实例中的本轮任务文件已缺失，无法恢复运行状态");
                 connection.mkdir(job.getRunDir());
@@ -199,6 +242,7 @@ public class CloudTrainingWorker {
                     ? annotationDatasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection) : null;
                 if (!job.isAnnotation()) datasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection);
                 Map<String, Object> config = json.readValue(job.getOptionsJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
+                config.remove("executionUserId");
                 if (predictionImages != null) config.put("images", predictionImages);
                 config.put("annotationType", job.getAnnotationType()); config.put("datasetId", String.valueOf(job.getDatasetId()));
                 config.put("workDir", node.getWorkDir()); config.put("gpuIndex", company ? json.readTree(job.getOptionsJson()).path("sharedQueue").path("gpuIndex").asInt(-1) : node.getGpuIndex());
@@ -226,16 +270,13 @@ public class CloudTrainingWorker {
                     job.setOptionsJson(jdbc.queryForObject("SELECT options_json FROM vls_cloud_training_job WHERE id=?",String.class,job.getId()));
                     if(paidArchives.hasCheckpoint(job) && !paidArchives.mayArchive(job,node,archiveTarget(node),System.currentTimeMillis()))return;
                 }
-                archive(job, connection, result);
+                String classes = archive(job, connection, result, company);
                 boolean autoConfirm = job.isAnnotation() && importAnnotationResults(job, connection, result);
-                if(company) {
-                    String classes=new TrainingDatasetLayout(job.getAnnotationType(),data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir()+"/dataset");
-                    sharedQueue.release(connection,node,job,result,ModelArtifactObjectStore.hash(classes));
-                }
-                finish(job, "COMPLETED", "PT 和类别文件已校验并回存平台", job.modelKey(), autoConfirm);
+                JsonNode acknowledgement = company ? sharedQueue.release(connection, node, job, result, ModelArtifactObjectStore.hash(classes)) : null;
+                finish(job, "COMPLETED", "PT 和类别文件已校验并回存平台", job.modelKey(), autoConfirm, deploymentNodeId, acknowledgement);
             } else if ("FAILED".equals(state) || "CANCELLED".equals(state)) {
-                if(company)sharedQueue.release(connection,node,job,result,null);
-                finish(job, state, limited(result.path("message").asText("训练进程结束")), null);
+                JsonNode acknowledgement = company ? sharedQueue.release(connection, node, job, result, null) : null;
+                finish(job, state, limited(result.path("message").asText("训练进程结束")), null, false, deploymentNodeId, acknowledgement);
             } else if ("NOT_STARTED".equals(state) || "WAITING".equals(state)) {
                 phase(job, "PREPARING", result.path("message").asText("等待 GPU 资源"), 0, 0);
                 if (!cancelled(job)) connection.execute("nohup " + command + " run " + quote(configPath)
@@ -244,6 +285,10 @@ public class CloudTrainingWorker {
                 phase(job, "RUNNING", cancelled(job) ? "等待任务进程确认停止" : "所选 GPU 节点执行中", Math.min(98, result.path("progress").asInt()), result.path("epoch").asInt());
             } else throw new IOException("实例返回了未知任务状态");
         }
+    }
+
+    private JsonNode releaseCancelled(ComputeSsh.Connection connection, ComputeNode node, CloudTrainingJob job) throws IOException {
+        return sharedQueue.release(connection, node, job, json.createObjectNode().put("state", "CANCELLED"), null);
     }
 
     private String archiveTarget(ComputeNode node) { return String.valueOf(nodes.configurationSnapshot(node).get("targetFingerprint")); }
@@ -300,11 +345,12 @@ public class CloudTrainingWorker {
         } finally { Files.deleteIfExists(local); }
     }
 
-    private void archive(CloudTrainingJob job, ComputeSsh.Connection connection, JsonNode result) throws IOException {
+    private String archive(CloudTrainingJob job, ComputeSsh.Connection connection, JsonNode result, boolean shared) throws IOException {
         String sha = result.path("sha256").asText(); long size = result.path("size").asLong();
         if (!sha.matches("[a-f0-9]{64}") || size < 1) throw new IOException("实例产物缺少校验信息");
         String yaml = new TrainingDatasetLayout(job.getAnnotationType(), data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir() + "/dataset");
-        if(job.isAnnotation() || paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+        boolean verifyOriginal = shared || job.isAnnotation() || paidArchives != null && paidArchives.hasCheckpoint(job);
+        if (verifyOriginal) {
             requireOriginalStoredArtifact(job.modelKey(),sha,size,false);
             requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,false);
         }
@@ -315,10 +361,11 @@ public class CloudTrainingWorker {
         })) throw new IOException("PT 归档等待重试");
         // archive() may observe a concurrent READY row after the preflight. Completion must
         // still match this original result and classes, including that short-circuit path.
-        if(job.isAnnotation() || paidArchives!=null && paidArchives.hasCheckpoint(job)) {
+        if (verifyOriginal) {
             requireOriginalStoredArtifact(job.modelKey(),sha,size,true);
             requireOriginalStoredArtifact(ModelClassFileService.storagePath(job.modelKey()),ModelArtifactObjectStore.hash(yaml),yaml.getBytes(StandardCharsets.UTF_8).length,true);
         }
+        return yaml;
     }
 
     private void requireOriginalStoredArtifact(String path,String sha,long size,boolean requireReady) throws IOException {
@@ -359,10 +406,11 @@ public class CloudTrainingWorker {
     }
 
     private void finish(CloudTrainingJob job, String state, String message, String model) {
-        finish(job, state, message, model, false);
+        finish(job, state, message, model, false, null, null);
     }
 
-    private void finish(CloudTrainingJob job, String state, String message, String model, boolean autoConfirm) {
+    private void finish(CloudTrainingJob job, String state, String message, String model, boolean autoConfirm,
+                        Long releasedNodeId, JsonNode acknowledgement) {
         new TransactionTemplate(transactions).execute(tx -> {
             boolean success = "COMPLETED".equals(state);
             String trainingState = success ? "completed" : "CANCELLED".equals(state) ? "stop" : "failed";
@@ -370,6 +418,7 @@ public class CloudTrainingWorker {
             jdbc.update("UPDATE vls_container_instance SET instance_status=?,stop_time=NOW(),error_message=? WHERE tenant_id=? AND id=?", success ? "completed" : "CANCELLED".equals(state) ? "cancelled" : "error", success ? null : message, job.getTenantId(), job.getContainerRecordId());
             if (job.isAnnotation()) annotations.finished(job,state,message,autoConfirm);
             else jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=CASE WHEN ?='completed' THEN 100 ELSE progress END,error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
+            if (acknowledgement != null) workspaceCleanup.enqueue(job, acknowledgement, releasedNodeId);
             return null;
         });
     }

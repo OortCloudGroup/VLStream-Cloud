@@ -106,7 +106,9 @@ public class ComputeQueueSnapshotService {
                 + "AND JSON_UNQUOTE(JSON_EXTRACT(j.options_json,'$.sharedQueue.mode'))='SHARED_GPU_QUEUE'", String.class, args.toArray());
             if (names.isEmpty()) names = jdbc.queryForList("SELECT t.task_name FROM vls_cloud_training_job j JOIN vls_smart_annotation_round r ON r.id=j.smart_round_id AND BINARY r.tenant_id=BINARY j.tenant_id "
                 + "JOIN vls_smart_annotation_task t ON t.id=r.task_id AND BINARY t.tenant_id=BINARY r.tenant_id "
-                + "WHERE j.id=? AND BINARY t.tenant_id=BINARY ? AND BINARY t.create_user=BINARY ? AND BINARY j.public_owner_subject=BINARY ? AND t.is_deleted=0 AND r.is_deleted=0 AND j.training_id IS NULL "
+                + "WHERE j.id=? AND BINARY t.tenant_id=BINARY ? "
+                + "AND BINARY (" + ComputePublicTaskAccess.annotationExecutionUser("j", "t.create_user") + ")=BINARY ? "
+                + "AND BINARY j.public_owner_subject=BINARY ? AND t.is_deleted=0 AND r.is_deleted=0 AND j.training_id IS NULL "
                 + "AND j.node_id IN (" + ConfiguredComputeRegistry.placeholders(ids.size()) + ") AND JSON_VALID(j.options_json) "
                 + "AND JSON_UNQUOTE(JSON_EXTRACT(j.options_json,'$.sharedQueue.mode'))='SHARED_GPU_QUEUE'", String.class, args.toArray());
             if (names.size() == 1) result.setActiveTaskName(names.get(0));

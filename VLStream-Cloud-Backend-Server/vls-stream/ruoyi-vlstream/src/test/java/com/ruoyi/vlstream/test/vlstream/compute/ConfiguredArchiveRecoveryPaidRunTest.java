@@ -25,11 +25,12 @@ class ConfiguredArchiveRecoveryPaidRunTest {
     private ComputePaidRunIntegrationTest f;
     private JdbcTemplate jdbc;
     private ComputePaidArchiveRecoveryService archives;
+    private ComputeExecutionCoordinator leases;
     private String source,jobId="original-archive-job";
 
     @BeforeEach void setup() throws Exception {
         official=new ConfiguredOfficialRunIntegrationTest();official.setup();f=official.f;jdbc=f.jdbc;
-        jdbc.execute("ALTER TABLE vls_cloud_training_job ADD COLUMN options_json TEXT");
+        leases=official.enableCentralLease();
         jdbc.execute("ALTER TABLE vls_cloud_training_job ADD COLUMN run_dir TEXT");
         jdbc.execute("CREATE TABLE vls_model_artifact_storage(tenant_id VARCHAR(64),path_hash CHAR(64),storage_state VARCHAR(32),retry_after TIMESTAMP,sha256 VARCHAR(64),file_size BIGINT)");
         archives=new ComputePaidArchiveRecoveryService(jdbc,f.json,new DataSourceTransactionManager(jdbc.getDataSource()));
@@ -49,6 +50,8 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         official.finish(source);
         assertEquals("COMPLETED",f.runs.get(source,f.payer).getState());
         assertEquals("ARCHIVE_PENDING",job().getJobState());
+        f.runs.scanCentralReleases();
+        verify(leases,never()).enqueueRelease(anyLong(),anyString(),anyString());
         // The existing wallet fixture models one hold at a time. The completed old hold stays
         // in its local journal; a fresh fixture serves only the explicitly accepted new run.
         f.wallet=f.new Wallet();
@@ -79,6 +82,7 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         String oldUsage=f.runs.get(source,f.payer).getUsageId();
         String oldHold=jdbc.queryForObject("SELECT hold_intent_id FROM vls_compute_paid_run WHERE run_id=?",String.class,source);
         String recovery=accepted();f.runs.accept(recovery,f.payer);
+        assertEquals(source,jdbc.queryForObject("SELECT central_lease_root_run_id FROM vls_compute_paid_run WHERE run_id=?",String.class,recovery));
         String usage=f.runs.get(recovery,f.payer).getUsageId();
         String newHold=jdbc.queryForObject("SELECT hold_intent_id FROM vls_compute_paid_run WHERE run_id=?",String.class,recovery);
         assertNotEquals(oldUsage,usage);assertNotEquals(oldHold,newHold);
@@ -98,6 +102,10 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         assertEquals("COMPLETED",f.runs.get(recovery,f.payer).getState());assertEquals(0,f.wallet.remaining());
         assertFalse(f.runs.get(source,f.payer).isArchiveRecoveryAvailable());
         assertEquals("FREE",official.nodes.publicInventory().read(official.node(),false).getPublicState());
+        f.runs.scanCentralReleases();
+        verify(leases,times(2)).acquire(any(ComputeNode.class),eq("paid:"+source));
+        verify(leases,never()).acquire(any(ComputeNode.class),eq("paid:"+recovery));
+        verify(leases).enqueueRelease(-6000L,"paid:"+source,ConfiguredOfficialRunIntegrationTest.LEASE_SCOPE);
     }
 
     @Test void changedClaimOrForeignPayerCannotObtainOrAcceptRecovery() throws Exception {

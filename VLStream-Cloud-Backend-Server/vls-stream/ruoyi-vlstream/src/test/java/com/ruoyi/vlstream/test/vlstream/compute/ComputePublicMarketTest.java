@@ -5,12 +5,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -65,44 +67,43 @@ class ComputePublicMarketTest {
             assertEquals("GPU", ComputePublicMarketService.publicText(value, "GPU"));
         assertEquals("公司 P100", ComputePublicMarketService.publicText("公司 P100", "GPU"));
     }
-    private ComputeNode referenceNode() {
-        ComputeNode node = new ComputeNode();
-        node.setId(792022144331380001L); node.setProvider("autodl");
-        node.setServerGroup("autodl-pro-7920a22db144"); node.setProviderGpuAmount(1);
-        node.setBillingType("POINTS");
-        return node;
-    }
-    private ComputePublicMarketService.Offer referenceOffer(ComputeNode node) {
-        ComputePublicMarketService.Offer offer = new ComputePublicMarketService.Offer();
-        offer.setBillingType("POINTS");
-        ComputePublicMarketService.referencePrice(offer, node);
-        return offer;
-    }
-    @Test void referenceRequiresExactTrustedIdentityAndNoConfiguredQuota() {
-        ComputeNode node = referenceNode(); node.setName("Renamed resource");
-        assertEquals(new BigDecimal("12.92"), referenceOffer(node).getReferencePrice());
-        for (Long id : new Long[]{null, 9L}) { node = referenceNode(); node.setId(id); assertNull(referenceOffer(node).getReferencePrice()); }
-        for (String provider : new String[]{null, "aliyun"}) { node = referenceNode(); node.setProvider(provider); assertNull(referenceOffer(node).getReferencePrice()); }
-        for (String group : new String[]{null, "other-instance"}) { node = referenceNode(); node.setServerGroup(group); assertNull(referenceOffer(node).getReferencePrice()); }
-        for (Integer amount : new Integer[]{null, 0, 2}) { node = referenceNode(); node.setProviderGpuAmount(amount); assertNull(referenceOffer(node).getReferencePrice()); }
-        for (BigDecimal quota : new BigDecimal[]{BigDecimal.ZERO, new BigDecimal("-1"), new BigDecimal("6.46")}) {
-            node = referenceNode(); node.setPointsPerHour(quota); assertNull(referenceOffer(node).getReferencePrice());
-        }
-        node = referenceNode(); node.setBillingType("FREE"); assertNull(referenceOffer(node).getReferencePrice());
-        ComputePublicMarketService.Offer free = new ComputePublicMarketService.Offer(); free.setBillingType("FREE");
-        ComputePublicMarketService.referencePrice(free, referenceNode()); assertNull(free.getReferencePrice());
-    }
-    @Test void referenceJsonContainsOnlySafeDatedDisplayFields() throws Exception {
-        String json = new ObjectMapper().writeValueAsString(referenceOffer(referenceNode()));
-        com.fasterxml.jackson.databind.JsonNode body = new ObjectMapper().readTree(json);
-        assertEquals(14, body.size());
-        assertEquals("12.92", body.path("referencePrice").asText());
-        assertEquals("CNY", body.path("referenceCurrency").asText());
-        assertEquals("PER_INSTANCE_HOUR", body.path("referenceUnit").asText());
-        assertEquals("2026-10-19", body.path("referenceDate").asText());
+    @Test void originalCompanyOfferShowsFixedPriceEvenWithoutExecutionCatalog() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(new DriverManagerDataSource(
+            "jdbc:h2:mem:legacy_company_price_" + System.nanoTime() + ";MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", ""));
+        jdbc.execute("CREATE TABLE vls_compute_node(id BIGINT PRIMARY KEY, name VARCHAR(100), gpu_model VARCHAR(100), "
+            + "provider VARCHAR(32), provider_product VARCHAR(32), provider_instance_id VARCHAR(100), "
+            + "resource_scope VARCHAR(32), tenant_id VARCHAR(64), billing_type VARCHAR(32), points_per_hour DECIMAL(18,4))");
+        jdbc.execute("CREATE TABLE vls_company_compute_offer(offer_code VARCHAR(100), node_id BIGINT, provider VARCHAR(32), "
+            + "provider_instance_id VARCHAR(100), published INT)");
+        jdbc.update("INSERT INTO vls_compute_node VALUES "
+            + "(792022144331380001,'Renamed resource','NVIDIA RTX 6000D','autodl','AUTODL_PRO','pro-7920a22db144','PLATFORM','000000','POINTS',NULL),"
+            + "(9,'Another RTX 6000D','NVIDIA RTX 6000D','autodl','AUTODL_PRO','pro-123456abcdef','PLATFORM','000000','POINTS',NULL)");
+        jdbc.update("INSERT INTO vls_company_compute_offer VALUES ("
+            + "'a-original',792022144331380001,'autodl','pro-7920a22db144',1),('b-other',9,'autodl','pro-123456abcdef',1)");
+        CompanyComputeOfferService service = new CompanyComputeOfferService(jdbc, mock(CompanyComputeOfferAuthority.class));
+        List<ComputeMarketService.Resource> resources = service.marketResources(20, 0);
+        assertEquals("13.00", resources.get(0).getUserHourlyPrice());
+        assertEquals("CNY", resources.get(0).getPriceCurrency());
+        assertEquals("PER_INSTANCE_HOUR", resources.get(0).getPriceUnit());
+        assertEquals("VLS_FIXED", resources.get(0).getPricePolicy());
+        assertEquals("PENDING_CONFIGURATION", resources.get(0).getClaimState());
+        assertFalse(resources.get(0).isPaidAdmissionEnabled());
+        assertFalse(resources.get(0).isSchedulable());
+        assertNull(resources.get(1).getUserHourlyPrice());
+
+        List<ComputePublicMarketService.Offer> offers = service.publicMarketOffers(20, 0);
+        assertEquals(new BigDecimal("13.00"), offers.get(0).getPrice());
+        assertEquals("CNY", offers.get(0).getPriceCurrency());
+        assertEquals("PAID_DISABLED", offers.get(0).getAvailability());
+        assertFalse(offers.get(0).isPaidUseEnabled());
+        assertNull(offers.get(1).getPrice());
+        String json = new ObjectMapper().writeValueAsString(offers.get(0));
         for (String forbidden : new String[]{"792022144331380001", "pro-7920a22db144", "provider", "serverGroup", "host", "password", "tenant", "owner", "cost"}) assertFalse(json.contains(forbidden), forbidden);
-        assertNull(referenceOffer(referenceNode()).getPrice());
-        assertFalse(referenceOffer(referenceNode()).isPaidUseEnabled());
+
+        jdbc.update("UPDATE vls_compute_node SET points_per_hour=8 WHERE id=9");
+        ComputePublicMarketService.Offer other = service.publicMarketOffers(20, 0).get(1);
+        assertEquals(0, new BigDecimal("8").compareTo(other.getPrice()));
+        assertEquals("POINTS_PER_HOUR", other.getPriceUnit());
     }
 
     private ComputeNode configuredNode(String billingType, String schedulingMode) {
