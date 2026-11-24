@@ -39,6 +39,9 @@ public class DeviceInfo extends TenantEntity {
 	 */
 	@Schema(description = "设备编号，唯一标识")
 	private String deviceId;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private java.util.List<String> categoryKeys;
 	/**
 	 * (RTSP/HTTP etc.)
 	 */

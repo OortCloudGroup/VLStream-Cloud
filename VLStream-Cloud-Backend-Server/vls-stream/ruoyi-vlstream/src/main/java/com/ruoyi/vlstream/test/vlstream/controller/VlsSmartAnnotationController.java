@@ -39,7 +39,8 @@ public class VlsSmartAnnotationController {
     public R<List<String>> llmModels(@PathVariable Long id) { return R.data(service.llmModels(id)); }
     @GetMapping("/{id}") public R<Map<String, Object>> detail(@PathVariable Long id) { return R.data(service.detail(id)); }
     @GetMapping("/{id}/predictions") public R<Map<String, Object>> predictions(@PathVariable Long id, @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "PENDING") String state, @RequestParam(defaultValue = "false") boolean hardOnly) { return R.data(service.predictions(id, page, state, hardOnly)); }
+        @RequestParam(defaultValue = "PENDING") String state, @RequestParam(defaultValue = "false") boolean hardOnly,
+        @RequestParam(required = false) String reviewKind) { return R.data(service.predictions(id, page, state, hardOnly, reviewKind)); }
     @PostMapping("/{id}/predictions/{candidateId}") public R<Boolean> review(@PathVariable Long id, @PathVariable Long candidateId, @Valid @RequestBody SmartAnnotationRequests.Review request) { service.review(id, candidateId, request); return R.data(true); }
     @PostMapping("/{id}/confirm") public R<Boolean> confirm(@PathVariable Long id, @Valid @RequestBody SmartAnnotationRequests.ConfirmBatch request) { service.confirmBatch(id, request.getIds()); return R.data(true); }
     @PostMapping("/{id}/confirm-all") public R<Boolean> confirmAll(@PathVariable Long id) { service.confirmAll(id); return R.data(true); }
@@ -54,6 +55,16 @@ public class VlsSmartAnnotationController {
         }
     }
     @PostMapping("/{id}/next") public R<Boolean> next(@PathVariable Long id) { service.next(id); return R.data(true); }
+    @PostMapping("/{id}/continue-llm")
+    public R<Boolean> continueLlm(@PathVariable Long id, @Valid @RequestBody(required = false) SmartAnnotationRequests.PilotPrompt request) {
+        service.continueLlm(id, request == null ? null : request.getPrompt());
+        return R.data(true);
+    }
+    @PostMapping("/{id}/rerun-llm-pilot")
+    public R<Boolean> rerunLlmPilot(@PathVariable Long id, @Valid @RequestBody(required = false) SmartAnnotationRequests.PilotPrompt request) {
+        service.rerunLlmPilot(id, request == null ? null : request.getPrompt());
+        return R.data(true);
+    }
     @PostMapping("/{id}/finish") public R<Boolean> finish(@PathVariable Long id) { service.finish(id); return R.data(true); }
     @PostMapping("/{id}/retry") public R<Boolean> retry(@PathVariable Long id) { service.retry(id); return R.data(true); }
     @PostMapping("/{id}/cancel") public R<Boolean> cancel(@PathVariable Long id) { service.cancel(id); return R.data(true); }

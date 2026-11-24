@@ -12,6 +12,9 @@
     @filter-change="handleClassificationFilter"
     @assigned="loadDevices"
   >
+    <template #category-action="{ type, category }">
+      <LlmReviewScopeButton :key="type + category.id" :type="type" :target-id="category.id" :label="category.categoryName" />
+    </template>
     <div class="protocol-page">
       <el-card shadow="never">
         <template #header>
@@ -62,10 +65,11 @@
           <el-table-column :label="$tp('最后心跳')" min-width="180">
             <template #default="{ row }">{{ formatDeviceTime(row.lastHeartbeatTime) }}</template>
           </el-table-column>
-          <el-table-column :label="$tp('操作')" width="260" fixed="right">
+          <el-table-column :label="$tp('操作')" width="335" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">{{ $tp('详情') }}</el-button>
               <el-button link type="primary" :disabled="row.online !== true" @click="openPreview(row)">{{ $tp('播放') }}</el-button>
+              <LlmReviewScopeButton type="DEVICE" :target-id="row.deviceId" :label="row.deviceName || row.deviceId" />
               <PlatformRecordingActions protocol="VLSTREAM" :row-id="row.id" :online="row.online === true" />
             </template>
           </el-table-column>
@@ -243,6 +247,7 @@
 </template>
 
 <script setup>
+import LlmReviewScopeButton from '@/components/LlmReviewScopeButton.vue'
 import { translatePhrase as uiText } from '@/i18n'
 import { useWvpMediaStatus } from '@/utils/useWvpMediaStatus'
 

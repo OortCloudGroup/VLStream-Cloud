@@ -24,6 +24,14 @@ public final class DatasetPartitioner {
             || path.startsWith("__MACOSX/") || path.contains("/__MACOSX/");
     }
 
+    /** SQL form of {@link #auxiliaryFile(String)} for page-level eligibility; use only fixed column names. */
+    static String auxiliaryFileSql(String column) {
+        String path = "REPLACE(COALESCE(" + column + ", ''), CHAR(92), '/')";
+        String file = "SUBSTRING_INDEX(" + path + ", '/', -1)";
+        return "(LEFT(" + file + ", 2) = '._' OR LOWER(" + file + ") = '.ds_store' "
+            + "OR LOCATE(CAST('/__MACOSX/' AS BINARY), CAST(CONCAT('/', " + path + ") AS BINARY)) > 0)";
+    }
+
     public static Map<Long, String> partition(List<AnnotationImage> samples, Map<Long, String> classes,
                                              DataRequests.Split request) {
         if (samples.size() < 2) throw new ServiceException("至少需要两张有标注且未标记低质量/剔除的图片");

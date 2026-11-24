@@ -12,6 +12,8 @@ import org.springblade.core.mp.base.TenantEntity;
 @EqualsAndHashCode(callSuper = true)
 @TableName("vls_smart_annotation_round")
 public class SmartAnnotationRound extends TenantEntity {
+    static final String LLM_PILOT_STAGE = "llm_pilot";
+
     @JsonSerialize(using = ToStringSerializer.class) private Long taskId;
     private Integer roundNumber;
     @JsonSerialize(using = ToStringSerializer.class) private Long versionId;

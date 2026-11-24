@@ -37,7 +37,8 @@
         <span>{{ $tp('已预测 {count} 张', { count: detail.round.predictedCount }) }}</span>
         <span v-if="llmTask">{{ $tp('失败 {count} 张', { count: detail.round.llmFailedCount || 0 }) }}</span>
         <span>{{ $tp('已确认 {count} 张', { count: detail.counts.ACCEPTED || 0 }) }}</span>
-        <span>{{ $tp('待确认 {count} 张', { count: detail.counts.PENDING || 0 }) }}</span>
+        <span>{{ $tp(pilotReview ? '试标候选 {count} 张' : '待确认 {count} 张', { count: detail.counts.PENDING || 0 }) }}</span>
+        <span v-if="llmTask && detail.pendingSpotChecks">{{ $tp('待抽检 {count} 张', { count: detail.pendingSpotChecks }) }}</span>
         <span>{{ $tp('已跳过 {count} 张', { count: detail.counts.SKIPPED || 0 }) }}</span>
       </div>
       <el-alert v-if="detail.task.errorMessage" :title="detail.task.errorMessage" type="error" :closable="false" />
@@ -50,31 +51,42 @@
           { processed: detail.task.bulkProcessed || 0, total: detail.task.bulkTotal || 0, accepted: detail.task.bulkAccepted || 0, conflicts: detail.task.bulkConflicts || 0 }) }}</span>
         <el-progress v-if="confirming" :percentage="Math.min(100, Math.round((detail.task.bulkProcessed || 0) * 100 / Math.max(1, detail.task.bulkTotal || 1)))" />
       </div>
-      <div v-if="(active || llmTask) && !confirming && detail.round.progressTotal" class="bulk-summary"><span>{{ $tp(llmTask ? '已处理图片' : detail.round.progressStage === 'TRAINING' ? '本轮模型训练' : '生成预标注') }}：{{ detail.round.progressCurrent || 0 }} / {{ detail.round.progressTotal }}</span><el-progress :percentage="Math.min(100, Math.round((detail.round.progressCurrent || 0) * 100 / detail.round.progressTotal))" /></div>
+      <div v-if="(active || llmTask) && !confirming && detail.round.progressTotal" class="bulk-summary"><span>{{ $tp(pilotStage ? '试标进度' : llmTask ? '已处理图片' : detail.round.progressStage === 'TRAINING' ? '本轮模型训练' : '生成预标注') }}：{{ detail.round.progressCurrent || 0 }} / {{ detail.round.progressTotal }}</span><el-progress :percentage="Math.min(100, Math.round((detail.round.progressCurrent || 0) * 100 / detail.round.progressTotal))" /></div>
       <el-alert v-if="active" :title="queueMessage" type="info" :closable="false" />
+      <el-alert v-if="pilotReview" :title="$tp('请检查试标图片里的漏标、错标和定位偏差。试标结果暂存在任务中。')" type="info" :closable="false" />
       <div v-if="!['COMPLETED', 'CANCELLED', 'CANCEL_REQUESTED'].includes(detail.task.taskState)" class="actions task-actions">
-        <el-button v-if="llmTask && ['FAILED', 'REVIEW'].includes(detail.task.taskState) && detail.round.llmFailedCount > 0" :disabled="busy" @click="retryLlm">{{ $tp('重试失败图片') }}</el-button>
+        <template v-if="pilotReview">
+          <el-button type="primary" :disabled="busy || !detail.canContinueLlm" @click="continuePilot">{{ $tp('继续批量标注') }}</el-button>
+          <el-button :disabled="busy" @click="openPilotRerun">{{ $tp('调整要求再试标') }}</el-button>
+        </template>
+        <el-button v-if="llmTask && ['FAILED', 'REVIEW', 'PILOT_REVIEW'].includes(detail.task.taskState) && detail.round.llmFailedCount > 0" :disabled="busy" @click="retryLlm">{{ $tp('重试失败图片') }}</el-button>
         <el-button v-if="!llmTask && detail.task.taskState === 'FAILED'" :disabled="busy" type="primary" @click="perform(retrySmartTask)">{{ $tp('重试本轮') }}</el-button>
-        <template v-if="detail.task.taskState === 'REVIEW'"><el-button v-if="detail.task.mode === 'active' && detail.canUseRoundModel !== false" :disabled="busy || detail.pendingHard > 0 || detail.task.roundNumber >= detail.maxRounds || !detail.counts.ACCEPTED" @click="next">{{ $tp('继续下一轮') }}</el-button><el-button type="primary" :disabled="busy" @click="finish">{{ $tp('完成任务') }}</el-button></template>
+        <template v-if="detail.task.taskState === 'REVIEW'">
+          <el-button v-if="detail.task.mode === 'active' && detail.canUseRoundModel !== false" :disabled="busy || detail.pendingHard > 0 || detail.task.roundNumber >= detail.maxRounds || !detail.counts.ACCEPTED" @click="next">{{ $tp('继续下一轮') }}</el-button>
+          <el-button type="primary" :disabled="busy || detail.pendingSpotChecks > 0" @click="finish">{{ $tp('完成任务') }}</el-button>
+          <span v-if="detail.pendingSpotChecks > 0" class="hint">{{ $tp('完成任务前请处理待抽检图片。') }}</span>
+        </template>
         <el-button :disabled="busy" type="danger" plain @click="cancel">{{ $tp('取消任务') }}</el-button>
       </div>
       <template v-if="showPredictions(detail)">
         <div class="filters">
           <el-select v-model="query.state" :aria-label="$tp('状态')" @change="changePredictionFilter">
-            <el-option :label="$tp('待确认')" value="PENDING" />
-            <el-option :label="$tp('已确认')" value="ACCEPTED" />
-            <el-option :label="$tp('已跳过')" value="SKIPPED" />
+            <el-option :label="$tp(pilotReview ? '试标候选' : '待确认')" value="PENDING" />
+            <el-option v-if="!pilotReview" :label="$tp('已确认')" value="ACCEPTED" />
+            <el-option v-if="!pilotReview" :label="$tp('已跳过')" value="SKIPPED" />
             <el-option v-if="llmTask" :label="$tp('预标注失败')" value="FAILED" />
             <el-option :label="$tp('全部结果')" value="" />
           </el-select>
+          <el-checkbox v-if="llmTask && detail.task.taskState === 'REVIEW' && (detail.pendingSpotChecks || query.reviewKind)"
+            :model-value="query.reviewKind === 'SPOT_CHECK'" @change="filterSpotChecks">{{ $tp('仅看待抽检') }}</el-checkbox>
           <el-checkbox v-if="detail.task.mode === 'active'" v-model="query.hardOnly" @change="changePredictionFilter">{{ $tp('仅看本轮难例（待处理 {count}）', { count: detail.pendingHard }) }}</el-checkbox>
-          <template v-if="detail.task.taskState === 'REVIEW'">
+          <template v-if="detail.task.taskState === 'REVIEW' && !query.reviewKind">
             <el-button :disabled="busy || !confirmable.length" @click="batchConfirm">{{ $tp('确认本页可用结果（{count}）', { count: confirmable.length }) }}</el-button>
-            <el-button type="primary" :disabled="busy || !detail.counts.PENDING" @click="confirmRoundPredictions">{{ $tp('确认本轮已通过标注') }}</el-button>
+            <el-button type="primary" :disabled="busy || !canConfirmRound" @click="confirmRoundPredictions">{{ $tp('确认本轮已通过标注') }}</el-button>
           </template>
         </div>
-        <p class="hint">{{ $tp(llmTask
-          ? '低分、缺分或需要修正的结果须逐图复核。分割结果可在编辑器中补齐遗漏区域并修正边界。'
+        <p v-if="!pilotReview" class="hint">{{ $tp(llmTask
+          ? '低分、缺分、抽检或需要修正的结果须逐图复核。分割结果可在编辑器中补齐遗漏区域并修正边界。'
           : '难例按预测置信度排序，优先检查漏检、低置信度和类别不匹配的图片。模型类别未匹配时，需手动选择标签。') }}</p>
         <div class="prediction-grid">
           <article v-for="row in predictions" :key="row.candidate.id" class="prediction-card" :class="{ 'is-actionable': canReview(row) }" @click="openReview(row)">
@@ -82,14 +94,16 @@
               <img v-if="row.previewSrc && !row.previewFailed" :src="row.previewSrc" :alt="row.imageName" loading="lazy" @error="row.previewFailed = true" />
               <span v-else-if="row.previewFailed" class="preview-error">{{ $tp('图片读取失败') }}</span>
               <el-tag v-if="!llmTask && row.candidate.hardExample" class="hard-tag" type="warning" size="small">{{ $tp('难例') }}</el-tag>
+              <el-tag v-else-if="row.candidate.llmReviewKind === 'SPOT_CHECK'" class="hard-tag" type="warning" size="small">{{ $tp('高分抽检') }}</el-tag>
+              <el-tag v-else-if="row.candidate.llmReviewKind === 'PILOT'" class="hard-tag" type="info" size="small">{{ $tp('试标样本') }}</el-tag>
             </div>
             <div class="prediction-description">
               <strong>{{ row.imageName }}</strong>
-              <span>{{ boxCount(row) }} {{ $tp(countUnits[detail.task.annotationType]) }} · {{ $tp(reviewStates[row.candidate.reviewState]) }}</span>
+              <span>{{ boxCount(row) }} {{ $tp(countUnits[detail.task.annotationType]) }} · {{ $tp(pilotReview && row.candidate.reviewState === 'PENDING' ? '可预览' : reviewStates[row.candidate.reviewState]) }}</span>
               <small v-if="row.predictionQuality?.suppressedCount">{{ $tp('已合并 {count} 个同类重叠框', { count: row.predictionQuality.suppressedCount }) }}</small>
               <small v-if="row.predictionQuality?.classConflict" role="status">{{ $tp('类别冲突，需逐图检查后确认') }}</small>
               <small v-if="row.candidate.reviewError">{{ row.candidate.reviewError }}</small>
-              <el-button v-if="canReview(row)" link type="primary" @click.stop="openReview(row)">{{ $tp('检查并确认') }}</el-button>
+              <el-button v-if="canReview(row)" link type="primary" @click.stop="openReview(row)">{{ $tp(pilotReview ? '查看试标' : '检查并确认') }}</el-button>
             </div>
           </article>
         </div>
@@ -109,15 +123,13 @@
         <el-form-item :label="$tp('数据集')">
           <el-select v-model="form.datasetId" filterable remote :remote-method="searchDatasets" :loading="datasetsLoading"
             :placeholder="$tp('搜索数据集')" :no-data-text="$tp('暂无数据集')"
-            :disabled="busy" style="width:100%" @change="changeDataset">
+            :aria-describedby="datasetIssue ? 'llm-dataset-issue' : undefined" :disabled="busy" style="width:100%" @change="changeDataset">
             <template #label="{ label }">{{ options?.datasetName ? datasetLabel(options.datasetName, options.annotationType) : label }}</template>
             <el-option v-for="dataset in datasets" :key="dataset.id" :label="datasetLabel(dataset.annotationName, dataset.annotationType)"
               :value="String(dataset.id)" :disabled="datasetDisabled(dataset)">
               <span class="dataset-option">
                 <span class="dataset-option-name">{{ datasetLabel(dataset.annotationName, dataset.annotationType) }}</span>
-                <span v-if="datasetDisabled(dataset)" class="dataset-option-status">
-                  {{ $tp(dataset.datasetGenerated === false ? '训练包未生成或已失效' : '训练包生成状态未确认') }}
-                </span>
+                <span v-if="datasetReason(dataset)" class="dataset-option-status">{{ $tp(datasetReason(dataset)) }}</span>
               </span>
             </el-option>
           </el-select>
@@ -126,6 +138,7 @@
               ? '请在数据集管理中确认该数据集已生成有效训练包，再重新选择。'
               : '首次主动学习前，请先导入待标注图片并完成人工示例标注，再到数据集管理生成训练包。') }}
           </p>
+          <p v-else-if="datasetIssue" id="llm-dataset-issue" class="hint" role="status">{{ $tp(datasetIssue) }}</p>
         </el-form-item>
         <el-form-item v-if="form.mode !== 'llm'" :label="$tp('GPU 设备')"><div style="width:100%"><TrainingComputeSelector v-model="form.computeNodeId" :nodes="computeNodes" :loading="computeLoading" :disabled="busy" :node-label="node => node.name || String(node.id)" @reload="loadCompute" /><el-button link :disabled="computeLoading" @click="loadCompute">{{ $tp('刷新') }}</el-button><p v-if="form.computeNodeId && !selectedCompute?.schedulable" class="hint">{{ $tp('请先在算力市场完成开机与环境检查') }}</p></div></el-form-item>
         <el-form-item :label="$tp('任务名称')"><el-input v-model="form.taskName" maxlength="80" :disabled="busy" /></el-form-item>
@@ -158,16 +171,47 @@
           <div style="width:100%">
             <el-slider v-model="confidenceThreshold" :min="0.05" :max="0.95" :step="0.05" show-input :disabled="busy" />
             <p class="hint">{{ $tp(form.mode === 'llm'
-              ? '大模型分数是模型估计值。整张图片通过校验，且每项预测分数都严格超过阈值时，系统才自动确认。低分、缺分或有疑问的结果留待人工复核。'
+              ? '校验通过且各项分数均高于阈值时自动确认，其余逐图复核。'
               : '图片通过校验，且模型返回的每项预测（包括合并前的重叠框）置信度都超过阈值时，系统会自动保存为正式标注。空预测和未达标的图片留待人工确认。') }}</p>
           </div>
         </el-form-item>
+        <template v-if="llmQualitySupported">
+          <el-form-item :label="$tp('小批试标')">
+            <div class="llm-field">
+              <el-switch v-model="form.llmPilotEnabled" :aria-label="$tp('小批试标')" :disabled="busy" />
+              <template v-if="form.llmPilotEnabled">
+                <el-input-number v-model="form.llmPilotSize" :aria-label="$tp('试标图片数量')" :min="1" :max="50" :precision="0" :disabled="busy" />
+                <span>{{ $tp('张') }}</span>
+              </template>
+              <p v-if="form.llmPilotEnabled" class="hint llm-field-message">{{ $tp('先生成少量候选供检查，图片不足时试标全部。你可以调整标注要求、重新试标或继续批量标注。') }}</p>
+            </div>
+          </el-form-item>
+          <el-form-item :label="$tp('高分抽检')">
+            <div class="llm-field">
+              <el-input-number v-model="form.llmReviewPercent" :aria-label="$tp('高分抽检比例')" :min="0" :max="100" :precision="0" :disabled="busy" />
+              <span>%</span>
+              <p class="hint llm-field-message">{{ $tp('随机抽查本可自动通过的图片，逐张确认后保存。设为 0 可关闭。') }}</p>
+            </div>
+          </el-form-item>
+        </template>
         <template v-if="form.mode === 'active'"><el-form-item :label="$tp('每轮训练次数')"><el-input-number v-model="form.epochs" :min="1" :max="100" /></el-form-item><el-form-item :label="$tp('每轮难例数量')"><el-input-number v-model="form.reviewSize" :min="1" :max="500" /></el-form-item></template>
       </el-form>
       <template v-if="options"><el-alert :title="$tp('{value0}：当前有 {value1} 张未标注图片。{value2}', { value0: $tp(typeNames[options.annotationType]), value1: options.unlabeled, value2: modeHint })" :type="ready ? 'info' : 'warning'" :closable="false" /><div class="label-counts"><el-tag v-for="label in options.labelCounts" :key="label.name">{{ label.name }}：{{ label.count }} {{ $tp(options.countUnit) }}</el-tag></div></template>
-      <template #footer><el-button :disabled="busy" @click="creating = false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="busy" :disabled="!ready" @click="create">{{ $tp('创建并入队') }}</el-button></template>
+      <template #footer><el-button :disabled="busy" @click="creating = false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="busy" :disabled="!ready" @click="create">{{ $tp(llmQualitySupported && form.llmPilotEnabled ? '开始试标' : '创建并入队') }}</el-button></template>
     </el-dialog>
-    <SmartAnnotationReview :item="reviewItem" :annotation-type="detail?.task.annotationType || 'object_detection'" :labels="detail?.labels || []" :saving="busy" :llm="llmTask" @close="closeReview" @save="saveReview" />
+    <el-dialog v-model="rerunningPilot" :title="$tp('调整要求再试标')" width="min(540px, calc(100vw - 32px))" :close-on-click-modal="false">
+      <el-form label-position="top">
+        <el-form-item :label="$tp('标注要求')">
+          <el-input v-model="pilotPrompt" type="textarea" :rows="4" :maxlength="2000" show-word-limit :disabled="busy" />
+        </el-form-item>
+      </el-form>
+      <p class="hint">{{ $tp('重新处理同一批试标图片。任务会再次暂停，供你检查新结果。') }}</p>
+      <template #footer>
+        <el-button :disabled="busy" @click="rerunningPilot = false">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="busy" @click="rerunPilot">{{ $tp('重新试标') }}</el-button>
+      </template>
+    </el-dialog>
+    <SmartAnnotationReview :item="reviewItem" :annotation-type="detail?.task.annotationType || 'object_detection'" :labels="detail?.labels || []" :saving="busy" :llm="llmTask" :read-only="pilotReview" :title="pilotReview ? '试标预览' : '确认预标注'" @close="closeReview" @save="saveReview" />
   </div>
 </template>
 
@@ -178,7 +222,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listDataProjects } from '@/api/dataManagement'
-import { listSmartTasks, smartOptions, listSmartLlmProviders, listSmartLlmModels, createSmartTask, getSmartTask, smartPredictions, getSmartPrediction, fetchSmartPredictionImage, reviewSmartPrediction, confirmSmartBatch, confirmAllSmartPredictions, nextSmartRound, finishSmartTask, retrySmartTask, cancelSmartTask } from '@/api/smartAnnotation'
+import { listSmartTasks, smartOptions, listSmartLlmProviders, listSmartLlmModels, createSmartTask, getSmartTask, smartPredictions, getSmartPrediction, fetchSmartPredictionImage, reviewSmartPrediction, confirmSmartBatch, confirmAllSmartPredictions, nextSmartRound, continueSmartLlm, rerunSmartLlmPilot, finishSmartTask, retrySmartTask, cancelSmartTask } from '@/api/smartAnnotation'
 import SmartAnnotationReview from './components/SmartAnnotationReview.vue'
 import TrainingComputeSelector from './components/TrainingComputeSelector.vue'
 import { listComputeSelection } from '@/api/compute'
@@ -196,12 +240,16 @@ const loading = ref(false); const busy = ref(false); const creating = ref(false)
 const datasets = ref([]); const options = ref(null); const sourceKey = ref('')
 const datasetsLoading = ref(false)
 const datasetNeedsGeneration = ref(false)
+const datasetIssue = ref('')
 const predictions = ref([]); const predictionTotal = ref(0); const reviewItem = ref(null)
 const predictionsLoading = ref(false)
+const rerunningPilot = ref(false)
+const pilotPrompt = ref('')
+const llmQualityDefaults = { llmConfidence: 0.50, llmPilotEnabled: true, llmPilotSize: 10, llmReviewPercent: 5 }
 const form = reactive({
   datasetId: '', taskName: '', mode: props.llmOnly ? 'llm' : 'active',
   computeNodeId: '', confidence: 0.25, epochs: 20, reviewSize: 50,
-  providerId: '', modelName: '', prompt: '', llmConfidence: 0.50
+  providerId: '', modelName: '', prompt: '', ...llmQualityDefaults
 })
 const llmProviders = ref([])
 const llmModels = ref([])
@@ -225,17 +273,19 @@ const loadCompute = async () => {
   try { apply(await listComputeSelection(apply)) } catch (error) { if (sequence === computeSequence) { computeNodes.value = []; handleError(error) } }
   finally { if (sequence === computeSequence) computeLoading.value = false }
 }
-const query = reactive({ page: 1, state: 'PENDING', hardOnly: false })
-const states = { QUEUED: '等待 GPU', PREPARING: '准备数据', RUNNING: '计算中', REVIEW: '待确认', CONFIRMING: '批量确认中', AUTO_CONFIRMING: '自动确认中', COMPLETED: '已完成', FAILED: '失败', CANCEL_REQUESTED: '正在取消', CANCELLED: '已取消' }
+const query = reactive({ page: 1, state: 'PENDING', hardOnly: false, reviewKind: '' })
+const states = { QUEUED: '等待 GPU', PREPARING: '准备数据', RUNNING: '计算中', PILOT_REVIEW: '待查看试标', REVIEW: '待确认', CONFIRMING: '批量确认中', AUTO_CONFIRMING: '自动确认中', COMPLETED: '已完成', FAILED: '失败', CANCEL_REQUESTED: '正在取消', CANCELLED: '已取消' }
 const typeNames = { image_classification: '图像分类', object_detection: '物体检测', instance_segmentation: '实例分割', semantic_segmentation: '语义分割' }
-const datasetLabel = (name, type) => `${name} · ${uiText(typeNames[type])}`
+const datasetLabel = (name, type) => typeNames[type] ? `${name} · ${uiText(typeNames[type])}` : name
 const countUnits = { image_classification: '个类别', object_detection: '个预测框', instance_segmentation: '个实例', semantic_segmentation: '类区域' }
 const reviewStates = { PENDING: '待确认', ACCEPTED: '已确认', SKIPPED: '已跳过', FAILED: '预标注失败' }
 const modeNames = { active: '主动学习', model: '指定模型', llm: '大模型标注' }
 const modeName = mode => uiText(modeNames[mode] || mode)
 const stateName = (state, mode) => uiText(mode === 'llm' && state === 'QUEUED' ? '等待模型调用' : states[state] || state)
-const stateType = state => ({ COMPLETED: 'success', FAILED: 'danger', REVIEW: 'warning' }[state] || 'info')
+const stateType = state => ({ COMPLETED: 'success', FAILED: 'danger', REVIEW: 'warning', PILOT_REVIEW: 'warning' }[state] || 'info')
 const llmTask = computed(() => detail.value?.task.mode === 'llm')
+const pilotStage = computed(() => llmTask.value && detail.value?.round.progressStage === 'llm_pilot')
+const pilotReview = computed(() => llmTask.value && detail.value?.task.taskState === 'PILOT_REVIEW')
 const confirming = computed(() => ['CONFIRMING', 'AUTO_CONFIRMING'].includes(detail.value?.task.taskState))
 const active = computed(() => confirming.value || ['QUEUED', 'PREPARING', 'RUNNING', 'CANCEL_REQUESTED'].includes(detail.value?.task.taskState))
 const queueMessage = computed(() => {
@@ -258,10 +308,15 @@ const modeHint = computed(() => {
   })
   return uiText(form.mode === 'llm' ? '视觉模型使用下列数据集标签生成候选。' : '指定模型会预标注当前所有可用的未标注图片。')
 })
+const llmQualitySupported = computed(() => form.mode === 'llm' && options.value?.llmQualitySupported === true)
 const ready = computed(() => {
   if (!form.datasetId || !form.taskName.trim() || !(options.value?.unlabeled > 0)) return false
   if (form.mode === 'llm') {
-    return Boolean(llmProviderName.value && form.modelName && options.value.labelCounts.length)
+    return Boolean(llmProviderName.value && llmModels.value.includes(form.modelName) && options.value.labelCounts?.length)
+      && (!llmQualitySupported.value || (
+        (!form.llmPilotEnabled || (Number.isInteger(form.llmPilotSize) && form.llmPilotSize >= 1 && form.llmPilotSize <= 50))
+        && Number.isInteger(form.llmReviewPercent) && form.llmReviewPercent >= 0 && form.llmReviewPercent <= 100
+      ))
   }
   return !computeLoading.value && selectedCompute.value?.schedulable && sourceKey.value
     && (!activeLearning.value || (options.value.datasetGenerated === true
@@ -270,16 +325,20 @@ const ready = computed(() => {
 })
 const boxCount = row => JSON.parse(row.candidate.boxesJson || '[]').length
 const confirmable = computed(() => predictions.value.filter(row => {
-  if (row.predictionQuality?.classConflict || row.predictionQuality?.manualReview) return false
+  if (row.predictionQuality?.classConflict || row.predictionQuality?.manualReview || row.candidate.llmReviewKind) return false
   const boxes = JSON.parse(row.candidate.boxesJson || '[]')
   return row.candidate.reviewState === 'PENDING' && boxes.length
     && boxes.every(box => box.labelId && (llmTask.value
       ? Number.isFinite(box.confidence) && box.confidence > detail.value.task.confidence
       : box.confidence >= detail.value.task.confidence))
 }))
-const canReview = row => row.candidate.reviewState === 'PENDING' && detail.value?.task.taskState === 'REVIEW'
+const canReview = row => row.candidate.reviewState === 'PENDING' && (pilotReview.value || detail.value?.task.taskState === 'REVIEW')
+const canConfirmRound = computed(() => {
+  const pending = detail.value?.counts.PENDING || 0
+  return pending > (llmTask.value ? detail.value.pendingHard || 0 : 0)
+})
 const showPredictions = result => ['REVIEW', 'COMPLETED'].includes(result.task.taskState)
-  || (result.task.mode === 'llm' && result.task.taskState === 'FAILED')
+  || (result.task.mode === 'llm' && ['PILOT_REVIEW', 'FAILED'].includes(result.task.taskState))
 const handleError = error => { if (error !== 'cancel' && error !== 'close') ElMessage.error(error?.message || uiText('操作失败')) }
 const run = async operation => { if (busy.value) return; busy.value = true; try { await operation() } catch (error) { handleError(error) } finally { busy.value = false } }
 let predictionRequest
@@ -332,12 +391,19 @@ const loadPredictions = async () => {
   }
 }
 const changePredictionFilter = () => {
+  if (query.state !== 'PENDING') query.reviewKind = ''
   query.page = 1
   return loadPredictions()
+}
+const filterSpotChecks = checked => {
+  query.reviewKind = checked ? 'SPOT_CHECK' : ''
+  if (checked) query.state = 'PENDING'
+  return changePredictionFilter()
 }
 const resetPredictionQuery = result => {
   const allAccepted = !result.counts?.PENDING && result.counts?.ACCEPTED > 0
   query.page = 1
+  query.reviewKind = ''
   query.state = result.task.mode === 'llm' && !result.counts?.PENDING && result.round.llmFailedCount > 0
     ? 'FAILED' : allAccepted ? 'ACCEPTED' : 'PENDING'
   query.hardOnly = !allAccepted && result.task.mode === 'active' && result.pendingHard > 0
@@ -350,8 +416,13 @@ const refresh = async () => {
       const { id } = detail.value.task
       const result = await getSmartTask(id)
       if (disposed || detail.value?.task.id !== id) return
-      const enteringReview = result.task.taskState === 'REVIEW' && detail.value.task.taskState !== 'REVIEW'
-      if (enteringReview || (result.task.mode === 'llm' && result.task.taskState === 'FAILED' && detail.value.task.taskState !== 'FAILED')) resetPredictionQuery(result)
+      if (result.task.taskState !== detail.value.task.taskState) {
+        if (detail.value.task.taskState === 'PILOT_REVIEW') {
+          closeReview()
+          rerunningPilot.value = false
+        }
+        if (showPredictions(result)) resetPredictionQuery(result)
+      }
       detail.value = result
       if (showPredictions(result)) await loadPredictions()
     }
@@ -380,28 +451,47 @@ const enter = id => run(async () => {
 })
 const leave = async () => { clearPredictions(); closeReview(); detail.value = null; await router.replace({ query: route.query.dataset ? { dataset: route.query.dataset } : {} }); await refresh() }
 const openDataset = () => router.push({ path: '/data-management', query: { dataset: detail.value.task.datasetId } })
-const datasetDisabled = dataset => activeLearning.value && dataset.datasetGenerated !== true
+const llmDatasetIssues = {
+  MISSING_LABELS: '请先添加标注标签',
+  NO_UNLABELED_IMAGES: '无可标注图片',
+  UNSUPPORTED_TYPE: '不支持的标注类型'
+}
+const datasetReason = dataset => {
+  if (activeLearning.value && dataset.datasetGenerated !== true) {
+    return dataset.datasetGenerated === false ? '训练包未生成或已失效' : '训练包生成状态未确认'
+  }
+  if (form.mode !== 'llm') return ''
+  if (!typeNames[dataset.annotationType]) return llmDatasetIssues.UNSUPPORTED_TYPE
+  if (dataset.llmAnnotationStatus) return llmDatasetIssues[dataset.llmAnnotationStatus] || ''
+  const { totalCount, annotatedCount } = dataset
+  return totalCount === 0 || (totalCount > 0 && totalCount === annotatedCount)
+    ? llmDatasetIssues.NO_UNLABELED_IMAGES : ''
+}
+const datasetDisabled = dataset => Boolean(datasetReason(dataset))
 let llmProviderSequence = 0
 let llmModelSequence = 0
 const llmDialogOpen = () => creating.value && form.mode === 'llm'
 const changeLlmProvider = async () => {
   const sequence = ++llmModelSequence
   const provider = llmProviders.value.find(item => String(item.id) === form.providerId)
-  form.modelName = provider?.modelName || ''
-  llmModels.value = form.modelName ? [form.modelName] : []
+  const previousModel = form.modelName
+  form.modelName = ''
+  llmModels.value = []
   llmModelError.value = ''
   llmModelsLoading.value = Boolean(provider)
   if (!provider) return
   try {
     const models = await listSmartLlmModels(provider.id)
     if (sequence === llmModelSequence && llmDialogOpen()) {
-      llmModels.value = [...new Set([...llmModels.value, ...models])]
+      const available = [...new Set(models)]
+      llmModels.value = available
+      form.modelName = [previousModel, provider.modelName].find(name => available.includes(name))
+        || (available.length === 1 ? available[0] : '')
+      if (!available.length) llmModelError.value = uiText('该提供商没有可用于标注的视觉模型。')
     }
   } catch {
     if (sequence === llmModelSequence && llmDialogOpen()) {
-      llmModelError.value = uiText(form.modelName
-        ? '读取模型目录失败，仍可选用提供商已配置的模型。'
-        : '读取模型目录失败，请刷新提供商列表后重试。')
+      llmModelError.value = uiText('读取模型目录失败，请刷新提供商列表后重试。')
     }
   } finally {
     if (sequence === llmModelSequence) llmModelsLoading.value = false
@@ -436,9 +526,11 @@ const searchDatasets = async keyword => {
   const sequence = ++datasetSequence
   datasetsLoading.value = true
   try {
-    const result = await listDataProjects({ keyword, size: 100, includeGeneratedStatus: activeLearning.value })
+    const request = { keyword, size: 100, includeGeneratedStatus: activeLearning.value }
+    if (form.mode === 'llm') request.includeLlmAnnotationStatus = true
+    const result = await listDataProjects(request)
     if (sequence === datasetSequence && creating.value) {
-      datasets.value = result.records.filter(dataset => typeNames[dataset.annotationType])
+      datasets.value = form.mode === 'llm' ? result.records : result.records.filter(dataset => typeNames[dataset.annotationType])
     }
   } catch (error) {
     if (sequence === datasetSequence && creating.value) {
@@ -455,19 +547,27 @@ const resetOptions = () => {
   options.value = null
   sourceKey.value = ''
   datasetNeedsGeneration.value = false
+  datasetIssue.value = ''
   return ++optionSequence
 }
-const rejectDataset = () => {
+const rejectDataset = reason => {
   form.datasetId = ''
-  datasetNeedsGeneration.value = true
+  if (form.mode === 'llm') datasetIssue.value = reason
+  else datasetNeedsGeneration.value = true
+}
+const rejectLlmDataset = (datasetId, status) => {
+  datasets.value = datasets.value.map(dataset => String(dataset.id) === datasetId
+    ? { ...dataset, llmAnnotationStatus: status } : dataset)
+  rejectDataset(llmDatasetIssues[status])
 }
 const loadOptions = async () => {
   const sequence = resetOptions()
   const datasetId = form.datasetId
   if (!datasetId) return
   const selected = datasets.value.find(dataset => String(dataset.id) === datasetId)
-  if (selected && datasetDisabled(selected)) {
-    rejectDataset()
+  const reason = selected && datasetReason(selected)
+  if (reason) {
+    rejectDataset(reason)
     return
   }
 
@@ -481,6 +581,10 @@ const loadOptions = async () => {
       if (datasetsLoading.value) await searchDatasets('')
       return
     }
+    if (form.mode === 'llm' && (result.unlabeled === 0 || result.labelCounts?.length === 0)) {
+      rejectLlmDataset(datasetId, result.labelCounts?.length === 0 ? 'MISSING_LABELS' : 'NO_UNLABELED_IMAGES')
+      return
+    }
     options.value = result
     if (activeLearning.value) sourceKey.value = 'system:0'
     if (!form.taskName) {
@@ -489,6 +593,10 @@ const loadOptions = async () => {
     }
   } catch (error) {
     if (sequence === optionSequence && creating.value) {
+      if (form.mode === 'llm' && error?.message === '请先在标注页面创建需要识别的标签') {
+        rejectLlmDataset(datasetId, 'MISSING_LABELS')
+        return
+      }
       if (activeLearning.value) form.datasetId = ''
       handleError(error)
     }
@@ -508,6 +616,7 @@ const changeMode = async () => {
 }
 
 const openCreate = async () => {
+  if (form.mode === 'llm') Object.assign(form, llmQualityDefaults)
   creating.value = true
   if (route.query.dataset) form.datasetId = String(route.query.dataset)
   await changeMode()
@@ -519,7 +628,12 @@ const create = () => run(async () => {
   const common = { datasetId, taskName: taskName.trim(), mode }
   let payload
   if (mode === 'llm') {
-    payload = { ...common, providerId: form.providerId, modelName: form.modelName, prompt: form.prompt.trim(), confidence: form.llmConfidence }
+    payload = { ...common, providerId: form.providerId, modelName: form.modelName, prompt: form.prompt.trim(),
+      confidence: form.llmConfidence }
+    if (llmQualitySupported.value) {
+      payload.llmPilotSize = form.llmPilotEnabled ? form.llmPilotSize : 0
+      payload.llmReviewPercent = form.llmReviewPercent
+    }
   } else {
     await loadCompute()
     if (!selectedCompute.value?.schedulable) throw new Error(uiText('所选 GPU 设备尚未就绪，请刷新后重试'))
@@ -554,7 +668,13 @@ const openReview = row => run(async () => {
     throw error
   }
 })
-const saveReview = request => run(async () => { await reviewSmartPrediction(detail.value.task.id, reviewItem.value.candidate.id, request); closeReview(); await refresh(); ElMessage.success(request.skip ? uiText('已跳过') : uiText('标注已确认并保存')) })
+const saveReview = request => run(async () => {
+  if (detail.value?.task.taskState !== 'REVIEW' || !reviewItem.value) return
+  await reviewSmartPrediction(detail.value.task.id, reviewItem.value.candidate.id, request)
+  closeReview()
+  await refresh()
+  ElMessage.success(request.skip ? uiText('已跳过') : uiText('标注已确认并保存'))
+})
 const batchConfirm = () => run(async () => { await ElMessageBox.confirm(uiText('将本页 {value0} 张图片当前显示的预测结果保存为正式标注。请先检查预测效果。', { value0: confirmable.value.length }), uiText('批量确认'), { type: 'warning' }); await confirmSmartBatch(detail.value.task.id, confirmable.value.map(row => row.candidate.id)); await refresh() })
 const confirmRoundPredictions = () => run(async () => {
   await ElMessageBox.confirm(
@@ -566,6 +686,23 @@ const confirmRoundPredictions = () => run(async () => {
   await refresh()
 })
 const perform = operation => run(async () => { await operation(detail.value.task.id); await refresh() })
+const continuePilot = () => run(async () => {
+  if (!pilotReview.value || !detail.value.canContinueLlm) return
+  await continueSmartLlm(detail.value.task.id)
+  clearPredictions()
+  await refresh()
+})
+const openPilotRerun = () => {
+  pilotPrompt.value = detail.value.task.llmPrompt || ''
+  rerunningPilot.value = true
+}
+const rerunPilot = () => run(async () => {
+  if (!pilotReview.value) return
+  await rerunSmartLlmPilot(detail.value.task.id, { prompt: pilotPrompt.value.trim() })
+  rerunningPilot.value = false
+  clearPredictions()
+  await refresh()
+})
 const retryLlm = () => run(async () => {
   await ElMessageBox.confirm(uiText('重试会重新调用当前任务的视觉模型，可能产生调用费用。已保存的标注会保留。'), uiText('重试失败图片'), { type: 'warning' })
   await retrySmartTask(detail.value.task.id)

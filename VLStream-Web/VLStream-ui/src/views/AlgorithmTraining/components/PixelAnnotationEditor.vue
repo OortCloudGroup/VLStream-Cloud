@@ -1,7 +1,12 @@
 <template>
   <div v-if="kind === 'image_classification'" class="classification-editor">
     <img :src="imageUrl" :alt="$tp('待分类图片')" />
-    <aside><h3>{{ $tp('整图类别') }}</h3><p>{{ $tp('为这张图片选择一个类别。') }}</p><el-select v-model="classification" :disabled="disabled" :placeholder="$tp('选择类别')" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+    <aside><h3>{{ $tp('整图类别') }}</h3>
+      <p v-if="readOnly">{{ labelName(classification) }}</p>
+      <template v-else>
+        <p>{{ $tp('为这张图片选择一个类别。') }}</p>
+        <el-select v-model="classification" :disabled="disabled" :placeholder="$tp('选择类别')" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+      </template>
       <p v-if="regions[0]?.className">
         {{ $tp('模型建议：') }}{{ regions[0].className }} ·
         <template v-if="llm">{{ regions[0].confidence == null ? $tp('无模型分数') : $tp('模型估计 {score}', { score: `${Math.round(regions[0].confidence * 100)}%` }) }}</template>
@@ -11,19 +16,32 @@
   </div>
   <div v-else class="pixel-editor" v-loading="loading">
     <div class="pixel-main">
-      <div class="pixel-toolbar"><el-radio-group v-model="tool" size="small"><el-radio-button value="brush">{{ $tp('画笔') }}</el-radio-button><el-radio-button value="erase">{{ $tp('橡皮') }}</el-radio-button></el-radio-group><span>{{ $tp('画笔') }}</span><el-input-number v-model="brush" :min="1" :max="160" :disabled="disabled" size="small" /><el-button size="small" :disabled="!history.length || disabled" @click="undo">{{ $tp('撤销绘制') }}</el-button><span>{{ $tp('透明度') }}</span><el-input-number v-model="opacity" :min="0" :max="90" :step="10" size="small" @change="draw" /></div>
+      <div class="pixel-toolbar">
+        <template v-if="!readOnly">
+          <el-radio-group v-model="tool" size="small"><el-radio-button value="brush">{{ $tp('画笔') }}</el-radio-button><el-radio-button value="erase">{{ $tp('橡皮') }}</el-radio-button></el-radio-group>
+          <span>{{ $tp('画笔') }}</span><el-input-number v-model="brush" :min="1" :max="160" :disabled="disabled" size="small" />
+          <el-button size="small" :disabled="!history.length || disabled" @click="undo">{{ $tp('撤销绘制') }}</el-button>
+        </template>
+        <span>{{ $tp('透明度') }}</span><el-input-number v-model="opacity" :min="0" :max="90" :step="10" size="small" @change="draw" />
+      </div>
       <el-alert v-if="error" :title="$tp(error)" type="error" :closable="false" />
       <div class="pixel-stage"><canvas ref="canvas" :width="width" :height="height" :aria-label="$tp('像素标注画布')" @pointerdown="begin" @pointermove="paint" @pointerup="end" @pointercancel="end" /></div>
-      <p class="pixel-hint">{{ semantic ? $tp('每个像素只能有一个类别；还有 {value0} 个像素未归类。', { value0: unassigned.toLocaleString() }) : $tp('每个实例独立保存，可涂抹修正轮廓或用橡皮去除多余像素。') }}</p>
+      <p v-if="semantic || !readOnly" class="pixel-hint">{{ semantic ? $tp('每个像素只能有一个类别；还有 {value0} 个像素未归类。', { value0: unassigned.toLocaleString() }) : $tp('每个实例独立保存，可涂抹修正轮廓或用橡皮去除多余像素。') }}</p>
     </div>
     <aside class="pixel-sidebar">
-      <el-select v-model="newLabel" :disabled="disabled" :placeholder="$tp('新区域的类别')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
-      <el-button :disabled="disabled || loading || Boolean(error) || !newLabel" @click="add">{{ semantic ? $tp('添加类别区域') : $tp('新增实例') }}</el-button>
-      <el-button v-if="semantic" :disabled="disabled || loading || Boolean(error) || selected < 0 || !unassigned" @click="fillRemaining">{{ $tp('填充未归类区域') }}</el-button>
+      <template v-if="!readOnly">
+        <el-select v-model="newLabel" :disabled="disabled" :placeholder="$tp('新区域的类别')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+        <el-button :disabled="disabled || loading || Boolean(error) || !newLabel" @click="add">{{ semantic ? $tp('添加类别区域') : $tp('新增实例') }}</el-button>
+        <el-button v-if="semantic" :disabled="disabled || loading || Boolean(error) || selected < 0 || !unassigned" @click="fillRemaining">{{ $tp('填充未归类区域') }}</el-button>
+      </template>
       <div v-for="(entry, index) in entries" :key="entry.key" class="pixel-entry" :class="{ selected: selected === index }" @click="selected = index; draw()">
-        <div class="pixel-entry-title"><strong>{{ semantic ? $tp('区域') : $tp('实例') }} {{ index + 1 }}</strong><el-button link type="danger" :disabled="disabled" @click.stop="remove(index)">{{ $tp('删除') }}</el-button></div>
-        <el-select v-model="entry.labelId" :disabled="disabled" :placeholder="$tp('匹配标签')" style="width:100%" @change="entry.edited = true; emit('change'); draw()"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
-        <small v-if="entry.className">{{ $tp('模型类别：') }}{{ entry.className }}</small>
+        <div class="pixel-entry-title">
+          <strong>{{ semantic ? $tp('区域') : $tp('实例') }} {{ index + 1 }}</strong>
+          <el-button v-if="!readOnly" link type="danger" :disabled="disabled" @click.stop="remove(index)">{{ $tp('删除') }}</el-button>
+        </div>
+        <el-select v-if="!readOnly" v-model="entry.labelId" :disabled="disabled" :placeholder="$tp('匹配标签')" style="width:100%" @change="entry.edited = true; emit('change'); draw()"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+        <small v-if="entry.className || readOnly">{{ $tp('模型类别：') }}{{ entry.className || labelName(entry.labelId) }}</small>
+        <small v-if="llm">{{ entry.confidence == null ? $tp('无模型分数') : $tp('模型估计 {score}', { score: `${Math.round(entry.confidence * 100)}%` }) }}</small>
       </div>
     </aside>
   </div>
@@ -31,9 +49,11 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { translatePhrase as uiText } from '@/i18n'
 
-const props = defineProps({ kind: { type: String, required: true }, imageUrl: { type: String, required: true }, width: { type: Number, required: true }, height: { type: Number, required: true }, regions: { type: Array, default: () => [] }, labels: { type: Array, default: () => [] }, disabled: Boolean, llm: Boolean })
+const props = defineProps({ kind: { type: String, required: true }, imageUrl: { type: String, required: true }, width: { type: Number, required: true }, height: { type: Number, required: true }, regions: { type: Array, default: () => [] }, labels: { type: Array, default: () => [] }, disabled: Boolean, llm: Boolean, readOnly: Boolean })
 const emit = defineEmits(['change'])
+const labelName = id => props.labels.find(label => String(label.id) === id)?.name || uiText('未选择标签')
 const semantic = computed(() => props.kind === 'semantic_segmentation')
 const canvas = ref(null); const entries = ref([]); const selected = ref(-1); const newLabel = ref('')
 const classification = ref(''); const changed = ref(false); const tool = ref('brush'); const brush = ref(20); const opacity = ref(40)

@@ -55,6 +55,10 @@ public class VlsEventReportApplicationService {
 		return MULTI.equalsIgnoreCase(StringUtils.trimToEmpty(tenantType));
 	}
 
+    public String eventSink() {
+        return isMultiTenant() ? "VLS" : "LOCAL";
+    }
+
 	public JSONObject loadReviewSource(Long eventId, String tenantId) {
 		EventManagement event = eventManagementMapper.selectOne(new LambdaQueryWrapper<EventManagement>()
 			.eq(EventManagement::getId, eventId).eq(EventManagement::getTenantId, tenantId));

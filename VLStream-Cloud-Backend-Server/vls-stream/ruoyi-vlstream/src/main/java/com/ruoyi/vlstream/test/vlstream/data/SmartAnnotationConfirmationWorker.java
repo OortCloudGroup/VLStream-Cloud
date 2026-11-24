@@ -73,8 +73,7 @@ public class SmartAnnotationConfirmationWorker {
                 QueryWrapper<SmartAnnotationCandidate> query = service.<SmartAnnotationCandidate>scope().eq("round_id", round.getId())
                     .eq("review_state", "PENDING").gt("id", task.getBulkCursor() == null ? 0L : task.getBulkCursor());
                 if (automatic) query.and(group -> group.isNull("review_error").or().eq("review_error", ""));
-                if ("llm".equals(task.getMode())) query.eq("hard_example", 0)
-                    .and(group -> group.isNull("review_error").or().eq("review_error", ""));
+                if ("llm".equals(task.getMode())) service.llmAutoEligible(query);
                 SmartAnnotationCandidate candidate = candidates.selectOne(query.orderByAsc("id").last("LIMIT 1"));
                 if (candidate == null) {
                     tasks.update(null, taskUpdate(id).set("task_state", "REVIEW").set("bulk_processed", task.getBulkTotal()));

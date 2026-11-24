@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoyi.common.exception.ServiceException;
 import cn.hutool.core.util.IdUtil;
-import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.*;
 import com.ruoyi.vlstream.test.vlstream.service.*;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,8 @@ public class CloudAiEvents {
     private final VlsEventReportApplicationService application;
     private final IVlsEventManagementService events;
     private final DeviceMediaUploadService media;
-    private final CloudAiLocalEventSink localEvents;
+    private final CloudAiReviewPublisher publisher;
+    private final LlmReviewTaskService review;
 
     @Transactional(rollbackFor = Exception.class)
     public void ingest(Map<String,Object> run, JsonNode report, Map<String,String> evidence) {
@@ -42,6 +42,7 @@ public class CloudAiEvents {
         List<Map<String,Object>> existing = jdbc.queryForList("SELECT * FROM vls_cloud_ai_event WHERE id=? FOR UPDATE", id);
         DeviceInfo device = new DeviceInfo(); device.setTenantId(tenant); device.setDeviceId(eventDeviceId(camera));
         device.setDeviceName(camera.path("name").asText()); device.setAddress(camera.path("address").asText(""));
+        boolean pending;
         EventManagement event;
         if (existing.isEmpty()) {
             if (!evidence.containsKey("original") || !evidence.containsKey("annotated")) throw new ServiceException("事件截图尚未完成归档");
@@ -56,22 +57,19 @@ public class CloudAiEvents {
             for (String field : Arrays.asList("protocol", "deviceRowId", "deviceId", "streamId", "channelId", "channelName")) if (camera.hasNonNull(field)) cameraReference.set(field,camera.get(field));
             event.setEventData(data.toString());
             event.setId(IdUtil.getSnowflakeNextId());
-            if (application.isMultiTenant()) application.persistCloudAiEvent(event, device);
-            else localEvents.create(tenant, event.getId(), ActiveSafetyEventReport.builder()
-                .sourceMessageId(event.getMqttMessageId()).deviceEventId(id)
-                .deviceId(device.getDeviceId()).deviceName(device.getDeviceName())
-                .eventType(event.getEventType()).description(event.getEventDesc()).eventTime(event.getReportTime())
-                .mediaId(evidence.get("annotated")).imageMediaIds(Arrays.asList(evidence.get("annotated"), evidence.get("original")))
-                .videoMediaIds(Collections.emptyList()).mqttPayloadJson(data.toString()).address(device.getAddress()).build());
-            jdbc.update("INSERT INTO vls_cloud_ai_event(id,tenant_id,run_id,scene_id,event_id,event_sink,camera_key,model_id,detected_at,detail_json,original_media_id,annotated_media_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                id, tenant, runId, run.get("scene_id"), event.getId(), application.isMultiTenant() ? "VLS" : "LOCAL", report.path("cameraKey").asText(), report.path("modelId").asText(), detectedAt, report.toString(), evidence.get("original"), evidence.get("annotated"));
+            pending = review.enqueueSceneIfRequired(String.valueOf(run.get("scene_id")), event, device,
+                evidence.get("original"), report.path("detections").get(0).path("confidence").asText());
+            if (!pending) publisher.create(event, device, evidence.get("original"));
+            jdbc.update("INSERT INTO vls_cloud_ai_event(id,tenant_id,run_id,scene_id,event_id,event_sink,camera_key,model_id,detected_at,detail_json,original_media_id,annotated_media_id,review_pending) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                id, tenant, runId, run.get("scene_id"), event.getId(), application.isMultiTenant() ? "VLS" : "LOCAL", report.path("cameraKey").asText(), report.path("modelId").asText(), detectedAt, report.toString(), evidence.get("original"), evidence.get("annotated"), pending);
         } else {
             Map<String,Object> before = existing.get(0);
             if (!tenant.equals(before.get("tenant_id")) || !runId.equals(before.get("run_id")) || !report.path("cameraKey").asText().equals(before.get("camera_key")) || !report.path("modelId").asText().equals(before.get("model_id"))) throw new ServiceException("重复事件身份不一致");
             if (!"PENDING".equals(before.get("media_state"))) return;
             long eventId = ((Number) before.get("event_id")).longValue();
             if (application.isMultiTenant() != "VLS".equals(before.get("event_sink"))) throw new ServiceException("事件所属的租户运行模式已改变");
-            if (application.isMultiTenant()) event = events.getById(eventId);
+            pending = CloudAiReviewPublisher.pending(before);
+            if (application.isMultiTenant() && !pending) event = events.getById(eventId);
             else { event = new EventManagement(); event.setId(eventId); }
         }
         String state = report.path("mediaState").asText("PENDING");
@@ -80,9 +78,7 @@ public class CloudAiEvents {
         jdbc.update("UPDATE vls_cloud_ai_event SET media_state=?,video_media_id=?,detail_json=? WHERE id=? AND tenant_id=?", state, evidence.get("video"), report.toString(), id, tenant);
         List<String> images = Arrays.asList(evidence.get("annotated"), evidence.get("original"));
         List<String> videos = evidence.containsKey("video") ? Collections.singletonList(evidence.get("video")) : Collections.emptyList();
-        if (application.isMultiTenant()) {
-            if (event != null) application.publishCloudAiEvidence(event, device, images, videos);
-        } else localEvents.completeEvidence(tenant, event.getId(), images, videos);
+        if (!pending && event != null) publisher.complete(event, device, images, videos);
     }
 
     public Map<String,Object> page(int page, int size, String search, String status, String sceneId, String runId) {

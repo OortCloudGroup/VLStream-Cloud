@@ -110,6 +110,7 @@ class CloudAiControllerPermissionTest {
     private AlgorithmCatalogService catalog;
     private LlmReviewManagementService llmManagement;
     private LlmReviewTaskService llmTasks;
+    private com.ruoyi.vlstream.test.vlstream.service.LlmReviewScopes reviewScopes;
     private DataManagementService data;
     private SmartAnnotationService smart;
     private DatasetAnnotationEditor editor;
@@ -159,6 +160,10 @@ class CloudAiControllerPermissionTest {
         catalog = mock(AlgorithmCatalogService.class);
         llmManagement = mock(LlmReviewManagementService.class);
         llmTasks = mock(LlmReviewTaskService.class);
+        reviewScopes = mock(com.ruoyi.vlstream.test.vlstream.service.LlmReviewScopes.class);
+        com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties reviewProperties =
+            new com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties();
+        reviewProperties.setEnabled(true);
         data = mock(DataManagementService.class);
         smart = mock(SmartAnnotationService.class);
         editor = mock(DatasetAnnotationEditor.class);
@@ -189,6 +194,7 @@ class CloudAiControllerPermissionTest {
         mvc = MockMvcBuilders.standaloneSetup(new CloudAiController(service, sources, events, models), new PlatformRecordingController(recordings),
                 new VlsAlgorithmController(algorithms, mock(com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService.class)),
                 new AlgorithmCatalogController(catalog, mock(com.ruoyi.vlstream.test.vlstream.service.AlgorithmCoverService.class)),
+                new com.ruoyi.vlstream.test.vlstream.controller.VlsLlmReviewScopeController(reviewScopes, reviewProperties),
                 new VlsLlmReviewController(llmManagement, llmTasks, mock(com.ruoyi.vlstream.test.vlstream.service.OpenAiVisionClient.class)),
                 new VlsDataManagementController(data, mock(DataTransferService.class)),
                 new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class)),
@@ -222,6 +228,38 @@ class CloudAiControllerPermissionTest {
     private MockHttpServletRequestBuilder logged(MockHttpServletRequestBuilder request) {
         return request.header(SaManager.getConfig().getTokenName(), token);
     }
+    @Test void scopeReadAndDisableUseTheRequestedTargetAndTenant() throws Exception {
+        permissions.add("vls:menu:llm-review-tasks"); permissions.add("vls:menu:vlstream:device");
+        com.ruoyi.common.helper.TenantContextHolder.setTenantId("scope-tenant");
+        try {
+            when(reviewScopes.enabled("scope-tenant","TAG:7")).thenReturn(true);
+            mvc.perform(logged(get("/vlsLlmReview/scopes/TAG/7"))).andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data").value(true));
+            mvc.perform(logged(put("/vlsLlmReview/scopes/TAG/7").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))).andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data").value(false));
+            verify(reviewScopes).setEnabled("TAG:7", false);
+        } finally {
+            com.ruoyi.common.helper.TenantContextHolder.clear();
+        }
+    }
+
+    @Test void scopeWriteRequiresTargetPageAndReviewPermission() throws Exception {
+        for (String type : Arrays.asList("DEVICE", "REGION", "GROUP", "TAG", "SCENE")) {
+            String path = "/vlsLlmReview/scopes/" + type + "/7";
+            permissions.clear();
+            permissions.add("SCENE".equals(type) ? "vls:menu:scene-governance" : "vls:menu:vlstream:device");
+            MockHttpServletRequestBuilder request = put(path).contentType(MediaType.APPLICATION_JSON).content("{\"enabled\":true}");
+            mvc.perform(logged(request)).andExpect(status().isForbidden());
+            permissions.add("vls:menu:llm-review-tasks");
+            mvc.perform(logged(request)).andExpect(status().isOk());
+            verify(reviewScopes).validateTarget(type, "7");
+            verify(reviewScopes).setEnabled(type + ":7", true);
+            permissions.remove("SCENE".equals(type) ? "vls:menu:scene-governance" : "vls:menu:vlstream:device");
+            mvc.perform(logged(request)).andExpect(status().isForbidden());
+        }
+    }
+
     @AfterEach void cleanup() {
         SaTokenContextForThreadLocalStorage.clearBox();
         SaManager.setStpInterface(previousPermissions);

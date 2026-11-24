@@ -123,6 +123,9 @@ public class WvpVlStreamDeviceResolver {
 		device.setLongitude(data.getBigDecimal("longitude"));
 		device.setLatitude(data.getBigDecimal("latitude"));
 		device.setAddress(data.getStr("address"));
+		if (data.getJSONArray("categoryKeys") != null) {
+            device.setCategoryKeys(data.getJSONArray("categoryKeys").toList(String.class));
+        }
 		device.setTag(data.getStr("tag"));
 		return device;
 	}
@@ -137,14 +140,22 @@ public class WvpVlStreamDeviceResolver {
 		return tenantId;
 	}
 
-	private URI deviceUri(String deviceId) {
+    public void requireCategory(String type, String id) {
+        URI uri = deviceUri("categories", type, id);
+        JSONObject result = JSONUtil.parseObj(restTemplate.getForObject(uri, String.class));
+        if (!Integer.valueOf(200).equals(result.getInt("code")) || !Boolean.TRUE.equals(result.getBool("data"))) {
+            throw new ServiceException("分类不存在或 WVP 尚未支持分类复核");
+        }
+    }
+
+	private URI deviceUri(String... segments) {
 		String baseUrl = StringUtils.removeEnd(StringUtils.trimToEmpty(properties.getBaseUrl()), "/");
 		if (StringUtils.isBlank(baseUrl)) {
 			throw new ServiceException("WVP内部服务地址不能为空");
 		}
 		try {
 			return UriComponentsBuilder.fromHttpUrl(baseUrl)
-				.pathSegment("internal", "vlstream", "device", deviceId)
+				.pathSegment("internal", "vlstream", "device").pathSegment(segments)
 				.build().encode().toUri();
 		} catch (IllegalArgumentException exception) {
 			throw new ServiceException("WVP内部服务地址配置不正确");

@@ -46,6 +46,7 @@ public class OpenAiVisionClient {
 	private static final int MAX_ANNOTATION_RESPONSE_BYTES = 2 * 1024 * 1024;
 	private static final int MAX_ANNOTATION_CONTENT_CHARS = 1024 * 1024;
 	private static final JsonFactory ANNOTATION_JSON = new JsonFactory().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
+	private static final String OORTCLOUD_MODELS_BASE = "https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1";
 
 	private final LlmApiKeyCipher apiKeyCipher;
 
@@ -80,8 +81,9 @@ public class OpenAiVisionClient {
 			if (models == null) throw new ServiceException("模型列表响应格式不正确");
 			Set<String> names = new LinkedHashSet<>();
 			for (int i = 0; i < models.size(); i++) {
-				String name = models.getJSONObject(i).getStr("id");
-				if (StringUtils.isNotBlank(name)) names.add(name);
+				JSONObject model = models.getJSONObject(i);
+				String name = model.getStr("id");
+				if (StringUtils.isNotBlank(name) && (!annotation || isAnnotationModel(model, name, base))) names.add(name);
 			}
 			return new ArrayList<>(names);
 		} catch (ServiceException exception) {
@@ -91,6 +93,27 @@ public class OpenAiVisionClient {
 		} finally {
 			if (connection != null) connection.disconnect();
 		}
+	}
+
+	static boolean isAnnotationModel(JSONObject model, String name, String base) {
+		Object architecture = model.get("architecture");
+		JSONObject metadata = architecture instanceof JSONObject ? (JSONObject) architecture : new JSONObject();
+		Object input = model.get("input_modalities");
+		Object architectureInput = metadata.get("input_modalities");
+		if (!allowsModality(input, "image") || !allowsModality(architectureInput, "image")
+			|| !allowsModality(model.get("output_modalities"), "text") || !allowsModality(metadata.get("output_modalities"), "text")) {
+			return false;
+		}
+		// The OortCloud catalogue omits modalities. These exact relay models have accepted image input in VLS.
+		return input != null || architectureInput != null || (OORTCLOUD_MODELS_BASE.equalsIgnoreCase(base)
+			&& ("glm-5.3-flash".equalsIgnoreCase(name) || "glm-5.4".equalsIgnoreCase(name)
+				|| "qwen3.6-flash".equalsIgnoreCase(name)));
+	}
+
+	private static boolean allowsModality(Object declared, String required) {
+		if (declared == null) return true;
+		return declared instanceof JSONArray && ((JSONArray) declared).stream()
+			.anyMatch(value -> value instanceof String && required.equalsIgnoreCase((String) value));
 	}
 
 	public VisionDecision review(LlmProvider provider, String prompt, List<byte[]> images) {

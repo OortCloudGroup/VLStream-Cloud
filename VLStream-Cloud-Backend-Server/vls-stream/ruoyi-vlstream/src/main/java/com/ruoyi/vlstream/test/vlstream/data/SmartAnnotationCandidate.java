@@ -11,6 +11,10 @@ import org.springblade.core.mp.base.TenantEntity;
 @EqualsAndHashCode(callSuper = true)
 @TableName("vls_smart_annotation_candidate")
 public class SmartAnnotationCandidate extends TenantEntity {
+    static final String PILOT = "PILOT";
+    static final String SPOT_CHECK = "SPOT_CHECK";
+    static final String DEFERRED = "DEFERRED";
+
     @JsonSerialize(using = ToStringSerializer.class) private Long taskId;
     @JsonSerialize(using = ToStringSerializer.class) private Long roundId;
     @JsonSerialize(using = ToStringSerializer.class) private Long imageId;
@@ -22,6 +26,7 @@ public class SmartAnnotationCandidate extends TenantEntity {
     private Double uncertainty;
     private Integer hardExample;
     private String reviewState;
+    private String llmReviewKind;
     @com.fasterxml.jackson.annotation.JsonIgnore private String llmInputSha256;
     @com.fasterxml.jackson.annotation.JsonIgnore private String llmClaimToken;
     @com.fasterxml.jackson.annotation.JsonIgnore private java.util.Date llmClaimUntil;

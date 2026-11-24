@@ -42,6 +42,11 @@ public class DataManagementService {
     }
 
     public IPage<AlgorithmAnnotation> projects(String keyword, int page, int size, boolean generatedOnly, boolean includeGeneratedStatus) {
+        return projects(keyword, page, size, generatedOnly, includeGeneratedStatus, false);
+    }
+
+    public IPage<AlgorithmAnnotation> projects(String keyword, int page, int size, boolean generatedOnly,
+                                                boolean includeGeneratedStatus, boolean includeLlmAnnotationStatus) {
         QueryWrapper<AlgorithmAnnotation> query = generatedOnly ? generatedProjects() : new QueryWrapper<AlgorithmAnnotation>().eq("tenant_id", tenant());
         if (hasText(keyword)) query.and(q -> q.like("annotation_name", keyword).or().like("project_code", keyword));
         IPage<AlgorithmAnnotation> result = projects.selectPage(new Page<>(Math.max(1, page), Math.max(1, Math.min(100, size))), query.orderByDesc("id"));
@@ -51,7 +56,41 @@ public class DataManagementService {
                 .map(AlgorithmAnnotation::getId).collect(Collectors.toSet());
             result.getRecords().forEach(project -> project.setDatasetGenerated(generatedIds.contains(project.getId())));
         }
+        if (includeLlmAnnotationStatus) {
+            setLlmAnnotationStatuses(result.getRecords());
+        }
         return result;
+    }
+
+    private void setLlmAnnotationStatuses(List<AlgorithmAnnotation> page) {
+        Set<String> types = Arrays.stream(AnnotationTaskType.values()).map(AnnotationTaskType::getCode).collect(Collectors.toSet());
+        Set<Long> supported = page.stream().filter(project -> types.contains(project.getAnnotationType()))
+            .map(AlgorithmAnnotation::getId).collect(Collectors.toSet());
+        Set<Long> labeled = annotationEligibleProjects(supported,
+            "EXISTS (SELECT 1 FROM vls_annotation_label l WHERE l.annotation_id = vls_algorithm_annotation.id "
+                + "AND l.tenant_id = vls_algorithm_annotation.tenant_id AND l.is_deleted = 0)");
+        Set<Long> ready = annotationEligibleProjects(labeled,
+            "EXISTS (SELECT 1 FROM vls_annotation_image img WHERE img.annotation_id = vls_algorithm_annotation.id "
+                + "AND img.tenant_id = vls_algorithm_annotation.tenant_id AND img.is_deleted = 0 "
+                + "AND (img.media_type IS NULL OR CAST(img.media_type AS BINARY) = 'image') "
+                + "AND (img.quality_status IS NULL OR CAST(img.quality_status AS BINARY) NOT IN ('low', 'excluded')) "
+                + "AND NOT " + DatasetPartitioner.auxiliaryFileSql("img.original_name")
+                + " AND NOT " + DatasetPartitioner.auxiliaryFileSql("img.image_name")
+                + " AND NOT EXISTS (SELECT 1 FROM vls_annotation_instance ai WHERE ai.image_id = img.id "
+                + "AND ai.annotation_id = img.annotation_id AND ai.tenant_id = img.tenant_id AND ai.is_deleted = 0))");
+        for (AlgorithmAnnotation project : page) {
+            Long id = project.getId();
+            if (!supported.contains(id)) project.setLlmAnnotationStatus("UNSUPPORTED_TYPE");
+            else if (!labeled.contains(id)) project.setLlmAnnotationStatus("MISSING_LABELS");
+            else project.setLlmAnnotationStatus(ready.contains(id) ? "READY" : "NO_UNLABELED_IMAGES");
+        }
+    }
+
+    private Set<Long> annotationEligibleProjects(Set<Long> ids, String filter) {
+        if (ids.isEmpty()) return Collections.emptySet();
+        return projects.selectList(new QueryWrapper<AlgorithmAnnotation>().select("id")
+                .eq("tenant_id", tenant()).in("id", ids).apply(filter))
+            .stream().map(AlgorithmAnnotation::getId).collect(Collectors.toSet());
     }
 
     boolean isDatasetGenerated(Long projectId) {

@@ -127,7 +127,7 @@ public class LlmReviewManagementService {
 	}
 
 	public AlgorithmLlmReviewConfig getAlgorithmConfig(Long algorithmId) {
-		AlgorithmLlmReviewConfig config = configMapper.selectOne(
+		AlgorithmLlmReviewConfig config = algorithmId == null ? null : configMapper.selectOne(
 			new LambdaQueryWrapper<AlgorithmLlmReviewConfig>()
 				.eq(AlgorithmLlmReviewConfig::getAlgorithmId, algorithmId)
 				.last("limit 1"));

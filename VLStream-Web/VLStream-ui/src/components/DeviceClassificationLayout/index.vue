@@ -57,6 +57,7 @@
                     </div>
                   </el-tooltip>
                 </div>
+                <slot v-if="selectedCategory?.id === data.id" name="category-action" :type="activeType" :category="data" />
                 <div
                   v-if="!readonly"
                   v-show="hoveredTreeNodeId === data.id || (selectedCategory && selectedCategory.id === data.id)"

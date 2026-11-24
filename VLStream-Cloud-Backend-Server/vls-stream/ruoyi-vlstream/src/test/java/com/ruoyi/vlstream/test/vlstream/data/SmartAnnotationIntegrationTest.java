@@ -23,6 +23,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.context.annotation.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -40,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -90,8 +92,10 @@ class SmartAnnotationIntegrationTest {
             for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
         }
         jdbc.execute("ALTER TABLE vls_smart_annotation_task ADD COLUMN compute_node_id BIGINT NULL");
-        String vision = new String(Files.readAllBytes(migrations.resolve("V1_2_0_077__smart_annotation_vision_api.sql")), StandardCharsets.UTF_8);
-        for (String statement : vision.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+        for (String file : Arrays.asList("V1_2_0_077__smart_annotation_vision_api.sql", "V1_2_0_082__smart_annotation_llm_quality.sql")) {
+            String migration = new String(Files.readAllBytes(migrations.resolve(file)), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
+            for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+        }
     }
 
     Long image(int number) {
@@ -346,6 +350,148 @@ class SmartAnnotationIntegrationTest {
         verify(provider, times(6)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
     }
 
+    @Test void visionPilotPausesBeforeFormalWritesAndSpotChecksRequireIndividualReview() throws Exception {
+        for (int i = 1; i <= 4; i++) visionImage(i);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), contains("original guidance"), any(byte[].class)))
+            .thenReturn(visionBox("0.99"));
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), contains("corrected guidance"), any(byte[].class)))
+            .thenReturn(visionBox("0.92"), visionBox("0.91"), visionBox("0.90"), visionBox("0.40"));
+
+        MockMvc api = MockMvcBuilders.standaloneSetup(new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class))).build();
+        ObjectMapper json = context.getBean(ObjectMapper.class);
+        String collection = "/vlsData/smart-annotation";
+        String create = api.perform(post(collection).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(
+            DataManagementService.map("datasetId", dataset.toString(), "taskName", "Vision pilot and sampling", "mode", "llm", "providerId", "400",
+                "modelName", "vision-test", "prompt", "original guidance", "llmPilotSize", 2, "llmReviewPercent", 50))))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.llmPilotSize").value(2)).andExpect(jsonPath("$.data.llmReviewPercent").value(50))
+            .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(create).path("data").path("id").asLong();
+        String task = collection + "/" + id;
+
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+        for (int i = 0; i < 5; i++) worker.advance(id);
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        verify(provider, times(2)).annotate(anyString(), anyLong(), anyString(), anyString(), contains("original guidance"), any(byte[].class));
+        api.perform(get(task)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("PILOT_REVIEW"))
+            .andExpect(jsonPath("$.data.round.progressTotal").value(2)).andExpect(jsonPath("$.data.canContinueLlm").value(true));
+        api.perform(get(task + "/predictions")).andExpect(status().isOk()).andExpect(jsonPath("$.data.records.length()").value(2))
+            .andExpect(jsonPath("$.data.records[0].candidate.llmReviewKind").value("PILOT"));
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        SmartAnnotationCandidate preview = visionReviewCandidates(id, "PILOT").get(0);
+        SmartAnnotationRequests.Review previewSave = new SmartAnnotationRequests.Review();
+        previewSave.setBoxes(smart.boxes(preview.getBoxesJson()));
+        assertThrows(ServiceException.class, () -> smart.review(id, preview.getId(), previewSave));
+        assertThrows(ServiceException.class, () -> smart.confirmBatch(id, Collections.singletonList(preview.getId())));
+        assertThrows(ServiceException.class, () -> smart.confirmAll(id));
+        assertThrows(ServiceException.class, () -> smart.finish(id));
+
+        api.perform(post(task + "/continue-llm").contentType(MediaType.APPLICATION_JSON).content("{\"prompt\":\"corrected guidance\"}"))
+            .andExpect(status().isOk());
+        for (int i = 0; i < 6; i++) worker.advance(id);
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        verify(provider, times(4)).annotate(anyString(), anyLong(), anyString(), anyString(), contains("corrected guidance"), any(byte[].class));
+        api.perform(get(task)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("REVIEW"))
+            .andExpect(jsonPath("$.data.counts.ACCEPTED").value(1)).andExpect(jsonPath("$.data.counts.PENDING").value(3))
+            .andExpect(jsonPath("$.data.pendingSpotChecks").value(2));
+        api.perform(get(task + "/predictions").param("reviewKind", "SPOT_CHECK")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records.length()").value(2));
+        assertTrue(visionReviewCandidates(id, "PILOT").isEmpty());
+        assertEquals(1, data.snapshot(dataset).getInstances().size());
+
+        List<SmartAnnotationCandidate> checks = visionReviewCandidates(id, "SPOT_CHECK");
+        assertEquals(2, checks.size());
+        assertThrows(ServiceException.class, () -> smart.confirmBatch(id, Collections.singletonList(checks.get(0).getId())));
+        assertThrows(ServiceException.class, () -> smart.confirmAll(id));
+        assertThrows(ServiceException.class, () -> smart.finish(id));
+        SmartAnnotationRequests.Review correction = new SmartAnnotationRequests.Review();
+        correction.setBoxes(smart.boxes(checks.get(0).getBoxesJson()));
+        correction.getBoxes().get(0).setX(14.0);
+        api.perform(post(task + "/predictions/" + checks.get(0).getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(correction)))
+            .andExpect(status().isOk());
+        SmartAnnotationRequests.Review skip = new SmartAnnotationRequests.Review();
+        skip.setSkip(true);
+        smart.review(id, checks.get(1).getId(), skip);
+        api.perform(post(task + "/finish")).andExpect(status().isOk());
+        api.perform(get(task)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("COMPLETED"));
+        assertEquals(2, data.snapshot(dataset).getInstances().size());
+        DatasetVersion version = data.version(dataset, data.versions(dataset).get(0).getId());
+        List<AnnotationInstance> stored = data.readSnapshot(version.getSnapshotJson()).getInstances();
+        assertEquals(2, stored.size());
+        AnnotationInstance corrected = stored.stream().filter(instance -> checks.get(0).getImageId().equals(instance.getImageId()))
+            .findFirst().orElseThrow(AssertionError::new);
+        assertEquals(14.0, json.readTree(corrected.getAnnotationData()).path("x").asDouble());
+        assertEquals("ACCEPTED", visionState(checks.get(0).getImageId()));
+        assertEquals("SKIPPED", visionState(checks.get(1).getImageId()));
+    }
+
+    @Test void revisedPilotCanBeRetestedAndReusedWhenTheBatchContinues() throws Exception {
+        for (int i = 1; i <= 3; i++) visionImage(i);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), contains("initial guidance"), any(byte[].class)))
+            .thenReturn(visionBox("0.85"));
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), contains("revised guidance"), any(byte[].class)))
+            .thenReturn(visionBox("0.95"));
+        SmartAnnotationTask task = createVision(1, 0, "initial guidance");
+        long id = task.getId();
+        String path = "/vlsData/smart-annotation/" + id;
+        MockMvc api = MockMvcBuilders.standaloneSetup(new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class))).build();
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+        for (int i = 0; i < 3; i++) worker.advance(id);
+        Long originalPreviewImage = visionReviewCandidates(id, "PILOT").get(0).getImageId();
+        api.perform(post(path + "/rerun-llm-pilot").contentType(MediaType.APPLICATION_JSON).content("{\"prompt\":\"revised guidance\"}"))
+            .andExpect(status().isOk());
+        for (int i = 0; i < 3; i++) worker.advance(id);
+        api.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("PILOT_REVIEW"));
+        SmartAnnotationCandidate revisedPreview = visionReviewCandidates(id, "PILOT").get(0);
+        assertEquals(originalPreviewImage, revisedPreview.getImageId());
+        assertEquals(0.95, smart.boxes(revisedPreview.getBoxesJson()).get(0).getConfidence());
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        verify(provider, times(1)).annotate(anyString(), anyLong(), anyString(), anyString(), contains("revised guidance"), any(byte[].class));
+
+        api.perform(post(path + "/continue-llm")).andExpect(status().isOk());
+        for (int i = 0; i < 4; i++) worker.advance(id);
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        api.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("REVIEW"))
+            .andExpect(jsonPath("$.data.counts.ACCEPTED").value(2)).andExpect(jsonPath("$.data.counts.PENDING").value(1));
+        assertEquals("PENDING", visionState(originalPreviewImage));
+        assertEquals(2, data.snapshot(dataset).getInstances().size());
+        verify(provider, times(1)).annotate(anyString(), anyLong(), anyString(), anyString(), contains("initial guidance"), any(byte[].class));
+        verify(provider, times(3)).annotate(anyString(), anyLong(), anyString(), anyString(), contains("revised guidance"), any(byte[].class));
+    }
+
+    @Test void pilotFailureCanBeRetriedWithoutDispatchedBatchImages() throws Exception {
+        visionImage(1);
+        visionImage(2);
+        LlmAnnotationProviderService provider = visionProvider();
+        when(provider.annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class)))
+            .thenThrow(new ServiceException("模型请求过多", 429)).thenReturn(visionBox("0.95"));
+        SmartAnnotationTask task = createVision(1, 100, null);
+        long id = task.getId();
+        String path = "/vlsData/smart-annotation/" + id;
+        MockMvc api = MockMvcBuilders.standaloneSetup(new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class))).build();
+        SmartAnnotationLlmWorker worker = context.getBean(SmartAnnotationLlmWorker.class);
+        for (int i = 0; i < 3; i++) worker.advance(id);
+        api.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("PILOT_REVIEW"))
+            .andExpect(jsonPath("$.data.canContinueLlm").value(false));
+        verify(provider, times(1)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+
+        api.perform(post(path + "/retry")).andExpect(status().isOk());
+        for (int i = 0; i < 3; i++) worker.advance(id);
+        api.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("PILOT_REVIEW"))
+            .andExpect(jsonPath("$.data.canContinueLlm").value(true)).andExpect(jsonPath("$.data.round.llmFailedCount").value(0));
+        verify(provider, times(2)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        api.perform(post(path + "/continue-llm")).andExpect(status().isOk());
+        for (int i = 0; i < 3; i++) worker.advance(id);
+        context.getBean(SmartAnnotationConfirmationWorker.class).tick();
+        api.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data.task.taskState").value("REVIEW"))
+            .andExpect(jsonPath("$.data.counts.PENDING").value(2)).andExpect(jsonPath("$.data.pendingSpotChecks").value(1));
+        assertTrue(data.snapshot(dataset).getInstances().isEmpty());
+        verify(provider, times(3)).annotate(anyString(), anyLong(), anyString(), anyString(), anyString(), any(byte[].class));
+    }
+
     @Test void visionRateLimitStopsQueueAndExpiredClaimDoesNotReplay() throws Exception {
         Long interrupted = visionImage(1), limited = visionImage(2), neverSubmitted = visionImage(3);
         LlmAnnotationProviderService provider = visionProvider();
@@ -443,13 +589,25 @@ class SmartAnnotationIntegrationTest {
     }
 
     private SmartAnnotationTask createVision() {
+        return createVision(0, 0, null);
+    }
+
+    private SmartAnnotationTask createVision(int pilotSize, int reviewPercent, String prompt) {
         SmartAnnotationRequests.Create request = new SmartAnnotationRequests.Create();
         request.setDatasetId(dataset);
         request.setTaskName("Vision integration");
         request.setMode("llm");
         request.setProviderId(400L);
         request.setModelName("vision-test");
+        request.setLlmPilotSize(pilotSize);
+        request.setLlmReviewPercent(reviewPercent);
+        request.setPrompt(prompt);
         return smart.create(request);
+    }
+
+    private List<SmartAnnotationCandidate> visionReviewCandidates(long taskId, String kind) {
+        return sql.getMapper(SmartAnnotationCandidateMapper.class).selectList(smart.<SmartAnnotationCandidate>scope()
+            .eq("task_id", taskId).eq("llm_review_kind", kind).orderByAsc("id"));
     }
 
     private Long visionImage(int number) throws Exception {

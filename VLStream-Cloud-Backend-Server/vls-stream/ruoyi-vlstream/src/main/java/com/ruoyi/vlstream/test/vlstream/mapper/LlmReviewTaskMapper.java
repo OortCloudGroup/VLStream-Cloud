@@ -14,10 +14,10 @@ import java.util.List;
 
 public interface LlmReviewTaskMapper extends BaseMapper<LlmReviewTask> {
 
-	@Insert("INSERT IGNORE INTO vls_llm_review_task (id,tenant_id,source_message_id,device_event_id,device_id,"
+	@Insert("INSERT IGNORE INTO vls_llm_review_task (id,tenant_id,source_message_id,device_event_id,device_id,event_sink,"
 		+ "algorithm_id,provider_id,media_id,event_payload_json,config_snapshot_json,review_status,attempt_count,"
 		+ "next_retry_time,create_time,update_time,formal_event_id) VALUES (#{id},#{tenantId},#{sourceMessageId},#{deviceEventId},"
-		+ "#{deviceId},#{algorithmId},#{providerId},#{mediaId},#{eventPayloadJson},#{configSnapshotJson},"
+		+ "#{deviceId},#{eventSink},#{algorithmId},#{providerId},#{mediaId},#{eventPayloadJson},#{configSnapshotJson},"
 		+ "#{reviewStatus},#{attemptCount},#{nextRetryTime},#{createTime},#{updateTime},#{formalEventId})")
 	int insertIgnore(LlmReviewTask task);
 
@@ -30,11 +30,11 @@ public interface LlmReviewTaskMapper extends BaseMapper<LlmReviewTask> {
 	@Update("UPDATE vls_llm_review_task SET review_status='PROCESSING', locked_by=#{workerId}, "
 		+ "locked_at=#{now}, update_time=#{now} WHERE id IN (SELECT c.id FROM (SELECT id FROM "
 		+ "vls_llm_review_task WHERE ((review_status IN ('PENDING','RETRY') AND next_retry_time<=#{now}) "
-		+ "OR (review_status='PROCESSING' AND locked_at<=#{staleBefore})) ORDER BY next_retry_time,id "
+		+ "OR (review_status='PROCESSING' AND locked_at<=#{staleBefore})) AND (event_sink IS NULL OR event_sink=#{sink}) ORDER BY next_retry_time,id "
 		+ "LIMIT #{limit}) c) AND ((review_status IN ('PENDING','RETRY') AND next_retry_time<=#{now}) "
 		+ "OR (review_status='PROCESSING' AND locked_at<=#{staleBefore}))")
 	int claimBatch(@Param("workerId") String workerId, @Param("now") Date now,
-		@Param("staleBefore") Date staleBefore, @Param("limit") int limit);
+		@Param("staleBefore") Date staleBefore, @Param("limit") int limit, @Param("sink") String sink);
 
 	@InterceptorIgnore(tenantLine = "true")
 	@Select("SELECT * FROM vls_llm_review_task WHERE review_status='PROCESSING' AND locked_by=#{workerId} ORDER BY locked_at,id")

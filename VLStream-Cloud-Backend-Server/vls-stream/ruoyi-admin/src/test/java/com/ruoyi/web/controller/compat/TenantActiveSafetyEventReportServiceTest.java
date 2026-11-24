@@ -247,7 +247,9 @@ class TenantActiveSafetyEventReportServiceTest {
             service = new LlmReviewTaskService(new com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties(),
                 mock(com.ruoyi.vlstream.test.vlstream.mapper.AlgorithmLlmReviewConfigMapper.class), providers,
                 mock(LlmSystemProviderService.class), tasks, media, vision, sink,
-                mock(com.ruoyi.vlstream.test.vlstream.service.LlmReviewManagementService.class));
+                mock(com.ruoyi.vlstream.test.vlstream.service.LlmReviewManagementService.class),
+                mock(com.ruoyi.vlstream.test.vlstream.service.LlmReviewScopes.class),
+                mock(com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiReviewPublisher.class), mock(com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService.class));
         }
 
         OpenAiVisionClient.VisionDecision decision(String type) {

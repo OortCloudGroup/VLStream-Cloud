@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -118,7 +119,7 @@ public class SmartAnnotationLlmWorker {
         Outcome outcome = infer(claim);
         transaction.execute(status -> {
             SmartAnnotationTask task = service.taskForUpdate(id);
-            if (!"RUNNING".equals(task.getTaskState())) return null;
+            if (!task.llmRunningState().equals(task.getTaskState())) return null;
             SmartAnnotationCandidate image = candidates.selectOne(candidateScope(claim.round).eq("id", claim.image.getId()));
             if (image == null || !"RUNNING".equals(image.getReviewState()) || !claim.token.equals(image.getLlmClaimToken())) return null;
             record(task, service.current(task), image, outcome);
@@ -128,7 +129,8 @@ public class SmartAnnotationLlmWorker {
 
     private Claim claim(Long id) {
         SmartAnnotationTask task = service.taskForUpdate(id);
-        if (!"llm".equals(task.getMode()) || !("QUEUED".equals(task.getTaskState()) || "RUNNING".equals(task.getTaskState()))) return null;
+        if (!"llm".equals(task.getMode()) || !(task.llmQueueState().equals(task.getTaskState())
+            || task.llmRunningState().equals(task.getTaskState()))) return null;
         SmartAnnotationRound round = service.current(task);
         SmartAnnotationCandidate running = candidates.selectOne(candidateScope(round).eq("review_state", "RUNNING").last("LIMIT 1"));
         if (running != null) {
@@ -145,7 +147,7 @@ public class SmartAnnotationLlmWorker {
         String token = UUID.randomUUID().toString();
         candidates.update(null, candidateUpdate(image).set("review_state", "RUNNING").set("llm_claim_token", token)
             .set("llm_claim_until", new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30))));
-        tasks.update(null, taskUpdate(task).set("task_state", "RUNNING").set("update_time", new Date()));
+        tasks.update(null, taskUpdate(task).set("task_state", task.llmRunningState()).set("update_time", new Date()));
         if (!"RUNNING".equals(round.getRoundState())) rounds.update(null, roundUpdate(round).set("round_state", "RUNNING"));
         return new Claim(task, round, image, token);
     }
@@ -228,7 +230,7 @@ public class SmartAnnotationLlmWorker {
         if (pending) {
             double confidence = outcome.boxes.stream().mapToDouble(box -> box.getConfidence() == null ? 0 : box.getConfidence()).min().orElse(0);
             update.set("boxes_json", data.writeJson(outcome.boxes)).set("summary_json", data.writeJson(AnnotationPayloads.summary(outcome.boxes)))
-                .set("hard_example", message.isEmpty() ? 0 : 1).set("uncertainty", 1 - confidence);
+                .set("hard_example", message.isEmpty() && image.getLlmReviewKind() == null ? 0 : 1).set("uncertainty", 1 - confidence);
         }
         candidates.update(null, update);
         int additionallyFailed = outcome.stopRemaining ? candidates.update(null, new UpdateWrapper<SmartAnnotationCandidate>()
@@ -243,17 +245,37 @@ public class SmartAnnotationLlmWorker {
     }
 
     private void settle(SmartAnnotationTask task, SmartAnnotationRound round, String providerError) {
-        String state = round.getPredictedCount() == 0 && round.getLlmFailedCount() > 0 ? "FAILED" : "REVIEW";
+        boolean pilot = SmartAnnotationRound.LLM_PILOT_STAGE.equals(round.getProgressStage());
+        String state = "REVIEW";
+        if (pilot) state = SmartAnnotationTask.PILOT_REVIEW;
+        else if (round.getPredictedCount() == 0 && round.getLlmFailedCount() > 0) state = "FAILED";
         int eligible = 0;
         if ("REVIEW".equals(state)) {
-            eligible = candidates.selectCount(candidateScope(round).eq("review_state", "PENDING").eq("hard_example", 0)
-                .and(q -> q.isNull("review_error").or().eq("review_error", ""))).intValue();
+            QueryWrapper<SmartAnnotationCandidate> query = service.llmAutoEligible(candidateScope(round).eq("review_state", "PENDING"));
+            int percent = task.getLlmReviewPercent() == null ? 0 : task.getLlmReviewPercent();
+            eligible = percent == 0 ? candidates.selectCount(query).intValue() : reserveSpotChecks(round, query, percent);
         }
         rounds.update(null, roundUpdate(round).set("round_state", state).set("error_message", providerError));
         tasks.update(null, taskUpdate(task).set("task_state", eligible > 0 ? "AUTO_CONFIRMING" : state)
             .set("bulk_cursor", 0).set("bulk_total", eligible).set("bulk_processed", 0).set("bulk_accepted", 0)
             .set("bulk_conflicts", 0).set("bulk_error", null).set("error_message", providerError));
         clearSnapshot();
+    }
+
+    private int reserveSpotChecks(SmartAnnotationRound round, QueryWrapper<SmartAnnotationCandidate> query, int percent) {
+        List<Long> eligibleIds = candidates.selectList(query.select("id").orderByAsc("id")).stream()
+            .map(SmartAnnotationCandidate::getId).collect(Collectors.toList());
+        int count = (eligibleIds.size() * percent + 99) / 100;
+        if (count == 0) return 0;
+
+        // Select only among otherwise auto-confirmable results; persist the choice before the confirmation worker starts.
+        Collections.shuffle(eligibleIds, new Random(round.getId()));
+        for (int offset = 0; offset < count; offset += 500) {
+            candidates.update(null, new UpdateWrapper<SmartAnnotationCandidate>().eq("tenant_id", data.tenant())
+                .eq("round_id", round.getId()).eq("review_state", "PENDING").in("id", eligibleIds.subList(offset, Math.min(offset + 500, count)))
+                .set("llm_review_kind", SmartAnnotationCandidate.SPOT_CHECK).set("hard_example", 1));
+        }
+        return eligibleIds.size() - count;
     }
 
     private void loadSnapshot(Claim claim) {

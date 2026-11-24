@@ -31,7 +31,11 @@ public class VlsDataManagementController {
     public R<IPage<AlgorithmAnnotation>> projects(@RequestParam(required = false) @Size(max = 100) String keyword,
         @RequestParam(defaultValue = "1") @Min(1) int page, @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
         @RequestParam(defaultValue = "false") boolean generatedOnly,
-        @RequestParam(defaultValue = "false") boolean includeGeneratedStatus) {
+        @RequestParam(defaultValue = "false") boolean includeGeneratedStatus,
+        @RequestParam(defaultValue = "false") boolean includeLlmAnnotationStatus) {
+        if (includeLlmAnnotationStatus) {
+            return R.data(data.projects(keyword, page, size, generatedOnly, includeGeneratedStatus, true));
+        }
         return R.data(data.projects(keyword, page, size, generatedOnly, includeGeneratedStatus));
     }
 

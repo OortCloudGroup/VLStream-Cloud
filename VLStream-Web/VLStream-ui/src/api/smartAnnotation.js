@@ -31,6 +31,8 @@ export const reviewSmartPrediction = (id, candidateId, data) => call(`/${id}/pre
 export const confirmSmartBatch = (id, ids) => call(`/${id}/confirm`, 'post', { ids })
 export const confirmAllSmartPredictions = id => call(`/${id}/confirm-all`, 'post')
 export const nextSmartRound = id => call(`/${id}/next`, 'post')
+export const continueSmartLlm = (id, data) => call(`/${id}/continue-llm`, 'post', data)
+export const rerunSmartLlmPilot = (id, data) => call(`/${id}/rerun-llm-pilot`, 'post', data)
 export const finishSmartTask = id => call(`/${id}/finish`, 'post')
 export const retrySmartTask = id => call(`/${id}/retry`, 'post')
 export const cancelSmartTask = id => call(`/${id}/cancel`, 'post')

@@ -6,6 +6,7 @@ import com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.LlmReviewTaskMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.LlmReviewTask;
 import com.ruoyi.vlstream.test.vlstream.service.LlmReviewTaskService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +25,7 @@ public class LlmReviewWorker {
 	private final VlsLlmReviewProperties properties;
 	private final LlmReviewTaskMapper taskMapper;
 	private final LlmReviewTaskService taskService;
+	private final VlsEventReportApplicationService reporting;
 	private final String workerId = UUID.randomUUID().toString();
 
 	@Scheduled(fixedDelayString = "${vlstream.llm-review.scan-interval-millis:3000}")
@@ -34,7 +36,7 @@ public class LlmReviewWorker {
 		Date now = new Date();
 		long stale = properties.getStaleLockMillis() == null ? 120000L : properties.getStaleLockMillis();
 		int batchSize = Math.max(1, Math.min(properties.getBatchSize() == null ? 10 : properties.getBatchSize(), 50));
-		if (taskMapper.claimBatch(workerId, now, new Date(now.getTime() - stale), batchSize) == 0) {
+		if (taskMapper.claimBatch(workerId, now, new Date(now.getTime() - stale), batchSize, reporting.eventSink()) == 0) {
 			return;
 		}
 		List<LlmReviewTask> tasks = taskMapper.selectClaimed(workerId);

@@ -14,9 +14,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -54,6 +56,48 @@ class OpenAiVisionClientTest {
 			provider.setEnabled(false);
 			assertThrows(ServiceException.class, () -> client.listModels(provider));
 		} finally { server.stop(0); }
+	}
+
+	@Test
+	void annotationCatalogueRequiresImageInputAndAllowsTextOutput() throws Exception {
+		com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(
+			new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+		server.createContext("/v1/models", exchange -> {
+			String catalogue = "{\"data\":["
+				+ "{\"id\":\"vision-a\",\"input_modalities\":[\"text\",\"image\"]},"
+				+ "{\"id\":\"vision-b\",\"architecture\":{\"input_modalities\":[\"image\"],\"output_modalities\":[\"text\"]}},"
+				+ "{\"id\":\"text-only\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"]},"
+				+ "{\"id\":\"image-generator\",\"input_modalities\":[\"image\"],\"output_modalities\":[\"image\"]},"
+				+ "{\"id\":\"vision-unverified\",\"supported_endpoint_types\":[\"openai\"]},"
+				+ "{\"id\":\"contradiction\",\"input_modalities\":[\"image\"],\"architecture\":{\"input_modalities\":[\"text\"]}}]}";
+			byte[] body = catalogue.getBytes(StandardCharsets.UTF_8);
+			exchange.sendResponseHeaders(200, body.length);
+			try (java.io.OutputStream output = exchange.getResponseBody()) { output.write(body); }
+		});
+		server.start();
+		try {
+			LlmProvider provider = new LlmProvider();
+			provider.setEnabled(true);
+			provider.setApiKeyCiphertext("ciphertext");
+			provider.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1");
+			when(apiKeyCipher.decrypt("ciphertext")).thenReturn("fixture-key");
+			assertEquals(Arrays.asList("vision-a", "vision-b"), client.listAnnotationModels(provider));
+			assertEquals(Arrays.asList("vision-a", "vision-b", "text-only", "image-generator", "vision-unverified", "contradiction"),
+				client.listModels(provider));
+		} finally { server.stop(0); }
+	}
+
+	@Test
+	void recognisesVerifiedOortCloudModelsWithoutGuessingFromNames() {
+		String relay = "https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1";
+		JSONObject unmarked = JSONUtil.parseObj("{\"supported_endpoint_types\":[\"openai\"]}");
+		assertTrue(OpenAiVisionClient.isAnnotationModel(unmarked, "glm-5.3-Flash", relay));
+		assertTrue(OpenAiVisionClient.isAnnotationModel(unmarked, "glm-5.4", relay));
+		assertTrue(OpenAiVisionClient.isAnnotationModel(unmarked, "qwen3.6-flash", relay));
+		assertFalse(OpenAiVisionClient.isAnnotationModel(unmarked, "glm-5.3-Flash-v2", relay));
+		assertFalse(OpenAiVisionClient.isAnnotationModel(unmarked, "glm-5.3-Flash", "https://other-provider.example/v1"));
+		assertFalse(OpenAiVisionClient.isAnnotationModel(JSONUtil.parseObj("{\"input_modalities\":[\"text\"]}"), "glm-5.3-Flash", relay));
+		assertFalse(OpenAiVisionClient.isAnnotationModel(JSONUtil.parseObj("{\"input_modalities\":[\"text\"]}"), "glm-5.4", relay));
 	}
 
 	@Test

@@ -19,9 +19,16 @@ public final class SmartAnnotationRequests {
         private Long providerId;
         @Size(max = 200) private String modelName;
         @Size(max = 2000) private String prompt;
+        @Min(0) @Max(50) private int llmPilotSize;
+        @Min(0) @Max(100) private int llmReviewPercent;
         @DecimalMin("0.05") @DecimalMax("0.95") private Double confidence;
         @Min(1) @Max(100) private int epochs = 20;
         @Min(1) @Max(500) private int reviewSize = 50;
+    }
+
+    @Data
+    public static class PilotPrompt {
+        @Size(max = 2000) private String prompt;
     }
 
     @Data

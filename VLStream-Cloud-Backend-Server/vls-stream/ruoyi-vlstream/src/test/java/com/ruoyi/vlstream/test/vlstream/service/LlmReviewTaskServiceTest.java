@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 package com.ruoyi.vlstream.test.vlstream.service;
 
+import com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiReviewPublisher;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.ruoyi.common.exception.ServiceException;
@@ -155,6 +157,39 @@ class LlmReviewTaskServiceTest {
 		assertEquals("person_detected", JSONUtil.parseObj(task.getEventPayloadJson()).getStr("eventType"));
 	}
 
+    @Test
+    void sceneOnlyReviewsItsOwnDetectionsUsingOriginalFrameAndDefaults() {
+        Fixture f = new Fixture(true);
+        DeviceInfo device = f.device();
+        EventManagement report = new EventManagement();
+        report.setMqttMessageId("cloud-ai:e"); report.setDeviceEventId("e"); report.setReportTime(new Date());
+        AlgorithmLlmReviewConfig config = new AlgorithmLlmReviewConfig(); config.setProviderId(22L);
+        when(f.management.getAlgorithmConfig(null)).thenReturn(config);
+        when(f.scopes.enabled("000000","SCENE:a")).thenReturn(true);
+        assertFalse(f.service.enqueueSceneIfRequired("b",report,device,"original","0.93"));
+        assertTrue(f.service.enqueueSceneIfRequired("a",report,device,"original","0.93"));
+        ArgumentCaptor<LlmReviewTask> captured = ArgumentCaptor.forClass(LlmReviewTask.class);
+        verify(f.taskMapper).insertIgnore(captured.capture());
+        assertEquals("original",captured.getValue().getMediaId());
+        assertEquals("a",JSONUtil.parseObj(captured.getValue().getEventPayloadJson()).getStr("sceneId"));
+        assertEquals(null,captured.getValue().getFormalEventId());
+    }
+
+    @Test
+    void deviceScopeAcceptsEventsWithoutAlgorithmAndKeepsRetransmissionsInReview() {
+        Fixture f = new Fixture(true);
+        JSONObject envelope = f.envelope();
+        envelope.getJSONObject("payload").remove("algorithmId");
+        when(f.scopes.matchesDevice(any())).thenReturn(true, false);
+        AlgorithmLlmReviewConfig config = new AlgorithmLlmReviewConfig();
+        config.setProviderId(22L);
+        when(f.management.getAlgorithmConfig(null)).thenReturn(config);
+        assertTrue(f.service.enqueueIfRequired(envelope, f.device(), f.upload(), "e", "alarm", "", new Date()));
+        when(f.taskMapper.selectOne(any())).thenReturn(new LlmReviewTask());
+        assertTrue(f.service.enqueueIfRequired(envelope, f.device(), f.upload(), "e", "alarm", "", new Date()));
+        verify(f.taskMapper).insertIgnore(any());
+    }
+
 	@Test
 	void usesSingleImagePromptForProviderConnectivityTest() {
 		Fixture fixture = new Fixture(true);
@@ -244,7 +279,7 @@ class LlmReviewTaskServiceTest {
 		ServiceException error = assertThrows(ServiceException.class, () -> fixture.service.enqueueIfRequired(
 			fixture.envelope(), fixture.device(), null, "event-1", "person_detected", "检测到人员", new Date()));
 
-		assertEquals("当前算法要求图片复核，但媒体属于其他环境，无法在本机读取", error.getMessage());
+		assertEquals("当前事件要求图片复核，但媒体属于其他环境，无法在本机读取", error.getMessage());
 		verify(fixture.taskMapper, never()).insertIgnore(any());
 	}
 
@@ -258,7 +293,8 @@ class LlmReviewTaskServiceTest {
 		private final ActiveSafetyEventReportService sink = mock(ActiveSafetyEventReportService.class);
 		private final LlmReviewManagementService management = mock(LlmReviewManagementService.class);
 		private final LlmProvider systemProvider = new LlmProvider();
-		private final LlmReviewTaskService service;
+		private final LlmReviewScopes scopes = mock(LlmReviewScopes.class);
+        private final LlmReviewTaskService service;
 
 		Fixture(boolean enabled) {
 			VlsLlmReviewProperties properties = new VlsLlmReviewProperties();
@@ -272,7 +308,7 @@ class LlmReviewTaskServiceTest {
 			when(systemProviderService.isAuthorized(systemProvider)).thenReturn(true);
 			when(taskMapper.insertIgnore(any())).thenReturn(1);
 			service = new LlmReviewTaskService(properties, configMapper, providerMapper, systemProviderService,
-				taskMapper, media, visionClient, sink, management);
+				taskMapper, media, visionClient, sink, management, scopes, mock(CloudAiReviewPublisher.class), mock(VlsEventReportApplicationService.class));
 		}
 
 		JSONObject existingEvent() {

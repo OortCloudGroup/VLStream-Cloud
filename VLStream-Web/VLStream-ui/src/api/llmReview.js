@@ -86,6 +86,14 @@ export function saveAlgorithmLlmReviewConfig(algorithmId, data) {
   return request({ url: `/vlsLlmReview/algorithms/${algorithmId}/config`, method: 'put', data })
 }
 
+export function getReviewScope(type, id, identity) {
+  return requestForIdentity({ url: `/vlsLlmReview/scopes/${type}/${encodeURIComponent(id)}`, method: 'get' }, identity)
+}
+
+export function setReviewScope(type, id, enabled, identity) {
+  return requestForIdentity({ url: `/vlsLlmReview/scopes/${type}/${encodeURIComponent(id)}`, method: 'put', data: { enabled } }, identity)
+}
+
 export function getLlmReviewTasks(params) {
   return request({ url: '/vlsLlmReview/tasks', method: 'get', params })
 }

@@ -19,6 +19,7 @@ public class LlmReviewTask {
 	@TableId(type = IdType.ASSIGN_ID)
 	private Long id;
 	private String tenantId;
+	private String eventSink;
 	private String sourceMessageId;
 	private String deviceEventId;
 	private String deviceId;

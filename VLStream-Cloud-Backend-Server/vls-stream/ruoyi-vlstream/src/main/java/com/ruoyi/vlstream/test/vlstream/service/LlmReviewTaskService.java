@@ -21,6 +21,8 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.LlmProvider;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.LlmReviewTask;
+import com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiReviewPublisher;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +57,9 @@ public class LlmReviewTaskService {
 	private final OpenAiVisionClient visionClient;
 	private final ActiveSafetyEventReportService activeSafetyEventReportService;
 	private final LlmReviewManagementService managementService;
+	private final LlmReviewScopes scopes;
+	private final CloudAiReviewPublisher cloudPublisher;
+	private final VlsEventReportApplicationService reporting;
 
 	/** Review a persisted event without creating another formal event or enabling future reviews. */
 	@Transactional(rollbackFor = Exception.class)
@@ -113,25 +118,26 @@ public class LlmReviewTaskService {
 		JSONObject mqttPayload = envelope.getJSONObject("payload");
 		String rawAlgorithmId = mqttPayload == null ? null : mqttPayload.getStr("algorithmId");
 		Long algorithmId = parseLong(rawAlgorithmId);
-		if (algorithmId == null) {
-			log.debug("struct 事件未携带有效 algorithmId，保持原处理链路: messageId={}", envelope.getStr("messageId"));
-			return false;
-		}
-		AlgorithmLlmReviewConfig config = configMapper.selectOne(
+		AlgorithmLlmReviewConfig config = algorithmId == null ? null : configMapper.selectOne(
 			new LambdaQueryWrapper<AlgorithmLlmReviewConfig>()
 				.eq(AlgorithmLlmReviewConfig::getAlgorithmId, algorithmId)
-				.eq(AlgorithmLlmReviewConfig::getEnabled, true)
-				.last("limit 1"));
+				.eq(AlgorithmLlmReviewConfig::getEnabled, true).last("limit 1"));
 		if (config == null) {
-			return false;
+			if (!scopes.matchesDevice(device)) {
+				// A retransmission after a rule is switched off still belongs to its original task.
+				return existingTask(new JSONObject().set("tenantId", device.getTenantId())
+					.set("deviceId", device.getDeviceId()).set("deviceEventId", eventId)) != null;
+			}
+			config = managementService.getAlgorithmConfig(algorithmId);
+			if (config.getProviderId() == null) config.setProviderId(systemProviderService.getOrCreate().getId());
 		}
 		if (upload == null) {
-			throw new ServiceException("当前算法要求图片复核，但媒体属于其他环境，无法在本机读取");
+			throw new ServiceException("当前事件要求图片复核，但媒体属于其他环境，无法在本机读取");
 		}
 		if (DeviceMediaUploadService.isVideoType(upload.getContentType())) {
-			throw new ServiceException("当前算法要求图片复核，请同时上报抓拍图片和视频");
+			throw new ServiceException("当前事件要求图片复核，请同时上报抓拍图片和视频");
 		}
-		if (config.getProviderId() == null) throw new ServiceException("当前算法已开启复核，请先配置视觉大模型");
+		if (config.getProviderId() == null) throw new ServiceException("当前事件已开启复核，请先配置视觉大模型");
 
 		JSONObject event = new JSONObject();
 		event.set("sourceMessageId", envelope.getStr("messageId"));
@@ -152,6 +158,26 @@ public class LlmReviewTaskService {
 		return true;
 	}
 
+	public boolean enqueueSceneIfRequired(String sceneId, EventManagement report, DeviceInfo device, String originalImage,
+										  String confidence) {
+		if (!Boolean.TRUE.equals(properties.getEnabled()) || !scopes.enabled(device.getTenantId(), "SCENE:" + sceneId)) return false;
+		AlgorithmLlmReviewConfig config = managementService.getAlgorithmConfig(null);
+		JSONObject event = new JSONObject()
+			.set("sceneReview", true).set("sceneId", sceneId).set("tenantId", device.getTenantId())
+			.set("sourceMessageId", report.getMqttMessageId()).set("deviceEventId", report.getDeviceEventId())
+			.set("deviceId", device.getDeviceId()).set("deviceName", device.getDeviceName()).set("address", device.getAddress())
+			.set("eventType", report.getEventType()).set("description", report.getEventDesc())
+			.set("eventTime", report.getReportTime().getTime()).set("mediaId", originalImage)
+			.set("cloudEventData", report.getEventData())
+			.set("mqttPayload", new JSONObject().set("type", report.getEventType()).set("worth", confidence));
+		LlmReviewTask created = insertTask(event, config, config.getProviderId(), null, null);
+		if (!report.getMqttMessageId().equals(created.getSourceMessageId())
+				|| !sceneId.equals(safeJson(created.getEventPayloadJson()).getStr("sceneId"))) {
+			throw new ServiceException("云端告警标识已被其他复核任务占用");
+		}
+		return true;
+	}
+
 	private LlmReviewTask insertTask(JSONObject event, AlgorithmLlmReviewConfig config,
 			Long providerId, Long algorithmId, String formalEventId) {
 		JSONObject snapshot = new JSONObject();
@@ -165,6 +191,7 @@ public class LlmReviewTaskService {
 		LlmReviewTask task = new LlmReviewTask();
 		task.setId(IdUtil.getSnowflakeNextId());
 		task.setTenantId(event.getStr("tenantId"));
+		task.setEventSink(reporting.eventSink());
 		task.setSourceMessageId(event.getStr("sourceMessageId"));
 		task.setDeviceEventId(event.getStr("deviceEventId"));
 		task.setDeviceId(event.getStr("deviceId"));
@@ -227,6 +254,10 @@ public class LlmReviewTaskService {
 			String status = terminalStatus(decision, threshold);
 			String formalEventId = task.getFormalEventId();
 			if ("CONFIRMED".equals(status) && StringUtils.isBlank(formalEventId)) {
+				if (event.getBool("sceneReview", false)) {
+					cloudPublisher.finishConfirmed(task, event, workerId, attempt, decision, now);
+					return;
+				}
 				formalEventId = persistFormalEvent(task).getActiveSafetyEventId();
 			}
 			finish(task, workerId, status, attempt, now, decision.getDecision(), decision.getConfidence(),
@@ -247,6 +278,12 @@ public class LlmReviewTaskService {
 	@Transactional(rollbackFor = Exception.class)
 	public LlmReviewTask manualDecision(Long id, String decision) {
 		LlmReviewTask task = detail(id);
+		if (task.getEventSink() != null && !task.getEventSink().equals(reporting.eventSink())) {
+			throw new ServiceException("请在接收告警的运行模式下处理复核");
+		}
+		if (safeJson(task.getEventPayloadJson()).getBool("sceneReview", false)) {
+			task = taskMapper.findExistingForUpdate(task.getTenantId(), task.getDeviceId(), task.getDeviceEventId());
+		}
 		String normalized = StringUtils.upperCase(StringUtils.trimToEmpty(decision));
 		if (!"CONFIRMED".equals(normalized) && !"REJECTED".equals(normalized)) {
 			throw new ServiceException("人工复核只能选择 CONFIRMED 或 REJECTED");
@@ -270,6 +307,9 @@ public class LlmReviewTaskService {
 
 	private ActiveSafetyEventReportResult persistFormalEvent(LlmReviewTask task) {
 		JSONObject event = JSONUtil.parseObj(task.getEventPayloadJson());
+		if (event.getBool("sceneReview", false)) {
+			return ActiveSafetyEventReportResult.builder().activeSafetyEventId(cloudPublisher.confirm(task, event)).build();
+		}
 		return activeSafetyEventReportService.report(ActiveSafetyEventReport.builder()
 			.sourceMessageId(event.getStr("sourceMessageId"))
 			.deviceEventId(event.getStr("deviceEventId"))

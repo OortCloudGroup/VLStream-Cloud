@@ -5,8 +5,9 @@ import vm from 'node:vm'
 import { canAccessPage, filterMenuRoutes } from '../src/utils/menuAccess.mjs'
 
 const component = await readFile(new URL('../src/views/AlgorithmTraining/SmartAnnotation.vue', import.meta.url), 'utf8')
-const readiness = component.slice(component.indexOf('const ready ='), component.indexOf('const boxCount ='))
-const actions = component.slice(component.indexOf('const datasetDisabled ='), component.indexOf('const openReview ='))
+const qualityDefaults = component.slice(component.indexOf('const llmQualityDefaults ='), component.indexOf('const form ='))
+const readiness = component.slice(component.indexOf('const llmQualitySupported ='), component.indexOf('const boxCount ='))
+const actions = component.slice(component.indexOf('const llmDatasetIssues ='), component.indexOf('const openReview ='))
 const eligibility = component.slice(component.indexOf('const confirmable ='), component.indexOf('const canReview ='))
 const navigation = component.slice(component.indexOf('const refresh ='), component.indexOf('const leave ='))
 
@@ -22,7 +23,7 @@ function harness(overrides = {}) {
   const llmProviders = ref([])
   const state = {
     form, computed, activeLearning: computed(() => form.mode === 'active'),
-    datasets: ref([]), datasetsLoading: ref(false), datasetNeedsGeneration: ref(false), creating: ref(false),
+    datasets: ref([]), datasetsLoading: ref(false), datasetNeedsGeneration: ref(false), datasetIssue: ref(''), creating: ref(false),
     options: ref(null), sourceKey: ref(''), detail: ref(null),
     computeLoading: ref(false), selectedCompute: ref({ schedulable: true }),
     props: { llmOnly: false }, disposed: false,
@@ -48,7 +49,7 @@ function harness(overrides = {}) {
       return {
         datasetGenerated: id === generated.id,
         datasetName: id === generated.id ? generated.annotationName : ungenerated.annotationName,
-        unlabeled: 200, minUnlabeledImages: 101, minBoxesPerLabel: 10, labelCounts: [{ count: 20 }]
+        unlabeled: 200, minUnlabeledImages: 101, minBoxesPerLabel: 10, labelCounts: [{ count: 20 }], llmQualitySupported: true
       }
     },
     handleError: error => requests.errors.push(error),
@@ -61,10 +62,11 @@ function harness(overrides = {}) {
     ...overrides
   }
   const handlers = vm.runInNewContext(`(() => {
+    ${qualityDefaults}
     ${readiness}
     ${actions}
     ${navigation}
-    return { ready, datasetDisabled, searchDatasets, loadOptions, changeDataset, changeMode, openCreate, create, refresh, enter }
+    return { ready, llmQualitySupported, datasetReason, datasetDisabled, searchDatasets, loadOptions, changeDataset, changeMode, openCreate, create, refresh, enter }
   })()`, state)
   return { state, requests, ...handlers }
 }
@@ -213,7 +215,7 @@ test('results for a previous selection cannot clear a newer generated selection'
   assert.equal(ui.state.options.value.datasetGenerated, true)
 })
 
-test('LLM task submits the selected model directly without GPU fields', async () => {
+test('LLM task submits the selected model with default quality controls and no GPU fields', async () => {
   const ui = harness({
     route: { query: { dataset: ungenerated.id } },
     computeLoading: { value: true }, selectedCompute: { value: null }
@@ -222,6 +224,7 @@ test('LLM task submits the selected model directly without GPU fields', async ()
   await ui.openCreate()
   assert.equal(ui.requests.compute, 0)
   assert.equal(ui.requests.projects[0].includeGeneratedStatus, false)
+  assert.equal(ui.requests.projects[0].includeLlmAnnotationStatus, true)
   assert.deepEqual(ui.requests.options, [{ id: ungenerated.id, forActiveLearning: false }])
   assert.equal(ui.state.form.modelName, 'vision-default')
   ui.state.form.modelName = 'vision-alternative'
@@ -230,37 +233,166 @@ test('LLM task submits the selected model directly without GPU fields', async ()
   await ui.create()
   assert.deepEqual({ ...ui.requests.create[0] }, {
     datasetId: ungenerated.id, taskName: '待生成 - 大模型标注', mode: 'llm',
-    providerId: '2122504598019956740', modelName: 'vision-alternative', prompt: 'Check labels carefully.', confidence: 0.5
+    providerId: '2122504598019956740', modelName: 'vision-alternative', prompt: 'Check labels carefully.',
+    confidence: 0.5, llmPilotSize: 10, llmReviewPercent: 5
   })
   assert.equal(ui.requests.compute, 0)
 })
 
-test('LLM catalog failure retains the configured model when switching datasets', async () => {
+test('quality-enabled submission validates settings and older services allow direct annotation', async () => {
+  const ui = harness({ route: { query: { dataset: ungenerated.id } } })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  ui.state.form.llmPilotSize = 0
+  assert.equal(ui.ready.value, false)
+  ui.state.form.llmPilotSize = 10
+  ui.state.form.llmReviewPercent = 100.5
+  assert.equal(ui.ready.value, false)
+
+  ui.state.options.value.llmQualitySupported = undefined
+  assert.equal(ui.llmQualitySupported.value, false)
+  assert.equal(ui.state.form.llmPilotEnabled, true)
+  assert.equal(ui.ready.value, true)
+  await ui.create()
+  assert.equal(ui.requests.create.length, 1)
+  assert.equal(Object.hasOwn(ui.requests.create[0], 'llmPilotSize'), false)
+  assert.equal(Object.hasOwn(ui.requests.create[0], 'llmReviewPercent'), false)
+  assert.doesNotMatch(component, /当前服务版本不支持小批试标或高分抽检/)
+})
+
+test('LLM dataset options retain unsupported and ineligible rows with reasons', async () => {
+  const rows = [
+    { ...generated, llmAnnotationStatus: 'READY', totalCount: 0 },
+    { ...ungenerated, llmAnnotationStatus: 'NO_UNLABELED_IMAGES', totalCount: 99, annotatedCount: 14 },
+    { ...generated, id: 'label-less', llmAnnotationStatus: 'MISSING_LABELS' },
+    { ...generated, id: 'old-type', annotationType: 'unknown' },
+    { ...generated, id: 'old-full', totalCount: 4, annotatedCount: 4 }
+  ]
+  const ui = harness({ listDataProjects: async () => ({ records: rows }) })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  assert.equal(ui.state.datasets.value.length, rows.length)
+  assert.deepEqual(ui.state.datasets.value.map(ui.datasetReason), ['', '无可标注图片', '请先添加标注标签', '不支持的标注类型', '无可标注图片'])
+  assert.deepEqual(ui.state.datasets.value.map(ui.datasetDisabled), [false, true, true, true, true])
+  assert.deepEqual(ui.requests.options, [])
+})
+
+test('a dataset that is no longer eligible is cleared and disabled with an inline reason', async () => {
+  const ui = harness({ smartOptions: async () => ({ unlabeled: 0, labelCounts: [{ count: 20 }] }) })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  ui.state.form.datasetId = generated.id
+  await ui.loadOptions()
+  assert.equal(ui.state.form.datasetId, '')
+  assert.equal(ui.state.datasetIssue.value, '无可标注图片')
+  assert.equal(ui.datasetDisabled(ui.state.datasets.value[0]), true)
+  assert.equal(ui.ready.value, false)
+  assert.deepEqual(ui.requests.errors, [])
+})
+
+test('LLM catalog failure leaves the visual model unselected', async () => {
   const ui = harness({
     route: { query: { dataset: ungenerated.id } },
     listSmartLlmModels: async () => { throw new Error('catalog unavailable') }
   })
   ui.state.form.mode = 'llm'
   await ui.openCreate()
-  assert.equal(ui.state.form.modelName, 'vision-default')
+  assert.equal(ui.state.form.modelName, '')
   assert.ok(ui.state.llmModelError.value)
-  assert.equal(ui.ready.value, true)
+  assert.equal(ui.ready.value, false)
   ui.state.form.datasetId = generated.id
   await ui.changeDataset()
+  assert.equal(ui.ready.value, false)
+})
+
+test('LLM catalog excludes an unlisted provider default and selects the sole available vision model', async () => {
+  const ui = harness({
+    route: { query: { dataset: generated.id } },
+    listSmartLlmProviders: async () => [{ id: '1', name: 'Provider', modelName: 'text-default' }],
+    listSmartLlmModels: async () => ['vision-alternative']
+  })
+  ui.state.form.mode = 'llm'
+  await ui.openCreate()
+  assert.deepEqual(Array.from(ui.state.llmModels.value), ['vision-alternative'])
+  assert.equal(ui.state.form.modelName, 'vision-alternative')
   assert.equal(ui.ready.value, true)
 })
 
-test('LLM page confirmation requires a strict finite score and excludes manual-review candidates', () => {
-  const row = (id, confidence, manualReview = false) => ({
-    candidate: { id, reviewState: 'PENDING', boxesJson: JSON.stringify([{ labelId: '1', confidence }]) },
+test('LLM page confirmation requires a strict finite score and excludes pilot and spot-check candidates', () => {
+  const row = (id, confidence, manualReview = false, llmReviewKind) => ({
+    candidate: { id, reviewState: 'PENDING', llmReviewKind, boxesJson: JSON.stringify([{ labelId: '1', confidence }]) },
     predictionQuality: { manualReview }
   })
-  const predictions = [row('threshold', 0.85), row('above', 0.9), row('low', 0.8), row('missing', null), row('manual', 0.99, true), row('string', '0.99')]
+  const predictions = [row('threshold', 0.85), row('above', 0.9), row('low', 0.8), row('missing', null),
+    row('manual', 0.99, true), row('string', '0.99'), row('pilot', 0.99, false, 'PILOT'), row('sample', 0.99, false, 'SPOT_CHECK')]
   const confirmable = vm.runInNewContext(`(() => { ${eligibility}; return confirmable })()`, {
     computed: fn => ({ get value() { return fn() } }),
     predictions: { value: predictions }, llmTask: { value: true }, detail: { value: { task: { confidence: 0.85 } } }
   })
   assert.deepEqual(confirmable.value.map(item => item.candidate.id), ['above'])
+})
+
+test('a round containing only manual LLM reviews cannot be confirmed in bulk', () => {
+  const eligibility = component.slice(component.indexOf('const canConfirmRound ='), component.indexOf('const showPredictions ='))
+  const detail = { value: { counts: { PENDING: 2 }, pendingHard: 2 } }
+  const llmTask = { value: true }
+  const canConfirm = vm.runInNewContext(`(() => { ${eligibility}; return canConfirmRound })()`, {
+    computed: fn => ({ get value() { return fn() } }), detail, llmTask
+  })
+  assert.equal(canConfirm.value, false)
+  detail.value.counts.PENDING++
+  assert.equal(canConfirm.value, true)
+  detail.value.counts.PENDING = 2
+  llmTask.value = false
+  assert.equal(canConfirm.value, true)
+})
+
+test('spot-check filter requests pending spot-check candidates and clears on state change', async () => {
+  const filters = component.slice(component.indexOf('const changePredictionFilter ='), component.indexOf('const resetPredictionQuery ='))
+  const query = { page: 3, state: 'ACCEPTED', reviewKind: '' }
+  const requests = []
+  const { filterSpotChecks, changePredictionFilter } = vm.runInNewContext(`(() => {
+    ${filters}
+    return { filterSpotChecks, changePredictionFilter }
+  })()`, { query, loadPredictions: async () => requests.push({ ...query }) })
+  await filterSpotChecks(true)
+  assert.deepEqual(requests[0], { page: 1, state: 'PENDING', reviewKind: 'SPOT_CHECK' })
+  query.state = 'SKIPPED'
+  await changePredictionFilter()
+  assert.deepEqual(requests[1], { page: 1, state: 'SKIPPED', reviewKind: '' })
+})
+
+test('pilot preview never submits official labels and uses separate rerun and continue operations', async () => {
+  const save = component.slice(component.indexOf('const saveReview ='), component.indexOf('const batchConfirm ='))
+  const pilot = component.slice(component.indexOf('const continuePilot ='), component.indexOf('const retryLlm ='))
+  const detail = { value: { task: { id: '501', taskState: 'PILOT_REVIEW', llmPrompt: 'initial' }, canContinueLlm: false } }
+  const pilotPrompt = { value: '' }
+  const rerunningPilot = { value: false }
+  const requests = []
+  const { saveReview, openPilotRerun, rerunPilot, continuePilot } = vm.runInNewContext(`(() => {
+    ${save}
+    ${pilot}
+    return { saveReview, openPilotRerun, rerunPilot, continuePilot }
+  })()`, {
+    run: operation => operation(), detail, pilotReview: { value: true }, pilotPrompt, rerunningPilot,
+    reviewItem: { value: { candidate: { id: '502' } } },
+    reviewSmartPrediction: async () => requests.push('formal-review'),
+    rerunSmartLlmPilot: async (id, { prompt }) => requests.push(['rerun', id, prompt]),
+    continueSmartLlm: async id => requests.push(['continue', id]),
+    clearPredictions: () => {}, refresh: async () => {}
+  })
+  await saveReview({ boxes: [] })
+  await continuePilot()
+  assert.deepEqual(requests, [])
+  openPilotRerun()
+  assert.equal(pilotPrompt.value, 'initial')
+  assert.equal(rerunningPilot.value, true)
+  pilotPrompt.value = '  revised  '
+  await rerunPilot()
+  assert.equal(rerunningPilot.value, false)
+  detail.value.canContinueLlm = true
+  await continuePilot()
+  assert.deepEqual(requests, [['rerun', '501', 'revised'], ['continue', '501']])
 })
 
 test('each annotation entry requests its own task mode while preserving the dataset filter', async () => {

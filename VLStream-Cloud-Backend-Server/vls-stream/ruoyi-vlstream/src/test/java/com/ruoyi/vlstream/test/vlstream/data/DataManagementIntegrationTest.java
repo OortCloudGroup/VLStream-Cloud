@@ -87,6 +87,34 @@ class DataManagementIntegrationTest {
         TenantContextHolder.clear(); assertThrows(ServiceException.class, () -> data.projects(null, 1, 20, false, false));
     }
 
+    @Test void paginatedVisionDatasetEligibilityUsesUsableUnlabeledImagesAndTenantLabels() throws Exception {
+        Long empty = data.saveProject(null, request("VISION-EMPTY")).getId();
+        Long dataset = data.saveProject(null, request("VISION-QUALITY")).getId();
+        for (int i = 1; i <= 4; i++) upload(dataset, i);
+        AnnotationLabel label = new AnnotationLabel();
+        label.setAnnotationId(dataset); label.setTenantId("tenant-a"); label.setName("car");
+        label.setIsDeleted(0); label.setStatus(1);
+        sql.getMapper(VlsAnnotationLabelMapper.class).insert(label);
+        List<AnnotationImage> images = data.snapshot(dataset).getSamples();
+        org.springframework.jdbc.core.JdbcTemplate jdbc = new org.springframework.jdbc.core.JdbcTemplate(context.getBean(DataSource.class));
+        jdbc.update("UPDATE vls_annotation_image SET original_name=?, quality_status=? WHERE id=?", "zip\\__MACOSX\\image.png", "accepted", images.get(0).getId());
+        jdbc.update("UPDATE vls_annotation_image SET media_type=? WHERE id=?", "video", images.get(1).getId());
+        jdbc.update("UPDATE vls_annotation_image SET quality_status=? WHERE id=?", "excluded", images.get(2).getId());
+        Long ordinaryImage = images.get(3).getId();
+        jdbc.update("UPDATE vls_annotation_image SET original_name=?, quality_status=? WHERE id=?", ".camera.png", "accepted", ordinaryImage);
+
+        assertNull(data.projects("VISION-QUALITY", 1, 1, false, false).getRecords().get(0).getLlmAnnotationStatus());
+        assertEquals("READY", data.projects("VISION-QUALITY", 1, 1, false, false, true).getRecords().get(0).getLlmAnnotationStatus());
+        assertEquals(empty, data.projects("VISION-", 2, 1, false, false, true).getRecords().get(0).getId());
+        assertEquals("MISSING_LABELS", data.projects("VISION-", 2, 1, false, false, true).getRecords().get(0).getLlmAnnotationStatus());
+        annotate(dataset, ordinaryImage, label.getId());
+        assertEquals("NO_UNLABELED_IMAGES", data.projects("VISION-QUALITY", 1, 1, false, false, true).getRecords().get(0).getLlmAnnotationStatus());
+        jdbc.update("UPDATE vls_algorithm_annotation SET annotation_type=? WHERE id=?", "legacy_type", empty);
+        assertEquals("UNSUPPORTED_TYPE", data.projects("VISION-EMPTY", 1, 1, false, false, true).getRecords().get(0).getLlmAnnotationStatus());
+        TenantContextHolder.setTenantId("tenant-b");
+        assertEquals(0, data.projects("VISION-", 1, 20, false, false, true).getTotal());
+    }
+
     @Test void importSearchSplitCompareAndRestoreRecoverDeletedFileAndAnnotations() throws Exception {
         Long project = data.saveProject(null, request("ROUNDTRIP")).getId();
         for (int i = 1; i <= 4; i++) upload(project, i);

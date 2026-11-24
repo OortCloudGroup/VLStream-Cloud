@@ -51,6 +51,11 @@ public class AlgorithmAnnotation extends TenantEntity {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@Schema(description = "当前训练数据集已生成")
 	private Boolean datasetGenerated;
+
+	@TableField(exist = false)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	@Schema(description = "大模型标注数据集准入状态")
+	private String llmAnnotationStatus;
 	/**
 	 *
 	 */

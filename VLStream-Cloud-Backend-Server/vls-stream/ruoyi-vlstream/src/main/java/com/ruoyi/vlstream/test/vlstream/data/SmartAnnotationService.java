@@ -31,8 +31,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SmartAnnotationService {
-    private static final List<String> ACTIVE_TASK_STATES = Arrays.asList(
-        "QUEUED", "PREPARING", "RUNNING", "REVIEW", "CONFIRMING", "AUTO_CONFIRMING", "CANCEL_REQUESTED");
+    static final List<String> ACTIVE_TASK_STATES = Collections.unmodifiableList(Arrays.asList(
+        "QUEUED", "PREPARING", "RUNNING", "REVIEW", "CONFIRMING", "AUTO_CONFIRMING", "CANCEL_REQUESTED",
+        SmartAnnotationTask.LLM_QUEUED, SmartAnnotationTask.LLM_RUNNING, SmartAnnotationTask.PILOT_REVIEW));
     private final DataManagementService data;
     private final SmartAnnotationTaskMapper tasks;
     private final SmartAnnotationRoundMapper rounds;
@@ -138,7 +139,7 @@ public class SmartAnnotationService {
         InputCounts counts = inputCounts(datasetId, type);
         return DataManagementService.map("annotationType", type.getCode(), "countUnit", countSeedsByImage(type) ? "张图片" : "个实例",
             "sources", sources, "labels", labels, "unlabeled", counts.unlabeled,
-            "datasetName", project.getAnnotationName(), "datasetGenerated", datasetGenerated,
+            "datasetName", project.getAnnotationName(), "datasetGenerated", datasetGenerated, "llmQualitySupported", true,
             "labelCounts", labels.stream().map(label -> DataManagementService.map("name", label.getName(), "count", counts.seeds.getOrDefault(label.getId(), 0L))).collect(Collectors.toList()),
             "minBoxesPerLabel", minBoxes, "minUnlabeledImages", minUnlabeled, "maxRounds", maxRounds);
     }
@@ -205,6 +206,8 @@ public class SmartAnnotationService {
             task.setLlmProviderFingerprint(binding.getProviderFingerprint());
             task.setLlmPrompt(request.getPrompt() == null ? "" : request.getPrompt().trim());
             task.setLlmPromptVersion(LlmAnnotationAdapter.PROMPT_VERSION);
+            task.setLlmPilotSize(request.getLlmPilotSize());
+            task.setLlmReviewPercent(request.getLlmReviewPercent());
         } else {
             task.setComputeNodeId(request.getComputeNodeId());
             if (task.getComputeNodeId() == null) throw new ServiceException("请选择执行智能标注的 GPU 算力节点");
@@ -213,9 +216,9 @@ public class SmartAnnotationService {
         }
         task.setConfidence(request.getConfidence() == null ? (llm ? 0.50 : 0.25) : request.getConfidence());
         task.setEpochs(request.getEpochs()); task.setReviewSize(request.getReviewSize());
-        task.setRoundNumber(1); task.setTaskState("QUEUED"); tasks.insert(task);
+        task.setRoundNumber(1); task.setTaskState(llm ? task.llmQueueState() : "QUEUED"); tasks.insert(task);
         enqueueRound(task, snapshot);
-        return task;
+        return taskView(task, true);
     }
 
     private void requireNoOtherActiveTask(Long datasetId, Long currentId) {
@@ -321,11 +324,18 @@ public class SmartAnnotationService {
         round.setRoundState("QUEUED"); round.setPredictedCount(0);
         if ("llm".equals(task.getMode())) {
             List<AnnotationImage> images = unannotated(snapshot);
-            round.setProgressStage("llm"); round.setProgressCurrent(0); round.setProgressTotal(images.size()); round.setLlmFailedCount(0);
+            int pilotSize = Math.min(task.getLlmPilotSize(), images.size());
+            Set<Long> pilotImages = new HashSet<>();
+            if (pilotSize > 0) {
+                Collections.shuffle(images, new Random(round.getVersionId()));
+                images.subList(0, pilotSize).forEach(image -> pilotImages.add(image.getId()));
+            }
+            round.setProgressStage(pilotSize == 0 ? "llm" : SmartAnnotationRound.LLM_PILOT_STAGE);
+            round.setProgressCurrent(0); round.setProgressTotal(pilotSize == 0 ? images.size() : pilotSize); round.setLlmFailedCount(0);
             rounds.insert(round);
             jdbc.batchUpdate("INSERT INTO vls_smart_annotation_candidate "
-                    + "(id, tenant_id, task_id, round_id, image_id, image_width, image_height, boxes_json, summary_json, uncertainty, review_state) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, '[]', '[]', 1, 'QUEUED')",
+                    + "(id, tenant_id, task_id, round_id, image_id, image_width, image_height, boxes_json, summary_json, uncertainty, review_state, llm_review_kind) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, '[]', '[]', 1, ?, ?)",
                 images, 200, (statement, image) -> {
                     statement.setLong(1, IdWorker.getId());
                     statement.setString(2, task.getTenantId());
@@ -334,6 +344,9 @@ public class SmartAnnotationService {
                     statement.setLong(5, image.getId());
                     statement.setInt(6, image.getMediaWidth() == null ? 0 : image.getMediaWidth());
                     statement.setInt(7, image.getMediaHeight() == null ? 0 : image.getMediaHeight());
+                    boolean pilot = pilotImages.contains(image.getId());
+                    statement.setString(8, pilotSize == 0 || pilot ? "QUEUED" : SmartAnnotationCandidate.DEFERRED);
+                    statement.setString(9, pilot ? SmartAnnotationCandidate.PILOT : null);
                 });
         } else {
             rounds.insert(round);
@@ -353,12 +366,14 @@ public class SmartAnnotationService {
             .collect(Collectors.toMap(row -> (String) row.get("review_state"), row -> ((Number) row.get("state_count")).longValue()));
         long pendingHard = candidates.selectCount(this.<SmartAnnotationCandidate>scope().eq("round_id", round.getId())
             .eq("hard_example", 1).eq("review_state", "PENDING"));
+        long pendingSpotChecks = "llm".equals(task.getMode()) ? pendingSpotChecks(round) : 0;
         Map<String, Object> execution = task.getComputeNodeId() == null ? Collections.emptyMap() : compute.execution(task, round.getId());
         boolean canReadDiagnostics = task.getComputeNodeId() == null ? isCreator(task) : Boolean.TRUE.equals(execution.get("canReadDiagnostics"));
         List<SmartAnnotationRound> history = rounds.selectList(this.<SmartAnnotationRound>scope().eq("task_id", id).orderByAsc("round_number"))
             .stream().map(item -> roundView(task, item, canReadDiagnostics && Objects.equals(item.getId(), round.getId()))).collect(Collectors.toList());
         return DataManagementService.map("task", taskView(task, canReadDiagnostics), "round", roundView(task, round, canReadDiagnostics), "rounds", history,
-            "counts", counts, "pendingHard", pendingHard,
+            "counts", counts, "pendingHard", pendingHard, "pendingSpotChecks", pendingSpotChecks,
+            "canContinueLlm", SmartAnnotationTask.PILOT_REVIEW.equals(task.getTaskState()) && round.getPredictedCount() > 0,
             "labels", data.datasetLabels(task.getDatasetId()), "maxRounds", maxRounds,
             "canUseRoundModel", task.getComputeNodeId() == null || canReadDiagnostics,
             "execution", execution);
@@ -366,7 +381,15 @@ public class SmartAnnotationService {
 
     // GPU output can contain private execution paths and application diagnostics.
     private SmartAnnotationTask taskView(SmartAnnotationTask task, boolean canReadDiagnostics) {
-        if (canReadDiagnostics || "llm".equals(task.getMode())) return task;
+        if ("llm".equals(task.getMode())) {
+            String state = task.getTaskState();
+            if (!SmartAnnotationTask.LLM_QUEUED.equals(state) && !SmartAnnotationTask.LLM_RUNNING.equals(state)) return task;
+            SmartAnnotationTask view = new SmartAnnotationTask();
+            BeanUtils.copyProperties(task, view);
+            view.setTaskState(SmartAnnotationTask.LLM_QUEUED.equals(state) ? "QUEUED" : "RUNNING");
+            return view;
+        }
+        if (canReadDiagnostics) return task;
         SmartAnnotationTask view = new SmartAnnotationTask();
         BeanUtils.copyProperties(task, view);
         view.setComputeNodeId(null);
@@ -388,11 +411,21 @@ public class SmartAnnotationService {
     }
 
     public Map<String, Object> predictions(Long id, int page, String state, boolean hardOnly) {
+        return predictions(id, page, state, hardOnly, null);
+    }
+
+    public Map<String, Object> predictions(Long id, int page, String state, boolean hardOnly, String reviewKind) {
         SmartAnnotationTask task = task(id); SmartAnnotationRound round = current(task);
         QueryWrapper<SmartAnnotationCandidate> query = this.<SmartAnnotationCandidate>scope().eq("round_id", round.getId());
-        query.select("id", "task_id", "round_id", "image_id", "image_width", "image_height", "summary_json AS boxes_json", "review_error", "uncertainty", "hard_example", "review_state");
+        query.select("id", "task_id", "round_id", "image_id", "image_width", "image_height", "summary_json AS boxes_json", "review_error", "uncertainty", "hard_example", "review_state", "llm_review_kind");
+        if ("llm".equals(task.getMode())) query.ne("review_state", SmartAnnotationCandidate.DEFERRED);
         if (state != null && !state.isEmpty()) query.eq("review_state", state);
         if (hardOnly) query.eq("hard_example", 1);
+        if (reviewKind != null && !reviewKind.isEmpty()) {
+            if (!"llm".equals(task.getMode()) || !(SmartAnnotationCandidate.SPOT_CHECK.equals(reviewKind) || SmartAnnotationCandidate.PILOT.equals(reviewKind)))
+                throw new ServiceException("无效的大模型复核类型");
+            query.eq("llm_review_kind", reviewKind);
+        }
         IPage<SmartAnnotationCandidate> result = candidates.selectPage(new Page<>(Math.max(1, page), 20), query.orderByDesc("hard_example", "uncertainty").orderByAsc("id"));
         DatasetSnapshot snapshot = snapshot(task, round);
         Map<Long, AnnotationImage> images = snapshot.getSamples().stream().collect(Collectors.toMap(AnnotationImage::getId, s -> s));
@@ -425,15 +458,15 @@ public class SmartAnnotationService {
         SmartAnnotationRound round = current(task);
         SmartAnnotationCandidate candidate = candidates.selectOne(this.<SmartAnnotationCandidate>scope()
             .eq("id", candidateId).eq("task_id", task.getId()).eq("round_id", round.getId()));
-        if (candidate == null) throw new ServiceException("预标注结果不存在或不属于当前轮次");
+        if (candidate == null || SmartAnnotationCandidate.DEFERRED.equals(candidate.getReviewState()))
+            throw new ServiceException("预标注结果不存在或不属于当前轮次");
         return candidate;
     }
 
     private Map<String, Object> predictionQuality(SmartAnnotationTask task, SmartAnnotationCandidate candidate) {
         if (!"PENDING".equals(candidate.getReviewState())) return Collections.emptyMap();
         Map<String, Object> quality = new LinkedHashMap<>();
-        if ("llm".equals(task.getMode())) quality.put("manualReview", Integer.valueOf(1).equals(candidate.getHardExample())
-            || (candidate.getReviewError() != null && !candidate.getReviewError().isEmpty()));
+        if ("llm".equals(task.getMode())) quality.put("manualReview", requiresLlmIndividualReview(candidate));
         if (!"object_detection".equals(task.getAnnotationType())) return quality;
         List<SmartAnnotationRequests.Box> original = boxes(candidate.getBoxesJson());
         List<SmartAnnotationRequests.Box> filtered = DetectionPredictionFilter.suppressDuplicates(original);
@@ -445,10 +478,18 @@ public class SmartAnnotationService {
 
     List<SmartAnnotationRequests.Box> batchReviewBoxes(SmartAnnotationTask task, SmartAnnotationCandidate candidate) {
         boolean llm = "llm".equals(task.getMode());
-        if (llm && (Integer.valueOf(1).equals(candidate.getHardExample())
-            || (candidate.getReviewError() != null && !candidate.getReviewError().isEmpty())))
+        if (llm && requiresLlmIndividualReview(candidate))
             throw new ServiceException("此大模型候选需要逐图复核");
         return confirmationBoxes(task, boxes(candidate.getBoxesJson()), llm);
+    }
+
+    private boolean requiresLlmIndividualReview(SmartAnnotationCandidate candidate) {
+        return candidate.getLlmReviewKind() != null || Integer.valueOf(1).equals(candidate.getHardExample())
+            || (candidate.getReviewError() != null && !candidate.getReviewError().isEmpty());
+    }
+
+    QueryWrapper<SmartAnnotationCandidate> llmAutoEligible(QueryWrapper<SmartAnnotationCandidate> query) {
+        return query.eq("hard_example", 0).isNull("llm_review_kind").and(q -> q.isNull("review_error").or().eq("review_error", ""));
     }
 
     List<SmartAnnotationRequests.Box> confirmationBoxes(SmartAnnotationTask task, List<SmartAnnotationRequests.Box> regions, boolean automatic) {
@@ -594,9 +635,75 @@ public class SmartAnnotationService {
     public void finish(Long id) {
         SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
         if (!"REVIEW".equals(task.getTaskState())) throw new ServiceException("当前任务不可完成");
+        if ("llm".equals(task.getMode()) && pendingSpotChecks(current(task)) > 0)
+            throw new ServiceException("请先处理待抽检的高分图片");
         DataRequests.Version version = new DataRequests.Version(); version.setName("智能标注结果 · " + shortName(task.getTaskName()));
         version.setDescription("仅包含已确认标注，未确认预标注不会进入训练"); data.saveVersion(task.getDatasetId(), version);
         task.setTaskState("COMPLETED"); tasks.updateById(task);
+    }
+
+    private long pendingSpotChecks(SmartAnnotationRound round) {
+        return candidates.selectCount(this.<SmartAnnotationCandidate>scope().eq("round_id", round.getId())
+            .eq("review_state", "PENDING").eq("llm_review_kind", SmartAnnotationCandidate.SPOT_CHECK));
+    }
+
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public void continueLlm(Long id, String requestedPrompt) {
+        SmartAnnotationTask task = lockLlmPilot(id);
+        SmartAnnotationRound round = current(task);
+        if (round.getPredictedCount() == 0) throw new ServiceException("请先取得可检查的试标结果");
+
+        int deferred = candidates.update(null, roundCandidates(round).eq("review_state", SmartAnnotationCandidate.DEFERRED)
+            .set("review_state", "QUEUED"));
+        String prompt = requestedPrompt == null ? task.getLlmPrompt() : requestedPrompt.trim();
+        boolean promptChanged = !Objects.equals(prompt, task.getLlmPrompt());
+        if (promptChanged) resetPilotResults(round, null);
+        queueLlm(task, round, prompt, "llm", round.getProgressTotal() + deferred,
+            promptChanged ? 0 : round.getProgressCurrent(), promptChanged ? 0 : round.getPredictedCount(),
+            promptChanged ? 0 : round.getLlmFailedCount());
+    }
+
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public void rerunLlmPilot(Long id, String requestedPrompt) {
+        SmartAnnotationTask task = lockLlmPilot(id);
+        SmartAnnotationRound round = current(task);
+        String prompt = requestedPrompt == null ? task.getLlmPrompt() : requestedPrompt.trim();
+        resetPilotResults(round, SmartAnnotationCandidate.PILOT);
+        queueLlm(task, round, prompt, SmartAnnotationRound.LLM_PILOT_STAGE, round.getProgressTotal(), 0, 0, 0);
+    }
+
+    private SmartAnnotationTask lockLlmPilot(Long id) {
+        data.lockDatasetForTask(task(id).getDatasetId());
+        SmartAnnotationTask task = taskForUpdate(id);
+        if (!"llm".equals(task.getMode()) || !SmartAnnotationTask.PILOT_REVIEW.equals(task.getTaskState()))
+            throw new ServiceException("当前任务未处于试标检查阶段");
+        verifyLlmSubmission(task);
+        return task;
+    }
+
+    private void resetPilotResults(SmartAnnotationRound round, String reviewKind) {
+        candidates.update(null, roundCandidates(round).eq("llm_review_kind", SmartAnnotationCandidate.PILOT)
+            .set("review_state", "QUEUED").set("llm_review_kind", reviewKind).set("review_error", null)
+            .set("boxes_json", "[]").set("summary_json", "[]").set("uncertainty", 1).set("hard_example", 0)
+            .set("llm_raw_response", null).set("llm_input_sha256", null));
+    }
+
+    private UpdateWrapper<SmartAnnotationCandidate> roundCandidates(SmartAnnotationRound round) {
+        return new UpdateWrapper<SmartAnnotationCandidate>().eq("tenant_id", data.tenant()).eq("round_id", round.getId());
+    }
+
+    private void verifyLlmSubmission(SmartAnnotationTask task) {
+        requireNoOtherActiveTask(task.getDatasetId(), task.getId());
+        llmProvider.verifyBinding(data.tenant(), task.getSourceId(), task.getModelName(), task.getLlmProviderFingerprint());
+    }
+
+    private void queueLlm(SmartAnnotationTask task, SmartAnnotationRound round, String prompt, String stage, int total,
+                          int processed, int predicted, int failed) {
+        rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant())
+            .set("round_state", "QUEUED").set("progress_stage", stage).set("progress_total", total)
+            .set("progress_current", processed).set("predicted_count", predicted).set("llm_failed_count", failed).set("error_message", null));
+        tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", task.getId()).eq("tenant_id", data.tenant())
+            .set("task_state", task.llmQueueState()).set("llm_prompt", prompt).set("error_message", null).set("bulk_error", null));
     }
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
@@ -631,19 +738,15 @@ public class SmartAnnotationService {
     }
 
     private void retryLlm(SmartAnnotationTask task) {
-        if (!Arrays.asList("FAILED", "REVIEW").contains(task.getTaskState())) throw new ServiceException("当前任务不可重试");
+        if (!Arrays.asList("FAILED", "REVIEW", SmartAnnotationTask.PILOT_REVIEW).contains(task.getTaskState())) throw new ServiceException("当前任务不可重试");
         SmartAnnotationRound round = current(task);
         int failed = round.getLlmFailedCount() == null ? 0 : round.getLlmFailedCount();
         if (failed == 0) throw new ServiceException("没有失败图片可重试");
-        requireNoOtherActiveTask(task.getDatasetId(), task.getId());
-        llmProvider.verifyBinding(data.tenant(), task.getSourceId(), task.getModelName(), task.getLlmProviderFingerprint());
-        candidates.update(null, new UpdateWrapper<SmartAnnotationCandidate>().eq("tenant_id", data.tenant()).eq("round_id", round.getId())
+        verifyLlmSubmission(task);
+        candidates.update(null, roundCandidates(round)
             .eq("review_state", "FAILED").set("review_state", "QUEUED").set("review_error", null));
-        rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant())
-            .set("round_state", "QUEUED").set("progress_current", round.getProgressCurrent() - failed)
-            .set("llm_failed_count", 0).set("error_message", null));
-        tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", task.getId()).eq("tenant_id", data.tenant())
-            .set("task_state", "QUEUED").set("error_message", null).set("bulk_error", null));
+        queueLlm(task, round, task.getLlmPrompt(), round.getProgressStage(), round.getProgressTotal(),
+            round.getProgressCurrent() - failed, round.getPredictedCount(), 0);
     }
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
@@ -658,8 +761,8 @@ public class SmartAnnotationService {
             SmartAnnotationRound round = current(task);
             tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", id).eq("tenant_id", data.tenant()).set("task_state", "CANCELLED"));
             rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant()).set("round_state", "CANCELLED"));
-            candidates.update(null, new UpdateWrapper<SmartAnnotationCandidate>().eq("tenant_id", data.tenant()).eq("round_id", round.getId())
-                .in("review_state", "QUEUED", "RUNNING").set("review_state", "CANCELLED")
+            candidates.update(null, roundCandidates(round)
+                .in("review_state", "QUEUED", "RUNNING", SmartAnnotationCandidate.DEFERRED).set("review_state", "CANCELLED")
                 .set("llm_claim_token", null).set("llm_claim_until", null));
             return;
         }
@@ -681,7 +784,7 @@ public class SmartAnnotationService {
         if (Arrays.asList("CONFIRMING", "AUTO_CONFIRMING").contains(task.getTaskState())) return;
         if (!"REVIEW".equals(task.getTaskState())) throw new ServiceException("当前任务不可批量确认");
         QueryWrapper<SmartAnnotationCandidate> pending = this.<SmartAnnotationCandidate>scope().eq("round_id", current(task).getId()).eq("review_state", "PENDING");
-        if ("llm".equals(task.getMode())) pending.eq("hard_example", 0).and(q -> q.isNull("review_error").or().eq("review_error", ""));
+        if ("llm".equals(task.getMode())) llmAutoEligible(pending);
         int total = candidates.selectCount(pending).intValue();
         if ("llm".equals(task.getMode()) && total == 0) throw new ServiceException("剩余大模型候选需要逐图复核");
         tasks.update(null, new UpdateWrapper<SmartAnnotationTask>().eq("id", id).eq("tenant_id", data.tenant()).set("task_state", "CONFIRMING")
