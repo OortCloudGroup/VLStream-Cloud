@@ -6,12 +6,13 @@
             @pointerenter="hoverScroll.start(-1)" @pointerleave="hoverScroll.stop" @pointercancel="hoverScroll.stop" @blur="hoverScroll.stop" @click="scrollPage(-1)">‹</button>
         <div ref="scrollElement" class="square-thumbnail-track" @scroll="syncScroll">
         <div ref="laneElement" class="square-thumbnail-lane" :style="laneStyle">
-        <button v-for="(device, index) in devices" :key="device.id" type="button" class="square-thumbnail" :style="thumbnailPosition(index)"
+        <button v-for="(device, index) in devices" :key="device.id" :ref="element => observeThumbnail(device.id, element)"
+            type="button" class="square-thumbnail" :style="thumbnailPosition(index)"
             :class="{ active: device.id === selectedId }" :aria-pressed="device.id === selectedId"
             :aria-label="device.deviceName || device.name" data-i18n-ignore-attributes @click="$emit('select', device.id)">
             <VideoSquareDevicePlayer v-if="livePreviewIds.has(device.id)" class="thumbnail-live-player" :device="device" :recording-controls="false" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
-            <img v-else-if="frames[device.id]" :src="frames[device.id]" alt="" />
-            <span v-else class="thumbnail-unavailable">{{ $tp(device.status === 'OFFLINE' ? '无信号' : '未预览') }}</span>
+            <img v-else-if="device.status !== 'OFFLINE' && frames[device.id]" :src="frames[device.id]" alt="" />
+            <span v-else class="thumbnail-unavailable">{{ $tp(unavailablePreviewIds.has(device.id) ? '无信号' : '未预览') }}</span>
             <span class="thumbnail-name" data-i18n-ignore>{{ device.deviceName || device.name }}</span>
         </button>
         <span v-if="!devices.length" class="thumbnail-empty">{{ $tp('暂无设备') }}</span>
@@ -26,24 +27,70 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useHoverScroll } from '@/composables/useHoverScroll'
 import { useVideoMarquee, videoStripLoopWidth, videoStripWrappedCount } from '@/composables/useVideoMarquee.mjs'
+import { canPreviewVideoSource } from '@/utils/videoSquareCatalog'
 import VideoSquareDevicePlayer from './VideoSquareDevicePlayer.vue'
 const props = defineProps({ devices: { type: Array, default: () => [] }, selectedId: { type: [String, Number], default: '' }, frames: { type: Object, default: () => ({}) }, autoPreview: Boolean })
 const scrollElement = ref(null)
 const laneElement = ref(null)
-// Which thumbnails open a live preview. Device status flips while the catalogue loads, and every flip used to
-// mount/unmount a player (one camera session each), so changes settle briefly first. A hidden tab holds none.
 const PREVIEW_SETTLE_MS = 400
+const MIN_VISIBLE_RATIO = 0.01
 const pageVisible = ref(typeof document === 'undefined' || !document.hidden)
+const canObserveThumbnails = typeof IntersectionObserver !== 'undefined'
+const thumbnailElements = new Map()
+const thumbnailIds = new WeakMap()
+const visibleThumbnailIds = ref(new Set())
+let thumbnailObserver
+
+function observeThumbnail(id, element) {
+    const previous = thumbnailElements.get(id)
+    if (previous === element) return
+    if (previous) {
+        thumbnailObserver?.unobserve(previous)
+        thumbnailIds.delete(previous)
+        thumbnailElements.delete(id)
+        visibleThumbnailIds.value.delete(id)
+    }
+    if (element) {
+        thumbnailElements.set(id, element)
+        thumbnailIds.set(element, id)
+        thumbnailObserver?.observe(element)
+    }
+}
+
+function updateThumbnailVisibility(entries) {
+    for (const entry of entries) {
+        if (!thumbnailIds.has(entry.target)) continue
+        const id = thumbnailIds.get(entry.target)
+        if (entry.isIntersecting && entry.intersectionRatio >= MIN_VISIBLE_RATIO) {
+            visibleThumbnailIds.value.add(id)
+        } else {
+            visibleThumbnailIds.value.delete(id)
+        }
+    }
+}
+
+const unavailablePreviewIds = computed(() => new Set(props.devices
+    .filter(device => device.status === 'OFFLINE' || !device.sources?.some(source =>
+        source.protocol === 'VLSTREAM' || canPreviewVideoSource(source)))
+    .map(device => device.id)))
 const eligiblePreviewIds = computed(() => props.autoPreview && pageVisible.value
-    ? props.devices.filter(device => device.id !== props.selectedId).map(device => device.id) : [])
+    ? new Set(props.devices.filter(device => device.id !== props.selectedId &&
+        !unavailablePreviewIds.value.has(device.id) &&
+        (!canObserveThumbnails || visibleThumbnailIds.value.has(device.id))).map(device => device.id))
+    : new Set())
 const livePreviewIds = ref(new Set())
 let settleTimer
-watch(eligiblePreviewIds, ids => {
+watch(eligiblePreviewIds, (ids, previous) => {
+    if (previous && previous.size === ids.size && [...ids].every(id => previous.has(id))) return
     clearTimeout(settleTimer)
-    settleTimer = setTimeout(() => {
-        const current = livePreviewIds.value
-        if (current.size !== ids.length || ids.some(id => !current.has(id))) livePreviewIds.value = new Set(ids)
-    }, PREVIEW_SETTLE_MS)
+    const current = livePreviewIds.value
+    const remaining = new Set([...current].filter(id => ids.has(id)))
+    if (remaining.size !== current.size) livePreviewIds.value = remaining
+    // Leaving the viewport releases immediately. Only starting newcomers waits
+    // for scrolling and catalogue updates to settle.
+    if (remaining.size < ids.size) {
+        settleTimer = setTimeout(() => { livePreviewIds.value = ids }, PREVIEW_SETTLE_MS)
+    }
 }, { immediate: true })
 const syncVisibility = () => { pageVisible.value = !document.hidden }
 const canLeft = ref(false)
@@ -82,12 +129,18 @@ onMounted(() => {
     observer = new ResizeObserver(measureStrip)
     observer.observe(scrollElement.value)
     if (laneElement.value) observer.observe(laneElement.value)
+    if (canObserveThumbnails) {
+        // The viewport observer accounts for overflow clipping and marquee transforms.
+        thumbnailObserver = new IntersectionObserver(updateThumbnailVisibility, { threshold: MIN_VISIBLE_RATIO })
+        for (const element of thumbnailElements.values()) thumbnailObserver.observe(element)
+    }
     measureStrip()
     document.addEventListener('visibilitychange', syncVisibility)
 })
 watch(() => props.devices.length, () => nextTick(measureStrip))
 onBeforeUnmount(() => {
     observer?.disconnect()
+    thumbnailObserver?.disconnect()
     clearTimeout(settleTimer)
     document.removeEventListener('visibilitychange', syncVisibility)
 })

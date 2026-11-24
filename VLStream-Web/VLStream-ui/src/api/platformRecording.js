@@ -18,9 +18,10 @@ async function call(client, config) {
 // Retry capability detection periodically so a backend upgrade needs no page reload.
 let statusUnavailableUntil = 0
 export async function readRecordingStatus(protocol, rowId, invoke = call, now = Date.now) {
+  const options = { params: { protocol, rowId }, timeout: 8000 }
   if (now() >= statusUnavailableUntil) {
     try {
-      return await invoke(request, { url: '/platform-recordings/status', params: { protocol, rowId } })
+      return await invoke(request, { url: '/platform-recordings/status', ...options })
     } catch (error) {
       if (error?.response?.status !== 404 && error?.status !== 404 && error?.data?.code !== 404) throw error
       statusUnavailableUntil = now() + 60000
@@ -28,12 +29,12 @@ export async function readRecordingStatus(protocol, rowId, invoke = call, now = 
   }
   // This endpoint applies recording-menu, device and tenant authorization itself.
   // Its state is UNKNOWN if the worker lease has expired; manual_enabled is not proof.
-  const sources = await invoke(request, { url: '/platform-recordings/sources', params: { protocol, rowId } })
+  const sources = await invoke(request, { url: '/platform-recordings/sources', ...options })
   return Array.isArray(sources) && sources.some(source => source.state === 'RECORDING')
 }
 export const platformRecording = {
   runtime: () => call(request, { url: '/platform-recordings/runtime' }),
-  status: readRecordingStatus,
+  status: (protocol, rowId, signal) => readRecordingStatus(protocol, rowId, (client, config) => call(client, { ...config, signal })),
   retention: (id, days) => call(request, { url: `/platform-recordings/sources/${part(id)}/retention`, method: 'put', data: { days } }),
   sources: (protocol, rowId) => call(request, { url: '/platform-recordings/sources', params: { protocol, rowId } }),
   choices: (protocol, rowId) => call(wvpRequest, { url: `/video/cloud-ai/sources/${part(protocol)}/${part(rowId)}` }),

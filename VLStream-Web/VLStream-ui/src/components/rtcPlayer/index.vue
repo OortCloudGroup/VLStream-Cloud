@@ -49,7 +49,7 @@ export default {
       console.log(ZLMRTCClient)
       this.webrtcPlayer = new ZLMRTCClient.Endpoint({
         element: this.$refs.videoElement,// video
-        debug: true,// whether log
+        debug: !this.compactStatus,// whether log
         zlmsdpUrl: resolveZlmPlaybackUrl(url),//
         simulecast: false,
         useCamera: false,
@@ -71,7 +71,8 @@ export default {
       this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED,(e)=>{// offer anwser failed
         console.error('offer anwser 交换失败',e)
         this.eventcallbacK("OFFER ANSWER ERROR ", "offer anwser 交换失败")
-        if (e.code ==-400 && e.msg=="流不存在"){
+        // The square owns retries and refreshes permission and source state before trying again.
+        if (!this.compactStatus && e.code ==-400 && e.msg=="流不存在"){
           console.log("流不存在")
           this.timer = setTimeout(()=>{
             this.pause();

@@ -31,7 +31,7 @@ let stopMonitor = () => {}
 const retryVersion = ref(0)
 usePreviewReconnect({ enabled: () => props.compactStatus && !cameraConfig.value, failed: () => !!error.value || rtcStatus.value === 'failed',
   busy: () => loading.value, reconnect: () => { retryVersion.value++ }, media: () => playerRoot.value?.querySelector('video') })
-watch(() => [props.device.id, props.device.online, retryVersion.value], async ([id, online]) => {
+watch([() => props.device.id, () => props.device.online, retryVersion], async ([id, online]) => {
   stopMonitor()
   const current = ++generation
   cameraConfig.value = null
@@ -52,14 +52,6 @@ watch(() => [props.device.id, props.device.online, retryVersion.value], async ([
       error.value = '设备离线，不允许播放'
       return
     }
-    stopMonitor = monitorDevicePreview(async () => (await getStatus())?.data?.device, () => {
-      generation += 1
-      cameraConfig.value = null
-      rtcUrl.value = ''
-      rtcStatus.value = ''
-      loading.value = false
-      error.value = '设备离线或状态无法确认，已停止播放'
-    })
     const streams = (await (props.square ? getMqttSquareStreams(id) : getMqttDeviceStreams(id, requestOptions)))?.data || []
     if (current !== generation) return
     const preferred = streams.find(stream => stream.defaultStream) || streams[0]
@@ -70,8 +62,16 @@ watch(() => [props.device.id, props.device.online, retryVersion.value], async ([
       cameraConfig.value = preview.cameraId ? squareCameraRtcConfig(preview.cameraId, CAMERA_RTC_SOCKET_URL) : parseCameraRtcConfig(preview.url)
     } else {
       rtcUrl.value = location.protocol === 'https:' ? (preview.rtcs || preview.webrtcUrl) : (preview.rtc || preview.webrtcUrl)
-      if (!rtcUrl.value) error.value = 'WVP 未返回可用播放地址'
+      if (!rtcUrl.value) { error.value = 'WVP 未返回可用播放地址'; return }
     }
+    stopMonitor = monitorDevicePreview(async () => (await getStatus())?.data?.device, () => {
+      generation += 1
+      cameraConfig.value = null
+      rtcUrl.value = ''
+      rtcStatus.value = ''
+      loading.value = false
+      error.value = '设备离线或状态无法确认，已停止播放'
+    })
   } catch (cause) {
     if (current === generation) error.value = cause?.response?.data?.msg || cause?.message || '创建预览失败'
   } finally {

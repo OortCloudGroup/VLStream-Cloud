@@ -136,27 +136,68 @@ test('custom thumbnails queue their start and register the lease for page unload
   player.close()
 })
 
-test('thumbnail strip waits for status to settle and holds no previews while the tab is hidden', async () => {
+test('thumbnail strip only starts visible, supported previews and releases them when hidden', async () => {
   const listeners = {}
   const documentStub = { hidden: false, addEventListener: (name, handler) => { listeners[name] = handler }, removeEventListener() {} }
-  globalThis.ResizeObserver = class { observe() {} disconnect() {} }
+  const observed = new Set()
+  let notifyIntersection
+  class IntersectionObserver {
+    constructor(callback) { notifyIntersection = callback }
+    observe(element) { observed.add(element) }
+    unobserve(element) { observed.delete(element) }
+    disconnect() { observed.clear() }
+  }
+  const camera = (id, status, protocol = 'RTSP') => ({ id, status, sources: [{ protocol }] })
   const strip = load('views/VideoAggregation/components/VideoSquareThumbnailStrip.vue',
-    { devices: [{ id: 'a', status: 'UNKNOWN' }, { id: 'b', status: 'ONLINE' }], selectedId: 'a', autoPreview: true },
+    {
+      devices: [camera('a', 'ONLINE'), camera('b', 'OFFLINE'), camera('c', 'UNKNOWN'), camera('d', 'ONLINE', 'GB28181')],
+      selectedId: 'a', autoPreview: true,
+    },
     { useHoverScroll: () => ({ start() {}, stop() {} }), useVideoMarquee: () => ({ syncOffset() {} }),
+      canPreviewVideoSource: source => source.protocol === 'RTSP',
+      ResizeObserver: class { observe() {} disconnect() {} }, IntersectionObserver,
       VideoSquareDevicePlayer: {}, document: documentStub })
+  const tiles = { a: {}, b: {}, c: {}, d: {} }
+  for (const [id, tile] of Object.entries(tiles)) strip.instance.observeThumbnail(id, tile)
   strip.mounts.forEach(action => action())
+  assert.equal(observed.size, 4)
+  const visibility = (id, intersectionRatio) => ({
+    target: tiles[id], isIntersecting: intersectionRatio > 0, intersectionRatio,
+  })
+  notifyIntersection([visibility('a', 1), visibility('b', 1), visibility('c', 0), visibility('d', 1)])
+  await flush()
   const live = () => [...strip.instance.livePreviewIds.value].sort()
-  assert.deepEqual(live(), [], 'nothing mounts before the catalogue settles')
-  strip.props.devices = [{ id: 'a', status: 'ONLINE' }, { id: 'b', status: 'OFFLINE' }]; await flush()
-  strip.props.devices = [{ id: 'a', status: 'ONLINE' }, { id: 'b', status: 'ONLINE' }]; await flush()
+  assert.deepEqual(live(), [], 'selected, offline, unsupported and offscreen tiles open no sessions')
+  assert.deepEqual([...strip.instance.unavailablePreviewIds.value], ['b', 'd'])
+  strip.props.devices = [camera('a', 'ONLINE'), camera('b', 'ONLINE'), camera('c', 'UNKNOWN'), camera('d', 'ONLINE', 'GB28181')]
+  await flush()
+  assert.deepEqual(live(), [], 'a newly eligible tile waits for the catalogue to settle')
   await wait(450)
-  assert.deepEqual(live(), ['b'], 'only the final state mounts, and the selected device keeps its own main player')
-  strip.props.selectedId = 'b'; await flush(); await wait(450)
+  assert.deepEqual(live(), ['b'])
+  notifyIntersection([visibility('b', 0), visibility('c', 0.25)])
+  await flush()
+  assert.deepEqual(live(), [], 'a card leaving the clipped strip releases immediately')
+  await wait(450)
+  assert.deepEqual(live(), ['c'], 'a card scrolling into view starts its own preview')
+  strip.props.selectedId = 'c'
+  await flush()
+  assert.deepEqual(live(), [], 'promoting the thumbnail releases its duplicate player immediately')
+  await wait(450)
+  assert.deepEqual(live(), ['a'], 'the previous main-window device can become a visible preview')
+  documentStub.hidden = true
+  listeners.visibilitychange()
+  await flush()
+  assert.deepEqual(live(), [], 'a hidden tab releases its thumbnail sessions immediately')
+  documentStub.hidden = false
+  listeners.visibilitychange()
+  await flush()
+  await wait(450)
   assert.deepEqual(live(), ['a'])
-  documentStub.hidden = true; listeners.visibilitychange(); await flush(); await wait(450)
-  assert.deepEqual(live(), [], 'a hidden tab releases its thumbnail sessions')
-  documentStub.hidden = false; listeners.visibilitychange(); await flush(); await wait(450)
-  assert.deepEqual(live(), ['a'])
+  strip.instance.observeThumbnail('a', null)
+  notifyIntersection([visibility('a', 1)])
+  await flush()
+  assert.equal(observed.has(tiles.a), false)
+  assert.deepEqual(live(), [], 'a late intersection for a removed card cannot reopen it')
   strip.close()
-  delete globalThis.ResizeObserver
+  assert.equal(observed.size, 0, 'unmount disconnects the observer')
 })

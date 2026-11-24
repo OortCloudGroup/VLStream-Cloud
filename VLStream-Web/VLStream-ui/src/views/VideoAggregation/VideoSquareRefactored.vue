@@ -376,11 +376,15 @@ const setSquareView = async value => {
     ElMessage.info(uiText(view.label) + uiText('功能开发中'))
     return
   }
+  if (viewMode.value === 'map' && value !== 'map') mapInstance?.closePopup()
   viewMode.value = value
   devicePanelCollapsed.value = true
   devicePanelFront.value = false
   await nextTick()
-  if (value === 'map') mapInstance?.invalidateSize()
+  if (value !== 'map' || viewMode.value !== 'map' || !isComponentMounted) return
+  if (!mapInitialized) initMap()
+  else updateMapMarkers()
+  mapInstance?.invalidateSize()
 }
 const bottomWorkspace = ref(null)
 const floatingTools = ref(null)
@@ -530,10 +534,19 @@ const availableProtocols = ref([])
 const catalogError = ref('')
 let catalogGeneration = 0
 const statusClock = useCustomAvailabilityClock(() => deviceList.value)
+const CATALOG_REFRESH_MS = 30000
 let statusTimer
-const refreshPresence = () => {
-  statusClock.value = Date.now()
-  if (!document.hidden && !loading.value && isComponentMounted) loadDeviceList()
+let catalogCheckedAt = 0
+let catalogRequest
+const schedulePresenceRefresh = () => {
+  window.clearTimeout(statusTimer)
+  if (document.hidden || loading.value || !isComponentMounted) return
+  const delay = Math.max(0, catalogCheckedAt + CATALOG_REFRESH_MS - Date.now())
+  statusTimer = window.setTimeout(loadDeviceList, delay)
+}
+const onCatalogVisibilityChange = () => {
+  if (!document.hidden) statusClock.value = Date.now()
+  schedulePresenceRefresh()
 }
 
 
@@ -1020,7 +1033,7 @@ const updateMapLayer = () => {
 }
 
 const updateMapMarkers = () => {
-  if (!mapInstance) return
+  if (!mapInstance || viewMode.value !== 'map') return
 
   //
   mapMarkers.forEach(marker => {
@@ -1089,6 +1102,9 @@ const updateMapMarkers = () => {
         // A refresh/filter/unmount may have removed this marker while resolving.
         if (await popup.resolve(() => mapInstance?.hasLayer(marker) && marker.isPopupOpen())) marker.getPopup().update()
       })
+      .on('popupclose', () => {
+        if (mapRecordingTarget.value?.host === recordingHost) mapRecordingTarget.value = null
+      })
       .addTo(mapInstance)
 
     mapMarkers.push(marker)
@@ -1096,26 +1112,33 @@ const updateMapMarkers = () => {
 }
 
 const loadDeviceList = async () => {
+  window.clearTimeout(statusTimer)
+  catalogRequest?.abort()
+  const request = new AbortController()
+  catalogRequest = request
   const generation = ++catalogGeneration
   loading.value = true
   catalogError.value = ''
   try {
-    const catalog = await getVideoDeviceCatalog()
+    const catalog = await getVideoDeviceCatalog({ signal: request.signal, timeout: 15000, silentError: true })
     if (generation !== catalogGeneration || !isComponentMounted) return
     deviceList.value = catalog.devices
     statusClock.value = Date.now()
     realCameraStreams.value = catalog.devices
     availableProtocols.value = catalog.protocols
-    updateMapMarkers()
   } catch (error) {
     if (generation !== catalogGeneration || !isComponentMounted) return
     deviceList.value = []
     realCameraStreams.value = []
     availableProtocols.value = []
     catalogError.value = error?.message || '加载设备列表失败'
-    updateMapMarkers()
   } finally {
-    if (generation === catalogGeneration && isComponentMounted) loading.value = false
+    if (generation === catalogGeneration && isComponentMounted) {
+      catalogRequest = null
+      catalogCheckedAt = Date.now()
+      loading.value = false
+      schedulePresenceRefresh()
+    }
   }
 }
 
@@ -2340,30 +2363,14 @@ onMounted(async () => {
     if (!isComponentMounted) return
     // Enter the square ready to watch, after the authorized device catalog has arrived.
     selectPresentation('default')
-    statusTimer = window.setInterval(refreshPresence, 30000)
-    window.addEventListener('focus', refreshPresence)
     window.addEventListener('resize', resizeVideoDialogs)
-    document.addEventListener('visibilitychange', refreshPresence)
-
-    // afterInitialize
-    initMap()
+    document.addEventListener('visibilitychange', onCatalogVisibilityChange)
 
     // full
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
     document.addEventListener('mozfullscreenchange', handleFullscreenChange)
     document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-
-    // full
-    nextTick(() => {
-      setTimeout(() => {
-        if (mapInstance && mapInitialized && filteredCameraMarkers.value.length > 0) {
-          // console.log('Execute full :', filteredCameraMarkers.value.length)
-          fitBounds()
-        }
-      }, 600) // and full Load
-    })
-
 
     // ElMessage.success('VideoSquareLoad ')
   } catch (error) {
@@ -2379,10 +2386,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  window.clearInterval(statusTimer)
-  window.removeEventListener('focus', refreshPresence)
+  window.clearTimeout(statusTimer)
+  catalogRequest?.abort()
   window.removeEventListener('resize', resizeVideoDialogs)
-  document.removeEventListener('visibilitychange', refreshPresence)
+  document.removeEventListener('visibilitychange', onCatalogVisibilityChange)
   clearSidebarDeviceStats()
   catalogGeneration += 1
   console.log('VideoSquareRefactored组件开始卸载')
