@@ -31,7 +31,7 @@
     </select>
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="vlsAlgorithmModelResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel">
+    <resultMap id="vlsAlgorithmModelResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO">
         <result column="model_name" property="modelName"/>
         <result column="algorithm_id" property="algorithmId"/>
         <result column="training_id" property="trainingId"/>
@@ -71,14 +71,8 @@
     </resultMap>
 
     <select id="selectVlsAlgorithmModelPage" resultMap="vlsAlgorithmModelResultMap">
-        select *
-        from vls_algorithm_model
-        where is_deleted = 0
-        AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj JOIN vls_compute_node pn ON pn.id=pj.node_id
-            WHERE pj.training_id=vls_algorithm_model.training_id
-            AND (pj.public_instance_key IS NOT NULL OR pn.public_instance_key IS NOT NULL OR pn.resource_scope='PLATFORM')
-            AND (pj.public_owner_subject IS NULL OR pj.public_owner_subject &lt;&gt; #{publicOwner}))
-        order by create_time desc
+        SELECT *
+        FROM vls_algorithm_model ${ew.customSqlSegment}
     </select>
 
     <select id="exportVlsAlgorithmModel" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmModelExcel">
@@ -225,10 +219,7 @@
         SELECT
             SUM(CAST(REPLACE(REPLACE(REPLACE(model_size, 'MB', ''), 'GB', '000'), 'KB', '0.001') AS DECIMAL(10, 3))) *
             1024 * 1024
-        FROM vls_algorithm_model
-        WHERE is_deleted = 0
-          AND status = 'published'
-          AND model_size IS NOT NULL
+        FROM vls_algorithm_model ${ew.customSqlSegment}
     </select>
 
 </mapper>

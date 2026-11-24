@@ -17,7 +17,7 @@ export function getModelPage(params) {
   return currentIdentityRequest({
     url: '/vlsAlgorithmModel/page',
     method: 'get',
-    data: params
+    params
   })
 }
 

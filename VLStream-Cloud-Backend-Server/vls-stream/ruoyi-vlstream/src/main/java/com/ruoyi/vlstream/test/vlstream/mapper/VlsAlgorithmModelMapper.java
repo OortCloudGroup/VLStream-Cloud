@@ -34,10 +34,10 @@ public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 	 * Custom
 	 *
 	 * @param page parameter
-	 * @param vlsAlgorithmModel Query parameter
+	 * @param queryWrapper Model filters and access scope
 	 * @return List<VlsAlgorithmModelVO>
 	 */
-	List<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage page, AlgorithmModelVO vlsAlgorithmModel, @Param("publicOwner") String publicOwner);
+	List<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage<AlgorithmModelVO> page, @Param("ew") Wrapper<AlgorithmModel> queryWrapper);
 
 	/**
 	 * Get Export data
@@ -156,6 +156,6 @@ public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 	 *
 	 * @return ( )
 	 */
-	Long getTotalModelSize();
+	Long getTotalModelSize(@Param("ew") Wrapper<AlgorithmModel> queryWrapper);
 
 }

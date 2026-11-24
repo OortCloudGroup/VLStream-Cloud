@@ -9,6 +9,7 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
@@ -51,7 +52,15 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public IPage<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage<AlgorithmModelVO> page, AlgorithmModelVO vlsAlgorithmModel) {
-		return page.setRecords(baseMapper.selectVlsAlgorithmModelPage(page, vlsAlgorithmModel, publicAccess==null?"":publicAccess.viewer()));
+		QueryWrapper<AlgorithmModel> query = visibleModels();
+		if (vlsAlgorithmModel.getTrainingId() != null) {
+			query.eq("training_id", vlsAlgorithmModel.getTrainingId());
+		}
+		if (org.apache.commons.lang3.StringUtils.isNotBlank(vlsAlgorithmModel.getModelName())) {
+			query.like("model_name", vlsAlgorithmModel.getModelName().trim());
+		}
+		query.orderByDesc("create_time", "id");
+		return page.setRecords(baseMapper.selectVlsAlgorithmModelPage(page, query));
 	}
 
 	@Override
@@ -190,24 +199,18 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public List<AlgorithmModel> getModelsByAlgorithmId(Long algorithmId) {
-		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-		query.eq("algorithm_id",algorithmId).orderByDesc("create_time");
-		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
-		return baseMapper.selectList(query);
+		return baseMapper.selectList(visibleModels().eq("algorithm_id", algorithmId).orderByDesc("create_time", "id"));
 	}
 
 	@Override
 	public List<AlgorithmModel> getModelsByTrainingId(Long trainingId) {
 		if(publicAccess!=null)publicAccess.trainingFromHttp(trainingId);
-		return baseMapper.selectByTrainingId(trainingId);
+		return baseMapper.selectList(visibleModels().eq("training_id", trainingId).orderByDesc("create_time", "id"));
 	}
 
 	@Override
 	public List<AlgorithmModel> getModelsByStatus(String status) {
-		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-		query.eq("status",status).orderByDesc("create_time");
-		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
-		return baseMapper.selectList(query);
+		return baseMapper.selectList(visibleModels().eq("status", status).orderByDesc("create_time", "id"));
 	}
 
 	@Override
@@ -392,34 +395,33 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public AlgorithmModel getModelByAlgorithmIdAndVersion(Long algorithmId, Integer version) {
-		return baseMapper.selectOne(publicModels().eq("algorithm_id",algorithmId).eq("version",version));
+		return baseMapper.selectOne(visibleModels().eq("algorithm_id", algorithmId).eq("version", version));
 	}
 
 	@Override
 	public AlgorithmModel getLatestModelByAlgorithmId(Long algorithmId) {
-		return baseMapper.selectOne(publicModels().eq("algorithm_id",algorithmId).orderByDesc("create_time").last("LIMIT 1"));
+		return baseMapper.selectOne(visibleModels().eq("algorithm_id", algorithmId).orderByDesc("create_time", "id").last("LIMIT 1"));
 	}
 
 	@Override
 	public List<AlgorithmModel> getPopularModels(Integer limit) {
-		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=publicModels().eq("status","published").orderByDesc("download_count");
+		QueryWrapper<AlgorithmModel> query = visibleModels().eq("status", "published").orderByDesc("download_count");
 		if(limit!=null){if(limit<1 || limit>100)throw new com.ruoyi.common.exception.ServiceException("热门模型数量应为1到100");query.last("LIMIT "+limit);}
 		return baseMapper.selectList(query);
 	}
-	private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> publicModels() {
-		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();query.eq("is_deleted",0);
-		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
-		return query;
+
+	private QueryWrapper<AlgorithmModel> visibleModels() {
+		return publicAccess.filterModels(new QueryWrapper<>());
 	}
 
 	@Override
 	public Long countModelsByCreatedBy(Long createdBy) {
-		return baseMapper.countByCreatedBy(createdBy);
+		return baseMapper.selectCount(visibleModels().eq("create_user", createdBy));
 	}
 
 	@Override
 	public Long getTotalModelSize() {
-		return baseMapper.getTotalModelSize();
+		return baseMapper.getTotalModelSize(visibleModels().eq("status", "published").isNotNull("model_size"));
 	}
 
 }

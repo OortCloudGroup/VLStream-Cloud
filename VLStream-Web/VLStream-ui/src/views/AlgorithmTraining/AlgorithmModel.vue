@@ -558,8 +558,7 @@ const loadModelData = async () => {
     const params = {
       current: currentPage.value,
       size: pageSize.value,
-      modelName: searchForm.value.modelName,
-      status: 'published' // only already model
+      modelName: searchForm.value.modelName
     }
 
     // Process

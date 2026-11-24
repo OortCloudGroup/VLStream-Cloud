@@ -128,7 +128,7 @@ const modelList = ref([])
 // from model Load model, failed data.
 const loadModels = async () => {
   try {
-    const response = await getModelPage({ current: 1, size: 200, status: 'published' })
+    const response = await getModelPage()
     if (response?.code !== 200) throw new Error(response?.msg || response?.message || '加载失败')
     modelList.value = (response?.data?.records || []).map(model => ({
       ...model,

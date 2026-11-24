@@ -68,9 +68,10 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmModel")
 	public R<AlgorithmModelVO> detail(AlgorithmModel vlsAlgorithmModel) {
-		QueryWrapper<AlgorithmModel> wrapper=Condition.getQueryWrapper(vlsAlgorithmModel);
-		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_model.training_id");
+		QueryWrapper<AlgorithmModel> wrapper = Condition.getQueryWrapper(vlsAlgorithmModel);
+		publicAccess.filterModels(wrapper);
 		AlgorithmModel detail = vlsAlgorithmModelService.getOne(wrapper);
+		if (detail == null) return R.fail("模型不存在");
 		return R.data(VlsAlgorithmModelWrapper.build().entityVO(detail));
 	}
 
@@ -82,8 +83,8 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmModel")
 	public R<IPage<AlgorithmModelVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmModel, Query query) {
-		QueryWrapper<AlgorithmModel> wrapper=Condition.getQueryWrapper(vlsAlgorithmModel,AlgorithmModel.class);
-		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_model.training_id");
+		QueryWrapper<AlgorithmModel> wrapper = Condition.getQueryWrapper(vlsAlgorithmModel, AlgorithmModel.class);
+		publicAccess.filterModels(wrapper);
 		IPage<AlgorithmModel> pages = vlsAlgorithmModelService.page(Condition.getPage(query),wrapper);
 		return R.data(VlsAlgorithmModelWrapper.build().pageVO(pages));
 	}
@@ -158,11 +159,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmModel")
 	public void exportVlsAlgorithmModel(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmModel, BladeUser bladeUser, HttpServletResponse response) {
 		QueryWrapper<AlgorithmModel> queryWrapper = Condition.getQueryWrapper(vlsAlgorithmModel, AlgorithmModel.class);
-		if(publicAccess!=null)publicAccess.filter(queryWrapper,"vls_algorithm_model.training_id");
-		//if (!AuthUtil.isAdministrator()) {
-		//	queryWrapper.lambda().eq(VlsAlgorithmModelEntity::getTenantId, bladeUser.getTenantId());
-		//}
-		//queryWrapper.lambda().eq(VlsAlgorithmModelEntity::getIsDeleted, BladeConstant.DB_NOT_DELETED);
+		publicAccess.filterModels(queryWrapper);
 		List<VlsAlgorithmModelExcel> list = vlsAlgorithmModelService.exportVlsAlgorithmModel(queryWrapper);
 		ExcelUtil.export(response, "算法模型表数据" + DateUtil.today(), "算法模型表数据表", list, VlsAlgorithmModelExcel.class);
 	}

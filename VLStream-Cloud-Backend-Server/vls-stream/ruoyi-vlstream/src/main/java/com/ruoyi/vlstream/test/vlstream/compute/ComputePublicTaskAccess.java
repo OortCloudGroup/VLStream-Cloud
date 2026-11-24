@@ -67,6 +67,17 @@ public class ComputePublicTaskAccess {
                 +" AND CAST(bt.tenant_id AS BINARY)=CAST({0} AS BINARY) AND bt.create_user IS NOT NULL AND bt.create_user<>''"
                 +" AND CAST(bt.create_user AS BINARY)=CAST({1} AS BINARY)))",ComputeNodeService.tenant(),localViewer());
     }
+
+    /** Imported models belong to the tenant. Models linked to training inherit that task's access. */
+    public <T> QueryWrapper<T> filterModels(QueryWrapper<T> query) {
+        String training = "vls_algorithm_model.training_id";
+        String tenant = ComputeNodeService.tenant();
+        return query.eq("vls_algorithm_model.is_deleted", 0)
+            .apply("CAST(vls_algorithm_model.tenant_id AS BINARY)=CAST({0} AS BINARY)", tenant)
+            .and(scope -> scope.isNull(training).or(owned -> filter(owned, training)
+                .apply("NOT EXISTS (SELECT 1 FROM vls_cloud_training_job mj WHERE mj.training_id=" + training
+                    + " AND (mj.tenant_id IS NULL OR CAST(mj.tenant_id AS BINARY)<>CAST({0} AS BINARY)))", tenant)));
+    }
     private static String legacyPredicate(String trustedTrainingReference) {
         return "NOT EXISTS (SELECT 1 FROM vls_cloud_training_job lj LEFT JOIN vls_compute_node ln ON ln.id=lj.node_id"
             +" LEFT JOIN vls_algorithm_training lt ON lt.id=lj.training_id AND CAST(lt.tenant_id AS BINARY)=CAST(lj.tenant_id AS BINARY) WHERE lj.training_id="
@@ -115,14 +126,26 @@ public class ComputePublicTaskAccess {
     }
     public void model(Long id) {
         if(id==null)return;
-        List<Long> rows=jdbc.queryForList("SELECT training_id FROM vls_algorithm_model WHERE id=?",Long.class,id);
-        for(Long training:rows)training(training);
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT tenant_id, training_id FROM vls_algorithm_model WHERE id=?", id);
+        for (Map<String, Object> row : rows) {
+            if (!Objects.equals(ComputeNodeService.tenant(), row.get("tenant_id"))) {
+                throw new ServiceException("模型不存在或不属于当前租户", 403);
+            }
+            Number training = (Number) row.get("training_id");
+            if (training != null) training(training.longValue());
+        }
     }
     public static String containerPredicate(String trustedId,String trustedTrainingReference) {
         return "NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj LEFT JOIN vls_compute_node pn ON pn.id=pj.node_id WHERE (pj.container_record_id="
             +trustedId+" OR pj.training_id="+trustedTrainingReference+") AND "+protectedJob()
             +" AND ("+exclusiveSubjectCondition()+"))";
     }
+    static String annotationExecutionUser(String job, String legacyCreator) {
+        String executor = "JSON_EXTRACT(CASE WHEN JSON_VALID("+job+".options_json) THEN "+job+".options_json ELSE '{}' END,'$.executionUserId')";
+        return "CASE WHEN JSON_VALID("+job+".options_json) THEN CASE WHEN "+executor+" IS NULL THEN "+legacyCreator
+            +" WHEN JSON_TYPE("+executor+")='STRING' THEN JSON_UNQUOTE("+executor+") END END";
+    }
+
     public <T> QueryWrapper<T> filterContainers(QueryWrapper<T> query) {
         String annotation="CAST(COALESCE(vls_container_instance.instance_type,'') AS BINARY)=CAST('smart_annotation' AS BINARY)";
         String trainingReference="CASE WHEN "+annotation+" THEN NULL ELSE vls_container_instance.training_task_id END";
@@ -133,7 +156,9 @@ public class ComputePublicTaskAccess {
             .apply("(vls_container_instance.training_task_id IS NOT NULL OR EXISTS (SELECT 1 FROM vls_cloud_training_job bc WHERE bc.container_record_id=vls_container_instance.id)"
                 +" OR (vls_container_instance.create_user IS NOT NULL AND vls_container_instance.create_user<>'' AND CAST(vls_container_instance.create_user AS BINARY)=CAST({0} AS BINARY)))",localViewer())
             .apply("(("+annotation+" AND vls_container_instance.create_user IS NOT NULL AND CAST(vls_container_instance.create_user AS BINARY)=CAST({1} AS BINARY)"
-                +" AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job ac WHERE ac.container_record_id=vls_container_instance.id AND (ac.smart_round_id IS NULL OR ac.smart_round_id<>vls_container_instance.training_task_id OR CAST(ac.tenant_id AS BINARY)<>CAST(vls_container_instance.tenant_id AS BINARY)))"
+                +" AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job ac WHERE ac.container_record_id=vls_container_instance.id AND "
+                +"(ac.training_id IS NOT NULL OR ac.smart_round_id IS NULL OR ac.smart_round_id<>vls_container_instance.training_task_id OR CAST(ac.tenant_id AS BINARY)<>CAST(vls_container_instance.tenant_id AS BINARY)"
+                +" OR CAST(COALESCE("+annotationExecutionUser("ac", "vls_container_instance.create_user")+",'') AS BINARY)<>CAST({1} AS BINARY)))"
                 +" AND EXISTS (SELECT 1 FROM vls_smart_annotation_round ar JOIN vls_smart_annotation_task at ON at.id=ar.task_id"
                 +" WHERE ar.id=vls_container_instance.training_task_id AND CAST(ar.tenant_id AS BINARY)=CAST({0} AS BINARY)"
                 +" AND CAST(at.tenant_id AS BINARY)=CAST({0} AS BINARY) AND at.create_user IS NOT NULL AND at.create_user<>''"
@@ -156,10 +181,13 @@ public class ComputePublicTaskAccess {
             throw new ServiceException("容器的持久任务关联类型未确认");
         if("smart_annotation".equals(records.get(0).get("instance_type"))) {
             requireLegacyCreator(records,"智能标注容器归属未确认或不属于当前用户");
-            List<Map<String,Object>> compute=jdbc.queryForList("SELECT pj.tenant_id,pj.public_owner_subject,pj.options_json,pj.smart_round_id,pj.training_id,pn.scheduling_mode AS node_scheduling_mode FROM vls_cloud_training_job pj LEFT JOIN vls_compute_node pn ON pn.id=pj.node_id WHERE pj.container_record_id=?",id);
+            List<Map<String,Object>> compute=jdbc.queryForList("SELECT pj.tenant_id,pj.public_owner_subject,pj.options_json,pj.smart_round_id,pj.training_id,pn.scheduling_mode AS node_scheduling_mode,"
+                +annotationExecutionUser("pj", "?")+" AS execution_user FROM vls_cloud_training_job pj LEFT JOIN vls_compute_node pn ON pn.id=pj.node_id WHERE pj.container_record_id=?",
+                databaseCreator(records.get(0).get("create_user")),id);
             for(Map<String,Object> job:compute) {
                 if(job.get("training_id")!=null || !Objects.equals(job.get("smart_round_id"),records.get(0).get("training_task_id"))
                     || !Objects.equals(job.get("tenant_id"),ComputeNodeService.tenant())
+                    || !Objects.equals(job.get("execution_user"),localViewer())
                     || job.get("public_owner_subject")!=null && !allowed(job,viewer(),sharedViewer()))
                     throw new ServiceException("智能标注算力任务关联或操作身份不匹配");
             }
@@ -197,8 +225,14 @@ public class ComputePublicTaskAccess {
             || (input.getTenantId()!=null && !Objects.equals(input.getTenantId(),rows.get(0).get("tenant_id"))))
             throw new ServiceException("后台任务归属不存在、未确认或租户不匹配");
         if(RequestContextHolder.getRequestAttributes()!=null) {
-            requireLegacyCreator(rows,"只能为本人任务创建执行记录");
-            if(!annotation)training(input.getTrainingTaskId());
+            if (annotation) {
+                // The annotation service already checked the dataset and the compute scheduler checked
+                // the submitting member's node access. Retain the original creator on the container record.
+                if (localViewer().isEmpty()) throw new ServiceException("缺少可信智能标注执行身份", 403);
+            } else {
+                requireLegacyCreator(rows,"只能为本人任务创建执行记录");
+                training(input.getTrainingTaskId());
+            }
         }
         org.springframework.beans.BeanWrapper bean=new org.springframework.beans.BeanWrapperImpl(input);
         bean.setPropertyValue("tenantId",rows.get(0).get("tenant_id"));
