@@ -68,6 +68,7 @@ test('multi-tenant login marks intent only after successful local session exchan
     const login = intentModule()
     const check = new Function('extractAuthCallbackParams', 'markOortCloudLogin', `return ({${method}}).checkUrlToken`)(extractAuthCallbackParams, login.markOortCloudLogin)
     const manager = { cleanUrlToken() {}, clearAllTokens() {},
+      getIdentitySnapshot: () => ({}), getTenantMode: async () => 'multi', isIdentityCurrent: () => true,
       exchangePlatformToken: async () => succeeds ? { platformAccessToken: session.accessToken, tenantId: session.tenantId } : null }
     await check.call(manager, 'https://fixture.invalid/?accessToken=fixture-platform&tenantId=fixture-tenant')
     assert.equal(Boolean(login.getOortCloudLoginIntent({ ...session, usesPlatformSession: true })), succeeds)

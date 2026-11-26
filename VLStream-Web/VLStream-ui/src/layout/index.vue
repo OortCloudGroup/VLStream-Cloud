@@ -30,7 +30,7 @@
           <!--  -->
           <CollapseToggle
             class="sidebar-toggle"
-            :is-expanded="!sidebarCollapsed"
+            :is-expanded="compactVideoNav ? videoNavOpen : !sidebarCollapsed"
             @toggle="toggleSidebar"
           />
           <PlatformAppsEntry />
@@ -49,22 +49,21 @@
           </div>
         </div>
 
-        <div class="header-right">
-          <LocaleSwitcher v-if="localEventRoute || tenantMode !== 'multi' || !rightInfoReady" />
-          <OortCloudPopover v-if="!localEventRoute && ((tenantMode === 'multi' && !rightInfoReady) || (tenantMode !== 'multi' && isSuperAdmin))" :tenant-mode="tenantMode" />
+        <div class="header-right" :class="{ 'header-right--platform': tenantMode === 'multi' }">
+          <LocaleSwitcher v-if="tenantMode !== 'multi' || rightInfoStatus !== 'ready'" />
+          <OortCloudPopover v-if="(tenantMode === 'multi' && rightInfoStatus === 'failed') || (tenantMode === 'single' && menuIsSystemAdmin)" :tenant-mode="tenantMode" />
 
-          <RightInfoBar v-if="!localEventRoute && tenantMode === 'multi'" @ready-change="rightInfoReady = $event" @admin-status-change="platformSuperAdmin = $event" />
+          <RightInfoBar v-if="tenantMode === 'multi'" @ready-change="rightInfoStatus = $event ? 'ready' : 'failed'" />
 
           <PlatformHeaderRight
-            v-if="!localEventRoute && tenantMode === 'multi' && !rightInfoReady"
+            v-if="tenantMode === 'multi' && rightInfoStatus === 'failed'"
             :fallback-user="currentUser"
             :fallback-tenant="currentTenant"
-            @admin-status-change="platformSuperAdmin = $event"
             @switch-tenant="switchTenant"
           />
 
           <!-- userinfo -->
-          <el-dropdown v-if="localEventRoute || tenantMode !== 'multi'">
+          <el-dropdown v-if="tenantMode === 'single'">
             <span class="user-info">
               <el-icon><User /></el-icon>
               {{ currentUser.userName }}
@@ -83,13 +82,14 @@
     </el-header>
 
     <!-- main -->
-    <div class="layout-main">
+    <div class="layout-main" :class="{ 'compact-video-nav': compactVideoNav }" @keydown.esc="videoNavOpen = false">
       <!-- - only in non- -->
       <div
         v-if="showSidebar"
+        v-show="!compactVideoNav || videoNavOpen"
         class="layout-sidebar"
-        :class="{ 'is-collapsed': sidebarCollapsed }"
-        :style="{ width: sidebarCollapsed ? '64px' : '260px' }"
+        :class="{ 'is-collapsed': sidebarCollapsed && !compactVideoNav }"
+        :style="{ width: sidebarCollapsed && !compactVideoNav ? '64px' : '260px' }"
       >
         <el-menu
           :key="sidebarActivePath"
@@ -100,7 +100,8 @@
           background-color="transparent"
           text-color="var(--el-text-color-regular)"
           active-text-color="var(--el-color-primary)"
-          :collapse="sidebarCollapsed"
+          :collapse="sidebarCollapsed && !compactVideoNav"
+          @select="videoNavOpen = false"
           style="--el-menu-bg-color: transparent; background: transparent;"
         >
           <SidebarMenuNode
@@ -132,7 +133,8 @@
       </div>
 
       <!--  -->
-      <div class="layout-content">
+      <button v-if="compactVideoNav && videoNavOpen" type="button" class="video-nav-shade" :aria-label="tp('收起侧边栏')" @click="videoNavOpen = false" />
+      <div class="layout-content" :inert="compactVideoNav && videoNavOpen ? '' : null">
         <router-view />
       </div>
     </div>
@@ -142,18 +144,19 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
-import { getUserInfo, logoutUser } from '@/api/auth'
+import { logoutUser } from '@/api/auth'
 import { logoutModelHubSession } from '@/api/modelHubUser'
 import { getCloudPlatformUserPath } from '@/utils/modelHubAuth'
-import { getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
+import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 import { isLocalEventRoute } from '@/utils/localEventAccess.mjs'
 import { filterMenuRoutes } from '@/utils/menuAccess.mjs'
-import { menuPermissions } from '@/utils/menuAccessState'
+import { menuIsSystemAdmin, menuPermissions, navigationUser } from '@/utils/menuAccessState'
 import { sidebarDeviceStats } from '@/utils/sidebarDeviceStats.mjs'
 import {
   User,
@@ -207,47 +210,31 @@ const localEventRoute = computed(() => isLocalEventRoute(route.meta))
 const authManager = new AuthManager()
 
 
-// current userinfo
-const currentUser = ref({
-  userName: '管理员',
-  userId: '',
-  loginId: '',
-  isAdmin: false
-})
-const resolveAdminFlag = userInfo => Boolean(
-  userInfo?.isAdmin ||
-  userInfo?.is_admin ||
-  userInfo?.admin ||
-  userInfo?.user?.isAdmin ||
-  userInfo?.user?.is_admin ||
-  userInfo?.user?.admin
-)
-const platformSuperAdmin = ref(false)
-const rightInfoReady = ref(false)
+const currentUser = computed(() => navigationUser.value || {})
+const rightInfoStatus = ref('loading')
 const platformLogo = ref(null)
 const customLogoFailed = ref(false)
-const isSuperAdmin = computed(() => tenantMode.value === 'multi'
-  ? platformSuperAdmin.value
-  : Boolean(currentUser.value.isAdmin || currentUser.value.is_admin))
 
 // current menu
 const activeTopMenu = ref('workspace')
 
 //
 const sidebarCollapsed = ref(false)
+const narrowViewport = useMediaQuery('(max-width: 700px)')
+const compactVideoNav = computed(() => route.path === '/video-square' && narrowViewport.value)
+const videoNavOpen = ref(false)
+watch(compactVideoNav, () => { videoNavOpen.value = false })
 
 //
 const toggleSidebar = () => {
+  if (compactVideoNav.value) {
+    videoNavOpen.value = !videoNavOpen.value
+    return
+  }
   sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
-// relateddata
-const currentTenant = ref({
-  id: '',
-  name: '加载中...'
-})
-
-const tenantList = ref([])
+const currentTenant = computed(() => ({ id: currentUser.value.tenantId || '' }))
 const tenantMode = ref('loading')
 
 let llmSyncGeneration = 0
@@ -269,209 +256,11 @@ const syncDefaultLlmAuthorization = () => {
 }
 watch(localEventRoute, syncDefaultLlmAuthorization)
 
-// SpringBlade current userinterface new user and info.
-const loadBladeUserInfo = async () => {
-  const identity = authManager.getIdentitySnapshot()
-  const token = identity.token
-  if (!token) {
-    currentTenant.value = {
-      id: '',
-      name: '未登录'
-    }
-    return false
-  }
-
-  const response = await getUserInfo(undefined, { localSessionOnly: localEventRoute.value })
-  if (!authManager.isIdentityCurrent(identity)) return false
-  const user = response?.data || {}
-  if (response?.code !== 200 || !user) {
-    currentTenant.value = {
-      id: '',
-      name: response?.msg || '加载失败'
-    }
-    return false
-  }
-
-  const userInfo = {
-    ...user,
-    userName: user.realName || user.name || user.account || user.userName || '管理员',
-    userId: user.id || user.userId || '',
-    loginId: user.account || user.loginId || '',
-    tenantId: user.tenantId || '',
-    accessToken: token,
-    platformAccessToken: identity.platformToken || undefined
-  }
-  const tenant = {
-    id: userInfo.tenantId,
-    name: userInfo.tenantId || '默认租户'
-  }
-
-  currentUser.value = {
-    userName: userInfo.userName,
-    userId: userInfo.userId,
-    loginId: userInfo.loginId,
-    isAdmin: resolveAdminFlag(userInfo)
-  }
-  currentTenant.value = tenant
-  tenantList.value = [tenant]
-
-  await authManager.saveUserToLocal(userInfo)
-  return true
-}
-
-// Load info
-const loadTenantInfo = async () => {
-  if (localEventRoute.value) return loadBladeUserInfo()
-  const identity = authManager.getIdentitySnapshot()
-  console.log('🚀 loadTenantInfo函数开始执行...')
-  try {
-    console.log('🔍 loadTenantInfo函数开始执行...')
-    console.log('🔍 当前URL:', window.location.href)
-    console.log('🔍 当前URL参数:', window.location.search)
-    console.log('🔍 已读取本地认证状态')
-
-    console.log('开始调用getUserTenants API获取用户和租户信息...')
-
-    // : Get token getUserTenants
-    const token = identity.token
-
-    if (!token) {
-      console.log('❌ loadTenantInfo: 没有找到有效的token')
-      console.log('🚫 loadTenantInfo函数提前返回 - 没有token')
-      return
-    }
-
-    console.log('✅ loadTenantInfo: 已找到有效token')
-
-    // : correct parameter, accessToken
-    const response = await getUserTenants({ accessToken: token })
-    if (!authManager.isIdentityCurrent(identity)) return
-
-    console.log('getUserTenants API响应:', response)
-
-    // data
-    console.log('🔍 getUserTenants响应详细结构:', {
-      code: response.code,
-      data: response.data,
-      list: response.data?.list,
-      firstItem: response.data?.list?.[0]
-    })
-
-    if (response.code === 200 && response.data) {
-      // Process
-      if (response.data.list && response.data.list.length > 0) {
-        const tenants = response.data.list.map(tenant => ({
-          id: tenant.tenant_id,
-          name: tenant.tenant_name || '未知租户',
-          status: tenant.status,
-          phrase: tenant.phrase
-        }))
-
-        tenantList.value = tenants
-
-        // : correctfrom getUserTenants API in userinfo
-        const firstTenant = response.data.list[0]
-        console.log('🔍 第一个租户数据:', firstTenant)
-
-        // API userinfo
-        const responseUser = response.data.user || {}
-        const userInfo = {
-          ...responseUser,
-          userName: responseUser.nickName || responseUser.userName || firstTenant.user_name || '管理员',
-          userId: responseUser.userId || firstTenant.user_id || '',
-          loginId: responseUser.loginId || responseUser.userName || firstTenant.user_name || '',
-          tenantId: responseUser.tenantId || identity.tenantId || firstTenant.tenant_id || '',
-          accessToken: token,
-          platformAccessToken: identity.platformToken || undefined
-        }
-
-        console.log('✅ 从getUserTenants API获取到用户信息:', userInfo)
-
-        // new userinfo
-        currentUser.value = {
-          userName: userInfo.userName,
-          userId: userInfo.userId,
-          loginId: userInfo.loginId,
-          isAdmin: resolveAdminFlag(userInfo)
-        }
-
-        console.log('✅ 更新currentUser:', currentUser.value)
-        console.log('🔍 检查currentUser响应式更新:', {
-          userName: currentUser.value.userName,
-          userId: currentUser.value.userId,
-          loginId: currentUser.value.loginId
-        })
-
-        // new
-        nextTick(() => {
-          console.log('🔄 强制触发响应式更新后的状态:')
-          console.log('- currentUser:', currentUser.value)
-          console.log('- currentTenant:', currentTenant.value)
-        })
-
-        // Set current to
-        const currentTenantData = tenants.find(item => item.id === userInfo.tenantId) || tenants[0]
-        if (currentTenantData) {
-          currentTenant.value = currentTenantData
-          console.log('✅ 设置当前租户:', currentTenantData.name)
-          console.log('🔍 检查currentTenant响应式更新:', {
-            id: currentTenant.value.id,
-            name: currentTenant.value.name
-          })
-        }
-
-        // userinfo
-        try {
-          await authManager.saveUserToLocal(userInfo)
-          console.log('✅ 用户信息已保存到本地存储')
-        } catch (error) {
-          console.error('保存用户信息失败:', error)
-        }
-
-        console.log('✅ 租户信息和用户信息加载成功:', tenants)
-
-        // , page correct
-        setTimeout(() => {
-          console.log('🔍 延迟检查页面显示状态:')
-          console.log('- currentUser:', currentUser.value)
-          console.log('- currentTenant:', currentTenant.value)
-          console.log('- 页面应该显示用户:', currentUser.value.userName)
-          console.log('- 页面应该显示租户:', currentTenant.value.name)
-        }, 100)
-      } else {
-        console.warn('getUserTenants API返回的租户列表为空')
-        currentTenant.value = {
-          id: '',
-          name: '暂无租户'
-        }
-        console.log('🚫 loadTenantInfo函数结束 - 租户列表为空')
-      }
-    } else {
-      console.warn('获取租户列表失败:', response.msg)
-      // Set info
-      currentTenant.value = {
-        id: '',
-        name: '获取租户信息失败'
-      }
-      console.log('🚫 loadTenantInfo函数结束 - API调用失败')
-    }
-  } catch (error) {
-    if (!authManager.isIdentityCurrent(identity, true)) return
-    console.error('加载租户信息失败:', error)
-    // Set info
-    currentTenant.value = {
-      id: '',
-      name: '加载失败'
-    }
-    console.log('🚫 loadTenantInfo函数结束 - 发生异常')
-  }
-  console.log('🏁 loadTenantInfo函数执行完成')
-}
 
 //
 const switchingTenant = ref(false)
 const switchTenant = async (tenant) => {
-  if (switchingTenant.value || !tenant?.id || tenant.id === currentTenant.value.id) return
+  if (switchingTenant.value || !tenant?.id || String(tenant.id) === currentTenant.value.id) return
   switchingTenant.value = true
   const identity = authManager.getIdentitySnapshot()
   try {
@@ -513,10 +302,10 @@ const handleLogout = async () => {
   ])
   if (!authManager.isIdentityCurrent(identity, true)) return
   if (oortCloudLogout.status === 'rejected') {
-    console.warn('OortCloud 远端登出接口调用失败，已清理本地登录状态:', oortCloudLogout.reason)
+    logSafeRequestError('OortCloud 远端登出接口调用失败', oortCloudLogout.reason, console.warn)
   }
   if (vlstreamLogout.status === 'rejected') {
-    console.warn('VLStream 后端登出接口调用失败，继续清理本地登录状态:', vlstreamLogout.reason)
+    logSafeRequestError('VLStream 后端登出接口调用失败', vlstreamLogout.reason, console.warn)
   }
 
   authManager.clearAllTokens()
@@ -683,10 +472,8 @@ const getMenuRoutes = (menuKey) => {
   return filterMenuRoutes([
     { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
     { path: '/llm-review-tasks', meta: { title: '大模型复核', icon: '智能分析结果' } },
-    ...routes.filter(item => item.path !== 'event-management-menu'
-      && item.path !== '/active-safety/work-orders'
-      && item.path !== '/active-safety/settings')
-  ], menuPermissions.value)
+    ...routes.filter(item => item.path !== 'event-management-menu')
+  ], menuPermissions.value, tenantMode.value)
 }
 
 // whether
@@ -799,258 +586,41 @@ watch(() => route.path, (newPath) => {
   }
 }, { immediate: true })
 
-// Load user and info
-const forceLoadUserAndTenantInfo = async () => {
-  console.log('🚀 forceLoadUserAndTenantInfo函数开始执行...')
-  const loaded = await loadBladeUserInfo()
-  if (loaded && !localEventRoute.value) {
-    await loadTenantInfo()
-  }
-  return
-
-  try {
-    // Get token
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlToken = urlParams.get('accessToken') || urlParams.get('token')
-    const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-    const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-
-    const token = urlToken || sessionToken || localToken
-
-    if (!token) {
-      console.log('❌ 没有找到有效的token')
-      return
-    }
-
-    console.log('✅ 已找到有效token')
-
-    // getUserTenants API
-    const response = await getUserTenants({ accessToken: token })
-
-    console.log('📥 getUserTenants响应:', response)
-
-    //
-    if (response.status === 200 && response.data && response.data.code === 200 && response.data.data && response.data.data.list && response.data.data.list.length > 0) {
-      const firstTenant = response.data.data.list[0]
-
-      console.log('📋 解析到的用户和租户信息:')
-      console.log('- 用户名称:', firstTenant.user_name)
-      console.log('- 租户名称:', firstTenant.tenant_name)
-      console.log('- 用户ID:', firstTenant.user_id)
-      console.log('- 租户ID:', firstTenant.tenant_id)
-
-      // new currentUser
-      currentUser.value = {
-        userName: firstTenant.user_name || '管理员',
-        userId: firstTenant.user_id || '',
-        loginId: firstTenant.user_name || '',
-        isAdmin: resolveAdminFlag(firstTenant)
-      }
-
-      console.log('✅ 更新currentUser:', currentUser.value)
-
-      // new
-      const tenants = response.data.data.list.map(tenant => ({
-        id: tenant.tenant_id,
-        name: tenant.tenant_name || '未知租户',
-        status: tenant.status,
-        phrase: tenant.phrase
-      }))
-
-      tenantList.value = tenants
-      console.log('✅ 更新tenantList:', tenantList.value)
-
-      // Set current
-      if (tenants.length > 0) {
-        currentTenant.value = tenants[0]
-        console.log('✅ 设置当前租户:', currentTenant.value)
-      }
-
-      // localStorage
-      localStorage.setItem('userInfo', JSON.stringify({
-        userName: firstTenant.user_name,
-        userId: firstTenant.user_id,
-        tenantName: firstTenant.tenant_name,
-        tenantId: firstTenant.tenant_id,
-        accessToken: token
-      }))
-
-      console.log('✅ 用户信息已保存到localStorage')
-
-    } else {
-      console.warn('getUserTenants API返回数据格式不正确:', response)
-    }
-  } catch (error) {
-    console.error('❌ forceLoadUserAndTenantInfo失败:', error)
-  }
-
-  console.log('🏁 forceLoadUserAndTenantInfo函数执行完成')
-}
-
-// Load userinfo
-const loadUserInfo = async () => {
-  try {
-    // from Session StorageGet userinfo
-    let userInfo = await authManager.checkLocalToken()
-
-    // if Session Storage in , from localStorageGet
-    if (!userInfo) {
-      const localUserInfo = localStorage.getItem('userInfo')
-      if (localUserInfo) {
-        try {
-          userInfo = JSON.parse(localUserInfo)
-          console.log('从localStorage获取到用户信息:', userInfo.userName)
-          // userinfo Session Storage
-          await authManager.saveUserToLocal(userInfo)
-        } catch (error) {
-          console.error('解析localStorage用户信息失败:', error)
-        }
-      }
-    }
-
-    // if userinfo, main API, is loadTenantInfo method
-    // loadTenantInfo method will getUserTenants API new userinfo
-    if (!userInfo) {
-      console.log('本地没有用户信息，等待loadTenantInfo方法通过getUserTenants API获取')
-      // main API, loadTenantInfo method Process
-      return
-    }
-
-    // if userinfo, Set currentUser.value, getUserTenants API data
-    if (userInfo) {
-      console.log('本地有用户信息，但不更新显示，等待loadTenantInfo方法处理')
-      // Set currentUser.value, loadTenantInfo method Process
-    }
-  } catch (error) {
-    console.error('加载用户信息失败:', error)
-  }
-}
-
-// token event
-const handleTokenUpdate = async (event) => {
-  console.log('🔄 检测到token更新事件')
-  // only loadTenantInfo, loadUserInfo, getUserTenants API data
-  await loadTenantInfo()
-}
-
-const handleTokenInvalid = () => {
-  console.log('⚠️ 检测到token失效事件')
-  // Set userinfo, loadTenantInfo method Process
-  // if getUserTenants API failed, page will value
-}
-
-// token event
-const handleCrossSystemTokenUpdate = async (event) => {
-  console.log('🔄 检测到跨系统token更新事件:', event.detail)
-  // only loadTenantInfo, loadUserInfo, getUserTenants API data
-  await loadTenantInfo()
-}
-
-const handleCrossSystemTokenInvalid = () => {
-  console.log('⚠️ 检测到跨系统token失效事件')
-  // Set userinfo, loadTenantInfo method Process
-  // if getUserTenants API failed, page will value
-}
-
-// token event
-const handleAutoCrossSystemTokenUpdate = async (event) => {
-  console.log('🔄 检测到自动跨系统token更新事件:', event.detail)
-  // only loadTenantInfo, loadUserInfo, getUserTenants API data
-  await loadTenantInfo()
-}
-
-const handleAutoCrossSystemTokenInvalid = () => {
-  console.log('⚠️ 检测到自动跨系统token失效事件')
-  // Set userinfo, loadTenantInfo method Process
-  // if getUserTenants API failed, page will value
-}
-
+let logoRequestId = 0
 const loadPlatformLogo = async () => {
-  customLogoFailed.value = false
+  const requestId = ++logoRequestId
+  const identity = authManager.getIdentitySnapshot()
+  const current = () => layoutActive && requestId === logoRequestId && authManager.isIdentityCurrent(identity)
   try {
-    const response = await getCurrentPlatformLogo({ localSessionOnly: localEventRoute.value })
+    const response = await getCurrentPlatformLogo({ localSessionOnly: localEventRoute.value, silentError: true, timeout: 10_000 })
+    if (!current()) return
+    customLogoFailed.value = false
     platformLogo.value = response?.data?.systemDefault ? null : response?.data
   } catch (error) {
+    if (!current()) return
     platformLogo.value = null
-    console.warn('加载平台标识失败，使用系统默认标识:', error?.message)
+    logSafeRequestError('加载平台标识失败，使用系统默认标识', error, console.warn)
   }
 }
 
-// component Set menu and Load userinfo
 onMounted(async () => {
-  console.log('🎬 组件开始挂载...')
-
-  try {
-    try {
-      tenantMode.value = await authManager.getTenantMode()
-    } catch (error) {
-      tenantMode.value = 'single'
-      console.warn('获取租户模式失败，继续使用单租户菜单:', error?.message)
-    }
-    const activeMenu = getActiveMenuByRoute(route.path)
-    activeTopMenu.value = activeMenu
-    console.log('✅ 设置初始菜单:', activeMenu)
-
-    // getUserTenants API new
-    console.log('🔄 开始强制调用getUserTenants API...')
-    await forceLoadUserAndTenantInfo()
-    await loadPlatformLogo()
-    console.log('✅ 强制加载用户和租户信息完成')
-  } catch (error) {
-    console.error('❌ onMounted中发生错误:', error)
-  }
-
-  // , data new
-  setTimeout(async () => {
-    console.log('⏰ 延迟检查用户和租户信息...')
-    if (currentUser.value.userName === '管理员' || currentTenant.value.name === '加载中...') {
-      console.log('🔄 检测到默认状态，重新加载用户信息...')
-      await forceLoadUserAndTenantInfo()
-    }
-    }, 2000)
-
-  // token eventlistener
-  window.addEventListener('tokenUpdated', handleTokenUpdate)
-  window.addEventListener('tokenInvalid', handleTokenInvalid)
-
-  // token eventlistener
-  window.addEventListener('crossSystemTokenUpdated', handleCrossSystemTokenUpdate)
-  window.addEventListener('crossSystemTokenInvalid', handleCrossSystemTokenInvalid)
-
-  // token eventlistener
-  window.addEventListener('autoCrossSystemTokenUpdated', handleAutoCrossSystemTokenUpdate)
-  window.addEventListener('autoCrossSystemTokenInvalid', handleAutoCrossSystemTokenInvalid)
-
-  // usertoken new event
-  window.addEventListener('userTokenUpdated', handleUserTokenUpdated)
   window.addEventListener('platform-logo-changed', loadPlatformLogo)
-
   llmSessionEvents.forEach(name => window.addEventListener(name, syncDefaultLlmAuthorization))
-  syncDefaultLlmAuthorization()
-
-  console.log('🎬 组件挂载完成')
-
-  // windowobject,
-  window.forceLoadUserAndTenantInfo = forceLoadUserAndTenantInfo
-  console.log('🔧 forceLoadUserAndTenantInfo函数已暴露到window对象')
+  void loadPlatformLogo()
+  try {
+    const mode = await authManager.getTenantMode()
+    if (!layoutActive) return
+    tenantMode.value = mode
+    syncDefaultLlmAuthorization()
+  } catch (error) {
+    if (layoutActive) logSafeRequestError('加载租户模式失败', error, console.warn)
+  }
 })
 
-// component eventlistener
 onUnmounted(() => {
   layoutActive = false
   llmSyncGeneration++
   llmSessionEvents.forEach(name => window.removeEventListener(name, syncDefaultLlmAuthorization))
-  window.removeEventListener('tokenUpdated', handleTokenUpdate)
-  window.removeEventListener('tokenInvalid', handleTokenInvalid)
-  window.removeEventListener('crossSystemTokenUpdated', handleCrossSystemTokenUpdate)
-  window.removeEventListener('crossSystemTokenInvalid', handleCrossSystemTokenInvalid)
-
-  // token eventlistener
-  window.removeEventListener('autoCrossSystemTokenUpdated', handleAutoCrossSystemTokenUpdate)
-  window.removeEventListener('autoCrossSystemTokenInvalid', handleAutoCrossSystemTokenInvalid)
-
-  // event
-  window.removeEventListener('userTokenUpdated', handleUserTokenUpdated)
   window.removeEventListener('platform-logo-changed', loadPlatformLogo)
 })
 
@@ -1100,19 +670,6 @@ const getMenuIcon = (iconName) => {
   return iconMap[iconName] || Setting
 }
 
-// Process
-const handleUserTokenUpdated = async (event) => {
-  console.log('🔄 收到用户token更新事件，重新加载用户信息')
-
-  try {
-    // only new Load info, new Load userinfo, getUserTenants API data
-    await loadTenantInfo()
-
-    console.log('✅ 租户信息已更新')
-  } catch (error) {
-    console.error('❌ 更新租户信息失败:', error)
-  }
-}
 </script>
 
 <style scoped>
@@ -1284,6 +841,16 @@ const handleUserTokenUpdated = async (event) => {
 
 .header-right > * {
   flex-shrink: 0;
+}
+
+/* RightInfo selects its full toolbar at a measured width of 520px. */
+.header-right--platform {
+  flex-basis: min(520px, 42vw);
+}
+
+.header-right--platform > :deep(.right-info-sdk-container) {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 @media (max-width: 1500px) {
@@ -1599,6 +1166,25 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-content:first-child {
   margin-inline-start: 16px;
+}
+.compact-video-nav .layout-content {
+  margin: 4px;
+  height: calc(100% - 8px);
+}
+.compact-video-nav .layout-sidebar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 82;
+  max-width: 82vw;
+  background: var(--el-bg-color, white);
+  box-shadow: 4px 0 18px rgb(26 47 79 / .14);
+}
+.video-nav-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 81;
+  border: 0;
+  background: rgb(23 39 61 / .25);
 }
 
 .layout-content > * {

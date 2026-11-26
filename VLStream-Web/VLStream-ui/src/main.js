@@ -11,6 +11,8 @@ import router from './router'
 import ElementPlus, { ElMessage } from 'element-plus'
 import { installSessionMessageGuard } from '@/utils/sessionExpiry'
 import { bootstrapRequestIdentity } from '@/utils/requestIdentity.mjs'
+import { authManager } from '@/utils/auth'
+import { isLocalEventRoute } from '@/utils/localEventAccess.mjs'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
@@ -18,11 +20,7 @@ import './style.css'
 import { i18n, translatePhrase } from '@/i18n'
 import { installLegacyDomI18n } from '@/i18n/legacyDom'
 
-import Avue from '@smallwei/avue';
-import '@smallwei/avue/lib/index.css';
-import crudCommon from '@/mixins/crud.js';
-import axios from './utils/request';
-import basicContainer from './components/basic-container/main.vue';
+import basicContainer from './components/basic-container/main.vue'
 
 // and apaas-web events item
 import '@/assets/style/index.scss'
@@ -33,8 +31,6 @@ import '@/assets/style/polish.scss'
 import { installWvpCompat } from '@/utils/wvpCompat'
 import { capturePendingModelHubCallback } from '@/utils/modelHubAuth'
 import { initializeLocalPlatformRealm } from '@/utils/localPlatformRealm'
-
-window.$crudCommon = crudCommon;
 
 // OortCloud and VLStream accessToken parameter; in main before .
 initializeLocalPlatformRealm()
@@ -63,7 +59,6 @@ import SearchHeightBox from '@/components/SearchHeightBox.vue'
 import ExportExcelPdf from '@/components/exportExcelPdf.vue'
 import Directive from '@/directive/index'
 import commonComponents from '@/components/index.js'
-import indexVform from '@/components/index_vform.js'
 import Draggable from 'vuedraggable'
 import Pagination from '@/components/Pagination/index.vue'
 import RightToolbar from '@/components/RightToolbar/index.vue'
@@ -77,7 +72,6 @@ app.component('SearchHeightBox', SearchHeightBox)
 app.component('ExportExcelPdf', ExportExcelPdf)
 app.use(Directive)
 app.use(commonComponents)
-app.use(indexVform)
 app.component('Draggable', Draggable)
 app.component('Pagination', Pagination)
 app.component('RightToolbar', RightToolbar)
@@ -88,10 +82,16 @@ installWvpCompat(app)
 app.use(ElementPlus)
 app.use(createPinia())
 app.use(i18n)
+let workOrderFormsInstalled = false
+router.beforeResolve(async to => {
+  if (!to.meta.workOrderForms || workOrderFormsInstalled) return
+  if (isLocalEventRoute(to.meta) && await authManager.getTenantMode() === 'multi') return
+  const { default: workOrderForms } = await import('@/components/index_vform.js')
+  if (!workOrderFormsInstalled) {
+    app.use(workOrderForms)
+    workOrderFormsInstalled = true
+  }
+})
 app.use(router)
-app.use(Avue, {
-  axios,
-  calcHeight: 10,
-});
 app.mount('#app')
 installLegacyDomI18n()

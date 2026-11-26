@@ -10,13 +10,14 @@
     v-model:visible="popoverVisible"
     placement="bottom-end"
     trigger="hover"
+    :hide-after="300"
     :width="560"
     :offset="10"
     popper-class="oortcloud-welcome-popper"
     @show="handlePopoverShow"
   >
     <template #reference>
-      <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" :aria-label="$tp('打开 OortCloud')">
+      <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" :aria-label="$tp('打开 OortCloud')" @click="popoverVisible = true">
         <img class="entry-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <span>OortCloud</span>
       </button>
@@ -125,6 +126,7 @@ import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscrip
 import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
 import { getOortCloudSession } from '@/utils/oortCloudSession'
 import { redirectToPlatformLogin } from '@/utils/platformSession'
+import { isLoginFailureResponse } from '@/utils/sessionExpiry'
 import { getOortCloudTopupInfo, PLATFORM_ORIGIN } from '@/api/oortCloudAccount'
 
 const props = defineProps({ tenantMode: { type: String, default: 'single' } })
@@ -137,7 +139,7 @@ const isCurrentSession = session => {
 }
 let loadedSession = null
 const popoverVisible = ref(false)
-const authToken = ref('')
+let accountRequestId = 0
 const authVerified = ref(false)
 const loading = ref(false)
 const recordsLoading = ref(false)
@@ -229,13 +231,17 @@ const applyUserInfo = (response) => {
 }
 
 const isAuthenticationFailure = (error) => {
-  const status = Number(error?.response?.status)
-  const code = Number(error?.authenticationCode ?? error?.response?.data?.code)
-  const message = String(error?.response?.data?.message || error?.response?.data?.msg || error?.message || '')
-  return status === 401 || status === 403 || [401, 403, 4004].includes(code) || /access\s*token.*(?:无效|失效)|无效的\s*access\s*token|校验不通过/i.test(message)
+  const response = error?.response
+  return isLoginFailureResponse({
+    status: response?.status || 200,
+    data: { ...response?.data, code: error?.authenticationCode ?? response?.data?.code }
+  })
 }
 
 const resetAccountState = () => {
+  accountRequestId++
+  loadedSession = null
+  loading.value = false
   authVerified.value = false
   Object.assign(account, { userId: '', userName: '', photo: '', totalCredits: 0, usedCredits: 0, remainingCredits: 0 })
   subscriptions.value = []
@@ -274,21 +280,21 @@ const loadUsageRecords = async (page = 1) => {
 
 const loadAccount = async () => {
   const session = currentSession()
-  if (loading.value) return
   if (!loadedSession || !isCurrentSession(loadedSession)) resetAccountState()
+  if (loading.value || !session.accessToken) return
   loadedSession = session
-  authToken.value = session.accessToken
-  if (!authToken.value) return
+  const requestId = ++accountRequestId
+  const current = () => requestId === accountRequestId && isCurrentSession(session)
   loading.value = true
   loadError.value = ''
   try {
     const userResponse = await getModelHubUserInfo({ desensitize: true }, session)
-    if (!isCurrentSession(session)) return
+    if (!current()) return
     applyUserInfo(userResponse)
     authVerified.value = true
     const errors = []
     const results = await Promise.allSettled([getOortCloudAccountStats(session), getOortCloudSubscriptions(session), getOortCloudSubscriptionPlans(session), getOortCloudQuotaConfig(session)])
-    if (!isCurrentSession(session)) return
+    if (!current()) return
     const authError = results.find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
     if (authError && !session.usesPlatformSession) throw authError.reason
     if (results[0].status === 'fulfilled') {
@@ -306,10 +312,9 @@ const loadAccount = async () => {
     loadError.value = errors.join('，')
     await loadUsageRecords()
   } catch (error) {
-    if (!isCurrentSession(session)) return
+    if (!current()) return
     if (isAuthenticationFailure(error)) {
       resetAccountState()
-      authToken.value = ''
       if (session.usesPlatformSession) {
         redirectToPlatformLogin()
       } else {
@@ -318,17 +323,16 @@ const loadAccount = async () => {
       }
     } else loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
   } finally {
-    loading.value = false
-    if (!isCurrentSession(session)) await loadAccount()
+    if (requestId === accountRequestId) loading.value = false
   }
 }
 
 const handlePopoverShow = async () => {
   await loadAccount()
 }
-const handleAuthChanged = async () => {
+const handleAuthChanged = () => {
   resetAccountState()
-  await loadAccount()
+  if (popoverVisible.value) void loadAccount()
 }
 const handleVisitOortCloud = () => openOortCloudModelHub(getPlatformAccessToken())
 const handleUpgrade = () => openOortCodexPricing(getPlatformAccessToken())
@@ -359,7 +363,6 @@ const handleBuyResourcePack = async () => {
 const handleLogout = async () => {
   try { await logoutModelHubSession() } catch { ElMessage.warning(uiText('OortCloud 远端退出失败，已清理本地登录状态')) }
   resetAccountState()
-  authToken.value = ''
   ElMessage.success(uiText('已退出 OortCloud'))
 }
 const handleLogin = async () => {
@@ -369,20 +372,20 @@ const handleLogin = async () => {
     return
   }
   if (getModelHubAccessToken()) {
-    authToken.value = getModelHubAccessToken()
     await loadAccount()
     return
   }
   startModelHubLogin(null, { returnToCurrent: true })
 }
 
-onMounted(async () => {
+onMounted(() => {
   window.addEventListener('modelHubAuthChanged', handleAuthChanged)
-  await loadAccount()
 })
 watch(() => props.tenantMode, handleAuthChanged)
 onBeforeUnmount(() => {
   window.removeEventListener('modelHubAuthChanged', handleAuthChanged)
+  accountRequestId++
+  recordsRequestId++
 })
 </script>
 

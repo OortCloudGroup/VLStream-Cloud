@@ -87,7 +87,11 @@
         <p v-if="platformLoginError" class="platform-login-error">{{ platformLoginError }}</p>
         <el-button type="primary" size="large" class="login-button" @click="handlePlatformLogin"> {{ $tp('前往应用平台') }} </el-button>
       </div>
-      <div v-else class="platform-login-tip">{{ $tp('正在读取登录模式...') }}</div>
+      <div v-else-if="tenantMode === 'error'" class="platform-login-tip" role="status">
+        <p>{{ $tp('服务暂时不可用，请稍后重试') }}</p>
+        <el-button type="primary" @click="initializeLogin">{{ $tp('重试') }}</el-button>
+      </div>
+      <div v-else class="platform-login-tip" role="status">{{ $tp('正在读取登录模式...') }}</div>
 
     </div>
 
@@ -234,7 +238,8 @@ const handleLogin = async () => {
 }
 
 // pageLoad whether already
-onMounted(async () => {
+const initializeLogin = async () => {
+  tenantMode.value = 'loading'
   const callbackHref = window.location.href
   const { accessToken: token } = extractAuthCallbackParams(callbackHref)
   authManager.cleanUrlToken()
@@ -242,7 +247,13 @@ onMounted(async () => {
   if (cleanRoute.fullPath !== route.fullPath) {
     await router.replace({ path: cleanRoute.path, query: cleanRoute.query, hash: cleanRoute.hash })
   }
-  tenantMode.value = await authManager.getTenantMode()
+  try {
+    tenantMode.value = await authManager.getTenantMode()
+  } catch (error) {
+    logSafeRequestError('获取租户模式失败', error)
+    tenantMode.value = 'error'
+    return
+  }
   if (route.query.platformCallbackError === '1') platformLoginError.value = '平台登录凭证校验失败，请返回统一平台重新进入。'
 
   if (token) {
@@ -279,7 +290,8 @@ onMounted(async () => {
       logSafeRequestError('本地会话验证失败', error)
     }
   }
-})
+}
+onMounted(initializeLogin)
 </script>
 
 <style scoped>

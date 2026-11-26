@@ -9,12 +9,11 @@ import { safeAuthReturnPath } from '@/utils/authRedirect.mjs'
 import { beginAuthCheck, failAuthCheck } from '@/utils/authCheckState'
 import { LOCAL_EVENT_AUTH_SCOPE, isLocalEventRoute, selectRouteAuthScope } from '@/utils/localEventAccess.mjs'
 import { createRouter, createWebHistory } from 'vue-router'
-import Layout from '@/layout/index.vue'
 import { AuthManager } from '@/utils/auth'
 import { consumeCapturedModelHubCallback } from '@/utils/modelHubAuth'
 import { stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
-import { canAccessPage } from '@/utils/menuAccess.mjs'
+import { canAccessPage, isSingleTenantPage } from '@/utils/menuAccess.mjs'
 import { clearMenuPermissions, setMenuPermissions } from '@/utils/menuAccessState'
 import { ElMessage } from 'element-plus'
 import { translatePhrase } from '@/i18n'
@@ -30,7 +29,7 @@ const routes = [
   },
   {
     path: '/',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     redirect: '/workspace',
     meta: { requiresAuth: true },
     children: [
@@ -229,8 +228,10 @@ const routes = [
       {
         path: '/event-management',
         name: 'EventManagement',
-        component: () => import('@/views/DecisionAI/TenantEventManagement.vue'),
-        meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE }
+        component: async () => (await authManager.getTenantMode()) === 'multi'
+          ? import('@/views/DecisionAI/EventManagement.vue')
+          : import('@/views/events/page/eventManagement/secure.vue'),
+        meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE, workOrderForms: true }
       },
       {
         path: '/algorithm-management',
@@ -360,6 +361,11 @@ const routes = [
         meta: { title: '任务配置', icon: '任务配置' }
       },
       {
+        path: '/algorithm-orchestration',
+        redirect: { name: 'AlgorithmTask' },
+        meta: { hideInMenu: true }
+      },
+      {
         path: '/task-status',
         name: 'CloudTaskStatus',
         component: () => import('@/views/DecisionAI/TaskStatus.vue'),
@@ -458,25 +464,25 @@ const routes = [
         path: '/active-safety/work-orders/my',
         name: 'ActiveSafetyWorkOrdersMy',
         component: () => import('@/views/events/page/myWorkorder/myWorkorder.vue'),
-        meta: { title: '我的工单', icon: '工单' }
+        meta: { title: '我的工单', icon: '工单', workOrderForms: true }
       },
       {
         path: '/active-safety/work-orders/pending',
         name: 'ActiveSafetyWorkOrdersPending',
         component: () => import('@/views/events/page/workOrderDesignManage/pendingWorkOrder.vue'),
-        meta: { title: '待办工单', icon: '工单' }
+        meta: { title: '待办工单', icon: '工单', workOrderForms: true }
       },
       {
         path: '/active-safety/work-orders/completed',
         name: 'ActiveSafetyWorkOrdersCompleted',
         component: () => import('@/views/events/page/workOrderDesignManage/completedWorkOrder.vue'),
-        meta: { title: '已办工单', icon: '工单' }
+        meta: { title: '已办工单', icon: '工单', workOrderForms: true }
       },
       {
         path: '/active-safety/work-orders/claimable',
         name: 'ActiveSafetyWorkOrdersClaimable',
         component: () => import('@/views/events/page/workOrderDesignManage/workOrderClaim.vue'),
-        meta: { title: '可接工单', icon: '工单' }
+        meta: { title: '可接工单', icon: '工单', workOrderForms: true }
       },
       {
         path: '/active-safety/settings/secure',
@@ -488,16 +494,17 @@ const routes = [
         path: '/active-safety/settings/work-orders',
         name: 'ActiveSafetySettingsWorkOrders',
         component: () => import('@/views/events/page/eventManagement/sysWorkOrderSetting.vue'),
-        meta: { title: '工单设置', icon: '设置' }
+        meta: { title: '工单设置', icon: '设置', workOrderForms: true }
       },
       {
         path: '/workOrderDetails',
         name: 'ActiveSafetyWorkOrderDetails',
         component: () => import('@/pages/task_center/views/page/workOrderDetailsStep.vue'),
-        meta: { title: '工单详情', icon: '设置' }
+        meta: { title: '工单详情', icon: '设置', workOrderForms: true }
       }
     ]
-  }
+  },
+  { path: '/:pathMatch(.*)*', redirect: { name: 'Workspace' } }
 ]
 
 const router = createRouter({
@@ -505,103 +512,106 @@ const router = createRouter({
   routes
 })
 
-//
+let latestNavigation
 router.beforeEach(async (to, from, next) => {
+  latestNavigation = to
+  const superseded = () => latestNavigation !== to
   selectRouteAuthScope(to.meta)
   beginAuthCheck()
-  console.log('路由跳转')
 
   try {
-  const cleanRoute = router.resolve(stripAuthCallbackParams(to.fullPath))
-  const finishRoute = () => next(to.fullPath === cleanRoute.fullPath ? undefined : {
-    path: cleanRoute.path, query: cleanRoute.query, hash: cleanRoute.hash, replace: true
-  })
-  // need to token Validate .
-  if (to.path === '/login') {
-    clearMenuPermissions()
-    if (authManager.hasPlatformCallbackToken()) {
-      const userInfo = await authManager.checkUrlToken() // consumes URL before lazy-loading/async authentication
-      if (userInfo) next({ path: safeAuthReturnPath(cleanRoute.query.redirect, import.meta.env.BASE_URL), replace: true })
-      else next({ path: cleanRoute.path, query: { ...cleanRoute.query, platformCallbackError: '1' }, hash: cleanRoute.hash, replace: true })
-    } else {
-      authManager.cleanUrlToken()
-      finishRoute()
-    }
-    return
-  }
+    const cleanRoute = router.resolve(stripAuthCallbackParams(to.fullPath))
+    const finishRoute = () => next(to.fullPath === cleanRoute.fullPath ? undefined : {
+      path: cleanRoute.path, query: cleanRoute.query, hash: cleanRoute.hash, replace: true
+    })
 
-  // whether need to
-  if (to.meta.requiresAuth) {
-    const consumedOortCloudCallback = consumeCapturedModelHubCallback()
-    if (consumedOortCloudCallback) {
-      authManager.cleanUrlToken()
+    if (to.path === '/login') {
+      clearMenuPermissions()
+      if (!authManager.hasPlatformCallbackToken()) {
+        authManager.cleanUrlToken()
+        return finishRoute()
+      }
+      const userInfo = await authManager.checkUrlToken()
+      if (superseded()) return next(false)
+      return userInfo
+        ? next({ path: safeAuthReturnPath(cleanRoute.query.redirect, import.meta.env.BASE_URL), replace: true })
+        : next({ path: cleanRoute.path, query: { ...cleanRoute.query, platformCallbackError: '1' }, hash: cleanRoute.hash, replace: true })
     }
+
+    if (!to.meta.requiresAuth) {
+      authManager.cleanUrlToken()
+      return finishRoute()
+    }
+
+    if (consumeCapturedModelHubCallback()) authManager.cleanUrlToken()
     const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
+    const localSessionOnly = isLocalEventRoute(to.meta)
     const checkingIdentity = authManager.getIdentitySnapshot()
-    let userInfo = await (isLocalEventRoute(to.meta)
+    let userInfo = await (localSessionOnly
       ? authManager.checkLocalEventLogin()
       : authManager.checkExternalPlatformLogin())
+    if (superseded()) return next(false)
     if (!hasPlatformCallbackToken && !authManager.isIdentityCurrent(checkingIdentity)) {
       selectRouteAuthScope(from.meta)
-      next(false)
-      return
-    }
-    if (userInfo) {
-      // Exchange responses need not contain permissions; obtain the trusted local
-      // user-info response after the new session has been established.
-      if (!Array.isArray(userInfo.permissions)) {
-        const identity = authManager.getIdentitySnapshot()
-        userInfo = await authManager.verifyToken(identity.token, { localSessionOnly: isLocalEventRoute(to.meta) })
-        if (!authManager.isIdentityCurrent(identity)) {
-          next(false)
-          return
-        }
-      }
-      if (!userInfo || !Array.isArray(userInfo.permissions)) {
-        throw new Error('权限信息暂不可用')
-      }
-      setMenuPermissions(userInfo)
-      const matched = to.matched[to.matched.length - 1]
-      if (!canAccessPage(matched?.path || to.path, userInfo.permissions)) {
-        ElMessage.warning(translatePhrase('没有访问该页面的权限'))
-        next({ path: '/workspace', replace: true })
-        return
-      }
-      console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
-      finishRoute()
-      return
+      return next(false)
     }
 
-    clearMenuPermissions()
-    // Other multi-tenant routes retain platform validation; local event reads use the VLS session.
+    if (userInfo) {
+      // The exchange response may omit permissions. Verify the newly established local session.
+      if (!Array.isArray(userInfo.permissions)) {
+        const identity = authManager.getIdentitySnapshot()
+        userInfo = await authManager.checkLocalToken({ localSessionOnly })
+        if (superseded()) return next(false)
+        if (!authManager.isIdentityCurrent(identity)) {
+          selectRouteAuthScope(from.meta)
+          return next(false)
+        }
+      }
+      if (!userInfo || !Array.isArray(userInfo.permissions)) throw new Error('权限信息暂不可用')
+
+      const matched = to.matched[to.matched.length - 1]
+      const page = matched?.path || to.path
+      const identity = authManager.getIdentitySnapshot()
+      const tenantMode = isSingleTenantPage(page) ? await authManager.getTenantMode() : undefined
+      if (superseded()) return next(false)
+      if (!authManager.isIdentityCurrent(identity)) {
+        selectRouteAuthScope(from.meta)
+        return next(false)
+      }
+      setMenuPermissions(userInfo)
+      if (!canAccessPage(page, userInfo.permissions, tenantMode)) {
+        ElMessage.warning(translatePhrase('没有访问该页面的权限'))
+        return next({ path: '/workspace', replace: true })
+      }
+      return finishRoute()
+    }
+
     const tenantMode = await authManager.getTenantMode()
-    if (tenantMode === 'multi' && !hasPlatformCallbackToken && !isLocalEventRoute(to.meta)) {
+    if (superseded()) return next(false)
+    clearMenuPermissions()
+    if (tenantMode === 'multi' && !hasPlatformCallbackToken && !localSessionOnly) {
+      selectRouteAuthScope(from.meta)
       next(false)
       authManager.redirectToPlatformLogin(cleanRoute.fullPath)
       return
     }
-
-    if (hasPlatformCallbackToken) {
-      authManager.cleanUrlToken()
-    }
-
-    // ; only prompt / tip, .
-    next({
-      path: '/login',
-      query: { redirect: cleanRoute.fullPath }
-    })
-  } else {
-    authManager.cleanUrlToken()
-    finishRoute()
-  }
+    if (hasPlatformCallbackToken) authManager.cleanUrlToken()
+    return next({ path: '/login', query: { redirect: cleanRoute.fullPath } })
   } catch (error) {
+    if (superseded()) return next(false)
     selectRouteAuthScope(from.meta)
     logSafeRequestError('路由认证检查失败', error)
     authManager.cleanUrlToken()
-    // Transport, server and permission failures preserve the login. The request layer reports them.
     failAuthCheck(error, stripAuthCallbackParams(to.fullPath))
-    next(false)
+    return next(false)
   }
+})
+
+router.onError((error, to, from) => {
+  if (to !== latestNavigation) return
+  selectRouteAuthScope(from.meta)
+  logSafeRequestError('页面资源加载失败', error)
+  failAuthCheck(error, stripAuthCallbackParams(to.fullPath), { reload: true })
 })
 
 export default router

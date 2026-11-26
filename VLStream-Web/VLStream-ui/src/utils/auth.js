@@ -28,8 +28,10 @@ const normalizeApiResponse = (response) => {
 
 // Only reuse server-verified navigation data in this tab.
 const navigationInfoTtlMs = 60_000
-let verifiedNavigationInfo
+const verifiedNavigationInfo = new Map()
+const pendingNavigationInfo = new Map()
 let verifiedTenantMode
+let pendingTenantMode
 
 // All AuthManager instances share identity changes (layout, router and login).
 export class AuthManager {
@@ -38,7 +40,8 @@ export class AuthManager {
   }
 
   invalidatePendingIdentity() {
-    verifiedNavigationInfo = undefined
+    verifiedNavigationInfo.clear()
+    pendingNavigationInfo.clear()
     advanceIdentityRevision()
     this.validatedPlatformToken = ''
   }
@@ -108,6 +111,10 @@ export class AuthManager {
     if (!token) return null
     this.clearAllTokens()
     this.validatedPlatformToken = ''
+    const identity = this.getIdentitySnapshot()
+    // A direct callback can arrive in a fresh tab without a stored tenant mode.
+    await this.getTenantMode()
+    if (!this.isIdentityCurrent(identity)) return null
 
     // URL 传入的是统一平台令牌；无论单租户还是多租户，都必须先换取 VLS 本地会话。
     // single 仅禁止租户切换，不应禁止平台账号授权登录。
@@ -134,7 +141,7 @@ export class AuthManager {
         ...user,
         ...data,
         accessToken: token,
-        userName: user.realName || user.nickName || user.name || user.account || user.userName,
+        userName: user.nickName || user.realName || data.realName || data.userName || user.name || user.account || user.userName,
         loginId: user.account || user.loginId || user.userName,
         tenantId: tenantId || '000000'
       }
@@ -211,23 +218,30 @@ export class AuthManager {
   /* * Validate will in token. */
   async checkLocalToken(options = {}) {
     const identity = this.getIdentitySnapshot()
-    const token = this.getCurrentToken()
-    if (!token) return null
+    if (!identity.token) return null
     const localSessionOnly = Boolean(options.localSessionOnly)
-    const cached = verifiedNavigationInfo
-    if (cached && cached.expiresAt > Date.now() && cached.localSessionOnly === localSessionOnly
+    const cached = verifiedNavigationInfo.get(localSessionOnly)
+    if (cached && cached.expiresAt > Date.now()
         && this.isIdentityCurrent(cached.identity)) return cached.userInfo
 
-    const userInfo = await this.verifyToken(token, options)
-    if (userInfo) {
+    const pending = pendingNavigationInfo.get(localSessionOnly)
+    if (pending && this.isIdentityCurrent(pending.identity)) return pending.promise
+
+    const promise = this.verifyToken(identity.token, options).then(userInfo => {
+      if (!userInfo) {
+        this.clearIdentityTokens(identity)
+        return null
+      }
       if (!this.isIdentityCurrent(identity)) return null
       if (Array.isArray(userInfo.permissions)) {
-        verifiedNavigationInfo = { identity, localSessionOnly, userInfo, expiresAt: Date.now() + navigationInfoTtlMs }
+        verifiedNavigationInfo.set(localSessionOnly, { identity, userInfo, expiresAt: Date.now() + navigationInfoTtlMs })
       }
       return userInfo
-    }
-    this.clearIdentityTokens(identity)
-    return null
+    }).finally(() => {
+      if (pendingNavigationInfo.get(localSessionOnly)?.promise === promise) pendingNavigationInfo.delete(localSessionOnly)
+    })
+    pendingNavigationInfo.set(localSessionOnly, { identity, promise })
+    return promise
   }
 
   /* * item . */
@@ -281,17 +295,22 @@ export class AuthManager {
   async getTenantMode() {
     const revision = getIdentityRevision()
     if (verifiedTenantMode?.revision === revision) return verifiedTenantMode.mode
-    try {
-      const response = normalizeApiResponse(await getTenantMode())
+    if (pendingTenantMode?.revision === revision) return pendingTenantMode.promise
+    const promise = getTenantMode().then(result => {
+      const response = normalizeApiResponse(result)
       const mode = response?.data?.tenantType
       if (mode !== 'single' && mode !== 'multi') throw new Error('服务未返回有效租户模式')
       if (revision === getIdentityRevision()) verifiedTenantMode = { revision, mode: saveTenantMode(mode) }
       return mode
-    } catch (error) {
+    }).catch(error => {
       const cached = sessionStorage.getItem('vlsTenantMode')
       if (cached === 'single' || cached === 'multi') return cached
       throw error
-    }
+    }).finally(() => {
+      if (pendingTenantMode?.promise === promise) pendingTenantMode = undefined
+    })
+    pendingTenantMode = { revision, promise }
+    return promise
   }
 
   async exchangePlatformToken(platformToken, tenantId) {

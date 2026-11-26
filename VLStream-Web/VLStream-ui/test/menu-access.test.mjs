@@ -20,7 +20,13 @@ test('each application route is either deliberately public or has a page permiss
   const source = await readFile(new URL('../src/router/index.js', import.meta.url), 'utf8')
   const routes = [...source.matchAll(/path:\s*'([^']+)'/g)].map(match => match[1])
   const baseline = new Set(['/login', '/', '/workspace', '/user-profile', '/cloud-platform'])
-  assert.deepEqual(routes.filter(path => !baseline.has(path) && !isManagedMenuRoute(path)), [])
+  const redirects = new Map([...source.matchAll(/path:\s*'([^']+)',\s*redirect:\s*\{ name: '([^']+)' \}/g)]
+    .map(([, path, target]) => [path, target]))
+  assert.deepEqual(redirects, new Map([
+    ['/algorithm-orchestration', 'AlgorithmTask'],
+    ['/:pathMatch(.*)*', 'Workspace']
+  ]))
+  assert.deepEqual(routes.filter(path => !baseline.has(path) && !redirects.has(path) && !isManagedMenuRoute(path)), [])
 })
 
 test('existing permissions remain valid and new page keys match their full paths', () => {
@@ -70,6 +76,25 @@ test('legacy workflow list grants expose only their own work-order page and deta
     assert.deepEqual(filterMenuRoutes(tree, [action]), [{ path: 'work-orders', children: [{ path }] }])
     assert.equal(canAccessPage('/active-safety/settings/work-orders', [action]), false)
   }
+})
+
+test('menu filtering and direct navigation enforce the same tenant mode for active safety workflows', () => {
+  const paths = [
+    '/event-management',
+    '/active-safety/work-orders/my',
+    '/active-safety/work-orders/pending',
+    '/active-safety/work-orders/completed',
+    '/active-safety/work-orders/claimable',
+    '/active-safety/settings/secure',
+    '/active-safety/settings/work-orders',
+    '/workOrderDetails'
+  ]
+  const tree = paths.map(path => ({ path }))
+  const admin = ['*:*:*']
+  assert.deepEqual(filterMenuRoutes(tree, admin, 'single'), tree)
+  assert.deepEqual(filterMenuRoutes(tree, admin, 'multi'), [tree[0]])
+  assert.equal(canAccessPage('/active-safety/settings/work-orders', ['active-safety:settings:workorder'], 'single'), true)
+  assert.equal(canAccessPage('/active-safety/settings/work-orders', ['active-safety:settings:workorder'], 'multi'), false)
 })
 
 test('legacy VLS devices use their own permission, never an unrelated protocol grant', () => {

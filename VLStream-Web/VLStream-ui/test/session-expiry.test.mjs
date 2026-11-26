@@ -127,6 +127,19 @@ try {
   check(Boolean(await new AuthManager().checkExternalPlatformLogin()), 'persisted multi login failed validation')
   check(startupCalls[0].url.endsWith('/mode') && !startupCalls[0].headers.get('Authorization')
     && startupCalls[1].url.endsWith('/user/info'), 'protected user/info ran before anonymous mode detection')
+  identity('single')
+  const startupCounts = []
+  vls.authRequest.defaults.adapter = async config => {
+    startupCounts.push(config.url)
+    return { config, status: 200, headers: {}, data: { code: 200, data: config.url.endsWith('/mode')
+      ? { tenantType: 'single' } : { user: { tenantId: 'fixture-tenant' }, permissions: [] } } }
+  }
+  await Promise.all([new AuthManager().checkExternalPlatformLogin(), new AuthManager().checkExternalPlatformLogin()])
+  check(startupCounts.length === 2 && startupCounts[0].endsWith('/mode') && startupCounts[1].endsWith('/user/info'),
+    'concurrent navigation issued duplicate mode or profile requests')
+  await new AuthManager().checkLocalEventLogin()
+  await new AuthManager().checkExternalPlatformLogin()
+  check(startupCounts.length === 3 && startupCounts[2].endsWith('/user/info'), 'read-only and regular verification shared the wrong scope')
   for (const mode of ['single', 'multi']) {
     for (const client of clients) {
       for (const [status, code] of [[200, 401], [401, 401], [200, 4004]]) {
@@ -227,15 +240,20 @@ try {
 
   // Execute the actual protected-route guard, with only routing/component loading stubbed.
   const routerSource = readFileSync(path.join(root, 'src/router/index.js'), 'utf8')
-  const guardSource = routerSource.slice(routerSource.indexOf('router.beforeEach('), routerSource.indexOf('\nexport default router')).replaceAll('import.meta.env.BASE_URL', JSON.stringify('/bus/vls-ui/'))
+  const guardSource = routerSource.slice(routerSource.indexOf('let latestNavigation'), routerSource.indexOf('\nexport default router')).replaceAll('import.meta.env.BASE_URL', JSON.stringify('/bus/vls-ui/'))
   const managerForGuard = new AuthManager()
   managerForGuard.hasPlatformCallbackToken = () => false
   let guard
-  const routerStub = { beforeEach: value => { guard = value }, resolve: fullPath => ({ fullPath, path: fullPath.split('?')[0], query: {}, hash: '' }) }
-  new Function('router', 'authManager', 'stripAuthCallbackParams', 'consumeCapturedModelHubCallback', 'logSafeRequestError', 'safeAuthReturnPath', 'beginAuthCheck', 'failAuthCheck', 'selectRouteAuthScope', 'isLocalEventRoute', 'canAccessPage', 'setMenuPermissions', 'clearMenuPermissions', 'ElMessage', 'translatePhrase',
+  let routeError
+  const routerStub = {
+    beforeEach: value => { guard = value },
+    onError: value => { routeError = value },
+    resolve: fullPath => ({ fullPath, path: fullPath.split('?')[0], query: {}, hash: '' })
+  }
+  new Function('router', 'authManager', 'stripAuthCallbackParams', 'consumeCapturedModelHubCallback', 'logSafeRequestError', 'safeAuthReturnPath', 'beginAuthCheck', 'failAuthCheck', 'selectRouteAuthScope', 'isLocalEventRoute', 'canAccessPage', 'isSingleTenantPage', 'setMenuPermissions', 'clearMenuPermissions', 'ElMessage', 'translatePhrase',
     guardSource)(routerStub, managerForGuard, stripAuthCallbackParams, () => false, () => {}, redirects.safeAuthReturnPath,
     authCheckState.beginAuthCheck, authCheckState.failAuthCheck, localEvents.selectRouteAuthScope, localEvents.isLocalEventRoute,
-    menuAccess.canAccessPage, menuAccessState.setMenuPermissions, menuAccessState.clearMenuPermissions, ElMessage, value => value)
+    menuAccess.canAccessPage, menuAccess.isSingleTenantPage, menuAccessState.setMenuPermissions, menuAccessState.clearMenuPermissions, ElMessage, value => value)
   const route = { path: '/workspace', fullPath: '/workspace', matched: [{ path: '/workspace' }], meta: { requiresAuth: true } }
   identity()
   vls.authRequest.defaults.adapter = adapter({ code: 503 }, 503)
@@ -299,21 +317,24 @@ try {
   window.location.href = 'https://fixture.invalid:9443/bus/vls-ui/compute-market?accessToken=fixture-callback&tenantId=fixture-tenant'
   window.history = { replaceState: (_state, _title, url) => { window.location.href = new URL(url, window.location.origin).toString() } }
   const realCallbackCalls = []
+  sessionStorage.removeItem('vlsTenantMode')
   vls.authRequest.defaults.adapter = async config => {
     realCallbackCalls.push(config.url)
+    if (config.url.endsWith('/mode')) return { config, status: 200, headers: {}, data: { code: 200, data: { tenantType: 'multi' } } }
     if (config.url.endsWith('/exchangeToken')) return { config, status: 200, headers: {}, data: { code: 200, data: {
       accessToken: 'fixture-exchanged', platformAccessToken: 'fixture-callback', tenantId: 'fixture-tenant',
       user: { userId: '7', tenantId: 'fixture-tenant' }
     } } }
     assert.equal(config.url, '/blade-system/user/info')
     assert.equal(config.headers.get('Authorization'), 'Bearer fixture-exchanged')
+    assert.equal(config.headers.get('accesstoken'), 'fixture-callback')
     return { config, status: 200, headers: {}, data: { code: 200, data: {
       user: { userId: '7', tenantId: 'fixture-tenant' }, permissions: ['vls:menu:compute-market']
     } } }
   }
   nextResult = 'not called'
   await guard(computeRoute, route, value => { nextResult = value })
-  check(nextResult === undefined && realCallbackCalls[0].endsWith('/exchangeToken') && realCallbackCalls[1].endsWith('/user/info')
+  check(nextResult === undefined && realCallbackCalls[0].endsWith('/mode') && realCallbackCalls[1].endsWith('/exchangeToken') && realCallbackCalls[2].endsWith('/user/info')
     && vls.getLocalSessionToken() === 'fixture-exchanged' && !window.location.href.includes('accessToken='),
   'actual SSO callback did not exchange, verify permissions and clean credentials')
   managerForGuard.hasPlatformCallbackToken = () => false
@@ -359,7 +380,7 @@ try {
   const eventRoute = { path: '/event-management', fullPath: '/event-management',
     matched: [{ path: '/event-management' }],
     meta: { requiresAuth: true, authScope: localEvents.LOCAL_EVENT_AUTH_SCOPE } }
-  check(routerSource.includes("meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE }"), 'event route lost its local auth scope')
+  check(routerSource.includes("meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE"), 'event route lost its local auth scope')
   for (const platformToken of ['', 'fixture-expired-platform']) {
     identity('multi')
     for (const storage of [sessionStorage, localStorage]) {
@@ -440,22 +461,26 @@ try {
   }
   identity('multi'); localEvents.selectRouteAuthScope(eventRoute.meta)
   const layoutSource = readFileSync(path.join(root, 'src/layout/index.vue'), 'utf8')
-  const userLoaderSource = layoutSource.slice(layoutSource.indexOf('const loadBladeUserInfo = async () => {'), layoutSource.indexOf('// Load info'))
-  const profile = { value: {} }, tenant = { value: {} }, tenants = { value: [] }
-  const authApi = await server.ssrLoadModule('/src/api/auth.js')
+  const profileCalls = []
   vls.authRequest.defaults.adapter = async config => {
+    profileCalls.push(config.url)
+    if (config.url.endsWith('/mode')) return { config, status: 200, headers: {}, data: { code: 200, data: { tenantType: 'multi' } } }
     assert.equal(config.url, '/blade-system/user/info')
     assert.equal(config.vlsLocalSessionOnly, true)
-    return { config, status: 200, headers: {}, data: { code: 200, data: { userName: 'Local event user', tenantId: 'fixture-tenant' } } }
+    return { config, status: 200, headers: {}, data: { code: 200, data: {
+      user: { nickName: 'Local event user', tenantId: 'fixture-tenant' }, userName: 'shadow-account', realName: 'shadow-account',
+      tenantId: 'fixture-tenant', accessToken: 'fixture-local', permissions: ['active-safety:events:list']
+    } } }
   }
-  const loadProfile = new Function('authManager', 'getUserInfo', 'currentTenant', 'currentUser', 'tenantList', 'resolveAdminFlag', 'localEventRoute',
-    userLoaderSource + '\nreturn loadBladeUserInfo')(new AuthManager(), authApi.getUserInfo, tenant, profile, tenants, () => false, { value: true })
-  check(await loadProfile() && tenant.value.id === 'fixture-tenant' && profile.value.userName === 'Local event user', 'event header did not use trusted local user info')
-  const forceSource = layoutSource.slice(layoutSource.indexOf('const forceLoadUserAndTenantInfo = async () => {'), layoutSource.indexOf('// Load userinfo'))
-  const forceProfile = new Function('loadBladeUserInfo', 'loadTenantInfo', 'localEventRoute', forceSource + '\nreturn forceLoadUserAndTenantInfo')(
-    loadProfile, () => { throw new Error('local event header called platform tenant service') }, { value: true })
-  await forceProfile(); checks++
+  await guard(eventRoute, route, value => { nextResult = value })
+  const profile = menuAccessState.navigationUser.value
+  check(nextResult === undefined && profile.tenantId === 'fixture-tenant' && profile.userName === 'Local event user'
+    && !('accessToken' in profile) && profileCalls.length === 2, 'event route did not publish one trusted, sanitized header profile')
+  check(layoutSource.includes('navigationUser.value') && !layoutSource.includes('getUserTenants'), 'event header fetched a second identity or the platform tenant list')
   const rightInfoSource = readFileSync(path.join(root, 'src/layout/RightInfoBar.vue'), 'utf8')
+  const header = layoutSource.slice(layoutSource.indexOf('class="header-right"'), layoutSource.indexOf('</el-header>'))
+  check(header.includes(`<RightInfoBar v-if="tenantMode === 'multi'"`) && header.includes(`<el-dropdown v-if="tenantMode === 'single'"`)
+    && !header.includes('localEventRoute'), 'event route replaced the tenant account header')
   const expiryCallbackSource = rightInfoSource.slice(rightInfoSource.indexOf('function handleAutomaticExpiry() {'), rightInfoSource.indexOf('async function endLocalSession()'))
   let platformLoginCalls = 0, destroyedSdk = 0
   const automaticSdkExpiry = new Function('isLocalEventScopeActive', 'loginAgain', 'window', 'emit', 'destroyed', `let disposed=false,changingIdentity=false,timer,bar={destroy:destroyed}; ${expiryCallbackSource}\nreturn handleAutomaticExpiry`)(
@@ -493,5 +518,21 @@ try {
   managerForGuard.saveUserToLocal({ accessToken: 'new-guard-login', tenantId: 'new-tenant' })
   finishGuard(null); await checkingRoute
   check(nextResult === false && !sessionTestRedirects.length && vls.getLocalSessionToken() === 'new-guard-login', 'late guard redirected newer login')
+  identity()
+  let failOldNavigation
+  managerForGuard.checkLocalEventLogin = () => new Promise((_, reject) => { failOldNavigation = reject })
+  managerForGuard.checkExternalPlatformLogin = async () => ({ permissions: [], tenantId: 'fixture-tenant' })
+  let oldResult
+  const pendingLocalNavigation = guard(eventRoute, route, value => { oldResult = value })
+  await guard(route, {}, value => { nextResult = value })
+  failOldNavigation(new Error('obsolete event request'))
+  await pendingLocalNavigation
+  check(oldResult === false && nextResult === undefined && !localEvents.isLocalEventScopeActive()
+    && !authCheckState.authCheckFailed.value, 'a superseded navigation changed the current route recovery state')
+  routeError(new Error('obsolete chunk'), eventRoute, route)
+  check(!authCheckState.authCheckFailed.value, 'obsolete chunk reported a failure for the current route')
+  routeError(new Error('unavailable chunk'), route, {})
+  check(authCheckState.routeLoadFailed.value && authCheckState.authCheckRetryPath.value === '/workspace'
+    && vls.getLocalSessionToken() === 'fixture-local', 'current chunk failure lacks a reload recovery or cleared the session')
   console.log(JSON.stringify({ passed: true, checks, transport: 'synthetic Axios adapters only', clients: clients.length }))
 } finally { await server.close() }

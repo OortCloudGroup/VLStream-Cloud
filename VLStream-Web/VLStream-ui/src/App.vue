@@ -7,10 +7,10 @@
 
 <template>
   <el-config-provider :locale="elementLocale">
-    <div id="app">
+    <div class="application-view">
       <router-view v-slot="{ Component }">
         <component :is="Component" v-if="Component" />
-        <AuthCheckFallback v-else />
+        <AuthCheckFallback v-if="!Component || authCheckFailed" :compact="Boolean(Component)" />
       </router-view>
     </div>
   </el-config-provider>
@@ -19,10 +19,11 @@
 <script setup>
 import { elementLocale } from '@/i18n'
 import AuthCheckFallback from '@/components/AuthCheckFallback.vue'
+import { authCheckFailed } from '@/utils/authCheckState'
 </script>
 
 <style scoped>
-#app {
+.application-view {
   height: 100vh;
 }
 </style>

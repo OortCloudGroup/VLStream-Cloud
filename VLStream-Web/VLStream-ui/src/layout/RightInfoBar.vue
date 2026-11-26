@@ -7,13 +7,12 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { logout as logoutLocal } from '@/api/system/localAuth'
-import { getPlatformHeaderUser } from '@/api/platformHeader'
 import { currentLocale, setLocale, translatePhrase } from '@/i18n'
 import { authManager } from '@/utils/auth'
 import { getPlatformAccessToken } from '@/utils/request'
 import { isLocalEventScopeActive } from '@/utils/localEventAccess.mjs'
 
-const emit = defineEmits(['ready-change', 'admin-status-change'])
+const emit = defineEmits(['ready-change'])
 const container = ref(null)
 const switching = ref(false)
 let bar
@@ -21,6 +20,7 @@ let disposed = false
 let changingIdentity = false
 let token = ''
 let timer
+let startupTimer
 let script
 
 function loginAgain() {
@@ -92,6 +92,9 @@ function loadSdk(url) {
 }
 
 onMounted(async () => {
+  const deadline = new Promise((_, reject) => {
+    startupTimer = window.setTimeout(() => reject(new Error('SDK 加载超时')), 12_000)
+  })
   try {
     const platformBase = new URL(import.meta.env.VITE_PLATFORM_API_BASE || '/', window.location.origin)
     const loginUrl = new URL(import.meta.env.VITE_PLATFORM_LOGIN_URL || '/bus/apaas-web/loginPage/index.html', window.location.origin)
@@ -99,7 +102,7 @@ onMounted(async () => {
     const platformWebBase = `${loginUrl.origin}${loginUrl.pathname.split('/loginPage/')[0]}`.replace(/\/+$/, '')
     token = getPlatformAccessToken()
     if (!token) throw new Error('缺少平台登录状态')
-    const sdk = await loadSdk(sdkUrl.href)
+    const sdk = await Promise.race([loadSdk(sdkUrl.href), deadline])
     if (disposed) return
     bar = sdk.mountBar(container.value, {
       baseUrl: `${platformBase.href.replace(/\/+$/, '')}/`,
@@ -118,12 +121,9 @@ onMounted(async () => {
       onAuthExpired: handleAutomaticExpiry,
       onError: () => { /* SDK presents its own error; retain the host navigation. */ }
     })
-    await bar.ready
-    if (disposed) return
+    await Promise.race([bar.ready, deadline])
+    if (disposed || !bar) return
     emit('ready-change', true)
-    getPlatformHeaderUser().then(user => {
-      if (!disposed) emit('admin-status-change', Boolean(user?.isAdmin || user?.is_admin))
-    }).catch(() => {})
     timer = window.setInterval(async () => {
       if (disposed || changingIdentity) return
       const nextToken = getPlatformAccessToken()
@@ -141,15 +141,19 @@ onMounted(async () => {
     if (!disposed) {
       bar?.destroy()
       bar = undefined
+      script?.remove()
       emit('ready-change', false)
       ElMessage.warning(translatePhrase('用户信息组件加载失败，已使用原有导航'))
     }
+  } finally {
+    window.clearTimeout(startupTimer)
   }
 })
 
 watch(currentLocale, locale => bar?.updateOptions({ locale }))
 onBeforeUnmount(() => {
   disposed = true
+  window.clearTimeout(startupTimer)
   window.clearInterval(timer)
   bar?.destroy()
   script?.remove()

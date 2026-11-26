@@ -262,7 +262,7 @@ const departmentName = computed(() => headerUser.value.oort_depname || headerUse
 const identityList = computed(() => headerUser.value.user_ident_info?.user_ident || headerUser.value.user_ident || [])
 const realNameIdentity = computed(() => identityList.value.find(item => Number(item.identity_type) === 2))
 const isRealNamed = computed(() => Number(realNameIdentity.value?.status ?? headerUser.value.realNameStatus ?? headerUser.value.real_name_status) === 1)
-const tenantId = computed(() => headerUser.value.tenant_id || headerUser.value.tenantId || headerUser.value.tenant?.tenant_id || props.fallbackTenant?.id || '')
+const tenantId = computed(() => props.fallbackTenant?.id || headerUser.value.tenant_id || headerUser.value.tenantId || headerUser.value.tenant?.tenant_id || '')
 const userId = computed(() => headerUser.value.user_id || headerUser.value.userId || headerUser.value.id || props.fallbackUser?.userId || '')
 const isAdmin = computed(() => Boolean(headerUser.value.isAdmin || headerUser.value.is_admin))
 const isTenantAdmin = computed(() => Boolean(headerUser.value.isTenantAdmin || headerUser.value.is_tenant_admin || headerUser.value.user?.is_tenant_admin))

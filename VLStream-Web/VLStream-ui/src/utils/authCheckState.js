@@ -5,14 +5,17 @@ import { ref } from 'vue'
 export const authCheckFailed = ref(false)
 export const authCheckForbidden = ref(false)
 export const authCheckRetryPath = ref('/workspace')
+export const routeLoadFailed = ref(false)
 
 export function beginAuthCheck() {
   authCheckFailed.value = false
   authCheckForbidden.value = false
+  routeLoadFailed.value = false
 }
 
-export function failAuthCheck(error, retryPath) {
+export function failAuthCheck(error, retryPath, { reload = false } = {}) {
   authCheckRetryPath.value = retryPath
   authCheckForbidden.value = error?.response?.status === 403 || Number(error?.response?.data?.code) === 403
+  routeLoadFailed.value = reload
   authCheckFailed.value = true
 }

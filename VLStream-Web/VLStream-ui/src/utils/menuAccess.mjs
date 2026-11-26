@@ -41,6 +41,7 @@ const devicePages = ['/vlstream/device', '/isup/isupDevice', '/ehome/device', '/
 const workOrderPages = ['/active-safety/work-orders/my', '/active-safety/work-orders/pending',
   '/active-safety/work-orders/completed', '/active-safety/work-orders/claimable',
   '/active-safety/settings/work-orders']
+const singleTenantPages = new Set([...workOrderPages, '/active-safety/settings/secure', '/workOrderDetails'])
 // Legacy workflow list grants keep periodic work orders reachable. The server
 // independently filters ordinary work orders when the page grant is absent.
 const periodicWorkOrderListPermissions = {
@@ -88,7 +89,12 @@ export function permissionForPage(path) {
   return existingPermissions[path] || `vls:menu:${path.slice(1).replaceAll('/', ':')}`
 }
 
-export function canAccessPage(path, permissions) {
+export function isSingleTenantPage(path) {
+  return singleTenantPages.has(path)
+}
+
+export function canAccessPage(path, permissions, tenantMode) {
+  if (tenantMode === 'multi' && isSingleTenantPage(path)) return false
   const required = routeAliases[path] || (pageSet.has(path) ? [path] : null)
   if (!required) return true // login, workspace, personal account and other baseline routes
   if (!Array.isArray(permissions)) return false
@@ -97,12 +103,12 @@ export function canAccessPage(path, permissions) {
     (periodicWorkOrderListPermissions[page] && permissions.includes(periodicWorkOrderListPermissions[page])))
 }
 
-export function filterMenuRoutes(routes, permissions) {
+export function filterMenuRoutes(routes, permissions, tenantMode) {
   return routes.flatMap(item => {
     if (Array.isArray(item.children) && item.children.length) {
-      const children = filterMenuRoutes(item.children, permissions)
+      const children = filterMenuRoutes(item.children, permissions, tenantMode)
       return children.length ? [{ ...item, children }] : []
     }
-    return canAccessPage(item.path, permissions) ? [item] : []
+    return canAccessPage(item.path, permissions, tenantMode) ? [item] : []
   })
 }

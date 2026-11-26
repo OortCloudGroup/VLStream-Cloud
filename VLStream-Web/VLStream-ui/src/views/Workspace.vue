@@ -62,7 +62,15 @@
           <div class="card-content">
             <div class="card-text">
               <h3>VLStream Cloud</h3>
-              <el-button type="primary" size="small" class="guide-btn" @click="openGuide">
+              <el-button
+                type="primary"
+                size="small"
+                class="guide-btn"
+                tag="a"
+                :href="guideUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {{ tp('查看引导手册') }}
               </el-button>
             </div>
@@ -78,25 +86,22 @@
             <h3>{{ tp('常用功能') }}</h3>
           </div>
           <div class="functions-grid">
-            <div
-              v-for="item in functionList"
-              :key="item.key"
-              class="function-card"
-              @click="item.path && navigateTo(item.path)"
-            >
-              <img class="function-icon" :src="item.icon" :alt="item.label" />
-              <div class="function-text">{{ item.label }}</div>
-            </div>
+            <component :is="item.path ? 'router-link' : 'span'" v-for="item in functionList" :key="item.label" :to="item.path" class="function-card">
+              <img class="function-icon" :src="item.icon" alt="" />
+              <span class="function-text">{{ tp(item.label) }}</span>
+            </component>
           </div>
         </div>
 
         <div class="devices-panel">
           <div class="panel-header">
             <h3>{{ tp('VLS 设备列表') }}</h3>
-            <el-link type="primary" class="more-link" @click="gotoMoreDevice">{{ tp('更多') }}</el-link>
+            <el-link type="primary" class="more-link" :href="vlstreamDeviceUrl">{{ tp('更多') }}</el-link>
           </div>
-          <div class="devices-list">
-            <el-empty v-if="!hotDevices.length" :description="tp('暂无 VLS 设备')" :image-size="40" />
+          <div v-loading="devicesLoading" class="devices-list">
+            <el-empty v-if="!devicesLoading && !hotDevices.length" :description="tp(deviceLoadFailed ? '加载 VLS 设备列表失败' : '暂无 VLS 设备')" :image-size="40">
+              <el-button v-if="deviceLoadFailed" link type="primary" @click="loadDevices">{{ tp('重试') }}</el-button>
+            </el-empty>
             <div v-for="device in hotDevices" :key="device.id" class="device-item">
               <div class="device-info">
                 <img class="device-cam" src="@/assets/img/workbench/device_cam.png" alt="device" />
@@ -111,7 +116,6 @@
         </div>
       </div>
 
-      <!--  -->
       <div class="approval-panel">
         <div class="panel-header">
           <h3>{{ tp('我的待审核') }}</h3>
@@ -187,30 +191,34 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FullScreen } from '@element-plus/icons-vue'
 import { getVlsDeviceCatalog } from '@/api/vlsDeviceCatalog'
-import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import { ElMessage } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
+import { canAccessPage } from '@/utils/menuAccess.mjs'
+import { menuPermissions, navigationUser } from '@/utils/menuAccessState'
 import { currentLocale, translatePhrase } from '@/i18n'
 
+import iconAlgoTunnel from '@/assets/img/workbench/algo_tunnel.png'
+import iconOperationLog from '@/assets/img/workbench/operation_log.png'
 import iconVideoPlaza from '@/assets/img/workbench/video_plaza.png'
 import iconSceneGovernance from '@/assets/img/workbench/scene_governance.png'
 import iconEventManagement from '@/assets/img/workbench/event_management.png'
 import iconAlgoMarket from '@/assets/img/workbench/algo_market.png'
-import iconAlgoTunnel from '@/assets/img/workbench/algo_tunnel.png'
 import iconDeviceManagement from '@/assets/img/workbench/device_management.png'
 import iconVideoPlayback from '@/assets/img/workbench/video_playback.png'
-import iconOperationLog from '@/assets/img/workbench/operation_log.png'
 import iconAlgoTraining from '@/assets/img/workbench/algo_training.png'
 import iconAlgoOrchestration from '@/assets/img/workbench/algo_orchestration.png'
+
+defineOptions({ name: 'WorkspaceHome' })
 
 const router = useRouter()
 const tp = source => translatePhrase(source)
 
-const userName = ref('用户')
+const VlsDevicePlayer = defineAsyncComponent(() => import('@/components/VlsDevicePlayer.vue'))
+const userName = computed(() => navigationUser.value?.userName || tp('用户'))
 const now = ref(new Date())
 const weatherTemp = ref('--\u00b0C')
 let clockTimer = null
@@ -239,18 +247,22 @@ const greetingLine = computed(() => currentLocale.value === 'zh-CN'
   : `${greetingText.value}, ${userName.value}!`)
 
 const functionListSource = [
-  { key: 'video-plaza', label: '视频广场', path: 'video-square', icon: iconVideoPlaza },
-  { key: 'scene-governance', label: '场景治理', path: 'scene-governance', icon: iconSceneGovernance },
-  { key: 'event-management', label: '事件管理', path: 'event-management', icon: iconEventManagement },
-  { key: 'algo-market', label: '算法超市', path: 'algorithm-management', icon: iconAlgoMarket },
-  { key: 'algo-tunnel', label: '算法隧道', path: '', icon: iconAlgoTunnel },
-  { key: 'device-management', label: '设备管理', path: 'device-management', icon: iconDeviceManagement },
-  { key: 'video-playback', label: '视频回放', path: 'video-playback', icon: iconVideoPlayback },
-  { key: 'operation-log', label: '操作日志', path: '', icon: iconOperationLog },
-  { key: 'algo-training', label: '算法自主训练', path: 'algorithm-training', icon: iconAlgoTraining },
-  { key: 'algo-orchestration', label: '算法编排', path: 'algorithm-orchestration', icon: iconAlgoOrchestration }
+  { label: '视频广场', path: '/video-square', icon: iconVideoPlaza },
+  { label: '场景治理', path: '/scene-governance', icon: iconSceneGovernance },
+  { label: '事件管理', path: '/event-management', icon: iconEventManagement },
+  { label: '算法超市', path: '/algorithm-management', icon: iconAlgoMarket },
+  { label: '算法隧道', icon: iconAlgoTunnel },
+  { label: '设备管理', path: '/vlstream/device', icon: iconDeviceManagement },
+  { label: '视频回放', path: '/video-playback', icon: iconVideoPlayback },
+  { label: '操作日志', icon: iconOperationLog },
+  { label: '算法自主训练', path: '/algorithm-training', icon: iconAlgoTraining },
+  { label: '算法编排', path: '/algorithm-task', icon: iconAlgoOrchestration }
 ]
-const functionList = computed(() => functionListSource.map(item => ({ ...item, label: tp(item.label) })))
+const functionList = computed(() => functionListSource.filter(item => !item.path || canAccessPage(item.path, menuPermissions.value)))
+const vlstreamDeviceUrl = router.resolve('/vlstream/device').href
+const guideUrl = computed(() => currentLocale.value === 'zh-CN'
+  ? 'https://github.com/OortCloudGroup/VLStream-Cloud/blob/main/README.zh-CN.md'
+  : 'https://github.com/OortCloudGroup/VLStream-Cloud#readme')
 
 const playerDialogTitle = computed(() => {
   const preview = tp('摄像头预览')
@@ -316,8 +328,9 @@ const currentPlayDevice = ref(null)
 const workspacePlayerRef = ref(null)
 
 const hotDevices = ref([])
-
 const approvalData = ref([])
+const devicesLoading = ref(true)
+const deviceLoadFailed = ref(false)
 
 /**
  * full .
@@ -348,26 +361,12 @@ const handlePlayerClose = () => {
   showPlayer.value = false
 }
 
-const gotoMoreDevice = async () => {
-  await router.push('/vlstream/device')
-}
-
 /**
  * Generate OPlayer parameter.
  */
 const handlePlay = (device) => {
   currentPlayDevice.value = device
   showPlayer.value = true
-}
-
-const navigateTo = (path) => {
-  if (!path) return
-  router.push('/' + path)
-}
-
-const openGuide = () => {
-  const guideUrl = `${import.meta.env.BASE_URL}vlstream-cloud-guide.pdf`
-  // window.open(guideUrl, '_blank', 'noopener')
 }
 
 const handleDetail = () => {
@@ -382,24 +381,22 @@ const handleDelete = () => {
   ElMessage.info(tp('删除功能开发中'))
 }
 
-onMounted(async () => {
-  startClock()
-  startWeatherRefresh()
-  try {
-    const cached = localStorage.getItem('userInfo')
-    if (cached) {
-      const info = JSON.parse(cached)
-      userName.value = info.userName || info.username || userName.value
-    }
-
-  } catch {
-    console.warn('读取用户信息失败，使用默认名称')
-  }
+async function loadDevices() {
+  devicesLoading.value = true
+  deviceLoadFailed.value = false
   try {
     hotDevices.value = await getVlsDeviceCatalog({ limit: 5 })
-  } catch (e) {
-    ElMessage.error(tp('加载 VLS 设备列表失败'))
+  } catch {
+    deviceLoadFailed.value = true
+  } finally {
+    devicesLoading.value = false
   }
+}
+
+onMounted(() => {
+  startClock()
+  startWeatherRefresh()
+  void loadDevices()
 })
 
 onBeforeUnmount(() => {
@@ -730,6 +727,7 @@ onBeforeUnmount(() => {
   padding: 12px 8px;
   border-radius: 8px;
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.25s ease;
 }
 
