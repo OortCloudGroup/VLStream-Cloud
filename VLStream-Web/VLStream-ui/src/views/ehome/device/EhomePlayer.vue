@@ -8,6 +8,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { VideoCamera } from '@element-plus/icons-vue'
+import { loadJessibuca } from '@/utils/legacyVideoDecoders'
 
 const props = defineProps({ url: { type: String, required: true } })
 const container = ref()
@@ -15,31 +16,10 @@ const message = ref('正在连接视频…')
 let player
 let disposed = false
 
-const loadJessibuca = () => {
-  if (window.Jessibuca) return Promise.resolve(window.Jessibuca)
-  if (window.jessibuca) {
-    window.Jessibuca = window.jessibuca
-    return Promise.resolve(window.Jessibuca)
-  }
-  if (!window.__ehomeJessibucaLoader) {
-    window.__ehomeJessibucaLoader = new Promise((resolve, reject) => {
-      const script = document.createElement('script')
-      script.src = `${import.meta.env.BASE_URL}jessibuca/jessibuca.js?ehome=1`
-      script.onload = () => {
-        window.Jessibuca = window.Jessibuca || window.jessibuca
-        window.Jessibuca ? resolve(window.Jessibuca) : reject(new Error('播放器脚本未导出'))
-      }
-      script.onerror = () => reject(new Error('播放器脚本加载失败'))
-      document.head.appendChild(script)
-    })
-  }
-  return window.__ehomeJessibucaLoader
-}
-
 onMounted(async () => {
   let Player
   try { Player = await loadJessibuca() }
-  catch { message.value = '播放器加载失败，请刷新页面'; return }
+  catch { if (!disposed) message.value = '播放器加载失败，请重新播放'; return }
   if (disposed) return
   player = new Player({
     container: container.value,

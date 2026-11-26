@@ -145,6 +145,9 @@ export class CameraRtcSession {
     this.retryTimer = null
     this.callTimer = null
     this.heartbeatTimer = null
+    this.removeVideoListeners = null
+    this.videoReady = false
+    this.autoplayBlocked = false
     this.stopped = true
     this.generation = 0
   }
@@ -184,8 +187,15 @@ export class CameraRtcSession {
     this.cleanupSocket()
     this.setStatus('connecting', '正在连接 CameraRTC 信令服务…')
     this.clientId = newGuid(this.runtime)
-    const socket = new this.runtime.WebSocket(`${this.socketUrl}/wswebclient/${this.clientId}`)
+    let socket
+    try {
+      socket = new this.runtime.WebSocket(`${this.socketUrl}/wswebclient/${this.clientId}`)
+    } catch {
+      this.scheduleReconnect('信令连接中断')
+      return
+    }
     this.socket = socket
+    this.armCallTimeout()
     socket.onopen = () => {
       if (this.stopped || socket !== this.socket) return
       this.emitDiagnostic('signaling-open')
@@ -206,13 +216,13 @@ export class CameraRtcSession {
     if (this.stopped || !this.isSocketOpen()) return
     this.generation += 1
     this.cleanupPeerConnection()
-    this.clearAttemptTimers()
+    this.clearDisconnectTimer()
     this.sessionId = `PCWEB-${newGuid(this.runtime)}`
     this.pendingRemoteCandidates = []
     this.remoteDescriptionReady = false
     this.setStatus('connecting', '正在连接设备…')
     this.send('__connectto', { to: this.deviceId })
-    this.armCallTimeout()
+    if (!this.callTimer) this.armCallTimeout()
   }
 
   async handleSocketMessage(event) {
@@ -276,13 +286,13 @@ export class CameraRtcSession {
       source: 'MainStream',
       iceservers: JSON.stringify(this.iceConfiguration),
     })
-    this.armCallTimeout()
   }
 
   async handleOffer(data) {
     const generation = this.generation
     try {
       const peerConnection = this.createPeerConnection(generation)
+      this.setStatus('negotiating', '正在建立视频通道…')
       await peerConnection.setRemoteDescription({
         type: 'offer',
         sdp: data.sdp,
@@ -299,7 +309,6 @@ export class CameraRtcSession {
         type: answer.type,
         sdp: answer.sdp,
       })
-      this.setStatus('negotiating', '正在建立视频通道…')
     } catch (error) {
       this.emitDiagnostic('offer-error', {
         message: error?.message || String(error),
@@ -325,22 +334,41 @@ export class CameraRtcSession {
       }
     }
 
+    const video = this.videoElement
+    const handleVideoReady = () => {
+      if (!this.isCurrentPeer(peerConnection, generation) || this.videoReady || !video.srcObject ||
+        !(video.videoWidth > 0 && video.readyState >= 2) || video.paused) return
+      // ICE and incoming tracks can arrive without any decoded video.
+      this.videoReady = true
+      this.autoplayBlocked = false
+      this.clearCallTimer()
+      this.retryCount = 0
+      this.setStatus('playing', '播放中')
+    }
+    const videoEvents = ['playing', 'loadeddata', 'resize']
+    for (const event of videoEvents) video.addEventListener?.(event, handleVideoReady)
+    this.removeVideoListeners = () => {
+      for (const event of videoEvents) video.removeEventListener?.(event, handleVideoReady)
+    }
+
     peerConnection.ontrack = (event) => {
       if (!this.isCurrentPeer(peerConnection, generation)) return
       const stream = event.streams?.[0] || new this.runtime.MediaStream([event.track])
-      this.videoElement.srcObject = stream
+      if (video.srcObject !== stream) video.srcObject = stream
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true
       })
-      const playResult = this.videoElement.play()
+      const playResult = video.play()
       if (playResult?.then) {
         playResult
-          .then(() => {
-            this.videoElement.muted = false
-          })
+          .then(handleVideoReady)
           .catch((error) => {
             if (!this.isCurrentPeer(peerConnection, generation)) return
-            if (this.nativeControlsOnAutoplayFailure) this.videoElement.controls = true
+            if (this.nativeControlsOnAutoplayFailure && !this.videoReady) {
+              video.controls = true
+              this.autoplayBlocked = true
+              this.setStatus('awaiting-playback', '视频自动播放失败，请手动点击播放')
+            }
             this.emitDiagnostic('autoplay-rejected', {
               name: error?.name || 'Error',
               message: error?.message || String(error),
@@ -348,7 +376,6 @@ export class CameraRtcSession {
             })
           })
       }
-      this.setStatus('playing', '播放中')
     }
 
     peerConnection.onicecandidate = (event) => {
@@ -418,10 +445,8 @@ export class CameraRtcSession {
     this.emitDiagnostic('ice-state', { state })
     if (['connected', 'completed'].includes(state)) {
       this.clearDisconnectTimer()
-      this.clearCallTimer()
-      this.retryCount = 0
-      if (this.videoElement.srcObject) this.setStatus('playing', '播放中')
-      else this.setStatus('negotiating', '媒体通道已连接，正在等待画面…')
+      if (this.videoReady) this.setStatus('playing', '播放中')
+      else if (!this.autoplayBlocked) this.setStatus('negotiating', '媒体通道已连接，正在等待画面…')
       return
     }
 
@@ -449,6 +474,7 @@ export class CameraRtcSession {
     this.clearAttemptTimers()
     this.sendDisconnect()
     this.cleanupPeerConnection()
+    if (!this.isSocketOpen()) this.cleanupSocket()
 
     if (this.maxRetries >= 0 && this.retryCount >= this.maxRetries) {
       this.setStatus('failed', `${reason}，自动重连已达上限`)
@@ -476,7 +502,11 @@ export class CameraRtcSession {
     this.clearCallTimer()
     this.callTimer = this.runtime.setTimeout(() => {
       this.callTimer = null
-      this.scheduleReconnect('设备呼叫超时')
+      const iceState = this.peerConnection?.iceConnectionState
+      let reason = '设备呼叫超时'
+      if (!this.isSocketOpen()) reason = '信令连接中断'
+      else if (['connected', 'completed'].includes(iceState)) reason = '媒体连接失败'
+      this.scheduleReconnect(reason)
     }, this.callTimeoutMs)
   }
 
@@ -529,6 +559,10 @@ export class CameraRtcSession {
   }
 
   cleanupPeerConnection() {
+    this.removeVideoListeners?.()
+    this.removeVideoListeners = null
+    this.videoReady = false
+    this.autoplayBlocked = false
     const peerConnection = this.peerConnection
     this.peerConnection = null
     this.remoteDescriptionReady = false

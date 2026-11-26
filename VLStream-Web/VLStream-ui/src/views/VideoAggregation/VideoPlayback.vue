@@ -15,7 +15,7 @@
         <el-input v-model="listSearch" clearable :placeholder="$tp('搜索设备名称 / ID')" :prefix-icon="Search" />
         <el-button :icon="Refresh" :aria-label="$tp('刷新')" @click="loadCatalog" />
       </div>
-      <el-table :data="pageDevices" :row-class-name="({ row }) => device?.id === row.id ? 'selected-device' : ''" height="100%" @row-dblclick="selectDevice">
+      <el-table v-loading="catalogLoading" :data="pageDevices" :row-class-name="({ row }) => device?.id === row.id ? 'selected-device' : ''" height="100%" @row-dblclick="selectDevice">
         <el-table-column type="index" :index="index => (page - 1) * pageSize + index + 1" :label="$tp('序号')" width="68" />
         <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="150" show-overflow-tooltip />
         <el-table-column prop="deviceId" :label="$tp('设备 ID')" min-width="190" show-overflow-tooltip />
@@ -25,7 +25,7 @@
       </el-table>
       <el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[10, 20, 50]" :total="tableDevices.length" layout="total, prev, pager, next, sizes" />
     </main>
-    <el-dialog v-model="playerOpen" width="min(1360px, 94vw)" top="5vh" class="playback-dialog" append-to-body @closed="closePlayer">
+    <el-dialog v-model="playerOpen" width="min(1360px, 94vw)" top="5vh" class="playback-dialog" append-to-body @close="closePlayer">
       <template #header>
         <div class="dialog-heading">
           <span>{{ $tp('播放视频') }}<small>{{ device?.deviceName }}</small></span>
@@ -34,18 +34,20 @@
       <div v-loading="loading" class="playback-content">
         <div class="source-toolbar">
           <el-select v-if="device?.sources?.length > 1" v-model="sourceKey" :aria-label="$tp('设备来源')" @change="loadSources"><el-option v-for="item in device.sources" :key="key(item)" :value="key(item)" :label="`${item.protocol} · ${item.deviceName || item.rowId}`" /></el-select>
-          <el-select v-model="sourceId" :placeholder="$tp('选择录像通道')" @change="loadSegments"><el-option v-for="item in sources" :key="item.id" :value="item.id" :label="item.source?.channelName || item.source?.name || $tp('设备主码流')" /></el-select>
+          <el-select v-model="sourceId" :placeholder="$tp(loading || queryError || sources.length ? '选择录像通道' : '暂无录像通道')" :disabled="!sources.length" @change="loadSegments"><el-option v-for="item in sources" :key="item.id" :value="item.id" :label="item.source?.channelName || item.source?.name || $tp('设备主码流')" /></el-select>
           <el-tag v-if="recordSource" :type="recordSource.state === 'RECORDING' ? 'success' : 'info'">{{ $tp(recordingState(recordSource)) }}</el-tag>
         </div>
         <div class="date-panels">
-          <section class="date-panel years"><label>{{ $tp('年份') }}</label><div class="date-grid"><button v-for="year in years" :key="year" :class="{ chosen: selectedYear === year }" @click="chooseDate(year, selectedMonth, selectedDay)">{{ year }}</button></div></section>
-          <section class="date-panel months"><label>{{ $tp('月份') }}</label><div class="date-grid"><button v-for="month in 12" :key="month" :disabled="isFuture(selectedYear, month, 1)" :class="{ chosen: selectedMonth === month }" @click="chooseDate(selectedYear, month, selectedDay)">{{ month }}</button></div></section>
-          <section class="date-panel dates"><label>{{ $tp('日期') }} <small>{{ $tp('北京时间') }}</small></label><div class="date-grid"><button v-for="day in daysInMonth" :key="day" :disabled="isFuture(selectedYear, selectedMonth, day)" :class="{ chosen: selectedDay === day }" @click="chooseDate(selectedYear, selectedMonth, day)">{{ day }}</button></div></section>
+          <section class="date-panel years"><label>{{ $tp('年份') }}</label><div class="date-grid"><button v-for="year in years" :key="year" :disabled="!recordSource" :class="{ chosen: selectedYear === year }" @click="chooseDate(year, selectedMonth, selectedDay)">{{ year }}</button></div></section>
+          <section class="date-panel months"><label>{{ $tp('月份') }}</label><div class="date-grid"><button v-for="month in 12" :key="month" :disabled="!recordSource || isFuture(selectedYear, month, 1)" :class="{ chosen: selectedMonth === month }" @click="chooseDate(selectedYear, month, selectedDay)">{{ month }}</button></div></section>
+          <section class="date-panel dates"><label>{{ $tp('日期') }} <small>{{ $tp('北京时间') }}</small></label><div class="date-grid"><button v-for="day in daysInMonth" :key="day" :disabled="!recordSource || isFuture(selectedYear, selectedMonth, day)" :class="{ chosen: selectedDay === day }" @click="chooseDate(selectedYear, selectedMonth, day)">{{ day }}</button></div></section>
         </div>
-        <el-alert v-if="error" :title="error" type="error" :closable="false" />
+        <el-alert v-if="queryError || mediaError" :title="queryError || mediaError" type="error" :closable="false">
+          <el-button v-if="queryError" text type="primary" @click="retryQuery">{{ $tp('重试') }}</el-button>
+        </el-alert>
         <div class="media-layout">
           <section class="clip-panel"><div class="clip-heading">{{ $tp('视频列表') }} <small>{{ segments.length }}</small></div>
-            <div class="clip-list"><el-empty v-if="!segments.length" :image-size="40" :description="$tp('当天暂无录像')" />
+            <div class="clip-list"><el-empty v-if="!segments.length" :image-size="40" :description="$tp(clipListStatus)" />
               <button v-for="segment in segments" :key="segment.id" :class="['clip', { selected: active?.id === segment.id }]" @click="play(segment)">
                 <span class="clip-cover"><img v-if="posters[segment.id]" :src="posters[segment.id]" alt="" /><el-icon v-else><VideoPlay /></el-icon><small>{{ (Number(segment.size_bytes) / 1048576).toFixed(1) }} MB</small></span>
                 <span>{{ range(segment) }}</span>
@@ -53,7 +55,7 @@
             </div>
           </section>
           <section class="player-panel">
-            <div class="screen"><video v-if="url" ref="video" :src="url" controls playsinline @loadedmetadata="mediaReady" @loadeddata="capturePoster" @timeupdate="updateTime" @ended="next" @error="error = $tp('录像解码失败，请下载片段检查或选择其他录像')" /><div v-else class="empty"><el-icon><VideoPlay /></el-icon><strong>{{ $tp(loadingMedia ? '正在加载录像' : '当前没有可播放的录像') }}</strong><p>{{ $tp('开启手动录制或定时计划后，已保存的片段会显示在这里。') }}</p></div></div>
+            <div class="screen"><video v-if="url" ref="video" :src="url" controls playsinline @loadedmetadata="mediaReady" @loadeddata="capturePoster" @timeupdate="updateTime" @ended="next" @error="mediaError = $tp('录像解码失败，请下载片段检查或选择其他录像')" /><div v-else class="empty"><el-icon><VideoPlay /></el-icon><strong>{{ $tp(playerStatus) }}</strong><p v-if="!loading && !queryError && !recordSource">{{ $tp('开启手动录制或定时计划后，已保存的片段会显示在这里。') }}</p></div></div>
             <div class="player-toolbar"><span>{{ currentTime || '00:00:00' }}</span><el-select v-model="speed" size="small" :aria-label="$tp('播放速度')" @change="setSpeed"><el-option v-for="rate in [0.5, 1, 1.5, 2, 4]" :key="rate" :value="rate" :label="`${rate}×`" /></el-select><el-button text :disabled="!active || loadingMedia" @click="download">{{ $tp('下载当前片段') }}</el-button></div>
             <div class="track" role="group" :aria-label="$tp('录像时间轴')"><button v-for="segment in segments" :key="segment.id" :style="segmentStyle(segment)" :class="{ active: active?.id === segment.id }" :title="range(segment)" :aria-label="range(segment)" @click="play(segment)" /></div>
             <div class="hours"><span v-for="hour in [0, 4, 8, 12, 16, 20, 24]" :key="hour">{{ String(hour).padStart(2, '0') }}:00</span></div>
@@ -79,10 +81,16 @@ const tableDevices = computed(() => visibleDevices.value.filter(item => (!focuse
 const pageDevices = computed(() => tableDevices.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
 function filterDevice(value) { focusedDeviceId.value = value.id; device.value = value; page.value = 1 }
 function changeCategory(ids) { categoryIds.value = ids; focusedDeviceId.value = null; page.value = 1 }
-function closePlayer() { generation++; clearMedia(); posters.value = {} }
+function closePlayer() {
+  generation++
+  queryRequest?.abort()
+  clearMedia()
+  posters.value = {}
+}
 
 const devices = ref([]), device = ref(null), search = ref(''), categoryIds = ref(null)
-const catalogError = ref(''), error = ref(''), loading = ref(false), loadingMedia = ref(false)
+const catalogError = ref(''), catalogLoading = ref(false), queryError = ref(''), mediaError = ref('')
+const loading = ref(false), loadingMedia = ref(false)
 const sourceKey = ref(''), sources = ref([]), sourceId = ref(''), segments = ref([]), active = ref(null)
 const video = ref(null), url = ref(''), speed = ref(1), currentTime = ref('')
 const date = ref(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()))
@@ -100,47 +108,32 @@ function chooseDate(y, m, d) {
   if (date.value !== value) { date.value = value; loadSegments() }
 }
 function capturePoster() {
-  if (!active.value || !video.value?.videoWidth) return
+  if (!active.value || posters.value[active.value.id] || !video.value?.videoWidth) return
   try {
     const canvas = document.createElement('canvas'); canvas.width = 240; canvas.height = 135
     canvas.getContext('2d').drawImage(video.value, 0, 0, 240, 135)
     posters.value[active.value.id] = canvas.toDataURL('image/jpeg', 0.7)
   } catch { /* Thumbnail failure must not interrupt playback. */ }
 }
-async function warmPosters(items, ticket) {
-  // Bound background downloads to the first three clips; never prefetch an entire day.
-  for (const item of items.slice(0, 3)) {
-    if (disposed || ticket !== generation || !playerOpen.value) return
-    let objectUrl, preview
-    try {
-      const blob = await api.file(item.id)
-      if (disposed || ticket !== generation || !playerOpen.value) return
-      objectUrl = URL.createObjectURL(blob)
-      preview = document.createElement('video'); preview.muted = true; preview.preload = 'auto'
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Thumbnail timeout')), 8000)
-        const finish = () => { clearTimeout(timeout); resolve() }
-        preview.onerror = () => { clearTimeout(timeout); reject(new Error('Thumbnail unavailable')) }
-        preview.onloadeddata = () => { preview.currentTime = Math.min(0.1, preview.duration / 2); }
-        preview.onseeked = finish
-        preview.src = objectUrl
-      })
-      if (disposed || ticket !== generation || !playerOpen.value) return
-      const canvas = document.createElement('canvas'); canvas.width = 240; canvas.height = 135
-      canvas.getContext('2d').drawImage(preview, 0, 0, 240, 135)
-      posters.value[item.id] = canvas.toDataURL('image/jpeg', 0.7)
-    } catch { /* A missing thumbnail does not make a recording unavailable. */ }
-    finally { if (preview) { preview.removeAttribute('src'); preview.load() } if (objectUrl) URL.revokeObjectURL(objectUrl) }
-  }
-}
 const key = item => `${item.protocol}:${item.rowId}`
 const source = computed(() => device.value?.sources?.find(item => key(item) === sourceKey.value))
 const recordSource = computed(() => sources.value.find(item => item.id === sourceId.value))
+const clipListStatus = computed(() => {
+  if (loading.value) return '正在查询录像'
+  if (queryError.value) return '录像查询失败'
+  return recordSource.value ? '当天暂无录像' : '暂无录像通道'
+})
+const playerStatus = computed(() => {
+  if (loadingMedia.value) return '正在加载录像'
+  if (segments.value.length) return '选择录像片段播放'
+  return clipListStatus.value
+})
 const visibleDevices = computed(() => devices.value.filter(item => matchesVideoDevice(item, search.value) && (!categoryIds.value || categoryIds.value.includes(item.id))))
 const dayStart = computed(() => new Date(`${date.value}T00:00:00+08:00`).getTime())
 watch([listSearch, search, pageSize], () => { page.value = 1 })
 watch(tableDevices, values => { page.value = Math.min(page.value, Math.max(1, Math.ceil(values.length / pageSize.value))) })
-let generation = 0, mediaGeneration = 0, catalogGeneration = 0, disposed = false, poll, autoPlay = false, polling = false
+let generation = 0, mediaGeneration = 0, catalogGeneration = 0, disposed = false, poll, polling = false
+let queryRequest, mediaRequest
 const clock = time => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date(Number(time)))
 const range = segment => `${clock(segment.start_ms)} – ${clock(segment.end_ms)}`
 function segmentStyle(segment) {
@@ -148,11 +141,15 @@ function segmentStyle(segment) {
   return { insetInlineStart: `${from / 864000}%`, width: `${Math.max(.12, (to - from) / 864000)}%` }
 }
 function clearMedia() {
-  mediaGeneration++; video.value?.pause(); if (url.value) URL.revokeObjectURL(url.value)
-  url.value = ''; active.value = null; currentTime.value = ''; loadingMedia.value = false
+  mediaGeneration++
+  mediaRequest?.abort()
+  video.value?.pause()
+  if (url.value) URL.revokeObjectURL(url.value)
+  url.value = ''; active.value = null; currentTime.value = ''; loadingMedia.value = false; mediaError.value = ''
 }
 async function loadCatalog() {
   const ticket = ++catalogGeneration; catalogError.value = ''
+  catalogLoading.value = true
   try {
     const result = await getVideoDeviceCatalog()
     if (disposed || ticket !== catalogGeneration) return
@@ -160,71 +157,97 @@ async function loadCatalog() {
     const target = devices.value.find(item => item.sources?.some(s => s.protocol === route.query.protocol && String(s.rowId) === String(route.query.rowId)))
     if (target) await selectDevice(target, `${route.query.protocol}:${route.query.rowId}`)
   } catch (failure) { if (!disposed && ticket === catalogGeneration) catalogError.value = recordingError(failure) }
+  finally { if (!disposed && ticket === catalogGeneration) catalogLoading.value = false }
 }
-async function selectDevice(value, preferred) { device.value = value; playerOpen.value = true; posters.value = {}; sourceKey.value = typeof preferred === 'string' ? preferred : key(value.sources[0]); await loadSources() }
+async function selectDevice(value, preferred) {
+  device.value = value
+  playerOpen.value = true
+  sourceKey.value = typeof preferred === 'string' ? preferred : (value.sources?.length ? key(value.sources[0]) : '')
+  await loadSources()
+}
+function beginQuery() {
+  queryRequest?.abort()
+  queryRequest = new AbortController()
+  return queryRequest.signal
+}
+function retryQuery() {
+  return recordSource.value ? loadSegments() : loadSources()
+}
 async function loadSources() {
-  const ticket = ++generation; clearMedia(); segments.value = []; sources.value = []; sourceId.value = ''; error.value = ''
+  const ticket = ++generation
+  const signal = beginQuery()
+  clearMedia()
+  segments.value = []; sources.value = []; sourceId.value = ''; queryError.value = ''; posters.value = {}; loading.value = false
   if (!source.value) return
   loading.value = true
   try {
-    const rows = await api.sources(source.value.protocol, source.value.rowId)
+    const rows = await api.sources(source.value.protocol, source.value.rowId, signal)
     if (disposed || ticket !== generation) return
-    sources.value = rows; sourceId.value = rows[0]?.id || ''; loading.value = false
-    await loadSegments()
-  } catch (failure) { if (ticket === generation) error.value = recordingError(failure) }
+    sources.value = rows
+    sourceId.value = rows[0]?.id ?? ''
+    if (recordSource.value) await loadSegments()
+  } catch (failure) { if (ticket === generation) queryError.value = recordingError(failure) }
   finally { if (ticket === generation) loading.value = false }
 }
 async function loadSegments() {
-  const ticket = ++generation; clearMedia(); segments.value = []; error.value = ''; loading.value = false
-  if (!sourceId.value || !date.value) return
+  const ticket = ++generation
+  const signal = beginQuery()
+  clearMedia()
+  segments.value = []; queryError.value = ''; posters.value = {}; loading.value = false
+  if (!recordSource.value || !date.value) return
   loading.value = true
   try {
-    const rows = await api.segments(sourceId.value, date.value)
+    const rows = await api.segments(sourceId.value, date.value, signal)
     if (disposed || ticket !== generation) return
     segments.value = rows
-    warmPosters(rows, ticket)
-    if (rows.length) await play(rows[0], false)
-  } catch (failure) { if (ticket === generation) error.value = recordingError(failure) }
+  } catch (failure) { if (ticket === generation) queryError.value = recordingError(failure) }
   finally { if (ticket === generation) loading.value = false }
 }
-async function play(segment, shouldPlay = true) {
-  clearMedia(); const ticket = mediaGeneration; loadingMedia.value = true; error.value = ''; autoPlay = shouldPlay
+async function play(segment) {
+  clearMedia()
+  const ticket = mediaGeneration
+  mediaRequest = new AbortController()
+  loadingMedia.value = true
   try {
-    const blob = await api.file(segment.id)
+    const blob = await api.file(segment.id, mediaRequest.signal)
     if (disposed || ticket !== mediaGeneration) return
     if (!(blob instanceof Blob) || blob.type.includes('json')) throw new Error(t('录像文件不可用'))
     url.value = URL.createObjectURL(blob); active.value = segment; currentTime.value = clock(segment.start_ms)
-  } catch (failure) { if (ticket === mediaGeneration) error.value = recordingError(failure) }
+  } catch (failure) { if (ticket === mediaGeneration) mediaError.value = recordingError(failure) }
   finally { if (ticket === mediaGeneration) loadingMedia.value = false }
 }
 function setSpeed() { if (video.value) video.value.playbackRate = speed.value }
-function mediaReady() { setSpeed(); if (autoPlay) video.value?.play().catch(() => {}) }
+function mediaReady() { setSpeed(); video.value?.play().catch(() => {}) }
 function updateTime() {
   if (active.value) {
     currentTime.value = clock(Number(active.value.start_ms) + (video.value?.currentTime || 0) * 1000)
-    if (video.value?.currentTime > 0.2 && video.value.currentTime < 1) capturePoster()
   }
 }
 function next() { const index = segments.value.findIndex(item => item.id === active.value?.id); if (index >= 0 && index + 1 < segments.value.length) play(segments.value[index + 1]) }
 function download() { if (url.value && active.value) { const a = document.createElement('a'); a.href = url.value; a.download = `${active.value.id}.mp4`; a.click() } }
 async function refresh() {
-  if (!playerOpen.value || !source.value || loading.value || polling) return
+  if (document.hidden || !playerOpen.value || !source.value || loading.value || polling || queryError.value) return
   const ticket = generation; polling = true
+  const signal = beginQuery()
   try {
-    const rows = await api.sources(source.value.protocol, source.value.rowId)
+    const rows = await api.sources(source.value.protocol, source.value.rowId, signal)
     if (disposed || ticket !== generation) return
     sources.value = rows
-    if (!sourceId.value && rows.length) { sourceId.value = rows[0].id; await loadSegments(); return }
-    if (!sourceId.value) return
-    const items = await api.segments(sourceId.value, date.value)
+    if (!recordSource.value) {
+      if (!sourceId.value && !rows.length) return
+      sourceId.value = rows[0]?.id ?? ''
+      await loadSegments()
+      return
+    }
+    const items = await api.segments(sourceId.value, date.value, signal)
     if (disposed || ticket !== generation) return
     segments.value = items
-  } catch (failure) { if (!disposed && ticket === generation) error.value = recordingError(failure) }
+  } catch { /* Keep the last successful list available during background refresh failures. */ }
   finally { polling = false }
 }
 watch(() => [route.query.protocol, route.query.rowId], loadCatalog)
 onMounted(() => { loadCatalog(); poll = setInterval(refresh, 10000) })
-onBeforeUnmount(() => { disposed = true; generation++; catalogGeneration++; clearInterval(poll); clearMedia() })
+onBeforeUnmount(() => { disposed = true; catalogGeneration++; clearInterval(poll); closePlayer() })
 </script>
 <style scoped>
 .playback-workspace { display:grid; grid-template-columns:260px minmax(0,1fr); height:calc(100vh - 96px); min-height:640px; background:#fff; border-radius:16px; overflow:hidden; color:#202b40; }

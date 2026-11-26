@@ -6,9 +6,10 @@
 -->
 
 <template>
-  <div ref="container" @dblclick="fullscreenSwich" style="width:100%;height:100%;background-color: #000000;margin:0 auto;">
-    <div id="glplayer" style="width: 100%; height: 100%; display: flex"></div>
-    <div class="buttons-box" id="buttonsBox">
+  <div @dblclick="fullscreenSwich" style="width: 100%; min-height: 450px; background-color: #000; position: relative;">
+    <div :id="surfaceId" ref="surface" style="width: 100%; display: flex"></div>
+    <div v-if="playError" class="h265-video-error" role="status">{{ $tp(playError) }}</div>
+    <div class="buttons-box">
       <div class="buttons-box-left">
         <i v-if="!playing" class="iconfont icon-play h265web-btn" @click="unPause"></i>
         <i v-if="playing" class="iconfont icon-pause h265web-btn" @click="pause"></i>
@@ -30,197 +31,118 @@
 </template>
 
 <script>
-let h265webPlayer = {};
+import { markRaw } from 'vue'
+import { loadH265Web } from '@/utils/legacyVideoDecoders'
+
 /**
  * from github
  * @see https://github.com/numberwolf/h265web.js/blob/master/example_normal/index.js
  */
 const token = "base64:QXV0aG9yOmNoYW5neWFubG9uZ3xudW1iZXJ3b2xmLEdpdGh1YjpodHRwczovL2dpdGh1Yi5jb20vbnVtYmVyd29sZixFbWFpbDpwb3JzY2hlZ3QyM0Bmb3htYWlsLmNvbSxRUTo1MzEzNjU4NzIsSG9tZVBhZ2U6aHR0cDovL3h2aWRlby52aWRlbyxEaXNjb3JkOm51bWJlcndvbGYjODY5NCx3ZWNoYXI6bnVtYmVyd29sZjExLEJlaWppbmcsV29ya0luOkJhaWR1";
+let nextSurfaceId = 0
+
 export default {
-  name: 'h265web',
+  name: 'H265WebPlayer',
+  props: ['videoUrl', 'error', 'hasAudio', 'height'],
   data() {
     return {
+      surfaceId: `vls-h265-${++nextSurfaceId}`,
       playing: false,
       isNotMute: false,
-      quieting: false,
       fullscreen: false,
-      loaded: false, // mute
-      speed: 0,
-      kBps: 0,
-      btnDom: null,
-      videoInfo: null,
-      volume: 1,
-      rotate: 0,
-      vod: true, //
-      forceNoOffscreen: false,
-    };
+      player: null,
+      playVersion: 0,
+      playError: ''
+    }
   },
-  props: ['videoUrl', 'error', 'hasAudio', 'height'],
+  computed: {
+    streamUrl() {
+      return this.videoUrl ?? this.$route?.params?.url ?? ''
+    }
+  },
   mounted() {
-    window.onerror = (msg) => {
-      // console.error(msg)
-    };
-    console.log(this._uid)
-    let paramUrl = decodeURIComponent(this.$route.params.url)
-    this.$nextTick(() => {
-      this.updatePlayerDomSize()
-      window.onresize = () => {
-        this.updatePlayerDomSize()
-      }
-      if (typeof (this.videoUrl) == "undefined") {
-        this.videoUrl = paramUrl;
-      }
-      this.btnDom = document.getElementById("buttonsBox");
-      console.log("初始化时的地址为: " + this.videoUrl)
-      this.play(this.videoUrl)
-    })
+    void this.play(this.streamUrl)
   },
   watch: {
-    videoUrl(newData, oldData) {
-      this.play(newData)
-    },
-    immediate: true
+    streamUrl(url) {
+      void this.play(url)
+    }
+  },
+  beforeUnmount() {
+    this.destroy()
   },
   methods: {
-    updatePlayerDomSize() {
-      let dom = this.$refs.container;
-      let width = dom.parentNode.clientWidth
-      let height = (9 / 16) * width
-
-      const clientHeight = Math.min(document.body.clientHeight, document.documentElement.clientHeight)
-      if (height > clientHeight) {
-        height = clientHeight
-        width = (16 / 9) * height
-      }
-
-      dom.style.width = width + 'px';
-      dom.style.height = "450px";
-    },
-    create() {
-      let options = {};
-      console.log("hasAudio  " + this.hasAudio)
-      h265webPlayer[this._uid] = new window.new265webjs(this.videoUrl, Object.assign(
-          {
-            player: "glplayer", // id
-            width: 960,
-            height: 450,
-            token : token,
-            extInfo : {
-              coreProbePart : 0.4,
-              probeSize : 8192,
-              ignoreAudio : 0
-            }
-          },
-          options
-      ));
-      let h265web = h265webPlayer[this._uid];
-      h265web.onOpenFullScreen = () => {
-        this.fullscreen = true
-      }
-      h265web.onCloseFullScreen = () => {
-        this.fullscreen = false
-      }
-      h265web.onReadyShowDone = () => {
-        // ,
-        const result = h265web.play()
-        this.playing = result;
-      }
-      h265web.onLoadFinish = () => {
-        this.loaded = true;
-        // Get mediaInfo
-        // @see https://github.com/numberwolf/h265web.js/blob/8b26a31ffa419bd0a0f99fbd5111590e144e36a8/example_normal/index.js#L252C9-L263C11
-        // mediaInfo = playerObj.mediaInfo();
-      }
-      // h265web.onPlayTime = (...args) => {
-      //   console.log(args)
-      // }
-      h265web.do()
-    },
-    screenshot: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].screenshot();
+    async play(url) {
+      this.destroy()
+      this.playError = ''
+      if (typeof url !== 'string' || !url) return
+      const version = this.playVersion
+      const current = () => version === this.playVersion && this.$refs.surface
+      try {
+        const Player = await loadH265Web()
+        if (!current()) return
+        const player = markRaw(new Player(url, {
+          player: this.surfaceId,
+          width: 960,
+          height: 450,
+          token,
+          extInfo: { coreProbePart: 0.4, probeSize: 8192, ignoreAudio: 0 }
+        }))
+        this.player = player
+        player.onOpenFullScreen = () => { if (current()) this.fullscreen = true }
+        player.onCloseFullScreen = () => { if (current()) this.fullscreen = false }
+        player.onReadyShowDone = () => { if (current()) this.unPause() }
+        player.do()
+      } catch {
+        if (current()) this.playError = '播放器加载失败，请重新播放'
       }
     },
-    playBtnClick: function (event) {
-      this.play(this.videoUrl)
+    screenshot() { this.player?.screenshot() },
+    playBtnClick() { void this.play(this.streamUrl) },
+    unPause() {
+      if (!this.player) return this.playBtnClick()
+      this.player.play()
+      this.playing = this.player.isPlaying()
     },
-    play: function (url) {
-      console.log(url)
-      if (h265webPlayer[this._uid]) {
-        this.destroy();
-      }
-      this.create();
+    pause() {
+      this.player?.pause()
+      this.playing = false
     },
-    unPause: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].play();
-      }
-      this.playing = h265webPlayer[this._uid].isPlaying();
-      this.err = "";
+    mute() {
+      this.player?.setVoice(0)
+      this.isNotMute = false
     },
-    pause: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].pause();
-      }
-      this.playing = h265webPlayer[this._uid].isPlaying();
-      this.err = "";
+    cancelMute() {
+      if (!this.player) return
+      this.player.setVoice(1)
+      this.isNotMute = true
     },
-    mute: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].setVoice(0.0);
-        this.isNotMute = false;
-      }
+    destroy() {
+      this.playVersion++
+      const player = this.player
+      this.player = null
+      this.playing = false
+      this.fullscreen = false
+      player?.release()
     },
-    cancelMute: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].setVoice(1.0);
-        this.isNotMute = true;
-      }
-    },
-    destroy: function () {
-      if (h265webPlayer[this._uid]) {
-        h265webPlayer[this._uid].release();
-      }
-      if (document.getElementById("buttonsBox") == null) {
-        this.$refs.container.appendChild(this.btnDom)
-      }
-      h265webPlayer[this._uid] = null;
-      this.playing = false;
-      this.err = "";
-
-    },
-    eventcallbacK: function (type, message) {
-      // console.log("player event ")
-      // console.log(type)
-      // console.log(message)
-    },
-    fullscreenSwich: function () {
-      let isFull = this.isFullscreen()
-      if (isFull) {
-        h265webPlayer[this._uid].closeFullScreen()
-      } else {
-        h265webPlayer[this._uid].fullScreen()
-      }
-      this.fullscreen = !isFull;
-    },
-    isFullscreen: function () {
-      return document.fullscreenElement ||
-          document.msFullscreenElement ||
-          document.mozFullScreenElement ||
-          document.webkitFullscreenElement || false;
+    fullscreenSwich() {
+      if (this.fullscreen) this.player?.closeFullScreen()
+      else this.player?.fullScreen()
     }
-  },
-  destroyed() {
-    if (h265webPlayer[this._uid]) {
-      h265webPlayer[this._uid].destroy();
-    }
-    this.playing = false;
-    this.loaded = false;
-  },
+  }
 }
 </script>
 
 <style>
+.h265-video-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+}
+
 .buttons-box {
   width: 100%;
   height: 28px;

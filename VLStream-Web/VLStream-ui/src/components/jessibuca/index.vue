@@ -8,8 +8,9 @@
 <template>
   <div ref="container" @dblclick="fullscreenSwich"
        style="width:100%; height: 100%; background-color: #000000;margin:0 auto;position: relative;">
-    <div style="width:100%; padding-top: 56.25%; position: relative;"></div>
-    <div class="buttons-box" id="buttonsBox">
+    <div ref="surface" style="width: 100%; aspect-ratio: 16 / 9;"></div>
+    <div v-if="playError" class="legacy-video-error" role="status">{{ $tp(playError) }}</div>
+    <div class="buttons-box">
       <div class="buttons-box-left">
         <i v-if="!playing" class="iconfont icon-play jessibuca-btn" @click="playBtnClick"></i>
         <i v-if="playing" class="iconfont icon-pause jessibuca-btn" @click="pause"></i>
@@ -32,255 +33,139 @@
 </template>
 
 <script>
-let jessibucaPlayer = {};
+import { markRaw } from 'vue'
+import { loadJessibuca } from '@/utils/legacyVideoDecoders'
+
 export default {
-  name: 'jessibuca',
+  name: 'JessibucaPlayer',
+  props: ['videoUrl', 'error', 'hasAudio', 'height'],
   data() {
     return {
       playing: false,
       isNotMute: false,
-      quieting: false,
       fullscreen: false,
-      loaded: false, // mute
-      speed: 0,
-      performance: "", //
       kBps: 0,
-      btnDom: null,
-      videoInfo: null,
-      volume: 1,
-      rotate: 0,
-      vod: true, //
-      forceNoOffscreen: false,
-    };
+      player: null,
+      playVersion: 0,
+      playError: ''
+    }
   },
-  props: ['videoUrl', 'error', 'hasAudio', 'height'],
-  created() {
-    let paramUrl = decodeURIComponent(this.$route.params.url)
-    this.$nextTick(() => {
-      this.updatePlayerDomSize()
-      window.onresize = this.updatePlayerDomSize
-      if (typeof (this.videoUrl) == "undefined") {
-        this.videoUrl = paramUrl;
-      }
-      this.btnDom = document.getElementById("buttonsBox");
-    })
+  computed: {
+    streamUrl() {
+      return this.videoUrl ?? this.$route?.params?.url ?? ''
+    }
   },
-  // mounted() {
-  //   const ro = new ResizeObserver(entries => {
-  //     entries.forEach(entry => {
-  //       this.updatePlayerDomSize()
-  //     });
-  //   });
-  //   ro.observe(this.$refs.container);
-  // },
-  mounted(){
-    this.updatePlayerDomSize();
+  mounted() {
+    void this.play(this.streamUrl)
   },
   watch: {
-    videoUrl: {
-      handler(val, _) {
-        this.$nextTick(() => {
-          this.play(val);
-        })
-      },
-      immediate: true
+    streamUrl(url) {
+      void this.play(url)
     }
+  },
+  beforeUnmount() {
+    this.destroy()
   },
   methods: {
-    updatePlayerDomSize() {
-      let dom = this.$refs.container;
-      let width = dom.parentNode.clientWidth
-      let height = (9 / 16) * width
-      console.log(height)
-
-      console.log(dom.clientHeight)
-      if (height > dom.clientHeight) {
-        height = dom.clientHeight
-        width = (16 / 9) * height
-      }
-      if (width > 0 && height > 0) {
-        dom.style.width = width + 'px';
-        dom.style.height = height + "px";
-        dom.style.paddingTop = 0;
-      }
-    },
-    create() {
-      let options = {
-        container: this.$refs.container,
-        autoWasm: true,
-        background: "",
-        controlAutoHide: false,
-        debug: false,
-        decoder: `${import.meta.env.BASE_URL}jessibuca/decoder.js`,
-        forceNoOffscreen: false,
-        hasAudio: typeof (this.hasAudio) == "undefined" ? true : this.hasAudio,
-        heartTimeout: 5,
-        heartTimeoutReplay: true,
-        heartTimeoutReplayTimes: 3,
-        hiddenAutoPause: false,
-        hotKey: true,
-        isFlv: false,
-        isFullResize: false,
-        isNotMute: this.isNotMute,
-        isResize: false,
-        keepScreenOn: true,
-        loadingText: "请稍等, 视频加载中......",
-        loadingTimeout: 10,
-        loadingTimeoutReplay: true,
-        loadingTimeoutReplayTimes: 3,
-        openWebglAlignment: false,
-        operateBtns: {
-          fullscreen: false,
-          screenshot: false,
-          play: false,
-          audio: false,
-          record: false
-        },
-        recordType: "mp4",
-        rotate: 0,
-        showBandwidth: false,
-        supportDblclickFullscreen: false,
-        timeout: 10,
-        useMSE: true,
-        useWCS: false,
-        useWebFullScreen: true,
-        videoBuffer: 0.1,
-        wasmDecodeErrorReplay: true,
-        wcsUseVideoRender: true
-      };
-      console.log("Jessibuca -> options: ", options);
-      jessibucaPlayer[this._uid] = new window.Jessibuca({...options});
-
-      let jessibuca = jessibucaPlayer[this._uid];
-      let _this = this;
-      jessibuca.on("pause", function () {
-        _this.playing = false;
-      });
-      jessibuca.on("play", function () {
-        _this.playing = true;
-      });
-      jessibuca.on("fullscreen", function (msg) {
-        _this.fullscreen = msg
-      });
-      jessibuca.on("mute", function (msg) {
-        _this.isNotMute = !msg;
-      });
-      jessibuca.on("performance", function (performance) {
-        let show = "卡顿";
-        if (performance === 2) {
-          show = "非常流畅";
-        } else if (performance === 1) {
-          show = "流畅";
+    async play(url) {
+      this.destroy()
+      this.playError = ''
+      if (typeof url !== 'string' || !url) return
+      const version = this.playVersion
+      const current = () => version === this.playVersion && this.$refs.surface
+      try {
+        const Player = await loadJessibuca()
+        if (!current()) return
+        const player = markRaw(new Player({
+          container: this.$refs.surface,
+          autoWasm: true,
+          background: '',
+          controlAutoHide: false,
+          debug: false,
+          decoder: `${import.meta.env.BASE_URL}jessibuca/decoder.js`,
+          forceNoOffscreen: false,
+          hasAudio: this.hasAudio ?? true,
+          isNotMute: this.isNotMute,
+          isFlv: false,
+          hiddenAutoPause: false,
+          hotKey: true,
+          isFullResize: false,
+          isResize: false,
+          keepScreenOn: true,
+          useMSE: true,
+          useWCS: false,
+          useWebFullScreen: true,
+          wcsUseVideoRender: true,
+          videoBuffer: 0.1,
+          timeout: 10,
+          heartTimeout: 5,
+          heartTimeoutReplay: true,
+          heartTimeoutReplayTimes: 3,
+          loadingTimeout: 10,
+          loadingTimeoutReplay: true,
+          loadingTimeoutReplayTimes: 3,
+          loadingText: this.$tp('视频加载中，请稍候'),
+          openWebglAlignment: false,
+          recordType: 'mp4',
+          rotate: 0,
+          showBandwidth: false,
+          supportDblclickFullscreen: false,
+          wasmDecodeErrorReplay: true,
+          operateBtns: { fullscreen: false, screenshot: false, play: false, audio: false, record: false }
+        }))
+        this.player = player
+        player.on('play', () => {
+          if (!current()) return
+          this.playing = true
+          this.playError = ''
+        })
+        player.on('pause', () => { if (current()) this.playing = false })
+        player.on('fullscreen', value => { if (current()) this.fullscreen = value })
+        player.on('mute', value => { if (current()) this.isNotMute = !value })
+        player.on('kBps', value => { if (current()) this.kBps = Math.round(value) })
+        const failed = () => { if (current()) this.playError = '视频连接失败，请重新播放' }
+        player.on('error', failed)
+        const start = async () => {
+          if (!current()) return
+          try { await player.play(url) } catch { failed() }
         }
-        _this.performance = show;
-      });
-      jessibuca.on('kBps', function (kBps) {
-        _this.kBps = Math.round(kBps);
-      });
-      jessibuca.on("videoInfo", function (msg) {
-        console.log("Jessibuca -> videoInfo: ", msg);
-      });
-      jessibuca.on("audioInfo", function (msg) {
-        console.log("Jessibuca -> audioInfo: ", msg);
-      });
-      jessibuca.on("error", function (msg) {
-        console.log("Jessibuca -> error: ", msg);
-      });
-      jessibuca.on("timeout", function (msg) {
-        console.log("Jessibuca -> timeout: ", msg);
-      });
-      jessibuca.on("loadingTimeout", function (msg) {
-        console.log("Jessibuca -> timeout: ", msg);
-      });
-      jessibuca.on("delayTimeout", function (msg) {
-        console.log("Jessibuca -> timeout: ", msg);
-      });
-      jessibuca.on("playToRenderTimes", function (msg) {
-        console.log("Jessibuca -> playToRenderTimes: ", msg);
-      });
-    },
-    playBtnClick: function (event) {
-      this.play(this.videoUrl)
-    },
-    play: function (url) {
-      console.log("Jessibuca -> url: ", url);
-      if (jessibucaPlayer[this._uid]) {
-        this.destroy();
-      }
-      this.create();
-      jessibucaPlayer[this._uid].on("play", () => {
-        this.playing = true;
-        this.loaded = true;
-        this.quieting = jessibuca.quieting;
-      });
-      if (jessibucaPlayer[this._uid].hasLoaded()) {
-        jessibucaPlayer[this._uid].play(url);
-      } else {
-        jessibucaPlayer[this._uid].on("load", () => {
-          jessibucaPlayer[this._uid].play(url);
-        });
+        if (player.hasLoaded()) void start()
+        else player.on('load', start)
+      } catch {
+        if (current()) this.playError = '播放器加载失败，请重新播放'
       }
     },
-    pause: function () {
-      if (jessibucaPlayer[this._uid]) {
-        jessibucaPlayer[this._uid].pause();
-      }
-      this.playing = false;
-      this.err = "";
-      this.performance = "";
+    playBtnClick() { void this.play(this.streamUrl) },
+    pause() { this.player?.pause() },
+    screenshot() { this.player?.screenshot() },
+    mute() { this.player?.mute() },
+    cancelMute() { this.player?.cancelMute() },
+    destroy() {
+      this.playVersion++
+      const player = this.player
+      this.player = null
+      this.playing = false
+      this.fullscreen = false
+      this.kBps = 0
+      player?.destroy()
     },
-    screenshot: function () {
-      if (jessibucaPlayer[this._uid]) {
-        jessibucaPlayer[this._uid].screenshot();
-      }
-    },
-    mute: function () {
-      if (jessibucaPlayer[this._uid]) {
-        jessibucaPlayer[this._uid].mute();
-      }
-    },
-    cancelMute: function () {
-      if (jessibucaPlayer[this._uid]) {
-        jessibucaPlayer[this._uid].cancelMute();
-      }
-    },
-    destroy: function () {
-      if (jessibucaPlayer[this._uid]) {
-        jessibucaPlayer[this._uid].destroy();
-      }
-      if (document.getElementById("buttonsBox") == null) {
-        this.$refs.container.appendChild(this.btnDom)
-      }
-      jessibucaPlayer[this._uid] = null;
-      this.playing = false;
-      this.err = "";
-      this.performance = "";
-
-    },
-    fullscreenSwich: function () {
-      let isFull = this.isFullscreen()
-      jessibucaPlayer[this._uid].setFullscreen(!isFull)
-      this.fullscreen = !isFull;
-    },
-    isFullscreen: function () {
-      return document.fullscreenElement ||
-        document.msFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.webkitFullscreenElement || false;
+    fullscreenSwich() {
+      this.player?.setFullscreen(!this.fullscreen)
     }
-  },
-  destroyed() {
-    if (jessibucaPlayer[this._uid]) {
-      jessibucaPlayer[this._uid].destroy();
-    }
-    this.playing = false;
-    this.loaded = false;
-    this.performance = "";
-  },
+  }
 }
 </script>
 
 <style>
+.legacy-video-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+}
+
 .buttons-box {
   width: 100%;
   height: 28px;

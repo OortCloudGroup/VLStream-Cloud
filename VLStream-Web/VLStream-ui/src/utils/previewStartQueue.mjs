@@ -3,26 +3,42 @@
 export function createPreviewStartQueue({
   limit = 3,
   spacingMs = 300,
-  now = () => Date.now(),
+  now = () => performance.now(),
   sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
 } = {}) {
   const waiting = []
   let active = 0
   let nextStartAt = 0
+  let waitingForStart = false
 
   function pump() {
-    while (active < limit && waiting.length) run(waiting.shift())
+    while (!waitingForStart && active < limit && waiting.length) {
+      const delay = nextStartAt - now()
+      if (delay > 0) {
+        waitForStart(delay)
+        return
+      }
+      run(waiting.shift())
+    }
+  }
+
+  async function waitForStart(delay) {
+    waitingForStart = true
+    try {
+      await sleep(delay)
+    } catch (error) {
+      waiting.shift().reject(error)
+    } finally {
+      waitingForStart = false
+      pump()
+    }
   }
 
   async function run(job) {
     active++
     try {
       if (job.cancelled()) { job.resolve(undefined); return }
-      const startAt = Math.max(now(), nextStartAt)
-      nextStartAt = startAt + spacingMs
-      if (startAt > now()) await sleep(startAt - now())
-      // The player may have been replaced or unmounted while this start was queued.
-      if (job.cancelled()) { job.resolve(undefined); return }
+      nextStartAt = now() + spacingMs
       job.resolve(await job.task())
     } catch (error) {
       job.reject(error)

@@ -9,8 +9,9 @@
   <div ref="playerElement" class="camera-rtc-player" :class="{ 'is-compact-status': compactStatus }">
     <video ref="videoElement" class="camera-rtc-video" :controls="false" autoplay muted playsinline @play="updateControls" @pause="updateControls" @volumechange="updateControls" />
     <div v-if="status.state !== 'playing'" class="camera-rtc-status" :class="`is-${status.state}`">
-      <span v-if="isPending && (!compactStatus || ['connecting', 'negotiating'].includes(status.state))" class="camera-rtc-spinner" />
+      <span v-if="compactStatus ? isConnecting : isPending" class="camera-rtc-spinner" />
       <span class="camera-rtc-message">{{ displayStatus }}</span>
+      <el-button v-if="status.state === 'awaiting-playback' && !compactStatus" type="primary" size="small" @click="togglePlayback">{{ $tp('播放') }}</el-button>
       <el-button v-if="status.state === 'failed' && !compactStatus" type="primary" size="small" @click="retryNow"> {{ $tp('重新连接') }} </el-button>
     </div>
     <div v-if="status.state === 'playing' && !compactStatus" class="camera-rtc-controls" role="group" :aria-label="$tp('播放控制')">
@@ -42,16 +43,19 @@ const paused = ref(true)
 const muted = ref(true)
 const volume = ref(1)
 const fullscreen = ref(false)
+const slowStart = ref(false)
 const status = reactive({
   state: 'connecting',
   message: '正在初始化播放器…',
   retryCount: 0,
 })
 const isPending = computed(() => ['connecting', 'negotiating', 'recovering', 'retrying'].includes(status.state))
+const isConnecting = computed(() => !slowStart.value && status.retryCount === 0 && ['connecting', 'negotiating'].includes(status.state))
 const displayStatus = computed(() => translateUiMessage(props.compactStatus ?
-  (['connecting', 'negotiating'].includes(status.state) ? '正在连接…' : '无信号') : status.message))
+  (isConnecting.value ? '正在连接…' : '无信号') : status.message))
 const extraTurnUrls = parseCameraRtcTurnUrls(import.meta.env.VITE_CAMERA_RTC_TURN_URLS)
 let session = null
+let connectingTimer = null
 
 function updateControls() {
   if (!videoElement.value) return
@@ -93,6 +97,7 @@ async function toggleFullscreen() {
 function createSession() {
   session?.stop()
   if (!videoElement.value) return
+  startConnectingIndicator()
   session = new CameraRtcSession({
     videoElement: videoElement.value,
     deviceId: props.deviceId,
@@ -103,6 +108,7 @@ function createSession() {
     extraTurnUrls,
     onStatus(nextStatus) {
       Object.assign(status, nextStatus)
+      if (!isConnecting.value) clearTimeout(connectingTimer)
       emit('status-change', nextStatus)
     },
     onDiagnostic(event) {
@@ -112,20 +118,32 @@ function createSession() {
   session.start()
 }
 
+function startConnectingIndicator() {
+  clearTimeout(connectingTimer)
+  slowStart.value = false
+  // Cap the spinner without disconnecting a peer that can still deliver its first frame.
+  connectingTimer = setTimeout(() => { slowStart.value = true }, 12000)
+}
+
 function retryNow() {
+  startConnectingIndicator()
   session?.retryNow()
 }
 
 watch(() => [props.deviceId, props.socketUrl], createSession)
 watch(() => props.compactStatus, compact => {
   if (session) session.nativeControlsOnAutoplayFailure = !compact
-  if (compact && videoElement.value) videoElement.value.controls = false
+  if (compact && videoElement.value) {
+    videoElement.value.controls = false
+    videoElement.value.muted = true
+  }
 })
 onMounted(() => {
   document.addEventListener('fullscreenchange', updateFullscreen)
   createSession()
 })
 onBeforeUnmount(() => {
+  clearTimeout(connectingTimer)
   document.removeEventListener('fullscreenchange', updateFullscreen)
   session?.stop()
   session = null

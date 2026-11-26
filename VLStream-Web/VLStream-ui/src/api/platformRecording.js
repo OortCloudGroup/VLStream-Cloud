@@ -14,6 +14,11 @@ async function call(client, config) {
   check()
   return response?.data ?? response
 }
+async function list(config) {
+  const rows = await call(request, { ...config, timeout: 10000 })
+  if (!Array.isArray(rows)) throw new Error(translatePhrase('录像查询失败'))
+  return rows
+}
 // Older running backends expose source states but not the lightweight status route.
 // Retry capability detection periodically so a backend upgrade needs no page reload.
 let statusUnavailableUntil = 0
@@ -36,7 +41,7 @@ export const platformRecording = {
   runtime: () => call(request, { url: '/platform-recordings/runtime' }),
   status: (protocol, rowId, signal) => readRecordingStatus(protocol, rowId, (client, config) => call(client, { ...config, signal })),
   retention: (id, days) => call(request, { url: `/platform-recordings/sources/${part(id)}/retention`, method: 'put', data: { days } }),
-  sources: (protocol, rowId) => call(request, { url: '/platform-recordings/sources', params: { protocol, rowId } }),
+  sources: (protocol, rowId, signal) => list({ url: '/platform-recordings/sources', params: { protocol, rowId }, signal }),
   choices: (protocol, rowId) => call(wvpRequest, { url: `/video/cloud-ai/sources/${part(protocol)}/${part(rowId)}` }),
   async bind(selection) {
     const identity = authManager.getIdentitySnapshot()
@@ -46,8 +51,8 @@ export const platformRecording = {
   },
   manual: (id, enabled) => call(request, { url: `/platform-recordings/sources/${part(id)}/manual`, method: 'put', data: { enabled } }),
   plan: (id, plan) => call(request, { url: `/platform-recordings/sources/${part(id)}/plan`, method: 'put', data: plan }),
-  segments: (id, date) => call(request, { url: `/platform-recordings/sources/${part(id)}/segments`, params: { date } }),
-  file: id => call(request, { url: `/platform-recordings/segments/${part(id)}/file`, responseType: 'blob', timeout: 120000 }),
+  segments: (id, date, signal) => list({ url: `/platform-recordings/sources/${part(id)}/segments`, params: { date }, signal }),
+  file: (id, signal) => call(request, { url: `/platform-recordings/segments/${part(id)}/file`, responseType: 'blob', signal, timeout: 120000 }),
 }
 export const recordingError = error => error?.response?.status === 404 ? translatePhrase('后台录像接口尚未就绪，请更新并重启本地后端') : error?.response?.data?.msg || error?.data?.msg || error?.message || translatePhrase('请求失败')
 export const recordingState = row => ({ IDLE: '未录制', STARTING: '正在连接', RECORDING: '正在录制', STOPPING: '正在停止', RETRYING: '录制异常，等待重试', WAITING: '等待录像资源', UNKNOWN: '录像状态待确认' }[row?.state] || '未录制')
