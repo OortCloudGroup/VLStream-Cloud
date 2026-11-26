@@ -24,6 +24,7 @@ import cn.hutool.json.JSONObject;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.cloudai.CloudAiLocalEventSink;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
+import com.ruoyi.vlstream.test.vlstream.service.EventLocationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

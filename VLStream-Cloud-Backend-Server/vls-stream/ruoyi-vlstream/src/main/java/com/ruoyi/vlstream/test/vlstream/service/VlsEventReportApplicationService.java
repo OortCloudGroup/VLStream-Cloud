@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class VlsEventReportApplicationService {
 
 	private static final String MULTI = "multi";
-	private static final String MEDIA_REFERENCE_PREFIX = "vls-media://";
+	static final String MEDIA_REFERENCE_PREFIX = "vls-media://";
 
 	private final IVlsEventManagementService eventManagementService;
 	private final VlsEventManagementMapper eventManagementMapper;

@@ -205,18 +205,9 @@ public class DeviceMediaUploadService {
                 distinctIds.add(mediaId);
             }
         }
-        if (distinctIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<DeviceMediaUpload> uploads = uploadMapper.selectList(new LambdaQueryWrapper<DeviceMediaUpload>()
-            .eq(DeviceMediaUpload::getTenantId, tenantId)
-            .in(DeviceMediaUpload::getMediaId, distinctIds));
         int safeSeconds = Math.max(60, Math.min(seconds, 3600));
         Map<String, String> urls = new LinkedHashMap<String, String>();
-        for (DeviceMediaUpload upload : uploads) {
-            if (!tenantId.equals(upload.getTenantId()) || !STATUS_BOUND.equals(upload.getUploadStatus())) {
-                continue;
-            }
+        for (DeviceMediaUpload upload : findBoundUploads(tenantId, distinctIds).values()) {
             try {
                 urls.put(upload.getMediaId(), signViewUrl(upload, safeSeconds));
             } catch (RuntimeException exception) {
@@ -224,6 +215,23 @@ public class DeviceMediaUploadService {
             }
         }
         return urls;
+    }
+
+    /** Load only registered, bound media owned by the specified tenant. */
+    Map<String, DeviceMediaUpload> findBoundUploads(String tenantId, Set<String> mediaIds) {
+        if (StringUtils.isBlank(tenantId) || mediaIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<DeviceMediaUpload> uploads = uploadMapper.selectList(new LambdaQueryWrapper<DeviceMediaUpload>()
+            .eq(DeviceMediaUpload::getTenantId, tenantId)
+            .in(DeviceMediaUpload::getMediaId, mediaIds));
+        Map<String, DeviceMediaUpload> bound = new LinkedHashMap<>();
+        for (DeviceMediaUpload upload : uploads) {
+            if (tenantId.equals(upload.getTenantId()) && STATUS_BOUND.equals(upload.getUploadStatus())) {
+                bound.put(upload.getMediaId(), upload);
+            }
+        }
+        return bound;
     }
 
     String signViewUrl(DeviceMediaUpload upload, int seconds) {
@@ -314,7 +322,7 @@ public class DeviceMediaUploadService {
 		return configured == null || configured <= 0 ? fallback : configured;
 	}
 
-	private boolean isSupportedImageType(String contentType) {
+	static boolean isSupportedImageType(String contentType) {
 		return "image/jpeg".equalsIgnoreCase(contentType)
 			|| "image/png".equalsIgnoreCase(contentType)
 			|| "image/webp".equalsIgnoreCase(contentType);

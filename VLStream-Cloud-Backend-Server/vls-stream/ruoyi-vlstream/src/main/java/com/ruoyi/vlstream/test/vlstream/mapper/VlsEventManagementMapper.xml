@@ -7,7 +7,7 @@
 <mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="vlsEventManagementResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement">
+    <resultMap id="vlsEventManagementResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO">
         <result column="mqtt_message_id" property="mqttMessageId"/>
         <result column="device_event_id" property="deviceEventId"/>
         <result column="media_id" property="mediaId"/>

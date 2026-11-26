@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.compat;
+package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.config.WvpVlStreamDeviceProperties;

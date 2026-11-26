@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.compat;
+package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.config.WvpVlStreamDeviceProperties;
@@ -36,7 +36,7 @@ public class EventLocationService {
         this(properties, json, client());
     }
 
-    EventLocationService(WvpVlStreamDeviceProperties properties, ObjectMapper json, RestTemplate http) {
+    public EventLocationService(WvpVlStreamDeviceProperties properties, ObjectMapper json, RestTemplate http) {
         this.properties = properties;
         this.json = json;
         this.http = http;
@@ -153,7 +153,8 @@ public class EventLocationService {
         return new Coordinate(lng, lat, system == null || system < 1 || system > 3 ? 0 : system);
     }
 
-    static BigDecimal decimal(Object value) {
+    /** Parse a reported coordinate without coercing missing or invalid values to zero. */
+    public static BigDecimal decimal(Object value) {
         if (!(value instanceof Number) && !(value instanceof String)) return null;
         try { return new BigDecimal(value.toString().trim()); } catch (NumberFormatException ignored) { return null; }
     }

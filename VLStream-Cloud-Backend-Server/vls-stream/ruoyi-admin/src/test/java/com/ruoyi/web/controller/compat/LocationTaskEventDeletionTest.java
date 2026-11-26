@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.compat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
+import com.ruoyi.vlstream.test.vlstream.service.EventLocationService;
 import com.ruoyi.workflow.service.IWfProcessService;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeEach;

@@ -12,9 +12,11 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import com.ruoyi.common.interceptor.TokenHeaderResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -34,12 +36,14 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsEventManagementService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsEventDisplayService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsDeviceEventReportService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsEventManagementWrapper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +63,7 @@ public class VlsEventManagementController extends BladeController {
 	private final IVlsDeviceInfoService deviceInfoService;
 	private final VlsEventReportApplicationService eventReportApplicationService;
 	private final VlsDeviceEventReportService deviceEventReportService;
+	private final VlsEventDisplayService eventDisplayService;
 
 	/**
 	 * event
@@ -94,8 +99,11 @@ public class VlsEventManagementController extends BladeController {
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsEventManagement")
-	public R<IPage<EventManagementVO>> page(EventManagementVO vlsEventManagement, Query query) {
+	public R<IPage<EventManagementVO>> page(EventManagementVO vlsEventManagement, Query query, HttpServletRequest request) {
 		IPage<EventManagementVO> pages = vlsEventManagementService.selectVlsEventManagementPage(Condition.getPage(query), vlsEventManagement);
+		if (eventReportApplicationService.isMultiTenant()) {
+			eventDisplayService.enrich(pages.getRecords(), TokenHeaderResolver.resolve(request));
+		}
 		return R.data(pages);
 	}
 
@@ -163,10 +171,15 @@ public class VlsEventManagementController extends BladeController {
 
 	@SaCheckPermission("active-safety:events:list")
 	@GetMapping("/{id}")
-	public R<EventManagement> getEvent(@PathVariable Long id) {
+	public R<EventManagement> getEvent(@PathVariable Long id, HttpServletRequest request) {
 		EventManagement event = vlsEventManagementService.getEventById(id);
 		if (event == null) {
 			return R.fail("Event not found");
+		}
+		if (eventReportApplicationService.isMultiTenant()) {
+			EventManagementVO view = VlsEventManagementWrapper.build().entityVO(event);
+			eventDisplayService.enrich(Collections.singletonList(view), TokenHeaderResolver.resolve(request));
+			return R.data(view);
 		}
 		return R.data(event);
 	}

@@ -1822,6 +1822,8 @@ export const uiEnglish = {
   "已清空所有图片": "All images cleared",
   "请先选择要预览的图片": "Select an image to preview",
   "图片加载失败: {value0}": "Failed to load image: {value0}",
+  "图片加载失败": "Failed to load image",
+  "设备位置参考：{value0}": "Last known device location: {value0}",
   "没有可用的图片": "No available images",
   "没有可删除的图片": "No images to delete",
   "标注已同步，请重新选择要删除的标注": "Annotations synchronized. Select the annotation to delete again.",

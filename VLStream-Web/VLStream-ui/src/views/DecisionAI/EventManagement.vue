@@ -75,16 +75,19 @@
               <span class="detail-label">{{ $tp('上报图片') }}</span>
               <div class="detail-value">
                 <div class="report-images">
-                  <div v-if="selectedEvent?.reportImg" class="image-item">
+                  <div v-if="selectedEvent?.imageUrl" class="image-item">
                     <el-image
                       class="preview-image"
-                      :src="selectedEvent.reportImg"
+                      :src="selectedEvent.imageUrl"
+                      :alt="$tp('上报图片')"
                       fit="cover"
-                      :preview-src-list="[selectedEvent.reportImg]"
+                      :preview-src-list="[selectedEvent.imageUrl]"
                       :hide-on-click-modal="true"
                       preview-teleported
                       lazy
-                    />
+                    >
+                      <template #error><span class="no-image">{{ $tp('图片加载失败') }}</span></template>
+                    </el-image>
                   </div>
                   <span v-else class="no-image">{{ $tp('暂无图片') }}</span>
                 </div>
@@ -113,7 +116,7 @@
             </div>
             <div class="detail-content-wrapper">
               <span class="detail-label">{{ $tp('上报位置') }}</span>
-              <span class="detail-value">{{ selectedEvent?.reportLocation || '--' }}</span>
+              <span class="detail-value">{{ reportedLocation(selectedEvent) }}</span>
             </div>
           </div>
 
@@ -254,22 +257,27 @@
                 </template>
               </el-table-column>
               <el-table-column prop="eventDesc" :label="$tp('事件描述')" show-overflow-tooltip />
-              <el-table-column prop="reportLocation" :label="$tp('上报位置')" show-overflow-tooltip />
+              <el-table-column prop="reportLocation" :label="$tp('上报位置')" show-overflow-tooltip>
+                <template #default="{ row }">{{ reportedLocation(row) }}</template>
+              </el-table-column>
               <el-table-column prop="reportDevice" :label="$tp('上报设备')" show-overflow-tooltip />
               <el-table-column prop="reportTime" :label="$tp('上报时间')" />
               <el-table-column prop="reportImg" :label="$tp('上报图片')">
                 <template #default="scope">
                   <el-image
-                    v-if="scope.row.reportImg"
+                    v-if="scope.row.imageUrl"
                     class="table-report-img"
-                    :src="scope.row.reportImg"
+                    :src="scope.row.imageUrl"
+                    :alt="$tp('上报图片')"
                     fit="cover"
-                    :preview-src-list="[scope.row.reportImg]"
+                    :preview-src-list="[scope.row.imageUrl]"
                     :hide-on-click-modal="true"
                     preview-teleported
                     lazy
-                  />
-                  <span v-else class="no-image">--</span>
+                  >
+                    <template #error><span class="no-image">{{ $tp('图片加载失败') }}</span></template>
+                  </el-image>
+                  <span v-else class="no-image">{{ $tp('暂无图片') }}</span>
                 </template>
               </el-table-column>
               <el-table-column prop="status" :label="$tp('执行状态')">
@@ -446,13 +454,29 @@ const eventDescription = (item) => {
   return item.eventType && item.eventDesc === legacyDescription ? item.eventType : item.eventDesc
 }
 
+/** Label heartbeat coordinates so they are never mistaken for the original event position. */
+const reportedLocation = (event) => {
+  const location = event?.displayLocation
+  const { longitude, latitude } = location || {}
+  const text = location?.address || (longitude != null && latitude != null ? `${longitude}, ${latitude}` : '')
+  if (!text) return event?.reportLocation?.trim() || '—'
+  return location.source === 'DEVICE_HEARTBEAT' ? uiText('设备位置参考：{value0}', { value0: text }) : text
+}
+
+/** Prefer the signed view URL; older rows may already contain a browser-readable image link. */
+const reportImageUrl = (event) => {
+  const legacyUrl = event.reportImg?.trim() || ''
+  return event.reportImageUrl || (/^(?:https?:\/\/|\/(?![\\/]))/i.test(legacyUrl) ? legacyUrl : '')
+}
+
 const normalizeEvent = (item) => ({
   id: item.id,
   eventDesc: eventDescription(item),
   reportLocation: item.reportLocation,
+  displayLocation: item.displayLocation,
   reportDevice: item.reportDevice,
   reportTime: formatDateTime(item.reportTime),
-  reportImg: item.reportImg,
+  imageUrl: reportImageUrl(item),
   eventData: item.eventData,
   status: statusLabelMap[item.eventStatus] || item.eventStatus || '待处理',
   eventStatus: item.eventStatus,
@@ -920,7 +944,7 @@ watch(() => route.query.eventId, id => { if (id) handleDetail({ id: String(id) }
   align-self: flex-start;
 }
 
-/* ä¸ŠæŠ¥å›¾åƒæ ·å¼ */
+/* 上报图片 */
 .report-images {
   display: flex;
   gap: 12px;

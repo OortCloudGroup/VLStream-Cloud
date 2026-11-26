@@ -7,14 +7,17 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.framework.config.CustomTenantLineHandler;
 import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
 import com.ruoyi.vlstream.test.vlstream.config.VlsEventReportProperties;
+import com.ruoyi.vlstream.test.vlstream.config.WvpVlStreamDeviceProperties;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsEventManagementController;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsDeviceEventReportService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsEventDisplayService;
 import com.ruoyi.vlstream.test.vlstream.job.EventReportOutboxWorker;
 import com.ruoyi.vlstream.test.vlstream.mapper.EventReportOutboxMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
@@ -22,6 +25,8 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
 import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
+import com.ruoyi.vlstream.test.vlstream.service.EventLocationService;
+import com.ruoyi.vlstream.test.vlstream.service.ExternalEventImageService;
 import com.ruoyi.vlstream.test.vlstream.service.EventReportDeliveryStateService;
 import com.ruoyi.vlstream.test.vlstream.service.ThirdPartyEventReportClient;
 import com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService;
@@ -52,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -82,6 +88,7 @@ class MultiTenantEventPersistenceTest {
             + "idempotency_key VARCHAR(128), payload_json VARCHAR(4000), status VARCHAR(20), retry_count INT, "
             + "next_retry_time TIMESTAMP, locked_by VARCHAR(64), locked_at TIMESTAMP, last_error VARCHAR(2000), "
             + "reported_at TIMESTAMP, create_time TIMESTAMP, update_time TIMESTAMP)");
+        jdbc.execute("CREATE TABLE vls_llm_review_task (tenant_id VARCHAR(64),formal_event_id VARCHAR(100),review_status VARCHAR(30))");
         TokenProperties token = new TokenProperties(); token.setTenantType("multi");
         CustomTenantLineHandler tenant = new CustomTenantLineHandler(token);
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
@@ -156,8 +163,46 @@ class MultiTenantEventPersistenceTest {
     }
 
     private MockMvc statusHttp() {
+        ObjectMapper json = new ObjectMapper();
+        VlsEventDisplayService display = new VlsEventDisplayService(json, outboxMapper, mock(DeviceMediaUploadService.class),
+            new EventLocationService(new WvpVlStreamDeviceProperties(), json), mock(ExternalEventImageService.class));
         return MockMvcBuilders.standaloneSetup(new VlsEventManagementController(events,
-            mock(IVlsDeviceInfoService.class), application, mock(VlsDeviceEventReportService.class))).build();
+            mock(IVlsDeviceInfoService.class), application, mock(VlsDeviceEventReportService.class), display)).build();
+    }
+
+    /** Both page and detail recover the historical point without changing the event or widening its tenant scope. */
+    @Test void readEndpointsProjectCoordinatesFromTheOwnedOutboxSnapshot() throws Exception {
+        Long id = createStatusFixture();
+        String snapshot = "{\"point\":{\"lng\":114.1,\"lat\":22.5,\"coord_system_type\":1}}";
+        jdbc.update("UPDATE vls_event_report_outbox SET payload_json=? WHERE event_id=?", snapshot, id);
+        MockMvc http = statusHttp();
+
+        http.perform(get("/vlsEventManagement/page").param("current", "1").param("size", "10"))
+            .andExpect(jsonPath("$.data.records[0].displayLocation.longitude").value(114.1))
+            .andExpect(jsonPath("$.data.records[0].reportLocation").value("114.1, 22.5"))
+            .andExpect(jsonPath("$.data.records[0].displayLocation.source").value("EVENT"));
+        http.perform(get("/vlsEventManagement/{id}", id))
+            .andExpect(jsonPath("$.data.displayLocation.latitude").value(22.5))
+            .andExpect(jsonPath("$.data.eventData").value("{}"));
+        assertNull(jdbc.queryForObject("SELECT report_location FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals(snapshot, jdbc.queryForObject("SELECT payload_json FROM vls_event_report_outbox WHERE event_id=?", String.class, id));
+
+        TenantContextHolder.setTenantId("tenant-b");
+        http.perform(get("/vlsEventManagement/page")).andExpect(jsonPath("$.data.records").isEmpty());
+        http.perform(get("/vlsEventManagement/{id}", id)).andExpect(jsonPath("$.success").value(false));
+    }
+
+    /** A device's explicit report address is visible even to the deployed legacy event page. */
+    @Test void readEndpointsExposeAnAddressStoredOnlyInTheEventPayload() throws Exception {
+        Long id = createStatusFixture();
+        jdbc.update("UPDATE vls_event_management SET event_data=? WHERE id=?",
+            "{\"point\":{\"address\":\"Camera reported address\"}}", id);
+        MockMvc http = statusHttp();
+        http.perform(get("/vlsEventManagement/page"))
+            .andExpect(jsonPath("$.data.records[0].reportLocation").value("Camera reported address"));
+        http.perform(get("/vlsEventManagement/{id}", id))
+            .andExpect(jsonPath("$.data.reportLocation").value("Camera reported address"));
+        assertNull(jdbc.queryForObject("SELECT report_location FROM vls_event_management WHERE id=?", String.class, id));
     }
 
     @Test void persistsVisibleTenantEventThenRecordsOnlyBusinessConfirmedDelivery() throws Exception {
