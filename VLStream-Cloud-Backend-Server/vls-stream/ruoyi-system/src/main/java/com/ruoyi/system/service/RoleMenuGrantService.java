@@ -2,6 +2,7 @@ package com.ruoyi.system.service;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.model.LoginUser;
@@ -36,6 +37,7 @@ public class RoleMenuGrantService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final ISysRoleService roleService;
     private final ISysMenuService menuService;
+    private final DefaultMemberRoleService defaultMemberRoles;
 
     @Transactional(readOnly = true)
     public List<String> getMenuIds(String roleId) {
@@ -49,8 +51,9 @@ public class RoleMenuGrantService {
         if ("1".equals(role.getRoleId()) && !currentUserIsAdmin()) {
             return Collections.emptyList();
         }
+        Set<Long> existing = isDefaultMemberRole(role) ? toIds(readGrants(roleId)) : Collections.emptySet();
         List<String> result = new ArrayList<>();
-        for (Long id : new TreeSet<>(grantableIds(role))) {
+        for (Long id : new TreeSet<>(grantableIds(role, existing))) {
             result.add(String.valueOf(id));
         }
         return result;
@@ -79,11 +82,10 @@ public class RoleMenuGrantService {
             throw new ServiceException("角色权限已变更，请刷新后重试");
         }
 
-        Set<Long> grantable = grantableIds(role);
+        Set<Long> grantable = grantableIds(role, currentIds);
         if (!grantable.containsAll(requested)) {
-            throw new ServiceException("不能分配超出本人授权范围的菜单");
+            throw new ServiceException("不能分配超出操作者或目标角色授权范围的菜单");
         }
-        Set<Long> existing = new HashSet<>(currentIds);
         for (SysRoleMenu grant : current) {
             Long menuId = grant.getMenuId();
             // Rows with a different or missing tenant are historical data outside
@@ -97,7 +99,7 @@ public class RoleMenuGrantService {
             }
         }
         for (Long menuId : requested) {
-            if (!existing.contains(menuId)) {
+            if (!currentIds.contains(menuId)) {
                 SysRoleMenu grant = new SysRoleMenu();
                 grant.setRoleId(roleId);
                 grant.setTenantId(role.getTenantId());
@@ -131,14 +133,25 @@ public class RoleMenuGrantService {
         return roleMenuMapper.selectAllForVerifiedRole(roleId);
     }
 
-    private Set<Long> grantableIds(SysRole role) {
+    /** Only the built-in default member role is kept out of the system management module. */
+    private boolean isDefaultMemberRole(SysRole role) {
+        return UserConstants.DEFAULT_MEMBER_ROLE_KEY.equalsIgnoreCase(role.getRoleKey());
+    }
+
+    /** Keep existing visible grants editable so an administrator can revoke obsolete permissions. */
+    private Set<Long> grantableIds(SysRole role, Set<Long> existing) {
         String userId = currentUserId();
         boolean administrator = currentUserIsAdmin();
+        boolean defaultMember = isDefaultMemberRole(role);
         List<SysMenu> menus = menuService.selectMenuList(userId);
+        Set<Long> systemManagement = defaultMember
+            ? defaultMemberRoles.findSystemManagementMenuIds(menus) : Collections.<Long>emptySet();
         Set<Long> active = new HashSet<>();
         for (SysMenu menu : menus) {
-            if (administrator || "0".equals(menu.getStatus())) {
-                active.add(menu.getMenuId());
+            Long menuId = menu.getMenuId();
+            if ((administrator || "0".equals(menu.getStatus()))
+                && (!defaultMember || existing.contains(menuId) || !systemManagement.contains(menuId))) {
+                active.add(menuId);
             }
         }
         // Use the same tree builder as /system/menu/treeselect. A grant whose

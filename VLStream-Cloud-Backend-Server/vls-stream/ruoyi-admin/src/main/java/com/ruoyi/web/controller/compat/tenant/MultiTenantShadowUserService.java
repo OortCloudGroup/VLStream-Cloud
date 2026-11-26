@@ -21,6 +21,7 @@ import com.ruoyi.system.domain.SysRoleMenu;
 import com.ruoyi.system.mapper.SysRoleMenuMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.DefaultMemberMenuSyncService;
 import com.ruoyi.system.service.DefaultMemberRoleService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -42,17 +43,20 @@ public class MultiTenantShadowUserService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final TokenProperties tokenProperties;
     private final DefaultMemberRoleService defaultMemberRoles;
+    private final DefaultMemberMenuSyncService defaultMemberMenuSync;
 
     public MultiTenantShadowUserService(ISysUserService userService,
                                         SysRoleMapper roleMapper,
                                         SysRoleMenuMapper roleMenuMapper,
                                         TokenProperties tokenProperties,
-                                        DefaultMemberRoleService defaultMemberRoles) {
+                                        DefaultMemberRoleService defaultMemberRoles,
+                                        DefaultMemberMenuSyncService defaultMemberMenuSync) {
         this.userService = userService;
         this.roleMapper = roleMapper;
         this.roleMenuMapper = roleMenuMapper;
         this.tokenProperties = tokenProperties;
         this.defaultMemberRoles = defaultMemberRoles;
+        this.defaultMemberMenuSync = defaultMemberMenuSync;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -157,6 +161,9 @@ public class MultiTenantShadowUserService {
             roleMenu.setMenuId(templateMenu.getMenuId());
             roleMenuMapper.insert(roleMenu);
         }
+        // Menus the template already offered (including ones an administrator revoked)
+        // are not granted again by DefaultMemberMenuSyncService.
+        defaultMemberMenuSync.inheritOffers(template.getRoleId(), role.getRoleId(), tenantId);
         return role;
     }
 

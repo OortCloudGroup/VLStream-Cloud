@@ -18,7 +18,8 @@ import static org.mockito.Mockito.mock;
 @Tag("dev")
 class MenuCatalogueTreeTest {
     private final SysMenuServiceImpl service = new SysMenuServiceImpl(
-        mock(SysMenuMapper.class), mock(SysRoleMapper.class), mock(SysRoleMenuMapper.class));
+        mock(SysMenuMapper.class), mock(SysRoleMapper.class), mock(SysRoleMenuMapper.class),
+        mock(DefaultMemberMenuSyncService.class));
 
     @Test
     void unorderedRootsMissingParentsAndCyclesNeverHideGrantedActions() {

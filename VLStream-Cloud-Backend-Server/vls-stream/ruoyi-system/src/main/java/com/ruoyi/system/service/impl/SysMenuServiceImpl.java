@@ -20,6 +20,7 @@ import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.service.DefaultMemberMenuSyncService;
 import com.ruoyi.system.service.DefaultMemberRoleService;
 import com.ruoyi.common.utils.StreamUtils;
 import com.ruoyi.common.utils.StringUtils;
@@ -48,6 +49,7 @@ public class SysMenuServiceImpl implements ISysMenuService {
     private final SysMenuMapper baseMapper;
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
+    private final DefaultMemberMenuSyncService defaultMemberMenuSync;
 
     /**
      * userQuery menu list
@@ -288,7 +290,11 @@ public class SysMenuServiceImpl implements ISysMenuService {
      */
     @Override
     public int insertMenu(SysMenu menu) {
-        return baseMapper.insert(menu);
+        int rows = baseMapper.insert(menu);
+        if (rows > 0) {
+            defaultMemberMenuSync.syncQuietly("menu added");
+        }
+        return rows;
     }
 
     /**
@@ -300,7 +306,12 @@ public class SysMenuServiceImpl implements ISysMenuService {
     @Override
     public int updateMenu(SysMenu menu) {
         checkMenuMutable(menu.getMenuId());
-        return baseMapper.updateById(menu);
+        int rows = baseMapper.updateById(menu);
+        if (rows > 0) {
+            // A menu may have been enabled or moved out of the system directory.
+            defaultMemberMenuSync.syncQuietly("menu updated");
+        }
+        return rows;
     }
 
     /**

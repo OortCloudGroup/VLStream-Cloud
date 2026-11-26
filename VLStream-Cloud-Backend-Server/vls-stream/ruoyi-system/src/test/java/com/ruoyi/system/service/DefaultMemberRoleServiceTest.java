@@ -15,7 +15,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +33,7 @@ class DefaultMemberRoleServiceTest {
     private SysRole role;
     private final List<SysMenu> grants = new ArrayList<>();
     private final List<SysRoleMenu> bindings = new ArrayList<>();
+    private final Map<Long, SysMenu> catalogue = new HashMap<>();
 
     @BeforeEach
     void fixture() {
@@ -40,12 +44,34 @@ class DefaultMemberRoleServiceTest {
         for (String permission : DefaultMemberRoleService.BUSINESS_PERMISSIONS) addGrant(++id, permission);
         when(roles.selectOne(any())).thenReturn(role);
         when(roleMenus.selectList(any())).thenReturn(bindings);
-        when(menus.selectBatchIds(any())).thenReturn(grants);
+        when(menus.selectBatchIds(any())).thenAnswer(invocation -> {
+            List<SysMenu> found = new ArrayList<>();
+            for (Object key : (Collection<?>) invocation.getArgument(0)) {
+                SysMenu menu = catalogue.get(key);
+                if (menu != null && (grants.contains(menu) || !isGranted(menu.getMenuId()))) found.add(menu);
+            }
+            return found;
+        });
     }
 
-    private void addGrant(long id, String permission) {
-        SysMenu menu = new SysMenu(); menu.setMenuId(id); menu.setPerms(permission); menu.setStatus("0"); grants.add(menu);
+    private boolean isGranted(Long id) {
+        return bindings.stream().anyMatch(binding -> id.equals(binding.getMenuId()));
+    }
+
+    private SysMenu catalogueMenu(long id, String parentId, String path, String permission) {
+        SysMenu menu = new SysMenu(); menu.setMenuId(id); menu.setParentId(parentId); menu.setPath(path);
+        menu.setPerms(permission); menu.setStatus("0"); catalogue.put(id, menu);
+        return menu;
+    }
+
+    private SysMenu addGrant(long id, String permission) {
+        return addGrant(id, null, permission);
+    }
+
+    private SysMenu addGrant(long id, String parentId, String permission) {
+        SysMenu menu = catalogueMenu(id, parentId, null, permission); grants.add(menu);
         SysRoleMenu binding = new SysRoleMenu(); binding.setRoleId("2001"); binding.setTenantId("fixture-tenant"); binding.setMenuId(id); bindings.add(binding);
+        return menu;
     }
 
     @AfterEach void clear() { TenantContextHolder.clear(); }
@@ -86,15 +112,44 @@ class DefaultMemberRoleServiceTest {
     }
 
     @Test
-    void wildcardSystemAndComputeGrantsAreNeverDefaultedEvenWhenDisabled() {
-        for (String permission : new String[] {"*:*:*", "system:user:list", "active-safety:settings:workorder", "vls:compute:configure",
-            "vls:compute:publish", "vls:compute:manage-all", "vls:compute:company-publish",
-            "vls:menu:*", "vls:menu:future-privileged-page",
-            "vls:wvp:onvif:service:continuousMove"}) {
-            addGrant(999, permission); grants.get(grants.size() - 1).setStatus("1");
-            assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
-            grants.remove(grants.size() - 1); bindings.remove(bindings.size() - 1);
+    void systemManagementGrantsAreNeverDefaultedEvenWhenDisabled() {
+        for (String permission : new String[] {"*:*:*", "system", "system:user:list", "system:role:edit", "System:menu:list"}) {
+            addGrant(999, permission).setStatus("1");
+            assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role), permission);
+            grants.remove(grants.size() - 1); bindings.remove(bindings.size() - 1); catalogue.remove(999L);
         }
+    }
+
+    @Test
+    void anythingBelowTheSystemDirectoryIsRejected() {
+        catalogueMenu(900000, "0", "system", "system");
+        SysMenu firmware = catalogueMenu(950, "900000", "firmware", "vls:firmware:list");
+        catalogueMenu(951, "950", "#", null);
+        addGrant(952, "951", "vls:compute:company-publish");
+        assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
+        firmware.setParentId("0");
+        assertDoesNotThrow(() -> service.requireOrdinaryRole(role));
+    }
+
+    @Test
+    void orphanUnderTheUpstreamSystemRootIsRejected() {
+        addGrant(953, "1", "vls:compute:manage-all");
+        assertThrows(ServiceException.class, () -> service.requireOrdinaryRole(role));
+    }
+
+    @Test
+    void everyNonSystemPageAndOperationIsAcceptedForTheDefaultTemplate() {
+        catalogueMenu(920001, "0", "decision-ai", "vls:menu:group:decision-ai");
+        addGrant(920010, "920001", "vls:menu:group:cloud-device-intelligence");
+        addGrant(920150, "920010", "vls:menu:cloud-algorithm-config");
+        addGrant(901700, "active-safety:settings:workorder");
+        addGrant(901701, "901700", "workflow:model:add");
+        addGrant(990001, "vls:menu:future-page");
+        addGrant(990002, "vls:compute:publish");
+        addGrant(990003, null);
+        SysUser user = new SysUser();
+        service.assignIfMissing(user);
+        assertArrayEquals(new String[] {"2001"}, user.getRoleIds());
     }
 
     @Test
@@ -105,6 +160,20 @@ class DefaultMemberRoleServiceTest {
         SysUser user = new SysUser();
         service.assignIfMissing(user);
         assertArrayEquals(new String[] {"2001"}, user.getRoleIds());
+    }
+
+    @Test
+    void emptyRoleChoiceAcceptsCloudConfigurationFromTheCatalogueMigration() {
+        addGrant(920122, "vls:menu:scene-governance");
+        addGrant(920010, "vls:menu:group:cloud-device-intelligence");
+        addGrant(920150, "vls:menu:cloud-algorithm-config");
+        SysUser user = new SysUser();
+        user.setRoleIds(new String[0]);
+
+        service.assignIfMissing(user);
+
+        assertArrayEquals(new String[] {"2001"}, user.getRoleIds());
+        assertEquals("fixture-tenant", user.getTenantId());
     }
 
     @Test

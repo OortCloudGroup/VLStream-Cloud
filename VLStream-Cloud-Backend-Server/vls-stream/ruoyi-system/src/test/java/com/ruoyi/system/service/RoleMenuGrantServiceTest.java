@@ -8,6 +8,7 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.RoleMenuGrantUpdate;
 import com.ruoyi.system.domain.SysRoleMenu;
+import com.ruoyi.system.mapper.SysMenuMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.mapper.SysRoleMenuMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,9 @@ class RoleMenuGrantServiceTest {
         grants = mock(SysRoleMenuMapper.class);
         roleService = mock(ISysRoleService.class);
         menuService = mock(ISysMenuService.class);
-        service = spy(new RoleMenuGrantService(roles, grants, roleService, menuService));
+        DefaultMemberRoleService defaultMemberRoles =
+            new DefaultMemberRoleService(roles, grants, mock(SysMenuMapper.class));
+        service = spy(new RoleMenuGrantService(roles, grants, roleService, menuService, defaultMemberRoles));
         LoginUser login = new LoginUser();
         login.setTenantId("tenant-a");
         doReturn(login).when(service).currentLoginUser();
@@ -117,6 +120,51 @@ class RoleMenuGrantServiceTest {
         when(menuService.selectMenuList("99")).thenReturn(Arrays.asList(menu(1), disabled));
         assertEquals(Arrays.asList("1", "2"), service.getGrantableMenuIds("9"));
         verify(grants, never()).selectGrantableMenuIds(anyString(), anyString());
+    }
+
+    @Test
+    void administratorCanGrantAnyNonSystemMenuButNotSystemManagementToDefaultMember() {
+        role.setRoleKey("vls_member");
+        doReturn("1").when(service).currentUserId();
+        SysMenu cloud = menu(920150);
+        cloud.setPerms("vls:menu:cloud-algorithm-config");
+        SysMenu workOrderSettings = menu(901700);
+        workOrderSettings.setPerms("active-safety:settings:workorder");
+        SysMenu system = menu(900000);
+        system.setParentId("0");
+        system.setPath("system");
+        system.setPerms("system");
+        SysMenu users = menu(900100);
+        users.setParentId("900000");
+        users.setPerms("system:user:list");
+        when(menuService.selectMenuList("1")).thenReturn(Arrays.asList(cloud, workOrderSettings, system, users));
+        when(menuService.buildMenuTreeSelect(anyList())).thenReturn(Arrays.asList(tree(920150), tree(901700), tree(900000), tree(900100)));
+
+        assertEquals(Arrays.asList("901700", "920150"), service.getGrantableMenuIds("9"));
+        assertThrows(ServiceException.class,
+            () -> service.updateMenuIds("9", request(Arrays.asList("920150", "900100"), Collections.emptyList())));
+        verify(grants, never()).insert(any(SysRoleMenu.class));
+        verify(grants, never()).delete(any(Wrapper.class));
+
+        service.updateMenuIds("9", request(Arrays.asList("920150", "901700"), Collections.emptyList()));
+        verify(grants, times(2)).insert(any(SysRoleMenu.class));
+    }
+
+    @Test
+    void administratorCanRevokeAnExistingUnapprovedGrantFromDefaultMember() {
+        role.setRoleKey("vls_member");
+        doReturn("1").when(service).currentUserId();
+        SysMenu workOrderSettings = menu(901700);
+        workOrderSettings.setPerms("system:user:list");
+        when(menuService.selectMenuList("1")).thenReturn(Collections.singletonList(workOrderSettings));
+        when(menuService.buildMenuTreeSelect(anyList())).thenReturn(Collections.singletonList(tree(901700)));
+        when(grants.selectAllForVerifiedRole("9")).thenReturn(Collections.singletonList(grant(901700, "tenant-a")));
+
+        assertEquals(Collections.singletonList("901700"), service.getGrantableMenuIds("9"));
+        service.updateMenuIds("9", request(Collections.emptyList(), Collections.singletonList("901700")));
+
+        verify(grants).delete(any(Wrapper.class));
+        verify(grants, never()).insert(any(SysRoleMenu.class));
     }
 
     @Test
