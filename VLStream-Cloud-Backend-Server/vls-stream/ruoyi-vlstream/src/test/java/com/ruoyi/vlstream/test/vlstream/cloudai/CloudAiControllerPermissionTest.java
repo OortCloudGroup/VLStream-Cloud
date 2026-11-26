@@ -25,6 +25,7 @@ import com.ruoyi.vlstream.test.vlstream.controller.VlsDatasetAnnotationControlle
 import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmTrainingController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmModelController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsEventManagementController;
+import com.ruoyi.vlstream.test.vlstream.service.VlsEventDisplayService;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsModelDispatchController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsComputeQueueController;
 import com.ruoyi.vlstream.test.vlstream.controller.VlsAlgorithmAnnotationController;
@@ -200,7 +201,8 @@ class CloudAiControllerPermissionTest {
                 new VlsSmartAnnotationController(smart, mock(SmartAnnotationWorker.class)),
                 new VlsDatasetAnnotationController(editor), trainingController,
                 new VlsAlgorithmModelController(algorithmModels, mock(ModelFileDownloadService.class), mock(ImportedAlgorithmModelService.class)),
-                new VlsEventManagementController(eventManagement, mock(IVlsDeviceInfoService.class), mock(VlsEventReportApplicationService.class), mock(VlsDeviceEventReportService.class)),
+                new VlsEventManagementController(eventManagement, mock(IVlsDeviceInfoService.class),
+                    mock(VlsEventReportApplicationService.class), mock(VlsDeviceEventReportService.class), mock(VlsEventDisplayService.class)),
                 dispatchController, new VlsComputeQueueController(queues),
                 new VlsAlgorithmAnnotationController(annotations, mock(DataTrainingPublisher.class), mock(DatasetGenerationJobs.class)),
                 new VlsAnnotationLabelController(labels), new VlsAnnotationImageController(annotationImages),

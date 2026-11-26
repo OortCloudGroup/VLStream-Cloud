@@ -24,7 +24,7 @@ async function layout(mode, count = 1) {
         dialog:{id:1, position:{x:0,y:0}, layoutCount:count, cameras:[{id:'fixture',name:'Fixture',deviceData:{}}]},
         activeWindowIndex:0, activeCamera:{id:'fixture'}, active:true, showPtz:false,
         draggedWindowIndex:null, dragOverWindowIndex:null, movingWindowIndex:null,
-        floatingWindows:{}, thumbnailDevices:[], thumbnailFrames:{}, windowMedia:{},
+        floatingWindows:{}, thumbnailDevices:[], thumbnailFrames:{}, sharedPreviews:[], windowMedia:{},
         mediaState:{muted:true,canMute:false,canScreenshot:false}, playerFullscreen:false, capturing:false,
         workspaceSize:{width:900,height:600}, carouselWidth:300, carouselOffset:0,
         getLayoutClass:() => 'custom', videoGridStyle:() => ({}), windowPlacement:() => ({}),

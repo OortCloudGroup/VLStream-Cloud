@@ -61,6 +61,7 @@
               </nav>
             </div>
             <VideoLayoutControls
+            v-if="!isSceneView"
             show-presentation
             :presentation-mode="presentationMode"
             :layout-mode="layoutMode"
@@ -82,7 +83,11 @@
           <!-- main -->
           <!-- MasterGo 257:28891 / 309:30754 — 画面层在三种视图下都常驻：地图/列表只是把背景换成地图/表格，
                工具栏、缩略图行、播放窗口的位置与尺寸与视频展示完全一致，窗口仍可点选 -->
-          <section class="square-video-stage">
+          <template v-for="mode in sceneModes" :key="mode">
+            <VideoSquareSceneWorkspace v-if="visitedScenes[mode]" v-show="viewMode === mode" :active="viewMode === mode"
+              :mode="mode" :devices="visibleDevices" :catalog-error="catalogError" />
+          </template>
+          <section v-if="!isSceneView" class="square-video-stage">
             <!-- 列表视图：设备表格作为画面区背景，视频窗口浮在表格之上 -->
             <VideoSquareCatalogTable v-if="viewMode === 'list'" :devices="visibleDevices" :keyword="mapSearchKeyword" :loading="loading" :error="catalogError" @search="mapSearchKeyword = $event" @play="handleCameraClick" @sharing="openSharing" />
             <Teleport v-for="dialog in layoutDialogs" :key="'layout-' + dialog.id"
@@ -190,6 +195,7 @@
             :keyword="mapSearchKeyword"
             :loading="loading"
             :error="catalogError"
+            @close="closeDevicePanel"
             @settings="handleSettings"
             @protocols-change="displaySettings.deviceTypes = $event"
             @status-change="selectedStatus = $event"
@@ -215,34 +221,39 @@
           </div>
         </div>
       </div>
-      <el-dialog v-model="showCustomLayout" :title="$tp('自定义视图')" width="548px" align-center :append-to-body="false"
+      <el-dialog v-model="showCustomLayout" :title="$tp('自定义视图')" width="420px" align-center :append-to-body="false"
         class="square-custom-layout" @open-auto-focus="customRowInput?.focus()" @closed="focusExtendedLayoutButton">
-        <form class="custom-layout-form" @submit.prevent="applyCustomLayout">
+        <form id="square-custom-layout-form" class="custom-layout-form" @submit.prevent="applyCustomLayout">
           <div class="custom-layout-fields">
-            <label>
-              <span>{{ $tp('行（1–9）') }}</span>
-              <input ref="customRowInput" v-model="customRows" type="text" inputmode="numeric"
+            <div class="custom-layout-field">
+              <label for="square-custom-layout-rows">{{ $tp('行（1–9）') }}</label>
+              <el-input id="square-custom-layout-rows" ref="customRowInput" v-model="customRows" size="large" inputmode="numeric"
                 :aria-invalid="!isCustomLayoutDimension(customRows)" aria-describedby="square-custom-layout-status" />
-            </label>
+            </div>
             <span class="custom-layout-multiply" aria-hidden="true">×</span>
-            <label>
-              <span>{{ $tp('列（1–9）') }}</span>
-              <input v-model="customCols" type="text" inputmode="numeric"
+            <div class="custom-layout-field">
+              <label for="square-custom-layout-cols">{{ $tp('列（1–9）') }}</label>
+              <el-input id="square-custom-layout-cols" v-model="customCols" size="large" inputmode="numeric"
                 :aria-invalid="!isCustomLayoutDimension(customCols)" aria-describedby="square-custom-layout-status" />
-            </label>
+            </div>
           </div>
-          <div class="custom-layout-actions">
-            <p id="square-custom-layout-status" :class="{ 'is-error': customLayoutError }" aria-live="polite">
-              {{ $tp(customLayoutError || '最多 {count} 个画面', { count: MAX_VIDEO_WINDOWS }) }}
-            </p>
-            <el-button type="primary" native-type="submit" :disabled="Boolean(customLayoutError)">{{ $tp('确定') }}</el-button>
-          </div>
+          <p id="square-custom-layout-status" class="custom-layout-status" :class="{ 'is-error': !customLayoutCount }" aria-live="polite">
+            {{ customLayoutCount ? $tp('共 {count} 个画面', { count: customLayoutCount }) : $tp('行和列都必须是 1–9 的整数') }}
+          </p>
         </form>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="showCustomLayout = false">{{ $tp('取消') }}</el-button>
+            <el-button type="primary" native-type="submit" form="square-custom-layout-form" :disabled="!customLayoutCount">
+              {{ $tp('确定') }}
+            </el-button>
+          </div>
+        </template>
       </el-dialog>
     </div>
 
     <!-- Map/list previews reuse the video-mode player and transparent controls. -->
-    <div v-for="dialog in videoDialogs" :key="dialog.id" class="video-dialog-overlay" :style="{zIndex:2000 + dialog.id}">
+    <div v-for="dialog in (isSceneView ? [] : videoDialogs)" :key="dialog.id" class="video-dialog-overlay" :style="{zIndex:2000 + dialog.id}">
       <div class="video-dialog square-unified-preview" :data-video-dialog-id="dialog.id"
         :style="{left:dialog.position.x + 'px', top:dialog.position.y + 'px', width:dialog.previewWidth ? dialog.previewWidth + 'px' : undefined, height:dialog.previewWidth ? (dialog.previewWidth / (dialog.videoAspect || 16 / 9) + 32) + 'px' : undefined, '--video-aspect':dialog.videoAspect || 16 / 9}"
         @mousedown="bringToFront(dialog.id)"
@@ -294,7 +305,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
+import {computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import vFloatingDrag from '@/utils/floatingDrag'
 import {ElMessage} from 'element-plus'
 import {Close} from '@element-plus/icons-vue'
@@ -321,7 +332,7 @@ import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
 import VideoSquareCatalogTable from './components/VideoSquareCatalogTable.vue'
 import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
 import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
-import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, customLayoutDimensions, MAX_VIDEO_WINDOWS, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
+import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows, customLayoutDimensions, VIDEO_LAYOUT_OPTIONS } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import PlatformRecordingActions from '@/components/PlatformRecordingActions.vue'
 import { defaultVideoSource, videoSourceOnline } from '@/utils/videoSquareCatalog'
@@ -337,6 +348,7 @@ import { reverseGeocode } from '@/utils/osmGeocoding'
 import { createVideoAddressResolver, createVideoDeviceLocationPopup } from '@/utils/videoDeviceAddress.mjs'
 
 const resolveDeviceAddress = createVideoAddressResolver(reverseGeocode)
+const VideoSquareSceneWorkspace = defineAsyncComponent(() => import('./components/VideoSquareSceneWorkspace.vue'))
 
 // related
 const currentPage = ref(1)
@@ -356,6 +368,9 @@ const layoutMode = computed(() => {
 })
 // MasterGo 257:28183 默认态为「视频展示」
 const viewMode = ref('video')
+const sceneModes = ['topology', 'bim']
+const isSceneView = computed(() => sceneModes.includes(viewMode.value))
+const visitedScenes = ref({})
 const showSharing = ref(false)
 const sharingOwnerId = ref('')
 const openSharing = device => {
@@ -367,15 +382,13 @@ const squareViews = [
   { value: 'video', label: '视频展示', icon: videoViewIcon },
   { value: 'map', label: '地图模式', icon: mapViewIcon },
   { value: 'list', label: '列表', icon: listViewIcon },
-  { value: 'topology', label: '拓扑视图', icon: topologyViewIcon, placeholder: true },
-  { value: 'bim', label: 'BIM视图', icon: bimViewIcon, placeholder: true },
+  { value: 'topology', label: '拓扑视图', icon: topologyViewIcon },
+  { value: 'bim', label: 'BIM视图', icon: bimViewIcon },
 ]
 const setSquareView = async value => {
   const view = squareViews.find(item => item.value === value)
-  if (view?.placeholder) {
-    ElMessage.info(uiText(view.label) + uiText('功能开发中'))
-    return
-  }
+  if (!view) return
+  if (sceneModes.includes(value)) visitedScenes.value[value] = true
   if (viewMode.value === 'map' && value !== 'map') mapInstance?.closePopup()
   viewMode.value = value
   devicePanelCollapsed.value = true
@@ -395,6 +408,15 @@ const collapseDevicePanel = side => {
   if (side !== 'right') return
   devicePanelCollapsed.value = !devicePanelCollapsed.value
   devicePanelFront.value = !devicePanelCollapsed.value
+}
+/** Close the floating panel and return keyboard focus to its toolbar toggle. */
+const closeDevicePanel = async () => {
+  if (devicePanelCollapsed.value) return
+  collapseDevicePanel('right')
+  await nextTick()
+  if (devicePanelCollapsed.value) {
+    floatingTools.value?.querySelector('[aria-controls="square-device-catalog"]')?.focus({ preventScroll: true })
+  }
 }
 let toolbarObserver
 onMounted(() => {
@@ -422,7 +444,7 @@ const handleDeviceSelect = device => {
     const dialog = layoutDialogs.value[0]
     const empty = dialog.cameras.findIndex(camera => !camera)
     if (empty >= 0) { dialog.cameras[empty] = catalogVideoCamera(device); dialog.activeWindowIndex = empty }
-    else if (dialog.layoutCount < MAX_VIDEO_WINDOWS) {
+    else if (dialog.layoutCount < MAX_BOTTOM_VIDEO_WINDOWS) {
       resizeVideoLayout(dialog, dialog.layoutCount + 1, 'grid', {resetPositions:false})
       dialog.cameras[dialog.layoutCount - 1] = catalogVideoCamera(device)
       dialog.activeWindowIndex = dialog.layoutCount - 1
@@ -462,6 +484,7 @@ watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presenta
   saveVideoSquarePreferences({view, presentation, layout, closed})
 }, {deep:true, flush:'sync'})
 const BOTTOM_DEFAULT_WINDOW_COUNT = 4
+const MAX_BOTTOM_VIDEO_WINDOWS = 25
 const selectPresentation = mode => {
   if (!['default', 'bottom'].includes(mode)) return
   if (mode === 'default') closedPreviewIds.value = new Set()
@@ -485,7 +508,7 @@ const selectThumbnail = (dialogId, deviceId) => {
   if (device) assignVideoWindow(layoutDialogs.value, {dialogId, windowIndex:0}, device, currentDevices.value)
 }
 const devicePickerTarget = ref(null)
-watch(devicePanelCollapsed, collapsed => { if (collapsed) devicePickerTarget.value = null })
+watch(devicePanelCollapsed, collapsed => { if (collapsed) devicePickerTarget.value = null }, { flush: 'sync' })
 const dropCatalogDevice = (dialogId, windowIndex, deviceId) => {
   const device = visibleDevices.value.find(item => String(item.id) === String(deviceId))
   if (!device) return
@@ -499,10 +522,9 @@ const customRows = ref('1')
 const customCols = ref('1')
 const isCustomLayoutDimension = value => /^[1-9]$/.test(value)
 const activeCustomLayout = computed(() => presentationMode.value === 'grid' && customLayoutDimensions(layoutChoice.value.variant))
-const customLayoutError = computed(() => {
-  if (!isCustomLayoutDimension(customRows.value) || !isCustomLayoutDimension(customCols.value)) return '行和列都必须是 1–9 的整数'
-  if (Number(customRows.value) * Number(customCols.value) > MAX_VIDEO_WINDOWS) return '行数 × 列数不能超过 {count}'
-  return ''
+const customLayoutCount = computed(() => {
+  if (!isCustomLayoutDimension(customRows.value) || !isCustomLayoutDimension(customCols.value)) return 0
+  return Number(customRows.value) * Number(customCols.value)
 })
 const extendedLayouts = VIDEO_LAYOUT_OPTIONS
 const isExtendedLayoutActive = option => layoutChoice.value.count === option.count && layoutChoice.value.variant === option.variant
@@ -745,8 +767,8 @@ watch(visibleDevices, () => updateMapMarkers())
 watch(visibleDevices, (devices, previous) => {
   const dialog = layoutDialogs.value[0]
   if (presentationMode.value !== 'bottom' || layoutClosed.value || !dialog?.layoutCount) return
-  const count = Math.min(devices.length, MAX_VIDEO_WINDOWS)
-  if (count === Math.min(previous.length, MAX_VIDEO_WINDOWS) && devices.slice(0, count).every((device, index) => device.id === previous[index].id)) return
+  const count = Math.min(devices.length, MAX_BOTTOM_VIDEO_WINDOWS)
+  if (count === Math.min(previous.length, MAX_BOTTOM_VIDEO_WINDOWS) && devices.slice(0, count).every((device, index) => device.id === previous[index].id)) return
   loadBottomLayout(dialog)
 })
 watch(() => displaySettings.value.deviceTypes, () => {
@@ -1150,7 +1172,7 @@ const loadLayoutCameras = dialog => {
 }
 
 const loadBottomLayout = dialog => {
-  const count = Math.max(BOTTOM_DEFAULT_WINDOW_COUNT, Math.min(visibleDevices.value.length, MAX_VIDEO_WINDOWS))
+  const count = Math.max(BOTTOM_DEFAULT_WINDOW_COUNT, Math.min(visibleDevices.value.length, MAX_BOTTOM_VIDEO_WINDOWS))
   resizeVideoLayout(dialog, count, 'grid')
   loadLayoutCameras(dialog)
 }
@@ -1174,11 +1196,9 @@ const openCustomVideoDialogs = () => {
 }
 
 const applyCustomLayout = () => {
-  if (customLayoutError.value) return
-  const rows = Number(customRows.value)
-  const cols = Number(customCols.value)
+  if (!customLayoutCount.value) return
   presentationMode.value = 'grid'
-  openVideoDialogs(rows * cols, `custom-${rows}x${cols}`)
+  openVideoDialogs(customLayoutCount.value, `custom-${customRows.value}x${customCols.value}`)
   showCustomLayout.value = false
 }
 
@@ -3641,125 +3661,42 @@ body::-webkit-scrollbar {
   }
 }
 
-/* dialog */
-:deep(.square-custom-layout) {
-  --el-dialog-bg-color: #0d344f;
-  --el-dialog-padding-primary: 0px;
-  --el-dialog-border-radius: 10px;
-  max-width: calc(100% - 24px);
-  overflow: hidden;
-}
-
-:deep(.square-custom-layout .el-dialog__header) {
-  min-height: 44px;
-  padding: 9px 48px 9px 20px !important;
-  border-bottom: 1px solid #2a526c !important;
-}
-
-:deep(.square-custom-layout .el-dialog__headerbtn) {
-  right: 6px !important;
-  height: 36px !important;
-  width: 36px !important;
-}
-
-:deep(.square-custom-layout .el-dialog__headerbtn:hover) {
-  background-color: #21516f;
-}
-
-:deep(.square-custom-layout .el-dialog__headerbtn .el-dialog__close) {
-  color: #f0f8ff !important;
-}
-
-:deep(.square-custom-layout .el-dialog__title) {
-  color: #f0f8ff;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-:deep(.square-custom-layout .el-dialog__body) {
-  padding: 0;
-}
-
-.custom-layout-form {
-  padding: 28px clamp(16px, 5vw, 30px) 20px;
-  color: #cfe4f4;
-}
-
 .custom-layout-fields {
   display: grid;
-  grid-template-columns: minmax(0, 112px) max-content minmax(0, 112px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: end;
-  gap: 14px;
+  gap: 12px;
 }
 
-.custom-layout-fields label {
+.custom-layout-field {
   display: grid;
   gap: 8px;
-  font-weight: 600;
 }
 
-.custom-layout-fields input {
-  box-sizing: border-box;
-  width: 100%;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid #557a94;
-  border-radius: 4px;
-  background: #123f5f;
-  color: #f0f8ff;
-  font: inherit;
-  font-variant-numeric: tabular-nums;
+.custom-layout-field label {
+  color: var(--el-text-color-primary);
+  font-weight: 500;
 }
 
-.custom-layout-fields input[aria-invalid='true'] {
-  border-color: #ffb4b2;
+.custom-layout-field :deep(.el-input__wrapper:has(input[aria-invalid='true'])) {
+  box-shadow: 0 0 0 1px var(--el-color-danger) inset;
 }
 
 .custom-layout-multiply {
-  line-height: 36px;
+  display: grid;
+  place-items: center;
+  height: var(--el-component-size-large, 40px);
+  color: var(--el-text-color-secondary);
 }
 
-.custom-layout-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 16px;
-  margin-top: 12px;
-}
-
-.custom-layout-actions p {
-  margin: 0;
+.custom-layout-status {
+  margin: 12px 0 0;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 
-.custom-layout-actions .is-error {
-  color: #ffb4b2;
-}
-
-.custom-layout-actions .el-button {
-  --el-button-bg-color: #27b0ec;
-  --el-button-border-color: #27b0ec;
-  --el-button-text-color: #09263b;
-  --el-button-hover-bg-color: #64cafa;
-  --el-button-hover-border-color: #64cafa;
-  --el-button-hover-text-color: #09263b;
-  --el-button-active-bg-color: #32a6dc;
-  --el-button-active-border-color: #32a6dc;
-  --el-button-disabled-bg-color: #28526e;
-  --el-button-disabled-border-color: #28526e;
-  --el-button-disabled-text-color: #bfd5e6;
-  min-width: 144px;
-  height: 42px;
-  margin-inline-start: auto;
-  font-weight: 600;
-}
-
-.custom-layout-fields input:focus-visible,
-.custom-layout-actions .el-button:focus-visible,
-:deep(.square-custom-layout .el-dialog__headerbtn:focus-visible) {
-  outline: 2px solid #80d7ff;
-  outline-offset: 2px;
+.custom-layout-status.is-error {
+  color: var(--el-color-danger-dark-2);
 }
 
 .extended-layout-overlay {

@@ -59,6 +59,90 @@ class OpenAiVisionAnnotationTest {
     }
 
     @Test
+    void streamsTextPageCodeThroughTheSelectedRelayModel() {
+        AtomicReference<JSONObject> sent = new AtomicReference<>();
+        server.createContext("/v1/chat/completions", exchange -> {
+            sent.set(JSONUtil.parseObj(new String(org.apache.commons.io.IOUtils.toByteArray(exchange.getRequestBody()), StandardCharsets.UTF_8)));
+            exchange.getResponseHeaders().set("Content-Type", "text/event-stream; charset=utf-8");
+            reply(exchange, 200, "data: {\"choices\":[{\"delta\":{\"content\":\"第一行\"}}]}\n\n"
+                + "data: {\"choices\":[{\"delta\":{\"content\":\"第二行\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n");
+        });
+        java.util.List<String> chunks = new java.util.ArrayList<>();
+        client.generateScene(provider, "scene-model", "instructions", "description", chunks::add);
+        assertEquals(java.util.Arrays.asList("第一行", "第二行"), chunks);
+        assertEquals("scene-model", sent.get().getStr("model"));
+        assertTrue(sent.get().getBool("stream"));
+        assertEquals(Integer.valueOf(16384), sent.get().getInt("max_tokens"));
+        assertFalse(sent.get().containsKey("thinking"));
+        assertFalse(sent.get().containsKey("reasoning_effort"));
+        assertEquals("system", sent.get().getJSONArray("messages").getJSONObject(0).getStr("role"));
+    }
+
+    @Test
+    void reservesOutputForCodeUsingTheSelectedGlmModelsSupportedThinkingControls() {
+        AtomicReference<JSONObject> sent = new AtomicReference<>();
+        server.createContext("/v1/chat/completions", exchange -> {
+            sent.set(JSONUtil.parseObj(new String(org.apache.commons.io.IOUtils.toByteArray(exchange.getRequestBody()), StandardCharsets.UTF_8)));
+            exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
+            reply(exchange, 200, "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"internal\"}}]}\n\n"
+                + "data: {\"choices\":[{\"delta\":{\"content\":\"page\"},\"finish_reason\":\"stop\"}]}\n\n");
+        });
+        StringBuilder text = new StringBuilder();
+        client.generateScene(provider, "glm-5.3-Flash", "instructions", "description", text::append);
+        assertEquals("page", text.toString());
+        assertEquals(Integer.valueOf(32768), sent.get().getInt("max_tokens"));
+        assertEquals("low", sent.get().getStr("reasoning_effort"));
+        assertFalse(sent.get().containsKey("thinking"));
+
+        client.generateScene(provider, "GLM-4.7", "instructions", "description", text::append);
+        assertEquals("disabled", sent.get().getByPath("thinking.type"));
+        assertFalse(sent.get().containsKey("reasoning_effort"));
+        assertEquals("review-model", provider.getModelName());
+    }
+
+    @Test
+    void readsTheFinalPageAfterLargeStreamedReasoningWithoutShowingReasoningInThePage() {
+        server.createContext("/v1/chat/completions", exchange -> {
+            String padding = org.apache.commons.lang3.StringUtils.repeat("r", 4096);
+            byte[] reasoning = ("data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"" + padding + "\"}}]}\n\n")
+                .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
+            exchange.sendResponseHeaders(200, 0);
+            try (OutputStream stream = exchange.getResponseBody()) {
+                for (int i = 0; i < 512; i++) stream.write(reasoning);
+                stream.write("data: {\"choices\":[{\"delta\":{\"content\":\"page\"},\"finish_reason\":\"stop\"}]}\n\n"
+                    .getBytes(StandardCharsets.UTF_8));
+            }
+        });
+        StringBuilder visible = new StringBuilder();
+        client.generateScene(provider, "glm-5.3-flash", "instructions", "description", visible::append);
+        assertEquals("page", visible.toString());
+    }
+
+    @Test
+    void distinguishesOutputExhaustionFilteringAndUpstreamNetworkFailuresAcrossRelayFormats() {
+        AtomicReference<String> reason = new AtomicReference<>();
+        AtomicReference<Boolean> streaming = new AtomicReference<>();
+        server.createContext("/v1/chat/completions", exchange -> {
+            String entry = "{\"choices\":[{\"finish_reason\":\"" + reason.get() + "\",\"message\":{\"content\":\"incomplete\"}}]}";
+            exchange.getResponseHeaders().set("Content-Type", streaming.get() ? "text/event-stream" : "application/json");
+            reply(exchange, 200, streaming.get() ? "data: " + entry + "\n\ndata: [DONE]\n\n" : entry);
+        });
+        for (boolean sse : new boolean[] {true, false}) {
+            streaming.set(sse);
+            for (String[] scenario : new String[][] {{"length", "输出长度"}, {"content_filter", "过滤"},
+                {"sensitive", "过滤"}, {"network_error", "连接中断"}, {"model_context_window_exceeded", "上下文"}}) {
+                reason.set(scenario[0]);
+                StringBuilder text = new StringBuilder();
+                ServiceException failure = assertThrows(ServiceException.class,
+                    () -> client.generateScene(provider, "scene-model", "instructions", "description", text::append));
+                assertTrue(failure.getMessage().contains(scenario[1]), failure.getMessage());
+                assertEquals(0, text.length());
+            }
+        }
+    }
+
+    @Test
     void sendsIntactPngWithSelectedModelAndReturnsRawText() {
         AtomicReference<JSONObject> sent = new AtomicReference<>();
         AtomicReference<String> authorization = new AtomicReference<>();

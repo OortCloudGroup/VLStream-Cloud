@@ -307,6 +307,34 @@ test('CameraRTC compact status retains full diagnostics, retries and cleanup', a
   legacy.close()
 })
 
+test('CameraRTC compact indicator expires without stopping a session that can still produce video', async () => {
+  let session, timer
+  class Session {
+    constructor(options) { this.options = options; this.stops = 0; session = this }
+    start() { this.options.onStatus({ state: 'negotiating', message: '正在等待首帧', retryCount: 0 }) }
+    stop() { this.stops++ }
+  }
+  const player = harness('components/CameraRtcPlayer.vue', {
+    deviceId: 'slow-camera', socketUrl: 'ws://fixture', compactStatus: true,
+  }, {
+    CameraRtcSession: Session, parseCameraRtcTurnUrls: () => [],
+    setTimeout: (callback, delay) => { timer = callback; assert.equal(delay, 12000); return 1 },
+    clearTimeout: () => { timer = null },
+  })
+  player.instance.videoElement.value = { paused: false, muted: true, volume: 1 }
+  player.mounts.forEach(action => action())
+  assert.equal(session.options.callTimeoutMs, undefined)
+  assert.match(await player.html(), /正在连接…/)
+  timer()
+  assert.match(await player.html(), /无信号/)
+  assert.equal(session.stops, 0)
+  session.options.onStatus({ state: 'playing', message: '播放中', retryCount: 0 })
+  assert.doesNotMatch(await player.html(), /无信号|正在连接/)
+  player.close()
+  assert.equal(session.stops, 1)
+  assert.equal(timer, null)
+})
+
 test('video square alone opts each real protocol branch into compact display and uses no signal fallback', async () => {
   const deps = { VIDEO_PROTOCOLS: [{ value: 'VLSTREAM', path: '/device', label: 'VLStream' }], videoSourceKey: source => `${source.protocol}:${source.rowId}`,
     defaultVideoSource: sources => sources?.[0], canPreviewVideoSource: source => source.status === 'ONLINE', videoSourceOnline: source => source.status === 'ONLINE', videoSourceState: source => source.status || 'UNKNOWN', customStatusDetail: () => 'UNKNOWN' }
@@ -412,6 +440,23 @@ test('actual native-control templates opt out only for compact square display', 
   await flush()
   assert.ok((await vls.html()).includes('data-player="RtcPlayer" data-compact-status="true"'))
   vls.close()
+})
+
+test('a player moved to the main window resumes its decoded video and returns to a muted thumbnail', async () => {
+  let plays = 0
+  const video = { muted: false, paused: true, ended: false, readyState: 2, play: async () => { plays++; video.paused = false } }
+  const player = harness('views/VideoAggregation/components/VideoSquareDevicePlayer.vue', { device: { sources: [] }, thumbnail: true }, {
+    videoSourceKey: () => '', defaultVideoSource: () => null, HTMLMediaElement: { HAVE_CURRENT_DATA: 2 },
+  })
+  player.instance.playerElement.value = { querySelector: () => video }
+  player.props.thumbnail = false
+  await flush()
+  assert.equal(plays, 1)
+  player.props.thumbnail = true
+  await flush()
+  assert.equal(video.muted, true)
+  assert.equal(plays, 1)
+  player.close()
 })
 
 test('compact failed canvases contain only no signal, with no management or reconnect controls', async () => {

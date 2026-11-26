@@ -25,22 +25,39 @@ function load(path, values, dependencies) {
   return { props, instance, mounts, close: () => { unmounts.forEach(action => action()); scope.stop() } }
 }
 
-test('start queue caps concurrent starts and spaces them out', async () => {
-  const queue = createPreviewStartQueue({ limit: 2, spacingMs: 30 })
+test('start queue caps concurrent starts and preserves spacing after timer delays', async () => {
+  let now = 0
+  const timers = []
+  const queue = createPreviewStartQueue({
+    limit: 2,
+    spacingMs: 30,
+    now: () => now,
+    sleep: ms => new Promise(resolve => timers.push({ at: now + ms, resolve }))
+  })
+  async function advance(ms) {
+    now += ms
+    while (timers.length && timers[0].at <= now) timers.shift().resolve()
+    await flush()
+  }
   const startedAt = [], gates = []
   let running = 0, peak = 0
   const jobs = [0, 1, 2, 3, 4].map(index => queue.schedule(async () => {
-    startedAt.push(Date.now()); running++; peak = Math.max(peak, running)
+    startedAt.push(now); running++; peak = Math.max(peak, running)
     await new Promise(resolve => gates.push(resolve)); running--; return index
   }))
-  await wait(120)
+  await advance(250)
   assert.equal(peak, 2, 'never more than the limit in flight')
   assert.equal(queue.pending, 3)
-  while (gates.length) gates.shift()()
-  await wait(5)
-  while (gates.length || queue.pending || queue.active) { while (gates.length) gates.shift()(); await wait(10) }
+  gates.splice(0).forEach(release => release())
+  await advance(0)
+  await advance(60)
+  await advance(30)
+  gates.splice(0).forEach(release => release())
+  await advance(0)
+  await advance(30)
+  gates.shift()()
   assert.deepEqual(await Promise.all(jobs), [0, 1, 2, 3, 4], 'results keep their own task')
-  for (let index = 1; index < startedAt.length; index++) assert.ok(startedAt[index] - startedAt[index - 1] >= 25, `start ${index} was spaced`)
+  assert.deepEqual(startedAt, [0, 250, 310, 340, 370])
 })
 
 test('start queue skips cancelled work and still reports task errors', async () => {
@@ -167,23 +184,21 @@ test('thumbnail strip only starts visible, supported previews and releases them 
   notifyIntersection([visibility('a', 1), visibility('b', 1), visibility('c', 0), visibility('d', 1)])
   await flush()
   const live = () => [...strip.instance.livePreviewIds.value].sort()
-  assert.deepEqual(live(), [], 'selected, offline, unsupported and offscreen tiles open no sessions')
+  assert.deepEqual(live(), ['a'], 'the already running main preview can return to its visible tile')
   assert.deepEqual([...strip.instance.unavailablePreviewIds.value], ['b', 'd'])
   strip.props.devices = [camera('a', 'ONLINE'), camera('b', 'ONLINE'), camera('c', 'UNKNOWN'), camera('d', 'ONLINE', 'GB28181')]
   await flush()
-  assert.deepEqual(live(), [], 'a newly eligible tile waits for the catalogue to settle')
+  assert.deepEqual(live(), ['a'], 'a newly eligible tile waits for the catalogue to settle')
   await wait(450)
-  assert.deepEqual(live(), ['b'])
+  assert.deepEqual(live(), ['a', 'b'])
   notifyIntersection([visibility('b', 0), visibility('c', 0.25)])
   await flush()
-  assert.deepEqual(live(), [], 'a card leaving the clipped strip releases immediately')
+  assert.deepEqual(live(), ['a'], 'a card leaving the clipped strip releases immediately')
   await wait(450)
-  assert.deepEqual(live(), ['c'], 'a card scrolling into view starts its own preview')
+  assert.deepEqual(live(), ['a', 'c'], 'a card scrolling into view starts its own preview')
   strip.props.selectedId = 'c'
   await flush()
-  assert.deepEqual(live(), [], 'promoting the thumbnail releases its duplicate player immediately')
-  await wait(450)
-  assert.deepEqual(live(), ['a'], 'the previous main-window device can become a visible preview')
+  assert.deepEqual(live(), ['a', 'c'], 'switching main and thumbnail does not evict either running preview')
   documentStub.hidden = true
   listeners.visibilitychange()
   await flush()
@@ -192,12 +207,12 @@ test('thumbnail strip only starts visible, supported previews and releases them 
   listeners.visibilitychange()
   await flush()
   await wait(450)
-  assert.deepEqual(live(), ['a'])
+  assert.deepEqual(live(), ['a', 'c'])
   strip.instance.observeThumbnail('a', null)
   notifyIntersection([visibility('a', 1)])
   await flush()
   assert.equal(observed.has(tiles.a), false)
-  assert.deepEqual(live(), [], 'a late intersection for a removed card cannot reopen it')
+  assert.deepEqual(live(), ['c'], 'a late intersection for a removed card cannot reopen it')
   strip.close()
   assert.equal(observed.size, 0, 'unmount disconnects the observer')
 })

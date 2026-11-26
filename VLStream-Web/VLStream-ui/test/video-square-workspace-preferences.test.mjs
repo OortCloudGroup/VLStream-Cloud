@@ -14,7 +14,7 @@ test('each view and presentation restores independently and saves only display p
 })
 
 test('invalid layout combinations, malformed storage and blocked storage remain usable', () => {
-    assert.deepEqual(normalizeVideoSquarePreferences({view:'unknown',presentation:'unknown',layout:{count:26,variant:'grid'}}), {view:'video',presentation:'default',layout:{count:1,variant:'grid'},closed:false})
+    assert.deepEqual(normalizeVideoSquarePreferences({view:'unknown',presentation:'unknown',layout:{count:82,variant:'grid'}}), {view:'video',presentation:'default',layout:{count:1,variant:'grid'},closed:false})
     assert.equal(normalizeVideoSquarePreferences({layout:{count:4,variant:'two-overlay'}}).layout.count, 1)
     assert.equal(readVideoSquarePreferences({getItem:()=>'{broken'}).view, 'video')
     const blocked = {getItem:()=>{throw Error('blocked')},setItem:()=>{throw Error('blocked')}}
@@ -29,4 +29,12 @@ test('explicitly closed is persisted as display state without reducing the saved
     saveVideoSquarePreferences({view:'map',presentation:'bottom',layout:{count:8,variant:'grid'},closed:true,device:'not saved'},store)
     assert.deepEqual(readVideoSquarePreferences(store),{view:'map',presentation:'bottom',layout:{count:8,variant:'grid'},closed:true})
     assert.ok(!saved.includes('not saved'))
+})
+
+test('a 9×9 layout remains valid when saving display preferences', () => {
+    const values = new Map()
+    const storage = { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) }
+    const preference = { view: 'video', presentation: 'grid', layout: { count: 81, variant: 'custom-9x9' }, closed: false }
+    saveVideoSquarePreferences(preference, storage)
+    assert.deepEqual(readVideoSquarePreferences(storage), preference)
 })

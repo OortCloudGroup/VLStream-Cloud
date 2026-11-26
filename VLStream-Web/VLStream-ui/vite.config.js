@@ -10,6 +10,7 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { spawn } from 'node:child_process'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import { generatedPageRuntime } from './scripts/generated-page-runtime.mjs'
 
 const vlsSrc = path.resolve(__dirname, 'src')
 
@@ -104,6 +105,7 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     plugins: [
+      generatedPageRuntime(),
       vue(),
       AutoImport({
         imports: ['vue', 'vue-router'],

@@ -77,6 +77,48 @@ test('bottom loads late catalogue entries and follows the filtered order up to 2
     assert.equal(dialog.layoutCount, 0)
     h.stop()
 })
+test('a custom 9×9 layout applies and can be reopened after collapsing or removing a window', () => {
+    const h = square(), s = h.state, dialog = s.layoutDialogs.value[0]
+    s.openCustomVideoDialogs()
+    s.customRows.value = '10'
+    s.customCols.value = '9'
+    s.applyCustomLayout()
+    assert.equal(s.showCustomLayout.value, true)
+    assert.equal(dialog.layoutCount, 1)
+
+    s.customRows.value = '9'
+    s.applyCustomLayout()
+    assert.equal(s.showCustomLayout.value, false)
+    assert.equal(dialog.layoutCount, 81)
+    assert.equal(dialog.layoutVariant, 'custom-9x9')
+    assert.equal(new Set(dialog.windowIds).size, 81)
+    s.closeAllVideos()
+    assert.equal(dialog.layoutCount, 0)
+    s.closeAllVideos()
+    assert.equal(dialog.layoutCount, 81)
+    assert.equal(dialog.layoutVariant, 'custom-9x9')
+    s.removeDeviceFromWindow(dialog.id, 80)
+    s.closeAllVideos()
+    s.closeAllVideos()
+    assert.equal(dialog.layoutCount, 80)
+    assert.equal(dialog.layoutVariant, 'grid')
+    h.stop()
+})
+test('closing the device catalog clears the current picker but preserves the video workspace', async () => {
+    const h = square('video', 'grid', 4), s = h.state, dialog = s.layoutDialogs.value[0]
+    dialog.cameras[0] = { id: 'camera-in-use' }
+    s.addDeviceToWindow(dialog.id, 2)
+    assert.equal(s.devicePanelCollapsed.value, false)
+    assert.equal(s.devicePickerTarget.value.windowId, dialog.windowIds[2])
+    await s.closeDevicePanel()
+    assert.equal(s.devicePanelCollapsed.value, true)
+    assert.equal(s.devicePickerTarget.value, null)
+    assert.equal(dialog.layoutCount, 4)
+    assert.equal(dialog.cameras[0].id, 'camera-in-use')
+    s.collapseDevicePanel('right')
+    assert.equal(s.devicePanelCollapsed.value, false)
+    h.stop()
+})
 test('red phone removes the last slot without recreating a window',()=>{
     const h=square('list','grid',3),s=h.state,d=s.layoutDialogs.value[0]
     d.cameras=[{id:'a'},{id:'b'},{id:'c'}]

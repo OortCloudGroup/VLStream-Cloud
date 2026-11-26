@@ -1,4 +1,5 @@
-export const MAX_VIDEO_WINDOWS = 25
+// Custom grids reach 9 × 9. Generic grids also need this capacity after closing individual windows.
+export const MAX_VIDEO_WINDOWS = 81
 
 export function customLayoutDimensions(variant) {
   const match = /^custom-([1-9])x([1-9])$/.exec(variant)

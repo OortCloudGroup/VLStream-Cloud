@@ -1,6 +1,16 @@
 <template>
   <aside v-floating-drag v-loading="loading" class="device-list-panel square-device-panel">
-    <div class="device-card-drag-bar" data-drag-handle title="拖动设备面板" />
+    <div class="device-card-drag-bar" data-drag-handle :title="$tp('拖动设备面板')">
+      <button
+        type="button"
+        class="device-panel-close"
+        :aria-label="$tp('关闭设备栏')"
+        :title="$tp('关闭设备栏')"
+        @click.stop="$emit('close')"
+      >
+        <el-icon :size="16" aria-hidden="true"><Close /></el-icon>
+      </button>
+    </div>
     <slot name="views" />
     <div class="device-list-header" data-drag-handle title="拖动设备面板">
       <strong class="device-list-title">{{ $tp('数据展示') }}</strong>
@@ -67,6 +77,7 @@ import protocolArrowIcon from '@/assets/mastergo/video-square/protocol-arrow.svg
 import folderIcon from '@/assets/mastergo/video-square/folder.svg'
 import cameraIcon from '@/assets/mastergo/video-square/device-camera.svg'
 import { ElMessage } from 'element-plus'
+import { Close } from '@element-plus/icons-vue'
 import { translatePhrase } from '@/i18n'
 import { VIDEO_PROTOCOLS, videoDeviceCoordinates, videoDeviceGroups, sortVideoDevices } from '@/utils/videoSquareCatalog'
 import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
@@ -87,7 +98,7 @@ const props = defineProps({
   loading: Boolean,
   error: { type: String, default: '' },
 })
-defineEmits(['device-click', 'settings', 'search', 'protocols-change', 'status-change', 'classification-change'])
+defineEmits(['close', 'device-click', 'settings', 'search', 'protocols-change', 'status-change', 'classification-change'])
 const treeView = ref(true)
 const protocolsCollapsed = ref(true)
 const toggleTreeView = () => { treeView.value = true; ElMessage.success(translatePhrase('已切换到树形结构')) }
@@ -206,6 +217,30 @@ function toggleGroup(id) {
 .device-action-btn, .device-action-btn:hover { width: 20px; height: 20px; padding: 0; background: transparent; color: #333; border-radius: 0; }
 .catalog-settings { display: grid; gap: 8px; }
 .catalog-settings .el-button { margin: 0; }
+.device-panel-close {
+  display: grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--el-border-radius-base);
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+}
+.device-panel-close:hover {
+  background: var(--el-fill-color);
+  color: var(--el-text-color-primary);
+}
+.device-panel-close:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: -2px;
+}
+@media (pointer: coarse) {
+  .device-panel-close { inline-size: 44px; block-size: 44px; }
+}
 .protocol-option { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .protocol-menu { display: flex; align-items: center; justify-content: center; width: 16px; height: 20px; border: 0; background: transparent; padding: 0; cursor: pointer; }
 .protocol-menu img { width: 16px; height: 16px; }

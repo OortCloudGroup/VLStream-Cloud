@@ -1,8 +1,8 @@
 <template>
-  <div class="square-device-player" :class="{ 'is-recording': isRecording }">
+  <div ref="playerElement" class="square-device-player" :class="{ 'is-recording': isRecording }">
     <span v-if="isRecording" class="recording-indicator" role="status"><span class="recording-dot" aria-hidden="true"></span>{{ $tp('录像中') }}</span>
     <PlatformRecordingActions v-if="recordingControls && selected" class="square-recording" :protocol="selected.protocol" :row-id="selected.rowId" :online="videoSourceOnline(selected)" />
-    <el-select v-if="device.sources?.length > 1" v-model="selectedKey" size="small" class="source-selector"
+    <el-select v-if="!thumbnail && device.sources?.length > 1" v-model="selectedKey" size="small" class="source-selector"
       :aria-label="$tp('播放通道')" :teleported="false">
       <el-option v-for="source in device.sources" :key="sourceKey(source)" :value="sourceKey(source)"
         :label="sourceLabel(source)" />
@@ -30,7 +30,16 @@ import SquareProtocolDevicePlayer from './SquareProtocolDevicePlayer.vue'
 import { translatePhrase } from '@/i18n'
 import { customStatusDetail } from '@/utils/customDeviceState'
 import { VIDEO_PROTOCOLS, videoSourceKey, defaultVideoSource, canPreviewVideoSource, videoSourceOnline, videoSourceState } from '@/utils/videoSquareCatalog'
-const props = defineProps({ device: { type: Object, required: true }, recordingControls: { type: Boolean, default: false } })
+const props = defineProps({ device: { type: Object, required: true }, recordingControls: { type: Boolean, default: false }, thumbnail: { type: Boolean, default: false } })
+const playerElement = ref(null)
+watch(() => props.thumbnail, thumbnail => {
+  const video = playerElement.value?.querySelector('video')
+  if (!video) return
+  if (thumbnail) video.muted = true
+  if (video.paused && !video.ended && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    video.play().catch(() => {})
+  }
+}, { flush: 'post' })
 const isRecording = useDeviceRecording(() => props.device)
 const emit = defineEmits(['source-change'])
 const selectedKey = ref('')

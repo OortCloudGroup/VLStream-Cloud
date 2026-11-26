@@ -10,9 +10,10 @@
             type="button" class="square-thumbnail" :style="thumbnailPosition(index)"
             :class="{ active: device.id === selectedId }" :aria-pressed="device.id === selectedId"
             :aria-label="device.deviceName || device.name" data-i18n-ignore-attributes @click="$emit('select', device.id)">
-            <VideoSquareDevicePlayer v-if="livePreviewIds.has(device.id)" class="thumbnail-live-player" :device="device" :recording-controls="false" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview" />
-            <img v-else-if="device.status !== 'OFFLINE' && frames[device.id]" :src="frames[device.id]" alt="" />
+            <img v-if="device.status !== 'OFFLINE' && frames[device.id]" :src="frames[device.id]" alt="" />
             <span v-else class="thumbnail-unavailable">{{ $tp(unavailablePreviewIds.has(device.id) ? '无信号' : '未预览') }}</span>
+            <span :ref="element => emit('preview-target', device.id, element)" :data-thumbnail-id="device.id"
+                class="thumbnail-live-player" @playing.capture="mutePreview" @loadedmetadata.capture="mutePreview"></span>
             <span class="thumbnail-name" data-i18n-ignore>{{ device.deviceName || device.name }}</span>
         </button>
         <span v-if="!devices.length" class="thumbnail-empty">{{ $tp('暂无设备') }}</span>
@@ -28,8 +29,8 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useHoverScroll } from '@/composables/useHoverScroll'
 import { useVideoMarquee, videoStripLoopWidth, videoStripWrappedCount } from '@/composables/useVideoMarquee.mjs'
 import { canPreviewVideoSource } from '@/utils/videoSquareCatalog'
-import VideoSquareDevicePlayer from './VideoSquareDevicePlayer.vue'
 const props = defineProps({ devices: { type: Array, default: () => [] }, selectedId: { type: [String, Number], default: '' }, frames: { type: Object, default: () => ({}) }, autoPreview: Boolean })
+const emit = defineEmits(['select', 'preview-target', 'live-previews'])
 const scrollElement = ref(null)
 const laneElement = ref(null)
 const PREVIEW_SETTLE_MS = 400
@@ -74,24 +75,26 @@ const unavailablePreviewIds = computed(() => new Set(props.devices
         source.protocol === 'VLSTREAM' || canPreviewVideoSource(source)))
     .map(device => device.id)))
 const eligiblePreviewIds = computed(() => props.autoPreview && pageVisible.value
-    ? new Set(props.devices.filter(device => device.id !== props.selectedId &&
-        !unavailablePreviewIds.value.has(device.id) &&
+    ? new Set(props.devices.filter(device => !unavailablePreviewIds.value.has(device.id) &&
         (!canObserveThumbnails || visibleThumbnailIds.value.has(device.id))).map(device => device.id))
     : new Set())
 const livePreviewIds = ref(new Set())
 let settleTimer
-watch(eligiblePreviewIds, (ids, previous) => {
-    if (previous && previous.size === ids.size && [...ids].every(id => previous.has(id))) return
+watch([eligiblePreviewIds, () => props.selectedId], ([ids, selectedId], [previous, previousSelected]) => {
+    if (previousSelected === selectedId && previous?.size === ids.size && [...ids].every(id => previous.has(id))) return
     clearTimeout(settleTimer)
     const current = livePreviewIds.value
     const remaining = new Set([...current].filter(id => ids.has(id)))
-    if (remaining.size !== current.size) livePreviewIds.value = remaining
+    // A visible main player is already running and can become a thumbnail immediately.
+    if (ids.has(selectedId)) remaining.add(selectedId)
+    if (remaining.size !== current.size || [...remaining].some(id => !current.has(id))) livePreviewIds.value = remaining
     // Leaving the viewport releases immediately. Only starting newcomers waits
     // for scrolling and catalogue updates to settle.
     if (remaining.size < ids.size) {
         settleTimer = setTimeout(() => { livePreviewIds.value = ids }, PREVIEW_SETTLE_MS)
     }
 }, { immediate: true })
+watch(livePreviewIds, ids => emit('live-previews', ids))
 const syncVisibility = () => { pageVisible.value = !document.hidden }
 const canLeft = ref(false)
 const canRight = ref(false)
@@ -143,8 +146,8 @@ onBeforeUnmount(() => {
     thumbnailObserver?.disconnect()
     clearTimeout(settleTimer)
     document.removeEventListener('visibilitychange', syncVisibility)
+    emit('live-previews', new Set())
 })
-defineEmits(['select'])
 function mutePreview(event) {
     if (event.target instanceof HTMLMediaElement) event.target.muted = true
 }
@@ -163,9 +166,10 @@ function mutePreview(event) {
 .square-thumbnail:hover,.square-thumbnail:focus-visible { outline: 2px solid #f5222d; outline-offset: -2px; }
 .square-thumbnail img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .thumbnail-unavailable { font-size: 12px; }
-.thumbnail-name { position: absolute; inset: auto 0 0; padding: 5px 6px; background: rgb(0 0 0 / 55%); color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.thumbnail-name { position: absolute; z-index: 1; inset: auto 0 0; padding: 5px 6px; background: rgb(0 0 0 / 55%); color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .thumbnail-empty { padding: 12px; color: #778da2; font-size: 12px; }
-.thumbnail-live-player { position: absolute; inset: 0; pointer-events: none; }
+.thumbnail-live-player { position: absolute; z-index: 0; inset: 0; pointer-events: none; }
+.square-thumbnail:has(.square-device-player) > .thumbnail-unavailable { visibility: hidden; }
 .thumbnail-live-player :deep(.source-selector), .thumbnail-live-player :deep(.player-overlay), .thumbnail-live-player :deep(.oplayer-controller) { display: none; }
 /* Live previews and the selected camera's captured frame use the same square viewport. */
 .thumbnail-live-player :deep(.direct-player),

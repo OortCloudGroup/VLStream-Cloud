@@ -2,7 +2,7 @@ import { videoGridStyle } from './videoSquareLayout.mjs'
 
 const key = 'vls.videoSquare.workspace.v1'
 export function normalizeVideoSquarePreferences(value = {}) {
-    const view = ['video', 'map', 'list'].includes(value.view) ? value.view : 'video'
+    const view = ['video', 'map', 'list', 'topology', 'bim'].includes(value.view) ? value.view : 'video'
     const presentation = ['default', 'bottom', 'grid'].includes(value.presentation) ? value.presentation : 'default'
     let layout = {count:1, variant:'grid'}
     try {

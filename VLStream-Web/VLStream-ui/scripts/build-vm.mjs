@@ -16,6 +16,17 @@ export function vmBuildEnvironment(environment) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const { loadEnv } = await import('vite')
+  const platform = loadEnv('production', process.cwd(), 'VITE_PLATFORM_')
+  const requiredPlatformKeys = ['VITE_PLATFORM_APP_ID', 'VITE_PLATFORM_SECRET_KEY']
+  const missing = requiredPlatformKeys.filter(key => {
+    const value = platform[key]?.trim()
+    return !value || value.startsWith('replace-with-')
+  })
+  if (missing.length) {
+    throw new Error(`VM build requires platform application configuration: ${missing.join(', ')}`)
+  }
+
   const result = spawnSync(process.execPath, [
     fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url)),
     'build', '--mode', 'production', ...process.argv.slice(2)

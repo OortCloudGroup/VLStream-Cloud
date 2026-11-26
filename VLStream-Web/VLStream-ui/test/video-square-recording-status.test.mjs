@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { computed, effectScope, shallowRef, watch } from 'vue'
+import { computed, effectScope, ref, shallowRef, watch } from 'vue'
 
 const script = readFileSync(new URL('../src/composables/useDeviceRecording.js', import.meta.url), 'utf8')
   .replace(/^import .*$/gm, '').replace('export function ', 'function ')
@@ -144,4 +144,67 @@ test('polling admits at most three requests and rejects results from an obsolete
   windows.forEach(window => window.close())
   assert.equal(pending.get('2').signal.aborted, true)
   assert.equal(pending.get('3').signal.aborted, true)
+})
+
+const playbackSource = readFileSync(new URL('../src/views/VideoAggregation/VideoPlayback.vue', import.meta.url), 'utf8')
+  .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
+const loadPlayback = new Function('deps', `with (deps) {
+  ${playbackSource}
+  return { selectDevice, retryQuery, play, closePlayer, clipListStatus, playerStatus, segments, url }
+}`)
+const camera = { sources: [{ protocol: 'ONVIF', rowId: '1' }] }
+
+function setupPlayback(api) {
+  return loadPlayback({
+    api, computed, ref, watch,
+    useRoute: () => ({ query: {} }),
+    onMounted() {},
+    onBeforeUnmount() {},
+    recordingError: error => error.message,
+    t: value => value
+  })
+}
+
+test('recording playback distinguishes a missing channel, a failed lookup and a channel without clips', async () => {
+  let channels = []
+  let lookups = 0
+  const player = setupPlayback({
+    sources: async () => channels,
+    segments: async () => {
+      lookups += 1
+      if (lookups === 1) throw new Error('lookup failed')
+      return []
+    }
+  })
+  await player.selectDevice(camera)
+  assert.equal(player.clipListStatus.value, '暂无录像通道')
+  assert.equal(lookups, 0)
+  channels = [{ id: 'channel' }]
+  await player.selectDevice(camera)
+  assert.equal(player.clipListStatus.value, '录像查询失败')
+  await player.retryQuery()
+  assert.equal(player.clipListStatus.value, '当天暂无录像')
+  assert.equal(lookups, 2)
+})
+
+test('the recording list downloads media on selection and cancels stale playback on close', async () => {
+  let pendingFile
+  const clip = { id: 'clip', start_ms: 0 }
+  const player = setupPlayback({
+    sources: async () => [{ id: 'channel' }],
+    segments: async () => [clip],
+    file: (id, signal) => new Promise(resolve => { pendingFile = { id, signal, resolve } })
+  })
+  await player.selectDevice(camera)
+  assert.deepEqual(player.segments.value, [clip])
+  assert.equal(player.playerStatus.value, '选择录像片段播放')
+  assert.equal(pendingFile, undefined)
+  const playing = player.play(clip)
+  assert.equal(pendingFile.id, 'clip')
+  assert.equal(player.playerStatus.value, '正在加载录像')
+  player.closePlayer()
+  assert.equal(pendingFile.signal.aborted, true)
+  pendingFile.resolve(new Blob(['media'], { type: 'video/mp4' }))
+  await playing
+  assert.equal(player.url.value, '')
 })

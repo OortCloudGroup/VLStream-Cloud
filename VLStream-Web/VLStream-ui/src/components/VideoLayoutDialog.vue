@@ -57,7 +57,9 @@
               @loadedmetadata.capture="rememberAspect" @resize.capture="rememberAspect" @emptied.capture="refreshMediaState" @volumechange.capture="refreshMediaState">
               <!-- 缩略图横条随窗口数量联动：收起所有视频后一并隐藏，重新打开视频时自动恢复 -->
               <VideoSquareThumbnailStrip v-if="presentationMode === 'default' && showThumbnails" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
-                :frames="thumbnailFrames" :auto-preview="autoPreview" @select="$emit('select-thumbnail', $event)" />
+                :frames="thumbnailFrames" :auto-preview="autoPreview" @select="$emit('select-thumbnail', $event)"
+                @preview-target="(id, element) => setPreviewTarget(thumbnailTargets, id, element)"
+                @live-previews="liveThumbnailIds = $event" />
               <!--  -->
               <div ref="workspaceElement" class="video-grid" :class="[`layout-${getLayoutClass(dialog.layoutCount)}`, `variant-${dialog.layoutVariant || 'grid'}`]"
                 :style="compactGridStyle"
@@ -123,7 +125,9 @@
                   <!-- if data, -->
                   <template v-if="dialog.cameras[index - 1]">
                     <!-- OPlayer -->
-                    <VideoSquareDevicePlayer v-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" @source-change="selectedSources[index - 1] = $event" />
+                    <div v-if="sharesThumbnailPlayers && dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'"
+                      :ref="element => setPreviewTarget(windowTargets, index - 1, element)" class="window-preview-target" />
+                    <VideoSquareDevicePlayer v-else-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" @source-change="selectedSources[index - 1] = $event" />
                     <VlsDevicePlayer v-else-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VLSTREAM'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" compact-status />
                     <div
                       v-else-if="dialog.cameras[index - 1].deviceData && dialog.cameras[index - 1].deviceData.streamUrl"
@@ -154,6 +158,10 @@
                   </template>
                 </div>
               </div>
+              <Teleport v-for="preview in sharedPreviews" :key="preview.device.id" :to="preview.target">
+                <VideoSquareDevicePlayer :device="preview.device" :thumbnail="preview.thumbnail"
+                  @source-change="sharedSources.set(preview.device.id, $event)" />
+              </Teleport>
 
               <!-- MasterGo 257:28182 / 309:26171: controls follow the picture. -->
               <div v-if="presentationMode === 'bottom' && dialog.layoutCount" class="carousel-edge-controls" :style="{ height: carouselSize.height + 'px' }"
@@ -193,7 +201,7 @@ import { translatePhrase as uiText } from '@/i18n'
 
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import VideoSquareDevicePlayer from '@/views/VideoAggregation/components/VideoSquareDevicePlayer.vue'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowReactive, shallowRef, watch } from 'vue'
 import { useHoverScroll } from '@/composables/useHoverScroll'
 import { useVideoMarquee, videoStripLoopWidth, videoStripWrappedCount } from '@/composables/useVideoMarquee.mjs'
 import VideoSquareFloatingPtz from '@/views/VideoAggregation/components/VideoSquareFloatingPtz.vue'
@@ -231,6 +239,32 @@ const showPtz = ref(false)
 const activeWindowIndex = ref(0)
 const selectedSources = ref({})
 const thumbnailFrames = ref({})
+const windowTargets = shallowReactive(new Map())
+const thumbnailTargets = shallowReactive(new Map())
+const liveThumbnailIds = shallowRef(new Set())
+const sharedSources = shallowReactive(new Map())
+const sharesThumbnailPlayers = computed(() => props.presentationMode === 'default' && props.showThumbnails)
+
+function setPreviewTarget(targets, id, element) {
+  if (element) targets.set(id, element)
+  else targets.delete(id)
+}
+
+// Keep the player keyed by device while its destination changes between the two surfaces.
+const sharedPreviews = computed(() => {
+  if (!sharesThumbnailPlayers.value) return []
+  const players = new Map()
+  for (const device of props.thumbnailDevices) {
+    const target = thumbnailTargets.get(device.id)
+    if (target && liveThumbnailIds.value.has(device.id)) players.set(device.id, { device, target, thumbnail: true })
+  }
+  props.dialog.cameras.slice(0, props.dialog.layoutCount).forEach((camera, index) => {
+    if (camera?.deviceData?.catalogSource !== 'VIDEO_SQUARE') return
+    const target = windowTargets.get(index)
+    if (target) players.set(camera.id, { device: camera.deviceData, target, thumbnail: false })
+  })
+  return [...players.values()]
+})
 const windowMedia = ref({})
 const rememberAspect = () => refreshMediaState()
 const capturing = ref(false)
@@ -245,13 +279,16 @@ const refreshMediaState = () => {
   windowMedia.value = states
 }
 const rememberFrame = event => {
-  refreshMediaState()
-  const windowElement = event.target?.closest?.('.video-window')
-  const camera = props.dialog.cameras[Number(windowElement?.dataset.windowIndex)]
-  if (!camera || event.target?.tagName !== 'VIDEO') return
-  if (!event.target.paused) event.target.controls=false
-  const frame = captureThumbnailFrame(event.target)
-  if (frame) thumbnailFrames.value = {...thumbnailFrames.value, [camera.id]:frame}
+  const video = event.target
+  if (video?.tagName !== 'VIDEO') return
+  const windowElement = video.closest('.video-window')
+  const id = windowElement?.dataset.cameraId || video.closest('[data-thumbnail-id]')?.dataset.thumbnailId
+  if (!id) return
+  if (windowElement) refreshMediaState()
+  if (!video.paused) video.controls = false
+  if (!windowElement && thumbnailFrames.value[id]) return
+  const frame = captureThumbnailFrame(video)
+  if (frame) thumbnailFrames.value = { ...thumbnailFrames.value, [id]: frame }
 }
 const toggleSpeaker = async () => {
   const video = getActiveVideo()
@@ -283,7 +320,7 @@ const togglePlayerFullscreen = async index => {
     ElMessage.warning(uiText('当前无法进入全屏'))
   }
 }
-watch(() => [activeWindowIndex.value, props.dialog.cameras[activeWindowIndex.value]?.id], () => nextTick(refreshMediaState))
+watch(() => [activeWindowIndex.value, props.dialog.cameras[activeWindowIndex.value]?.id, sharedPreviews.value], refreshMediaState, { flush: 'post' })
 watch(() => props.dialog.layoutCount, count => {
   if (activeWindowIndex.value >= count) activeWindowIndex.value = 0
   if (!count) showPtz.value = false
@@ -293,7 +330,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange',fullscreen
 const activeCamera = computed(() => props.dialog.cameras[activeWindowIndex.value])
 const activeSource = computed(() => {
   const sources = activeCamera.value?.deviceData?.sources || []
-  const selected = selectedSources.value[activeWindowIndex.value]
+  const selected = sharesThumbnailPlayers.value ? sharedSources.get(activeCamera.value?.id) : selectedSources.value[activeWindowIndex.value]
   return sources.find(source => selected && videoSourceKey(source) === videoSourceKey(selected)) || null
 })
 
@@ -1775,6 +1812,7 @@ const handleDrop = (event, targetWindowIndex) => {
 .video-window :deep(#webRtcPlayerBox) { max-height: none; }
 
 .video-window :deep(.square-device-player) { overflow: hidden; }
+.window-preview-target { flex: 1 1 0; width: 100%; min-height: 0; }
 .video-window :deep(.source-selector) { flex: 0 0 auto; }
 .video-window :deep(.square-device-player > .vls-device-player),
 .video-window :deep(.square-device-player > .rtsp-device-player),

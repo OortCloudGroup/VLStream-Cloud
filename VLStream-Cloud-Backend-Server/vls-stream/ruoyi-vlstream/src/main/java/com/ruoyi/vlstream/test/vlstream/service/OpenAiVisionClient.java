@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
@@ -36,6 +37,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import org.apache.commons.io.input.BoundedInputStream;
 
 /** Minimal OpenAI-compatible multimodal chat client. */
 @Service
@@ -45,6 +48,11 @@ public class OpenAiVisionClient {
 	public static final int MAX_ANNOTATION_IMAGE_BYTES = 8 * 1024 * 1024;
 	private static final int MAX_ANNOTATION_RESPONSE_BYTES = 2 * 1024 * 1024;
 	private static final int MAX_ANNOTATION_CONTENT_CHARS = 1024 * 1024;
+	// SSE envelopes and reasoning deltas are much larger than the resulting HTML.
+	private static final int MAX_SCENE_STREAM_BYTES = 24 * 1024 * 1024;
+	private static final int GLM_SCENE_TOKENS = 32768;
+	private static final int SCENE_TOKENS = 16384;
+	private static final int SAFE_SCENE_TOKENS = 8192;
 	private static final JsonFactory ANNOTATION_JSON = new JsonFactory().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
 	private static final String OORTCLOUD_MODELS_BASE = "https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1";
 
@@ -52,14 +60,18 @@ public class OpenAiVisionClient {
 
 	/** Read the provider's actual model catalogue without exposing its stored key. */
 	public List<String> listModels(LlmProvider provider) {
-		return listModels(provider, false);
+		return listModels(provider, false, false);
 	}
 
 	List<String> listAnnotationModels(LlmProvider provider) {
-		return listModels(provider, true);
+		return listModels(provider, true, false);
 	}
 
-	private List<String> listModels(LlmProvider provider, boolean annotation) {
+	List<String> listSceneModels(LlmProvider provider) {
+		return listModels(provider, false, true);
+	}
+
+	private List<String> listModels(LlmProvider provider, boolean annotation, boolean scene) {
 		if (provider == null || !Boolean.TRUE.equals(provider.getEnabled())) {
 			throw new ServiceException("大模型配置不存在或已禁用");
 		}
@@ -70,20 +82,21 @@ public class OpenAiVisionClient {
 			String base = StringUtils.removeEnd(StringUtils.trim(provider.getBaseUrl()), "/");
 			base = StringUtils.removeEnd(base, "/chat/completions");
 			connection = (HttpURLConnection) new URL(base + "/models").openConnection();
-			if (annotation) connection.setInstanceFollowRedirects(false);
+			if (annotation || scene) connection.setInstanceFollowRedirects(false);
 			connection.setConnectTimeout(15000);
 			connection.setReadTimeout(15000);
 			connection.setRequestProperty("Authorization", "Bearer " + key);
 			int status = connection.getResponseCode();
 			if (status < 200 || status >= 300) throw new ServiceException("加载模型列表失败，HTTP " + status);
-			String response = annotation ? readAnnotationResponse(connection.getInputStream()) : read(connection.getInputStream());
+			String response = annotation || scene ? readModelResponse(connection.getInputStream()) : read(connection.getInputStream());
 			JSONArray models = JSONUtil.parseObj(response).getJSONArray("data");
 			if (models == null) throw new ServiceException("模型列表响应格式不正确");
 			Set<String> names = new LinkedHashSet<>();
 			for (int i = 0; i < models.size(); i++) {
 				JSONObject model = models.getJSONObject(i);
 				String name = model.getStr("id");
-				if (StringUtils.isNotBlank(name) && (!annotation || isAnnotationModel(model, name, base))) names.add(name);
+				if (StringUtils.isNotBlank(name) && (!annotation || isAnnotationModel(model, name, base))
+					&& (!scene || isTextModel(model))) names.add(name);
 			}
 			return new ArrayList<>(names);
 		} catch (ServiceException exception) {
@@ -93,6 +106,13 @@ public class OpenAiVisionClient {
 		} finally {
 			if (connection != null) connection.disconnect();
 		}
+	}
+
+	private static boolean isTextModel(JSONObject model) {
+		Object architecture = model.get("architecture");
+		JSONObject details = architecture instanceof JSONObject ? (JSONObject)architecture : new JSONObject();
+		return allowsModality(model.get("input_modalities"), "text") && allowsModality(model.get("output_modalities"), "text")
+			&& allowsModality(details.get("input_modalities"), "text") && allowsModality(details.get("output_modalities"), "text");
 	}
 
 	static boolean isAnnotationModel(JSONObject model, String name, String base) {
@@ -141,13 +161,41 @@ public class OpenAiVisionClient {
 			throw new ServiceException("智能标注提示词为空或超过处理限制");
 		}
 		String mimeType = annotationMimeType(image);
+		return complete(provider, requestBody(model, prompt, Collections.singletonList(image), mimeType), "智能标注", null);
+	}
+
+	void generateScene(LlmProvider provider, String model, String instructions, String input, Consumer<String> delta) {
+		JSONArray messages = new JSONArray();
+		messages.add(new JSONObject().set("role", "system").set("content", instructions));
+		messages.add(new JSONObject().set("role", "user").set("content", input));
+		JSONObject body = new JSONObject().set("model", model).set("messages", messages)
+			.set("stream", true).set("max_tokens", SCENE_TOKENS);
+		// GLM-5.3 always reasons. Its total output allowance includes reasoning and visible code.
+		if (StringUtils.equalsAnyIgnoreCase(model, "glm-5.3", "glm-5.3-flash", "glm-5.3-flashx")) {
+			body.set("max_tokens", GLM_SCENE_TOKENS).set("reasoning_effort", "low");
+		} else if (StringUtils.equalsAnyIgnoreCase(model, "glm-4.6", "glm-4.7", "glm-5", "glm-5.1", "glm-5.2")) {
+			body.set("max_tokens", GLM_SCENE_TOKENS).set("thinking", new JSONObject().set("type", "disabled"));
+		}
+		String buffered;
+		try {
+			buffered = complete(provider, body.toString(), "视图生成", delta);
+		} catch (ServiceException rejected) {
+			// A rich 3D page needs more room than 8K tokens, but some upstream models cap the request lower.
+			// HTTP 400 arrives before any generation, so one smaller retry costs no quota.
+			if (!Integer.valueOf(400).equals(rejected.getCode()) || body.getInt("max_tokens") <= SAFE_SCENE_TOKENS) throw rejected;
+			body.set("max_tokens", SAFE_SCENE_TOKENS);
+			buffered = complete(provider, body.toString(), "视图生成", delta);
+		}
+		if (buffered != null) delta.accept(buffered);
+	}
+
+	private String complete(LlmProvider provider, String payload, String operation, Consumer<String> delta) {
 		HttpURLConnection connection = null;
 		int timeoutMillis = Math.max(5, Math.min(defaultInt(provider.getTimeoutSeconds(), 120), 600)) * 1000;
 		try {
 			String apiKey = resolveApiKey(provider);
 			if (StringUtils.isBlank(apiKey)) throw new ServiceException("大模型 API Key 未配置");
-			byte[] body = requestBody(model, prompt, Collections.singletonList(image), mimeType)
-				.getBytes(StandardCharsets.UTF_8);
+			byte[] body = payload.getBytes(StandardCharsets.UTF_8);
 			connection = (HttpURLConnection) new URL(completionsUrl(provider.getBaseUrl())).openConnection();
 			connection.setInstanceFollowRedirects(false);
 			connection.setConnectTimeout(timeoutMillis);
@@ -163,52 +211,114 @@ public class OpenAiVisionClient {
 			}
 			int status = connection.getResponseCode();
 			if (status < 200 || status >= 300) {
-				String message = "智能标注模型接口返回 HTTP " + status;
+				if (delta != null && status == 429) {
+					throw new ServiceException("OortCloud 返回 HTTP 429，请稍后重试或在视频广场切换模型", status);
+				}
+				String message = operation + "模型接口返回 HTTP " + status;
 				if (status >= 500) message += "，上游执行情况未知";
 				throw new ServiceException(message, status);
 			}
-			JSONArray choices = JSONUtil.parseObj(readAnnotationResponse(connection.getInputStream())).getJSONArray("choices");
-			if (choices == null || choices.size() != 1) throw new ServiceException("智能标注模型响应缺少单条结果");
+			if (delta != null && StringUtils.containsIgnoreCase(connection.getContentType(), "text/event-stream")) {
+				readSceneStream(connection.getInputStream(), delta);
+				return null;
+			}
+			JSONArray choices = JSONUtil.parseObj(readModelResponse(connection.getInputStream())).getJSONArray("choices");
+			if (choices == null || choices.size() != 1) throw new ServiceException(operation + "模型响应缺少单条结果");
 			JSONObject choice = choices.getJSONObject(0);
 			String finishReason = choice.getStr("finish_reason");
-			if ("length".equals(finishReason) || "content_filter".equals(finishReason)) {
-				throw new ServiceException("智能标注模型输出被截断或过滤");
+			if (delta != null) {
+				checkSceneFinishReason(finishReason);
+			} else if ("length".equals(finishReason) || "content_filter".equals(finishReason)) {
+				throw new ServiceException(operation + "模型输出被截断或过滤");
 			}
 			Object content = choice.getByPath("message.content");
 			if (!(content instanceof String) || StringUtils.isBlank((String) content)
 				|| ((String) content).length() > MAX_ANNOTATION_CONTENT_CHARS) {
-				throw new ServiceException("智能标注模型未返回有效文本或输出超过处理限制");
+				throw new ServiceException(operation + "模型未返回有效文本或输出超过处理限制");
 			}
 			return (String) content;
-		} catch (ServiceException exception) {
+		} catch (ServiceException | UncheckedIOException | VideoSquareScenePatch.Mismatch exception) {
+			// A closed preview connection or an unusable edit cancels upstream work without another response.
 			throw exception;
 		} catch (SocketTimeoutException exception) {
-			throw new ServiceException("智能标注模型请求超时，上游执行情况未知");
+			throw new ServiceException(operation + "模型请求超时，上游执行情况未知");
 		} catch (Exception exception) {
-			throw new ServiceException("智能标注模型通信失败或返回格式无效，上游执行情况未知");
+			throw new ServiceException(operation + "模型通信失败或返回格式无效，上游执行情况未知");
 		} finally {
 			if (connection != null) connection.disconnect();
 		}
 	}
 
-	private String readAnnotationResponse(InputStream stream) throws IOException {
+	private void readSceneStream(InputStream stream, Consumer<String> delta) throws IOException {
+		boolean stopped = false;
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+			new BoundedInputStream(stream, MAX_SCENE_STREAM_BYTES), StandardCharsets.UTF_8))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				if (!line.startsWith("data:")) continue;
+				String data = line.substring(5).trim();
+				if ("[DONE]".equals(data)) return;
+				if (data.isEmpty()) continue;
+				JsonNodeChunk chunk = new JsonNodeChunk(JSONUtil.parseObj(data));
+				if (chunk.text != null) delta.accept(chunk.text);
+				if (chunk.stopped) stopped = true;
+			}
+		}
+		if (!stopped) throw new ServiceException("视图生成数据流中断，请重新生成");
+	}
+
+	private static void checkSceneFinishReason(String reason) {
+		if (StringUtils.isBlank(reason) || "null".equals(reason) || "stop".equals(reason)) return;
+		switch (reason) {
+			case "length":
+				throw new ServiceException("页面尚未生成完整，模型已达到输出长度上限。请分步描述需求或选择支持较长输出的模型", 422);
+			case "content_filter":
+			case "sensitive":
+				throw new ServiceException("模型服务已过滤本次生成内容，请调整描述后重试", 422);
+			case "model_context_window_exceeded":
+				throw new ServiceException("当前页面与描述超出模型上下文长度，请精简描述或切换到长上下文模型", 422);
+			case "network_error":
+				throw new ServiceException("模型服务的连接中断，请稍后重试", 502);
+			default:
+				throw new ServiceException("模型提前结束，未返回完整页面，请重新生成或切换模型", 422);
+		}
+	}
+
+	private static class JsonNodeChunk {
+		private String text;
+		private boolean stopped;
+
+		JsonNodeChunk(JSONObject data) {
+			JSONArray choices = data.getJSONArray("choices");
+			if (data.containsKey("error") || choices == null) throw new ServiceException("视图生成模型未能完成请求");
+			if (choices.isEmpty()) return; // optional usage-only chunk
+			JSONObject choice = choices.getJSONObject(0);
+			String reason = choice.getStr("finish_reason");
+			checkSceneFinishReason(reason);
+			stopped = "stop".equals(reason);
+			Object content = choice.getByPath("delta.content");
+			if (content instanceof String) text = (String) content;
+		}
+	}
+
+	private String readModelResponse(InputStream stream) throws IOException {
 		try (InputStream input = stream; ByteArrayOutputStream output = new ByteArrayOutputStream()) {
 			byte[] buffer = new byte[8192];
 			int count;
 			while ((count = input.read(buffer)) != -1) {
 				if (output.size() + count > MAX_ANNOTATION_RESPONSE_BYTES) {
-					throw new ServiceException("智能标注模型响应超过处理限制");
+					throw new ServiceException("模型响应超过处理限制");
 				}
 				output.write(buffer, 0, count);
 			}
 			String response = new String(output.toByteArray(), StandardCharsets.UTF_8);
 			try (JsonParser parser = ANNOTATION_JSON.createParser(response)) {
-				if (parser.nextToken() != JsonToken.START_OBJECT) throw new ServiceException("智能标注模型响应格式无效");
+				if (parser.nextToken() != JsonToken.START_OBJECT) throw new ServiceException("模型响应格式无效");
 				int depth = 1;
 				JsonToken token;
 				while ((token = parser.nextToken()) != null) {
-					if (depth == 0) throw new ServiceException("智能标注模型响应格式无效");
-					if (token.isStructStart() && ++depth > 64) throw new ServiceException("智能标注模型响应的嵌套层级超过限制");
+					if (depth == 0) throw new ServiceException("模型响应格式无效");
+					if (token.isStructStart() && ++depth > 64) throw new ServiceException("模型响应的嵌套层级超过限制");
 					if (token.isStructEnd()) depth--;
 				}
 			}

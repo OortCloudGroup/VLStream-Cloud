@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>智慧园区 · 三维 BIM</title>
+<style>
+:root{--panel:rgba(255,255,255,.8);--stroke:rgba(40,90,180,.18);--text:#0f1d33;--muted:#5a6b85;--accent:#2563eb;--live:#0891b2;--demo:#94a3b8;--shadow:0 8px 30px rgba(30,60,120,.14)}
+:root[data-vls-theme=dark]{--panel:rgba(9,17,33,.76);--stroke:rgba(110,160,255,.22);--text:#e8f0ff;--muted:#93a6c6;--accent:#38bdf8;--live:#22d3ee;--demo:#7b8aa3;--shadow:0 10px 40px rgba(0,0,0,.45)}
+html,body{height:100%;margin:0;overflow:hidden;background:#0b1220}
+body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--text)}
+#app{position:absolute;inset:0}
+#scene{display:block;width:100%;height:100%;outline:none}
+#labels{position:absolute;inset:0;pointer-events:none}
+.panel{position:absolute;z-index:3;background:var(--panel);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:blur(14px);transition:background .5s,color .5s}
+.title{left:18px;top:16px;padding:12px 16px;max-width:min(400px,58vw)}
+.title h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.02em}
+.title p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.stats{display:flex;gap:14px;margin-top:9px;font-size:12px;color:var(--muted)}
+.stats b{color:var(--text);font-size:15px;margin-right:4px;font-variant-numeric:tabular-nums}
+.tools{right:18px;top:16px;display:flex;gap:4px;padding:6px}
+.tools button,.floors button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.tools button:hover,.floors button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.tools button[aria-pressed=true],.floors button[aria-pressed=true]{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.tools svg{width:15px;height:15px}
+.floors{left:18px;bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:6px 8px;max-width:calc(100vw - 36px)}
+.floors strong{font-size:12px;font-weight:600;color:var(--muted);padding:0 8px 0 4px;white-space:nowrap}
+.floors button{height:30px;min-width:40px;padding:0 10px}
+.legend{right:18px;bottom:16px;display:flex;gap:14px;padding:9px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:50%;background:var(--live);box-shadow:0 0 8px var(--live)}
+.legend i.demo{background:transparent;border:1.5px dashed var(--demo);box-shadow:none}
+.tag{padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);font-size:12px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow);backdrop-filter:blur(8px);color:var(--text)}
+.tag small{font-weight:400;color:var(--muted);margin-left:6px}
+.room{font-size:11px;color:var(--text);background:var(--panel);border:1px solid var(--stroke);padding:2px 8px;border-radius:6px;white-space:nowrap}
+.pin{pointer-events:auto;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 9px 4px 7px;border-radius:999px;background:var(--panel);border:1px solid color-mix(in srgb,var(--live) 60%,transparent);font-size:12px;white-space:nowrap;box-shadow:0 0 18px color-mix(in srgb,var(--live) 35%,transparent);transform:translateY(-26px);transition:transform .2s,box-shadow .2s}
+.pin:hover{transform:translateY(-29px)}
+.pin i{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 3px color-mix(in srgb,var(--live) 25%,transparent)}
+.pin em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--live)}
+.pin.demo{border-style:dashed;border-color:var(--demo);box-shadow:none;color:var(--muted)}
+.pin.demo i{background:transparent;border:1.5px dashed var(--demo);box-shadow:none}
+.pin.demo em{color:var(--muted)}
+.pin.offline i{background:#f59e0b}
+.pin.previewing{box-shadow:0 0 0 2px var(--live),0 0 24px var(--live)}
+#toast{position:absolute;left:50%;top:18px;z-index:5;transform:translate(-50%,-12px);opacity:0;padding:8px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);box-shadow:var(--shadow);font-size:12.5px;transition:opacity .25s,transform .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#cbd5e1;font-size:14px}
+@media (max-width:700px){.legend{display:none}.title{max-width:calc(100vw - 36px)}.tools{top:auto;bottom:64px;right:12px}}
+</style>
+</head>
+<body>
+<div id="app"><canvas id="scene" tabindex="0" aria-label="三维园区，可拖动旋转、滚轮缩放"></canvas><div id="labels"></div></div>
+<section class="panel title">
+  <h1>智慧园区 · 三维 BIM</h1>
+  <p>拖动旋转 · 滚轮缩放 · 点击楼栋查看楼层 · 点击点位看实时视频</p>
+  <div class="stats"><span><b id="bCount">3</b>栋楼</span><span><b id="liveCount">0</b>实时点位</span><span><b id="demoCount">0</b>示意点位</span></div>
+</section>
+<nav class="panel tools" aria-label="镜头与显示">
+  <button id="btnHome" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>全景</button>
+  <button id="btnTop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>俯视</button>
+  <button id="btnOrbit" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>环绕</button>
+  <button id="btnNight" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg><span>夜景</span></button>
+</nav>
+<div id="floors" class="panel floors" role="group" aria-label="楼层剖面"></div>
+<div class="panel legend"><span><i></i>已授权摄像头</span><span><i class="demo"></i>示意点位</span></div>
+<div id="toast" role="status"></div>
+<div id="fallback">当前浏览器无法启用三维渲染（WebGL 不可用）</div>
+<script>
+const T = THREE;
+const container = document.getElementById('app');
+const canvas = document.getElementById('scene');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// All mutable view state lives here so later edits can find and extend it.
+const state = { night: VLS.theme === 'dark', mix: VLS.theme === 'dark' ? 1 : 0, userChoseTime: false, building: null, floor: 'all', previewing: null, home: null, rise: reduceMotion ? 1 : 0, hovered: null };
+
+let renderer;
+try {
+  renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (error) {
+  document.getElementById('fallback').style.display = 'flex';
+  throw error;
+}
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = T.PCFShadowMap;
+renderer.toneMapping = T.ACESFilmicToneMapping;
+
+const scene = new T.Scene();
+const camera = new T.PerspectiveCamera(40, 1, 0.5, 3000);
+camera.position.set(160, 120, 190);
+const controls = new T.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.maxPolarAngle = Math.PI * 0.47;
+controls.minDistance = 18;
+controls.maxDistance = 820;
+controls.autoRotateSpeed = 0.55;
+controls.target.set(0, 8, 0);
+
+const labelRenderer = new T.CSS2DRenderer({ element: document.getElementById('labels') });
+const composer = new T.EffectComposer(renderer);
+composer.addPass(new T.RenderPass(scene, camera));
+const bloom = new T.UnrealBloomPass(new T.Vector2(512, 512), 0.2, 0.5, 0.9);
+composer.addPass(bloom);
+composer.addPass(new T.OutputPass());
+VLS.three.autoResize(renderer, camera, container, composer, labelRenderer);
+
+const pmrem = new T.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new T.RoomEnvironment(), 0.04).texture;
+
+/* ---------- Sky, fog, lights ---------- */
+const PALETTE = {
+  day: { top: '#5d9cf0', horizon: '#e3eefb', fog: '#d7e4f3', ground: '#c3cdc8', plate: '#d6dcd9', hemi: 1.0, sun: 2.4, sunColor: '#fff3e2', exposure: 0.95, env: 0.35, bloom: 0, threshold: 1, windows: 0, lamps: 0, stars: 0 },
+  night: { top: '#01040d', horizon: '#15223d', fog: '#0a1325', ground: '#0b1322', plate: '#1b2536', hemi: 0.25, sun: 0.35, sunColor: '#9db5ff', exposure: 0.85, env: 0.05, bloom: 0.75, threshold: 0.62, windows: 2.0, lamps: 4.5, stars: 1 }
+};
+const sky = new T.Mesh(new T.SphereGeometry(1400, 32, 16), new T.ShaderMaterial({
+  side: T.BackSide, depthWrite: false,
+  uniforms: { top: { value: new T.Color() }, horizon: { value: new T.Color() } },
+  vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform vec3 top; uniform vec3 horizon; varying vec3 vDir; void main(){ float h = clamp(vDir.y * 1.6 + 0.08, 0.0, 1.0); gl_FragColor = vec4(mix(horizon, top, pow(h, 0.75)), 1.0); }'
+}));
+scene.add(sky);
+scene.fog = new T.Fog(0xdbe7f5, 260, 900);
+const hemi = new T.HemisphereLight(0xffffff, 0x7d8b99, 1.1);
+scene.add(hemi);
+const sun = new T.DirectionalLight(0xffffff, 2.6);
+sun.position.set(110, 170, 80);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -170, right: 170, top: 170, bottom: -170, near: 20, far: 520 });
+sun.shadow.camera.updateProjectionMatrix();
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.04;
+scene.add(sun);
+
+const starGeometry = new T.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 900; i++) {
+  const a = Math.random() * Math.PI * 2, h = 0.15 + Math.random() * 0.85, r = 1200;
+  starPositions.push(Math.cos(a) * r * Math.sqrt(1 - h * h), h * r, Math.sin(a) * r * Math.sqrt(1 - h * h));
+}
+starGeometry.setAttribute('position', new T.Float32BufferAttribute(starPositions, 3));
+const stars = new T.Points(starGeometry, new T.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+scene.add(stars);
+
+/* ---------- Materials and procedural textures ---------- */
+const mat = {
+  ground: new T.MeshStandardMaterial({ color: '#c7d1cc', roughness: 1 }),
+  plate: new T.MeshStandardMaterial({ color: '#d9dfdc', roughness: 0.95 }),
+  asphalt: new T.MeshStandardMaterial({ color: '#3a4250', roughness: 0.9 }),
+  walk: new T.MeshStandardMaterial({ color: '#c9ced6', roughness: 0.9 }),
+  marking: new T.MeshStandardMaterial({ color: '#f4f6f8', roughness: 0.6, emissive: '#ffffff', emissiveIntensity: 0 }),
+  grass: new T.MeshStandardMaterial({ color: '#6fae6a', roughness: 1 }),
+  concrete: new T.MeshStandardMaterial({ color: '#e3e7ec', roughness: 0.75 }),
+  roof: new T.MeshStandardMaterial({ color: '#aeb7c2', roughness: 0.8 }),
+  metal: new T.MeshStandardMaterial({ color: '#8b96a3', roughness: 0.4, metalness: 0.7 }),
+  wall: new T.MeshStandardMaterial({ color: '#f2f4f7', roughness: 0.9 }),
+  desk: new T.MeshStandardMaterial({ color: '#c8a679', roughness: 0.7 }),
+  trunk: new T.MeshStandardMaterial({ color: '#6b4f3a', roughness: 1 }),
+  crown: new T.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, flatShading: true }),
+  water: new T.MeshStandardMaterial({ color: '#5fb3e6', roughness: 0.1, metalness: 0.2, emissive: '#2ec5ff', emissiveIntensity: 0 }),
+  lamp: new T.MeshStandardMaterial({ color: '#fff1cf', emissive: '#ffcf7a', emissiveIntensity: 0 }),
+  beacon: new T.MeshBasicMaterial({ color: new T.Color('#ff4d4d').multiplyScalar(4) })
+};
+
+// One wide strip of 32 windows per floor; repeating it with random offsets avoids visible patterns.
+function windowTexture(lit) {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = lit ? '#000' : '#dfe5ec';
+  g.fillRect(0, 0, 1024, 64);
+  for (let i = 0; i < 32; i++) {
+    const x = i * 32;
+    if (lit) {
+      if (Math.random() < 0.58) { g.fillStyle = Math.random() < 0.25 ? '#bfe3ff' : '#ffd7a0'; g.fillRect(x + 4, 10, 24, 44); }
+    } else {
+      const grad = g.createLinearGradient(0, 8, 0, 56);
+      grad.addColorStop(0, '#6f8db0'); grad.addColorStop(1, '#2d4566');
+      g.fillStyle = grad; g.fillRect(x + 3, 8, 26, 48);
+      g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(x + 5, 10, 6, 44);
+    }
+  }
+  const t = new T.CanvasTexture(c);
+  t.wrapS = T.RepeatWrapping;
+  t.colorSpace = T.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+const glassMap = windowTexture(false);
+const litMaps = [windowTexture(true), windowTexture(true), windowTexture(true)];
+const facadeMaterials = [];
+function facadeMaterial(length, tint) {
+  const map = glassMap.clone(); map.needsUpdate = true;
+  const emissiveMap = litMaps[Math.floor(Math.random() * litMaps.length)].clone(); emissiveMap.needsUpdate = true;
+  map.repeat.set(length / 70, 1); emissiveMap.repeat.copy(map.repeat);
+  map.offset.x = emissiveMap.offset.x = Math.random();
+  const m = new T.MeshStandardMaterial({ color: tint, map, emissive: '#ffffff', emissiveMap, emissiveIntensity: 0, metalness: 0.35, roughness: 0.22, envMapIntensity: 1.2, transparent: true, opacity: 1 });
+  facadeMaterials.push(m);
+  return m;
+}
+
+const box = (w, h, d, material, x = 0, y = 0, z = 0, parent = scene, shadow = true) => {
+  const mesh = new T.Mesh(new T.BoxGeometry(w, h, d), material);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = shadow; mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+};
+function label(text, className, small) {
+  const el = document.createElement('div');
+  el.className = className;
+  el.textContent = text;
+  if (small) { const s = document.createElement('small'); s.textContent = small; el.appendChild(s); }
+  return new T.CSS2DObject(el);
+}
+
+/* ---------- Site: ground, roads, lawns, plaza ---------- */
+const park = new T.Group();
+scene.add(park);
+const ground = new T.Mesh(new T.CircleGeometry(1300, 64), mat.ground);
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+scene.add(ground);
+box(250, 0.6, 175, mat.plate, 0, 0.3, 2, park, false);
+const roads = [
+  { x: 0, z: 70, w: 290, d: 14 }, { x: -104, z: 0, w: 12, d: 154 }, { x: 6, z: 0, w: 9, d: 128 }, { x: -5, z: -70, w: 207, d: 9 }
+];
+for (const r of roads) {
+  box(r.w, 0.2, r.d, mat.asphalt, r.x, 0.68, r.z, park, false);
+  const horizontal = r.w > r.d, length = horizontal ? r.w : r.d;
+  const dashes = new T.InstancedMesh(new T.BoxGeometry(horizontal ? 3.2 : 0.35, 0.05, horizontal ? 0.35 : 3.2), mat.marking, Math.floor(length / 8));
+  const m4 = new T.Matrix4();
+  for (let i = 0; i < dashes.count; i++) {
+    const p = -length / 2 + 4 + i * 8;
+    m4.makeTranslation(horizontal ? r.x + p : r.x, 0.8, horizontal ? r.z : r.z + p);
+    dashes.setMatrixAt(i, m4);
+  }
+  park.add(dashes);
+}
+box(290, 0.35, 3, mat.walk, 0, 0.75, 61.5, park, false);
+box(290, 0.35, 3, mat.walk, 0, 0.75, 78.5, park, false);
+const lawns = [[-62, 30, 54, 34], [-66, -44, 40, 30], [70, -64, 60, 8], [92, 26, 16, 52], [-30, -58, 46, 10]];
+for (const [x, z, w, d] of lawns) box(w, 0.5, d, mat.grass, x, 0.85, z, park, false);
+const plaza = new T.Mesh(new T.CylinderGeometry(15, 15, 0.4, 48), mat.walk);
+plaza.position.set(-28, 0.85, 34); plaza.receiveShadow = true; park.add(plaza);
+const pool = new T.Mesh(new T.CylinderGeometry(7, 7, 0.5, 48), mat.water);
+pool.position.set(-28, 1.05, 34); park.add(pool);
+const fountainRing = new T.Mesh(new T.TorusGeometry(7.2, 0.35, 8, 64), mat.concrete);
+fountainRing.rotation.x = Math.PI / 2; fountainRing.position.set(-28, 1.3, 34); park.add(fountainRing);
+
+// Trees: instanced trunks and low-poly crowns along roads and lawns.
+const treeSpots = [];
+for (let x = -130; x <= 130; x += 13) { treeSpots.push([x + 2, 84]); if (Math.abs(x + 28) > 18) treeSpots.push([x, 56]); }
+for (let z = -66; z <= 52; z += 12) { treeSpots.push([-114, z]); treeSpots.push([-94, z + 5]); }
+for (let i = 0; i < 26; i++) treeSpots.push([-62 + (Math.random() - 0.5) * 48, 30 + (Math.random() - 0.5) * 28]);
+for (let i = 0; i < 14; i++) treeSpots.push([-66 + (Math.random() - 0.5) * 34, -44 + (Math.random() - 0.5) * 24]);
+for (let i = 0; i < 10; i++) treeSpots.push([92 + (Math.random() - 0.5) * 12, 26 + (Math.random() - 0.5) * 46]);
+const trunks = new T.InstancedMesh(new T.CylinderGeometry(0.35, 0.5, 3.4, 6), mat.trunk, treeSpots.length);
+const crowns = new T.InstancedMesh(new T.IcosahedronGeometry(2.6, 0), mat.crown, treeSpots.length);
+trunks.castShadow = crowns.castShadow = true;
+const tm = new T.Matrix4(), tq = new T.Quaternion(), ts = new T.Vector3(), tp = new T.Vector3();
+const greens = ['#4f9a5a', '#5fae5f', '#3f8a55', '#79b86a', '#2f7d4f'].map(c => new T.Color(c));
+treeSpots.forEach(([x, z], i) => {
+  const s = 0.8 + Math.random() * 0.6;
+  tm.compose(tp.set(x, 1.7 * s + 0.9, z), tq.identity(), ts.set(s, s, s)); trunks.setMatrixAt(i, tm);
+  tq.setFromAxisAngle(new T.Vector3(0, 1, 0), Math.random() * Math.PI);
+  tm.compose(tp.set(x, 5.2 * s + 0.9, z), tq, ts.set(s, s * 1.15, s)); crowns.setMatrixAt(i, tm);
+  crowns.setColorAt(i, greens[i % greens.length]);
+});
+park.add(trunks, crowns);
+
+// Street lamps on both sides of the avenue.
+const lampSpots = [];
+for (let x = -130; x <= 130; x += 20) lampSpots.push([x, 60.5], [x + 10, 79.5]);
+const poles = new T.InstancedMesh(new T.CylinderGeometry(0.18, 0.22, 7, 6), mat.metal, lampSpots.length);
+const heads = new T.InstancedMesh(new T.SphereGeometry(0.6, 12, 8), mat.lamp, lampSpots.length);
+lampSpots.forEach(([x, z], i) => {
+  tm.makeTranslation(x, 4.3, z); poles.setMatrixAt(i, tm);
+  tm.makeTranslation(x, 7.9, z); heads.setMatrixAt(i, tm);
+});
+park.add(poles, heads);
+
+/* ---------- Buildings ---------- */
+const ROOM_NAMES = {
+  A: [['大厅', '前台', '安防值班室', '会客区', '电梯厅', '展示区'], ['会议室', '开放办公', '经理室', '茶水间', '打印区', '洽谈室']],
+  B: [['研发大厅', '实验室', '测试间', '器材库', '休息区', '电梯厅'], ['开放工位', '评审室', '主管室', '茶水间', '机柜间', '电话亭']],
+  C: [['机房 A', '机房 B', '配电间', '运维中心', '备件库', '安检口'], ['网络间', '监控中心', '机房 C', 'UPS 间', '消防控制', '值班室']]
+};
+const SPEC = [
+  { key: 'A', name: '主楼', use: '综合办公', x: -40, z: -14, w: 46, d: 26, floors: 6, h: 4.4, tint: '#d6e6f7' },
+  { key: 'B', name: '研发楼', use: '研发测试', x: 50, z: -30, w: 30, d: 24, floors: 10, h: 4.0, tint: '#cfe0ef' },
+  { key: 'C', name: '数据中心', use: '机房运维', x: 46, z: 30, w: 40, d: 22, floors: 3, h: 5.2, tint: '#dfe7ef' }
+];
+const buildings = SPEC.map(spec => {
+  const b = { ...spec, group: new T.Group(), floorsList: [], height: 1.4 + spec.floors * spec.h + 1.2 };
+  b.group.position.set(spec.x, 0, spec.z);
+  park.add(b.group);
+  box(spec.w + 4, 1.4, spec.d + 4, mat.concrete, 0, 0.7, 0, b.group);
+  for (let i = 0; i < spec.floors; i++) {
+    const floor = new T.Group();
+    floor.position.y = 1.4 + i * spec.h;
+    b.group.add(floor);
+    box(spec.w, 0.5, spec.d, mat.concrete, 0, 0.25, 0, floor);
+    const fx = facadeMaterial(spec.d, spec.tint), fz = facadeMaterial(spec.w, spec.tint);
+    const facade = new T.Mesh(new T.BoxGeometry(spec.w - 0.8, spec.h - 0.5, spec.d - 0.8), [fx, fx, mat.concrete, mat.concrete, fz, fz]);
+    facade.position.y = 0.5 + (spec.h - 0.5) / 2;
+    facade.castShadow = facade.receiveShadow = true;
+    floor.add(facade);
+    const interior = new T.Group();
+    interior.visible = false;
+    floor.add(interior);
+    b.floorsList.push({ index: i, group: floor, facade, materials: [fx, fz], interior, built: false });
+  }
+  const roof = new T.Group();
+  roof.position.y = 1.4 + spec.floors * spec.h;
+  b.group.add(roof);
+  box(spec.w, 0.8, spec.d, mat.roof, 0, 0.4, 0, roof);
+  for (const [sx, sz] of [[-0.3, -0.2], [0.15, 0.25], [0.3, -0.25]]) box(4, 2, 3.2, mat.metal, spec.w * sx, 1.8, spec.d * sz, roof);
+  const mast = box(0.3, 7, 0.3, mat.metal, spec.w * 0.38, 4.3, -spec.d * 0.3, roof);
+  const beacon = new T.Mesh(new T.SphereGeometry(0.45, 12, 8), mat.beacon.clone());
+  beacon.position.set(spec.w * 0.38, 8, -spec.d * 0.3); roof.add(beacon);
+  b.beacon = beacon;
+  b.roof = roof;
+  // Invisible proxy for picking the whole building; hidden floors are excluded while sectioned.
+  b.proxy = new T.Mesh(new T.BoxGeometry(spec.w, b.height, spec.d), new T.MeshBasicMaterial({ visible: false }));
+  b.proxy.position.y = b.height / 2;
+  b.proxy.userData.building = b;
+  b.group.add(b.proxy);
+  b.outline = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(spec.w + 1.2, b.height + 0.6, spec.d + 1.2)), new T.LineBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0 }));
+  b.outline.position.y = b.height / 2;
+  b.group.add(b.outline);
+  b.tag = label(spec.name, 'tag', spec.floors + ' 层 · ' + spec.use);
+  b.tag.position.set(0, b.height + 9, 0);
+  b.group.add(b.tag);
+  return b;
+});
+
+/** Room partitions, desks and labels for one floor, built the first time that floor is sectioned. */
+function buildInterior(b, floor) {
+  if (floor.built) return;
+  floor.built = true;
+  const cols = 3, rows = 2, w = b.w - 2, d = b.d - 2, rw = w / cols, rd = d / rows, wallH = b.h * 0.55;
+  const names = ROOM_NAMES[b.key][floor.index === 0 ? 0 : 1];
+  for (let c = 1; c < cols; c++) box(0.25, wallH, d, mat.wall, -w / 2 + c * rw, 0.5 + wallH / 2, 0, floor.interior);
+  box(w, wallH, 0.25, mat.wall, 0, 0.5 + wallH / 2, 0, floor.interior);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const cx = -w / 2 + rw * (c + 0.5), cz = -d / 2 + rd * (r + 0.5);
+    for (let k = 0; k < 3; k++) box(rw * 0.22, 0.9, rd * 0.16, mat.desk, cx + (k - 1) * rw * 0.28, 0.95, cz + rd * 0.12, floor.interior);
+    const tag = label(names[(r * cols + c) % names.length] + (floor.index > 1 ? ' ' + (floor.index + 1) + '0' + (r * cols + c + 1) : ''), 'room');
+    tag.position.set(cx, wallH + 1.6, cz - rd * 0.18);
+    floor.interior.add(tag);
+  }
+}
+
+/* ---------- Camera points ---------- */
+// Outdoor points stay visible; indoor points appear with their floor's section view.
+const SLOTS = [
+  { name: '主楼正门', at: () => [SPEC[0].x, 0, SPEC[0].z + SPEC[0].d / 2 + 5] },
+  { name: '中心广场', at: () => [-28, 0, 50] },
+  { name: '研发楼入口', at: () => [SPEC[1].x - SPEC[1].w / 2 - 5, 0, SPEC[1].z + 4] },
+  { name: '数据中心门禁', at: () => [SPEC[2].x, 0, SPEC[2].z - SPEC[2].d / 2 - 5] },
+  { name: '东侧主路口', at: () => [104, 0, 70] },
+  { name: '主楼 1F 大厅', floor: ['A', 0], at: () => [-8, 1.2, 4] },
+  { name: '主楼 2F 会议室', floor: ['A', 1], at: () => [-14, 1.2, -5] }
+];
+const pins = [];
+const beamGeometry = new T.CylinderGeometry(0.22, 0.22, 9, 10, 1, true);
+const headGeometry = new T.SphereGeometry(1.05, 20, 14);
+const ringGeometry = new T.RingGeometry(1.4, 2.1, 40);
+function placePins() {
+  for (const p of pins) p.group.removeFromParent();
+  pins.length = 0;
+  const cameras = VLS.cameras;
+  SLOTS.forEach((slot, i) => {
+    const cam = cameras[i] || null;
+    const color = new T.Color(cam ? (cam.status === 'OFFLINE' ? '#f59e0b' : '#22d3ee') : '#8b97ab');
+    const group = new T.Group();
+    const [x, y, z] = slot.at();
+    group.position.set(x, y + 0.9, z);
+    const beam = new T.Mesh(beamGeometry, new T.MeshBasicMaterial({ color, transparent: true, opacity: cam ? 0.45 : 0.18, blending: T.AdditiveBlending, depthWrite: false }));
+    beam.position.y = 4.5;
+    const head = new T.Mesh(headGeometry, new T.MeshBasicMaterial({ color }));
+    head.position.y = 9.4;
+    const ring = new T.Mesh(ringGeometry, new T.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, side: T.DoubleSide, blending: T.AdditiveBlending, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.1;
+    const element = document.createElement('div');
+    element.className = 'pin' + (cam ? (cam.status === 'OFFLINE' ? ' offline' : '') : ' demo');
+    element.innerHTML = '<i></i><span></span><em></em>';
+    element.querySelector('span').textContent = cam ? cam.name : slot.name;
+    element.querySelector('em').textContent = cam ? '实时' : '示意';
+    element.title = cam ? slot.name + ' · 点击查看实时视频' : slot.name + ' · 示意点位，未绑定摄像头';
+    const tag = new T.CSS2DObject(element);
+    tag.position.y = 10.5;
+    group.add(beam, head, ring, tag);
+    const pin = { slot, camera: cam, group, head, ring, beam, element, phase: Math.random() * 6 };
+    head.userData.pin = pin;
+    element.addEventListener('pointerdown', event => event.stopPropagation());
+    element.addEventListener('click', event => { event.stopPropagation(); openPin(pin); });
+    if (slot.floor) {
+      const b = buildings.find(item => item.key === slot.floor[0]);
+      b.floorsList[slot.floor[1]].interior.add(group);
+      group.position.y = y + 0.4;
+    } else park.add(group);
+    pins.push(pin);
+  });
+  document.getElementById('liveCount').textContent = pins.filter(p => p.camera).length;
+  document.getElementById('demoCount').textContent = pins.filter(p => !p.camera).length;
+  markPreview();
+}
+function openPin(pin) {
+  if (pin.camera) VLS.preview(pin.camera.id);
+  else notify('「' + pin.slot.name + '」是示意点位，未绑定已授权摄像头');
+}
+function markPreview() {
+  for (const p of pins) p.element.classList.toggle('previewing', !!p.camera && p.camera.id === state.previewing);
+}
+
+/* ---------- Floors and section view ---------- */
+const floorsPanel = document.getElementById('floors');
+function renderFloorButtons() {
+  const b = state.building || buildings[0];
+  floorsPanel.replaceChildren();
+  const title = document.createElement('strong');
+  title.textContent = b.name + ' 剖面';
+  floorsPanel.appendChild(title);
+  const options = ['all'].concat(b.floorsList.map(f => f.index));
+  for (const option of options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = option === 'all' ? '全楼' : (option + 1) + 'F';
+    button.setAttribute('aria-pressed', String(state.floor === option && (state.building || buildings[0]) === b));
+    button.addEventListener('click', () => showFloor(b, option));
+    floorsPanel.appendChild(button);
+  }
+}
+/** Hides floors above the chosen one, opens its facade and reveals rooms and indoor points. */
+function showFloor(b, option, fly = true) {
+  state.building = b;
+  state.floor = option;
+  for (const other of buildings) for (const f of other.floorsList) {
+    const sectioned = other === b && option !== 'all';
+    f.group.visible = !sectioned || f.index <= option;
+    const open = sectioned && f.index === option;
+    if (open) buildInterior(other, f);
+    f.interior.visible = open;
+    for (const m of f.materials) { m.opacity = open ? 0.1 : 1; m.depthWrite = !open; }
+    f.facade.castShadow = !open;
+  }
+  for (const other of buildings) other.roof.visible = !(other === b && option !== 'all');
+  renderFloorButtons();
+  highlight();
+  if (!fly) return;
+  if (option === 'all') { focusBuilding(b); return; }
+  const y = 1.4 + option * b.h;
+  const target = new T.Vector3(b.x, y + 1.5, b.z);
+  const dir = camera.position.clone().sub(controls.target).setY(0).normalize();
+  const distance = Math.max(b.w, b.d) * 1.25;
+  VLS.three.flyTo(camera, controls, target.clone().add(dir.multiplyScalar(distance)).setY(y + distance * 0.85), target, 1000);
+}
+function focusBuilding(b) {
+  const target = new T.Vector3(b.x, b.height * 0.45, b.z);
+  const dir = camera.position.clone().sub(controls.target).setY(0).normalize();
+  const distance = Math.max(b.w, b.d, b.height) * 1.9;
+  VLS.three.flyTo(camera, controls, target.clone().add(dir.multiplyScalar(distance)).setY(b.height * 0.5 + distance * 0.55), target, 1000);
+}
+function highlight() {
+  for (const b of buildings) b.outline.material.opacity = b === state.building ? 0.9 : b === state.hovered ? 0.55 : 0;
+}
+
+/* ---------- Day and night ---------- */
+const colorA = new T.Color(), colorB = new T.Color();
+function lerpColor(target, a, b, t) { target.copy(colorA.set(a)).lerp(colorB.set(b), t); }
+function applyTime(t) {
+  const d = PALETTE.day, n = PALETTE.night, k = x => d[x] + (n[x] - d[x]) * t;
+  lerpColor(sky.material.uniforms.top.value, d.top, n.top, t);
+  lerpColor(sky.material.uniforms.horizon.value, d.horizon, n.horizon, t);
+  lerpColor(scene.fog.color, d.fog, n.fog, t);
+  lerpColor(mat.ground.color, d.ground, n.ground, t);
+  lerpColor(mat.plate.color, d.plate, n.plate, t);
+  lerpColor(sun.color, d.sunColor, n.sunColor, t);
+  hemi.intensity = k('hemi'); sun.intensity = k('sun');
+  renderer.toneMappingExposure = k('exposure');
+  scene.environmentIntensity = k('env');
+  bloom.strength = k('bloom'); bloom.threshold = k('threshold'); bloom.enabled = t > 0.02;
+  for (const m of facadeMaterials) m.emissiveIntensity = k('windows');
+  mat.lamp.emissiveIntensity = k('lamps');
+  mat.water.emissiveIntensity = t * 0.6;
+  mat.marking.emissiveIntensity = t * 0.25;
+  stars.material.opacity = k('stars');
+}
+function setNight(night, byUser) {
+  state.night = night;
+  if (byUser) state.userChoseTime = true;
+  const button = document.getElementById('btnNight');
+  button.setAttribute('aria-pressed', String(night));
+  button.querySelector('span').textContent = night ? '白天' : '夜景';
+}
+
+/* ---------- Interaction ---------- */
+VLS.three.onPick(renderer, camera, () => {
+  const visiblePins = pins.filter(p => p.group.parent && (p.group.parent === park || p.group.parent.visible)).map(p => p.head);
+  const proxies = buildings.filter(b => !(b === state.building && state.floor !== 'all')).map(b => b.proxy);
+  return visiblePins.concat(proxies);
+}, (object) => {
+  if (!object) return;
+  if (object.userData.pin) { openPin(object.userData.pin); return; }
+  const b = object.userData.building;
+  if (b && b !== state.building) { showFloor(b, 'all', false); focusBuilding(b); }
+}, { onHover: object => { state.hovered = object?.userData.building || null; highlight(); } });
+
+document.getElementById('btnHome').addEventListener('click', () => {
+  if (state.building && state.floor !== 'all') showFloor(state.building, 'all', false);
+  state.building = null; renderFloorButtons(); highlight();
+  VLS.three.flyTo(camera, controls, state.home.position, state.home.target, 1100);
+});
+document.getElementById('btnTop').addEventListener('click', () => {
+  const t = controls.target.clone();
+  VLS.three.flyTo(camera, controls, new T.Vector3(t.x, state.home.distance * 1.05, t.z + 0.01), t, 1000);
+});
+document.getElementById('btnOrbit').addEventListener('click', event => {
+  controls.autoRotate = !controls.autoRotate;
+  event.currentTarget.setAttribute('aria-pressed', String(controls.autoRotate));
+});
+document.getElementById('btnNight').addEventListener('click', () => setNight(!state.night, true));
+let toastTimer = 0;
+function notify(text) {
+  const toast = document.getElementById('toast');
+  toast.textContent = text; toast.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+VLS.on('theme', theme => { if (!state.userChoseTime) setNight(theme === 'dark'); });
+VLS.on('cameras', placePins);
+VLS.on('preview', id => { state.previewing = id; markPreview(); });
+
+/* ---------- Start: frame the whole campus, then rise and fly in ---------- */
+placePins();
+renderFloorButtons();
+setNight(state.night);
+applyTime(state.mix);
+state.home = VLS.three.fit(camera, controls, park, { padding: 1.04, direction: [1, 0.8, 1.1] });
+camera.position.copy(state.home.position).multiplyScalar(1.45).setY(state.home.position.y * 1.9);
+controls.update();
+if (!reduceMotion) for (const b of buildings) b.group.scale.y = 0.001;
+setTimeout(() => VLS.three.flyTo(camera, controls, state.home.position, state.home.target, reduceMotion ? 0 : 2200), 120);
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const goal = state.night ? 1 : 0;
+  if (state.mix !== goal) {
+    state.mix += Math.sign(goal - state.mix) * Math.min(Math.abs(goal - state.mix), dt / (reduceMotion ? 0.01 : 1.2));
+    applyTime(state.mix);
+  }
+  if (state.rise < 1) {
+    state.rise = Math.min(1, state.rise + dt / 1.8);
+    buildings.forEach((b, i) => {
+      const t = Math.min(1, Math.max(0, state.rise * 1.6 - i * 0.25));
+      b.group.scale.y = Math.max(0.001, 1 - Math.pow(1 - t, 3));
+    });
+  }
+  const s = now / 1000;
+  for (const p of pins) {
+    const pulse = (s * 0.8 + p.phase) % 1;
+    p.ring.scale.setScalar(1 + pulse * 1.6);
+    p.ring.material.opacity = (p.camera ? 0.8 : 0.35) * (1 - pulse);
+    p.head.position.y = 9.4 + Math.sin(s * 2 + p.phase) * 0.35;
+  }
+  for (const b of buildings) b.beacon.visible = Math.sin(s * 3 + b.x) > 0.2;
+  pool.rotation.y = s * 0.2;
+  controls.update();
+  composer.render();
+  labelRenderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

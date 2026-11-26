@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>园区视频链路 · 实时拓扑</title>
+<style>
+:root{--bg:#f3f7fd;--bg2:#e7eefa;--grid:rgba(40,80,160,.07);--card:rgba(255,255,255,.94);--card2:rgba(244,248,255,.96);--stroke:rgba(40,90,180,.2);--text:#0f1d33;--muted:#5a6b85;--accent:#2563eb;--accent2:#7c3aed;--live:#059669;--demo:#94a3b8;--edge:rgba(37,99,235,.22);--flow:#2563eb;--glow:rgba(37,99,235,.35);--panel:rgba(255,255,255,.82);--shadow:0 8px 30px rgba(30,60,120,.12)}
+:root[data-vls-theme=dark]{--bg:#050a15;--bg2:#0b1426;--grid:rgba(90,140,230,.07);--card:rgba(13,24,44,.9);--card2:rgba(20,34,60,.92);--stroke:rgba(110,160,255,.26);--text:#e8f0ff;--muted:#8ea2c4;--accent:#38bdf8;--accent2:#a78bfa;--live:#2dd4a7;--demo:#5b6b84;--edge:rgba(120,170,255,.22);--flow:#67e8f9;--glow:rgba(56,189,248,.55);--panel:rgba(10,19,36,.78);--shadow:0 10px 40px rgba(0,0,0,.45)}
+html,body{height:100%;margin:0;overflow:hidden}
+body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;color:var(--text);background:radial-gradient(1200px 700px at 12% -10%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),radial-gradient(900px 600px at 110% 110%,color-mix(in srgb,var(--accent2) 14%,transparent),transparent 60%),linear-gradient(var(--bg),var(--bg2));transition:background .6s,color .4s}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(ellipse at center,#000 40%,transparent 85%);pointer-events:none}
+#stage{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none;user-select:none}
+#stage.panning{cursor:grabbing}
+.panel{position:absolute;z-index:2;background:var(--panel);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+.title{left:18px;top:16px;padding:12px 16px;max-width:min(420px,60vw)}
+.title h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.02em}
+.title p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.stats{display:flex;gap:14px;margin-top:9px;font-size:12px;color:var(--muted)}
+.stats b{color:var(--text);font-size:15px;margin-right:4px;font-variant-numeric:tabular-nums}
+.tools{right:18px;top:16px;display:flex;gap:6px;padding:6px}
+.tools button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;transition:background .2s,border-color .2s}
+.tools button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.tools button[aria-pressed=true]{border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.tools svg{width:15px;height:15px}
+.legend{left:18px;bottom:16px;display:flex;flex-wrap:wrap;gap:14px;padding:9px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--live);box-shadow:0 0 0 3px color-mix(in srgb,var(--live) 25%,transparent)}
+.ring{width:9px;height:9px;border-radius:50%;border:1.5px dashed var(--demo)}
+.bar{width:22px;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--flow))}
+.hint{right:18px;bottom:16px;padding:9px 14px;font-size:12px;color:var(--muted);max-width:min(360px,50vw)}
+#tip{position:absolute;z-index:3;pointer-events:none;min-width:150px;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--stroke);box-shadow:var(--shadow);backdrop-filter:blur(12px);font-size:12px;line-height:1.6;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s}
+#tip.show{opacity:1;transform:none}
+#tip strong{display:block;font-size:13px}
+#tip em{font-style:normal;color:var(--muted)}
+#toast{position:absolute;left:50%;top:18px;z-index:4;transform:translate(-50%,-12px);opacity:0;padding:8px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);box-shadow:var(--shadow);font-size:12.5px;transition:opacity .25s,transform .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.node{cursor:pointer;outline:none}
+.node:focus-visible .card{stroke:var(--accent);stroke-width:2.4}
+.node .card{fill:var(--card);stroke:var(--stroke);stroke-width:1.2;transition:fill .3s,stroke .3s}
+.node .accent{fill:url(#accentGrad);opacity:.9}
+.node .icon-bg{fill:color-mix(in srgb,var(--accent) 14%,transparent)}
+.node .icon{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.node .name{fill:var(--text);font-size:13.5px;font-weight:600}
+.node .sub{fill:var(--muted);font-size:11px}
+.node .tag{font-size:10.5px;font-weight:600}
+.node.live .icon{stroke:var(--live)}
+.node.live .icon-bg{fill:color-mix(in srgb,var(--live) 16%,transparent)}
+.node.live .tag-bg{fill:color-mix(in srgb,var(--live) 18%,transparent)}
+.node.live .tag{fill:var(--live)}
+.node.demo .card{stroke-dasharray:5 4}
+.node.demo .tag-bg{fill:color-mix(in srgb,var(--demo) 20%,transparent)}
+.node.demo .tag{fill:var(--muted)}
+.node.demo .icon{stroke:var(--demo)}
+.node.demo .icon-bg{fill:color-mix(in srgb,var(--demo) 14%,transparent)}
+.node .pulse{fill:none;stroke:var(--live);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.node.live.online .pulse{animation:pulse 2.4s ease-out infinite}
+.node:hover .card{stroke:var(--accent)}
+.node.on .card{stroke:var(--accent);stroke-width:2;fill:var(--card2);filter:url(#glow)}
+.node.previewing .card{stroke:var(--live);stroke-width:2.4}
+.dim .node:not(.on){opacity:.28}
+.node{transition:opacity .35s}
+.edge-base{fill:none;stroke:var(--edge);stroke-width:2;transition:opacity .35s,stroke .35s,stroke-width .35s}
+.edge-flow{fill:none;stroke:var(--flow);stroke-width:2;stroke-dasharray:2 12;stroke-linecap:round;opacity:.55;animation:dash 1.4s linear infinite;transition:opacity .35s}
+.dim .edge-base:not(.on){opacity:.18}
+.dim .edge-flow:not(.on){opacity:0}
+.edge-base.on{stroke:var(--accent);stroke-width:3.2;filter:url(#glow)}
+.edge-flow.on{opacity:1;stroke-width:3;animation-duration:.7s}
+.particle{fill:var(--flow);filter:url(#glow)}
+.particle.on{fill:#fff}
+.paused .edge-flow{animation-play-state:paused}
+.intro{animation:nodeIn .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes nodeIn{from{opacity:0;transform:translateY(14px) scale(.96)}}
+@keyframes dash{to{stroke-dashoffset:-28}}
+@keyframes pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.12,1.5)}}
+@media (prefers-reduced-motion:reduce){.edge-flow,.node.live.online .pulse{animation:none}.intro{animation:none}}
+@media (max-width:640px){.hint{display:none}.title{max-width:calc(100vw - 36px)}.tools{top:auto;bottom:62px}}
+</style>
+</head>
+<body>
+<svg id="stage" role="application" aria-label="设备链路拓扑">
+  <defs>
+    <linearGradient id="accentGrad" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent2)"/></linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g id="world"><g id="edges"></g><g id="flows"></g><g id="particles"></g><g id="nodes"></g></g>
+</svg>
+<section class="panel title">
+  <h1>园区视频链路 · 实时拓扑</h1>
+  <p>摄像头 → 接入交换机 → 核心交换机 → 录像机 / 平台</p>
+  <div class="stats"><span><b id="liveCount">0</b>实时摄像头</span><span><b id="demoCount">0</b>示意设备</span><span><b id="linkCount">0</b>链路</span></div>
+</section>
+<nav class="panel tools" aria-label="视图操作">
+  <button id="btnAll" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M12 4v16"/></svg>全部链路</button>
+  <button id="btnFlow" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h10M13 8l4 4-4 4"/></svg>数据流</button>
+  <button id="btnReset" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M5 15a7 7 0 0 0 12 2M19 9A7 7 0 0 0 7 7"/></svg>重置视图</button>
+</nav>
+<div class="panel legend"><span><i class="dot"></i>已授权摄像头（实时视频）</span><span><i class="ring"></i>示意设备</span><span><i class="bar"></i>数据流向</span></div>
+<div class="panel hint">点击摄像头：高亮其到录像机的完整链路并打开实时预览 · 拖动平移 · 滚轮缩放</div>
+<div id="tip" role="tooltip"></div>
+<div id="toast" role="status"></div>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('stage');
+const world = document.getElementById('world');
+const layers = { edges: document.getElementById('edges'), flows: document.getElementById('flows'), particles: document.getElementById('particles'), nodes: document.getElementById('nodes') };
+const tip = document.getElementById('tip');
+const toast = document.getElementById('toast');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Shared state for layout, selection and the animated view box.
+const state = { nodes: [], edges: [], selected: null, showAll: false, flowing: !reduceMotion, vertical: false, view: null, fitView: null, previewing: null, particles: [] };
+
+const ICONS = {
+  camera: 'M3 8h11l3-2v10l-3-2H3zM6 14v3M4 17h4',
+  access: 'M3 9h18v6H3zM6.5 12h.01M10 12h.01M13.5 12h.01M17 12h.01',
+  core: 'M4 5h16v5H4zM4 14h16v5H4zM8 7.5h.01M8 16.5h.01M12 10v4',
+  nvr: 'M4 6h16v12H4zM8 10h8M8 14h5M17 14h.01',
+  platform: 'M7 18a5 5 0 1 1 1.2-9.9A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 18 18z',
+  screen: 'M3 5h18v11H3zM9 20h6M12 16v4',
+  storage: 'M5 6c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3zM5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3'
+};
+
+function el(name, attrs, parent) {
+  const node = document.createElementNS(NS, name);
+  for (const key in attrs) node.setAttribute(key, attrs[key]);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+/** Builds the device graph from the viewer's authorized cameras plus clearly marked schematic devices. */
+function buildGraph() {
+  const real = VLS.cameras.slice(0, 6);
+  const total = Math.min(7, Math.max(5, real.length + 1));
+  const cameras = real.map((c, i) => ({ id: 'cam' + i, kind: 'camera', name: c.name, sub: c.status === 'OFFLINE' ? '离线' : c.status === 'ONLINE' ? '在线 · 实时视频' : '状态未知', live: true, alias: c.id, status: c.status, col: 0 }));
+  const demoNames = ['东门枪机', '西门球机', '停车场全景', '大厅半球', '周界热成像', '仓库通道', '屋顶鹰眼'];
+  for (let i = cameras.length; i < total; i++) cameras.push({ id: 'cam' + i, kind: 'camera', name: demoNames[i % demoNames.length], sub: '示意点位 · 无视频', live: false, col: 0 });
+  const infra = [
+    { id: 'accA', kind: 'access', name: '接入交换机 A', sub: '示意 · 24 口 PoE', col: 1 },
+    { id: 'accB', kind: 'access', name: '接入交换机 B', sub: '示意 · 24 口 PoE', col: 1 },
+    { id: 'core', kind: 'core', name: '核心交换机', sub: '示意 · 万兆汇聚', col: 2 },
+    { id: 'nvr', kind: 'nvr', name: '录像机 NVR', sub: '示意 · 7×24 录像', col: 3 },
+    { id: 'vls', kind: 'platform', name: 'VLS 视频平台', sub: '示意 · 转发与分析', col: 3 },
+    { id: 'disk', kind: 'storage', name: '存储阵列', sub: '示意 · 30 天归档', col: 4 },
+    { id: 'wall', kind: 'screen', name: '监控大屏', sub: '示意 · 指挥中心', col: 4 }
+  ];
+  state.nodes = cameras.concat(infra);
+  state.edges = cameras.map((c, i) => ({ from: c.id, to: i % 2 ? 'accB' : 'accA' }))
+    .concat([{ from: 'accA', to: 'core' }, { from: 'accB', to: 'core' }, { from: 'core', to: 'nvr' }, { from: 'core', to: 'vls' }, { from: 'nvr', to: 'disk' }, { from: 'vls', to: 'wall' }]);
+  document.getElementById('liveCount').textContent = real.length;
+  document.getElementById('demoCount').textContent = state.nodes.length - real.length;
+  document.getElementById('linkCount').textContent = state.edges.length;
+}
+
+/** Column layout sized to the stage; switches to top-to-bottom flow in narrow containers. */
+function layout() {
+  const width = svg.clientWidth || innerWidth, height = svg.clientHeight || innerHeight;
+  state.vertical = width / Math.max(1, height) < 0.95;
+  const cols = [0, 1, 2, 3, 4].map(c => state.nodes.filter(n => n.col === c));
+  const w = state.vertical ? 172 : 204, h = 64;
+  // Screen area left free by the title, toolbar and legend panels.
+  const area = { left: 24, right: 24, top: width < 640 ? 150 : 124, bottom: 70 };
+  const freeW = width - area.left - area.right, freeH = height - area.top - area.bottom;
+  const gapMain = state.vertical ? Math.min(170, Math.max(h + 56, (freeH - h) / 4)) : Math.min(320, Math.max(w + 40, (freeW - w) / 4));
+  const gapCross = state.vertical ? w + 18 : Math.min(96, Math.max(h + 14, freeH / Math.max(...cols.map(l => l.length))));
+  cols.forEach((list, c) => list.forEach((n, i) => {
+    const offset = (i - (list.length - 1) / 2) * gapCross;
+    n.w = w; n.h = h;
+    if (state.vertical) { n.x = offset - w / 2; n.y = c * gapMain; }
+    else { n.x = c * gapMain; n.y = offset - h / 2; }
+  }));
+  const xs = state.nodes.map(n => n.x), ys = state.nodes.map(n => n.y);
+  const minX = Math.min(...xs), minY = Math.min(...ys), cw = Math.max(...xs) - minX + w, ch = Math.max(...ys) - minY + h;
+  const scale = Math.min(freeW / cw, freeH / ch, 1.3);
+  const cx = minX + cw / 2, cy = minY + ch / 2;
+  const sx = area.left + freeW / 2, sy = area.top + freeH / 2;
+  state.fitView = { x: cx - sx / scale, y: cy - sy / scale, w: width / scale, h: height / scale };
+}
+
+function anchor(n, out) {
+  if (state.vertical) return { x: n.x + n.w / 2, y: out ? n.y + n.h : n.y };
+  return { x: out ? n.x + n.w : n.x, y: n.y + n.h / 2 };
+}
+function edgePath(e) {
+  const a = anchor(byId(e.from), true), b = anchor(byId(e.to), false);
+  if (state.vertical) { const m = (a.y + b.y) / 2; return `M${a.x},${a.y} C${a.x},${m} ${b.x},${m} ${b.x},${b.y}`; }
+  const m = (a.x + b.x) / 2;
+  return `M${a.x},${a.y} C${m},${a.y} ${m},${b.y} ${b.x},${b.y}`;
+}
+const byId = id => state.nodes.find(n => n.id === id);
+
+function render() {
+  for (const layer of Object.values(layers)) layer.replaceChildren();
+  state.particles = [];
+  state.edges.forEach((e, i) => {
+    const d = edgePath(e);
+    e.base = el('path', { d, class: 'edge-base' }, layers.edges);
+    e.flow = el('path', { d, class: 'edge-flow' }, layers.flows);
+    e.length = e.base.getTotalLength();
+    // Draw-in animation for the first paint.
+    if (!reduceMotion) {
+      e.base.style.strokeDasharray = e.length;
+      e.base.style.strokeDashoffset = e.length;
+      e.base.getBoundingClientRect();
+      e.base.style.transition = `stroke-dashoffset 1s ${0.25 + byId(e.from).col * 0.18}s cubic-bezier(.3,.7,.2,1)`;
+      requestAnimationFrame(() => { e.base.style.strokeDashoffset = 0; });
+      setTimeout(() => { e.base.style.strokeDasharray = ''; e.base.style.transition = ''; }, 2200);
+    }
+    const count = e.length > 260 ? 3 : 2;
+    for (let k = 0; k < count; k++) state.particles.push({ edge: e, phase: k / count + i * 0.13, node: el('circle', { r: 2.6, class: 'particle' }, layers.particles) });
+  });
+  state.nodes.forEach(n => {
+    const g = el('g', { class: `node ${n.live ? 'live' : 'demo'} ${n.status === 'ONLINE' ? 'online' : ''}`, transform: `translate(${n.x},${n.y})`, tabindex: 0, role: 'button', 'aria-label': `${n.name}，${n.sub}` }, layers.nodes);
+    const inner = el('g', { class: 'intro', style: `animation-delay:${n.col * 0.12 + 0.05}s` }, g);
+    if (n.live) el('rect', { class: 'pulse', x: -2, y: -2, width: n.w + 4, height: n.h + 4, rx: 15 }, inner);
+    el('rect', { class: 'card', width: n.w, height: n.h, rx: 13 }, inner);
+    el('rect', { class: 'accent', x: 0, y: 12, width: 3, height: n.h - 24, rx: 1.5 }, inner);
+    el('rect', { class: 'icon-bg', x: 12, y: 14, width: 36, height: 36, rx: 10 }, inner);
+    el('path', { class: 'icon', d: ICONS[n.kind], transform: 'translate(18,20)' }, inner);
+    const name = el('text', { class: 'name', x: 58, y: 29 }, inner);
+    name.textContent = n.name.length > 11 ? n.name.slice(0, 10) + '…' : n.name;
+    const sub = el('text', { class: 'sub', x: 58, y: 47 }, inner);
+    sub.textContent = n.sub;
+    const tagText = n.live ? '实时' : '示意';
+    el('rect', { class: 'tag-bg', x: n.w - 42, y: 8, width: 34, height: 18, rx: 9 }, inner);
+    const tag = el('text', { class: 'tag', x: n.w - 25, y: 21, 'text-anchor': 'middle' }, inner);
+    tag.textContent = tagText;
+    n.el = g;
+    g.addEventListener('click', event => { event.stopPropagation(); select(n); });
+    g.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(n); } });
+    g.addEventListener('pointerenter', event => showTip(n, event));
+    g.addEventListener('pointermove', event => moveTip(event));
+    g.addEventListener('pointerleave', hideTip);
+  });
+  applySelection();
+  markPreview();
+}
+
+/** Upstream path from a camera to the recorder; for other devices, every link through them. */
+function pathEdges(n) {
+  const set = new Set();
+  if (n.kind === 'camera') {
+    let current = n.id;
+    while (current && current !== 'nvr') {
+      const next = state.edges.find(e => e.from === current && (e.to !== 'vls'));
+      if (!next) break;
+      set.add(next); current = next.to;
+    }
+    return set;
+  }
+  const walk = (id, dir) => state.edges.forEach(e => {
+    if ((dir > 0 ? e.from : e.to) === id && !set.has(e)) { set.add(e); walk(dir > 0 ? e.to : e.from, dir); }
+  });
+  walk(n.id, 1); walk(n.id, -1);
+  return set;
+}
+
+function select(n) {
+  state.showAll = false;
+  document.getElementById('btnAll').setAttribute('aria-pressed', 'false');
+  state.selected = state.selected === n && !n.live ? null : n;
+  applySelection();
+  if (n.kind === 'camera') {
+    if (n.live) VLS.preview(n.alias);
+    else notify('「' + n.name + '」是示意点位，未绑定已授权摄像头');
+  }
+}
+
+function applySelection() {
+  const active = state.showAll ? new Set(state.edges) : state.selected ? pathEdges(state.selected) : new Set();
+  const nodes = new Set();
+  active.forEach(e => { nodes.add(e.from); nodes.add(e.to); });
+  if (state.selected) nodes.add(state.selected.id);
+  world.classList.toggle('dim', active.size > 0 && !state.showAll);
+  state.edges.forEach(e => { const on = active.has(e); e.base.classList.toggle('on', on); e.flow.classList.toggle('on', on); });
+  state.nodes.forEach(n => n.el && n.el.classList.toggle('on', nodes.has(n.id) && (active.size > 0 || state.selected === n)));
+  state.particles.forEach(p => p.node.classList.toggle('on', active.has(p.edge)));
+}
+
+function markPreview() {
+  state.nodes.forEach(n => n.el && n.el.classList.toggle('previewing', !!n.alias && n.alias === state.previewing));
+}
+
+function showTip(n, event) {
+  tip.innerHTML = '';
+  const title = document.createElement('strong'); title.textContent = n.name;
+  const kind = { camera: '摄像头', access: '接入交换机', core: '核心交换机', nvr: '网络录像机', platform: '视频平台', screen: '显示终端', storage: '存储' }[n.kind];
+  const body = document.createElement('div'); body.textContent = kind + ' · ' + n.sub;
+  const note = document.createElement('em'); note.textContent = n.live ? '点击打开实时视频' : n.kind === 'camera' ? '示意点位，仅用于展示链路' : '点击高亮经过该设备的链路';
+  tip.append(title, body, note);
+  tip.classList.add('show');
+  moveTip(event);
+}
+function moveTip(event) {
+  const x = Math.min(event.clientX + 16, innerWidth - tip.offsetWidth - 10), y = Math.min(event.clientY + 16, innerHeight - tip.offsetHeight - 10);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.classList.remove('show'); }
+let toastTimer = 0;
+function notify(text) {
+  toast.textContent = text; toast.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+/* View box: fit, wheel zoom around the pointer, drag to pan, animated reset. */
+function setView(v) { state.view = v; svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`); }
+function animateView(to, ms = 650) {
+  const from = { ...state.view }, start = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - start) / (reduceMotion ? 1 : ms)), k = 1 - Math.pow(1 - t, 3);
+    setView({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, w: from.w + (to.w - from.w) * k, h: from.h + (to.h - from.h) * k });
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function toWorld(event) {
+  const r = svg.getBoundingClientRect();
+  return { x: state.view.x + (event.clientX - r.left) / r.width * state.view.w, y: state.view.y + (event.clientY - r.top) / r.height * state.view.h };
+}
+svg.addEventListener('wheel', event => {
+  event.preventDefault();
+  const p = toWorld(event), k = Math.pow(1.0015, event.deltaY);
+  const w = Math.min(state.fitView.w * 3, Math.max(state.fitView.w * 0.25, state.view.w * k));
+  const s = w / state.view.w;
+  setView({ x: p.x - (p.x - state.view.x) * s, y: p.y - (p.y - state.view.y) * s, w, h: state.view.h * s });
+}, { passive: false });
+let drag = null;
+svg.addEventListener('pointerdown', event => {
+  if (event.target.closest('.node')) return;
+  drag = { x: event.clientX, y: event.clientY, view: { ...state.view }, moved: false };
+  svg.setPointerCapture(event.pointerId);
+});
+svg.addEventListener('pointermove', event => {
+  if (!drag) return;
+  const r = svg.getBoundingClientRect(), dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) { drag.moved = true; svg.classList.add('panning'); }
+  setView({ ...drag.view, x: drag.view.x - dx / r.width * drag.view.w, y: drag.view.y - dy / r.height * drag.view.h });
+});
+svg.addEventListener('pointerup', () => {
+  if (drag && !drag.moved) { state.selected = null; applySelection(); }
+  drag = null; svg.classList.remove('panning');
+});
+
+document.getElementById('btnReset').addEventListener('click', () => animateView(state.fitView));
+document.getElementById('btnAll').addEventListener('click', event => {
+  state.showAll = !state.showAll; state.selected = null;
+  event.currentTarget.setAttribute('aria-pressed', String(state.showAll));
+  applySelection();
+});
+document.getElementById('btnFlow').addEventListener('click', event => {
+  state.flowing = !state.flowing;
+  event.currentTarget.setAttribute('aria-pressed', String(state.flowing));
+  world.classList.toggle('paused', !state.flowing);
+});
+
+/** Particles ride the links; highlighted links run faster. */
+function animate(now) {
+  if (state.flowing) {
+    for (const p of state.particles) {
+      const fast = p.node.classList.contains('on');
+      const visible = !world.classList.contains('dim') || fast;
+      p.node.style.opacity = visible ? 1 : 0;
+      if (!visible) continue;
+      const speed = fast ? 0.00055 : 0.00022;
+      const t = (now * speed + p.phase) % 1;
+      const pt = p.edge.base.getPointAtLength(t * p.edge.length);
+      p.node.setAttribute('cx', pt.x); p.node.setAttribute('cy', pt.y);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function rebuild(keepView) {
+  buildGraph(); layout(); render();
+  if (!keepView || !state.view) setView({ ...state.fitView });
+}
+let resizeTimer = 0;
+new ResizeObserver(() => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const wasVertical = state.vertical;
+    layout();
+    if (wasVertical !== state.vertical) render();
+    animateView(state.fitView, 380);
+  }, 60);
+}).observe(document.body);
+
+VLS.on('cameras', () => rebuild(true));
+VLS.on('preview', id => { state.previewing = id; markPreview(); });
+rebuild(false);
+if (!reduceMotion) requestAnimationFrame(animate);
+</script>
+</body>
+</html>

@@ -1,16 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { videoGridStyle, assignVideoWindow, resizeVideoLayout, fillLayoutWindows, resolveLayoutSpec } from '../src/utils/videoSquareLayout.mjs'
+import { videoGridStyle, assignVideoWindow, resizeVideoLayout, fillLayoutWindows, resolveLayoutSpec, MAX_VIDEO_WINDOWS } from '../src/utils/videoSquareLayout.mjs'
 
 test('all supported window counts fit in finite nonzero grid tracks', () => {
-  for (let count = 1; count <= 25; count++) {
+  for (let count = 1; count <= MAX_VIDEO_WINDOWS; count++) {
     const style = videoGridStyle(count)
     const columns = Number(style.gridTemplateColumns.match(/repeat\((\d+)/)[1])
     const rows = Number(style.gridTemplateRows.match(/repeat\((\d+)/)[1])
     assert.ok(columns * rows >= count && columns > 0 && rows > 0)
     assert.ok(columns * (rows - 1) < count)
   }
-  for (const count of [0, 26, 2.5, NaN, '4']) assert.throws(() => videoGridStyle(count), RangeError)
+  for (const count of [0, 82, 2.5, NaN, '4']) assert.throws(() => videoGridStyle(count), RangeError)
 })
 
 test('custom grids place equal windows in row order regardless of the preset with the same count', () => {
@@ -27,10 +27,14 @@ test('custom grids place equal windows in row order regardless of the preset wit
   assert.equal(resolveLayoutSpec(6).rows, 3)
 })
 
-test('custom grids allow dimensions from 1 to 9 and at most 25 windows', () => {
+test('custom grids allow both dimensions from 1 to 9 and retain their rectangular cell positions', () => {
   assert.equal(resolveLayoutSpec(9, 'custom-1x9').cells.length, 9)
-  assert.equal(resolveLayoutSpec(25, 'custom-5x5').cells.length, 25)
-  for (const [count, variant] of [[27, 'custom-3x9'], [10, 'custom-1x10'], [1, 'custom-0x1'], [5, 'custom-2x3']]) {
+  assert.equal(resolveLayoutSpec(27, 'custom-3x9').rows, 3)
+  assert.equal(resolveLayoutSpec(27, 'custom-3x9').cols, 9)
+  const full = resolveLayoutSpec(81, 'custom-9x9')
+  assert.equal(full.cells.length, 81)
+  assert.deepEqual(full.cells[80], { row: 8, col: 8, colSpan: 1, rowSpan: 1 })
+  for (const [count, variant] of [[90, 'custom-10x9'], [10, 'custom-1x10'], [1, 'custom-0x1'], [80, 'custom-9x9']]) {
     assert.throws(() => videoGridStyle(count, variant), RangeError)
   }
 })
