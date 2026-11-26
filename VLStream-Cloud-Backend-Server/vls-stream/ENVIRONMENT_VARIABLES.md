@@ -151,7 +151,10 @@
 | `VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS` | 预签名 PUT 地址有效期 | `600` | 否 | 60-3600 秒 | `600` |
 | `VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES` | 单张事件图片最大字节数 | `10485760` | 否 | 正整数 | `10485760` |
 | `VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED` | 是否允许设备无认证申请上传地址 | `false`；dev 为 `true` | 是 | `true/false` | 生产必须为 `false` |
-| `VLSTREAM_ALLOW_EXTERNAL_EVENT_MEDIA` | 共用 MQTT 时独立保存其他环境的事件数据，图片保持缺省 | `false`；dev 为 `true` | 否 | `true/false`；已有本机媒体仍须校验 | `true`（本地开发） |
+| `VLSTREAM_ALLOW_EXTERNAL_EVENT_MEDIA` | 共用 MQTT 时保存其他环境的事件数据，保留原媒体引用 | `false`；dev 为 `true` | 否 | `true/false`；已有本机媒体仍须校验 | `true`（共用 Broker 环境） |
+| `VLSTREAM_EXTERNAL_EVENT_IMAGE_TENANT_ID` | 获授权读取源端图片的多租户 ID，源端和读取端须一致 | 空 | 跨实例取图时两端必填 | 部署方已核对的可信租户 ID | — |
+| `VLSTREAM_EXTERNAL_EVENT_IMAGE_ACCESS_TOKEN` | 源端只读图片签名接口使用的专用共享凭据 | 空 | 跨实例取图时两端必填 | 由 Secret 注入的随机值，至少 32 字符 | — |
+| `VLSTREAM_EXTERNAL_EVENT_IMAGE_SOURCE_API_BASE` | 读取端使用的单租户 VLS HTTPS API 基地址，含网关前缀 | 空 | 仅多租户读取端必填 | 源端 API 与其浏览器预签名地址须同 HTTPS 来源（域名与端口） | `https://source.example.invalid/bus/vls-server` |
 
 > 当前无认证模式只用于 `192.168.88.0/24` 等隔离的局域网联调。生产必须关闭，并在启用
 > 每设备 HMAC-SHA256 身份认证后再开放上传地址申请接口。MinIO API endpoint 必须是硬件可访问
