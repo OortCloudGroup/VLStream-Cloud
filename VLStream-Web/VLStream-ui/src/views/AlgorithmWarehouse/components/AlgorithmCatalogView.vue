@@ -36,6 +36,9 @@
       </aside>
 
       <main class="category-main">
+        <el-alert v-if="catalogLoadFailed" :title="$tp('加载分类列表失败')" type="warning" :closable="false" show-icon>
+          <el-button link type="primary" @click="loadCatalogOptions">{{ $tp('重试') }}</el-button>
+        </el-alert>
         <nav v-if="section === 'library' && viewMode === 'flat'" class="flat-navigation">
           <div v-for="group in flatGroups" :key="group.id" class="flat-row">
             <span class="flat-parent" :class="{ active: activeCategoryId === group.id }" role="button" tabindex="0" :aria-pressed="activeCategoryId === group.id" @keydown.enter.prevent="selectFlat(group.id)" @keydown.space.prevent="selectFlat(group.id)" @click="selectFlat(group.id)">{{ group.name }}</span>
@@ -52,7 +55,8 @@
             </template>
           </div>
           <div class="toolbar-search">
-            <el-input v-model="keyword" clearable :placeholder="$tp('搜索')" :prefix-icon="Search" />
+            <el-input v-model="keyword" clearable :placeholder="$tp('搜索')" :prefix-icon="Search"
+                      @input="scheduleAlgorithmSearch" @keyup.enter="submitAlgorithmSearch" />
             <el-button link :icon="Upload" :title="$tp('导入功能待定义文件格式')" @click="ElMessage.info('请先定义算法导入文件格式')" />
             <el-dropdown><el-button link :icon="ArrowDown" /><template #dropdown><el-dropdown-menu>
               <el-dropdown-item @click="refreshAll">{{ $tp('刷新') }}</el-dropdown-item>
@@ -61,10 +65,13 @@
         </div>
 
         <template v-if="section === 'library'">
-          <div v-loading="loading" class="algorithm-grid">
+          <el-alert v-if="algorithmLoadFailed" :title="$tp('加载算法列表失败')" type="error" :closable="false" show-icon>
+            <el-button link type="primary" @click="loadAlgorithms">{{ $tp('重试') }}</el-button>
+          </el-alert>
+          <div v-loading="algorithmsLoading" class="algorithm-grid">
             <article v-for="algorithm in algorithms" :key="algorithm.id" class="algorithm-card">
               <div class="algorithm-image">
-                <img :src="algorithmCoverUrl(algorithm)" :alt="algorithm.name" />
+                <img :src="algorithmCoverUrl(algorithm)" :alt="algorithm.name" loading="lazy" decoding="async" />
                 <el-dropdown class="card-actions" trigger="click" @command="command => handleAlgorithmCommand(command, algorithm)">
                   <button type="button"><el-icon><MoreFilled /></el-icon></button>
                   <template #dropdown><el-dropdown-menu>
@@ -81,14 +88,14 @@
                 <p>{{ algorithm.description || $tp('暂无算法描述') }}</p>
               </div>
             </article>
-            <el-empty v-if="!loading && !algorithms.length" :description="$tp('暂无算法')" />
+            <el-empty v-if="!algorithmsLoading && !algorithmLoadFailed && !algorithms.length" :description="$tp('暂无算法')" />
           </div>
-          <el-pagination v-if="algorithmTotal > algorithmPageSize" v-model:current-page="algorithmCurrent"
+          <el-pagination v-if="algorithmTotal > algorithmPageSize" :current-page="algorithmCurrent"
                          :page-size="algorithmPageSize" :total="algorithmTotal" layout="prev, pager, next"
-                         class="algorithm-pagination" @current-change="loadAlgorithms" />
+                         class="algorithm-pagination" @update:current-page="selectAlgorithmPage" />
         </template>
 
-        <el-table v-else v-loading="loading" :data="visibleRows" row-key="id" highlight-current-row
+        <el-table v-else v-loading="catalogLoading" :data="visibleRows" row-key="id" highlight-current-row
                   @selection-change="selectedRows = $event" @row-click="row => activeCategoryId = row.id">
           <el-table-column type="selection" width="52" />
           <el-table-column type="index" :label="$tp('序号')" width="72" />
@@ -139,7 +146,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { computed, h, onMounted, reactive, ref, watch } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ArrowDown, Delete, Edit, Folder, MoreFilled, Plus, Search, Setting, TopRight, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPlatformAccessToken } from '@/utils/request'
@@ -162,7 +169,10 @@ const algorithms = ref([])
 const algorithmCurrent = ref(1)
 const algorithmPageSize = 24
 const algorithmTotal = ref(0)
-const loading = ref(false)
+const catalogLoading = ref(false)
+const algorithmsLoading = ref(true)
+const catalogLoadFailed = ref(false)
+const algorithmLoadFailed = ref(false)
 const saving = ref(false)
 // Repository IDs are Java Long values and must never pass through JS Number.
 const activeCategoryId = ref('0')
@@ -197,13 +207,11 @@ const visibleRows = computed(() => {
 })
 
 watch(treeKeyword, value => treeRef.value?.filter(value))
-watch(keyword, () => { algorithmCurrent.value = 1; if (section.value === 'library') loadAlgorithms() })
 watch(section, value => {
+  cancelAlgorithmLoad()
   selectedRows.value = []
-  algorithmCurrent.value = 1
-  const hadKeyword = Boolean(keyword.value)
   keyword.value = ''
-  if (value === 'library' && !hadKeyword) loadAlgorithms()
+  if (value === 'library') submitAlgorithmSearch()
 })
 
 const filterTree = (value, data) => !value || data.name.toLowerCase().includes(value.toLowerCase())
@@ -223,38 +231,115 @@ const flatChildren = group => {
 const parseIds = value => { try { return Array.isArray(value) ? value.map(String) : JSON.parse(value || '[]').map(String) } catch { return [] } }
 const typeName = value => algorithmTypes.find(item => item.value === value)?.label || uiText('算法')
 
-async function refreshAll() {
-  loading.value = true
-  try {
-    const [categoryResponse, settingResponse] = await Promise.all([getAlgorithmCatalogCategories(), getAlgorithmCatalogSettings()])
-    rows.value = categoryResponse.data || []
-    viewMode.value = settingResponse.data || 'flat'
-    if (section.value === 'library') await loadAlgorithms()
-  } finally { loading.value = false }
+let catalogRequest
+let algorithmRequest
+let searchTimer
+const searchDelayMs = 250
+
+async function loadCatalogOptions() {
+  catalogRequest?.abort()
+  const request = new AbortController()
+  catalogRequest = request
+  catalogLoading.value = true
+  catalogLoadFailed.value = false
+  const options = { signal: request.signal, silentError: true, timeout: 15_000 }
+  const [categories, settings] = await Promise.allSettled([
+    getAlgorithmCatalogCategories(options), getAlgorithmCatalogSettings(options)
+  ])
+  if (request.signal.aborted) return
+  if (categories.status === 'fulfilled' && Array.isArray(categories.value?.data)) rows.value = categories.value.data
+  else catalogLoadFailed.value = true
+  if (settings.status === 'fulfilled' && ['tree', 'flat'].includes(settings.value?.data)) viewMode.value = settings.value.data
+  else catalogLoadFailed.value = true
+  catalogLoading.value = false
 }
-let algorithmLoadVersion = 0
+
+function refreshAll() {
+  return Promise.all([loadCatalogOptions(), section.value === 'library' ? loadAlgorithms() : undefined])
+}
+
+function cancelAlgorithmLoad() {
+  clearTimeout(searchTimer)
+  algorithmRequest?.abort()
+}
+
 async function loadAlgorithms() {
-  const version = ++algorithmLoadVersion
-  loading.value = true
+  cancelAlgorithmLoad()
+  const request = new AbortController()
+  algorithmRequest = request
+  algorithmsLoading.value = true
+  algorithmLoadFailed.value = false
   try {
-    const response = await getAlgorithmCatalogPage({ categoryId: activeCategoryId.value === '0' ? undefined : activeCategoryId.value, keyword: keyword.value || undefined, type: algorithmType.value || undefined, current: algorithmCurrent.value, size: algorithmPageSize })
-    if (version !== algorithmLoadVersion) return
-    algorithms.value = response.data?.records || []
-    algorithmTotal.value = response.data?.total || 0
-  } finally { if (version === algorithmLoadVersion) loading.value = false }
+    const response = await getAlgorithmCatalogPage({
+      categoryId: activeCategoryId.value === '0' ? undefined : activeCategoryId.value,
+      keyword: keyword.value.trim() || undefined,
+      type: algorithmType.value || undefined,
+      current: algorithmCurrent.value,
+      size: algorithmPageSize
+    }, { signal: request.signal, silentError: true, timeout: 15_000 })
+    if (request.signal.aborted) return
+    const total = Number(response?.data?.total)
+    const records = response?.data?.records
+    if (!Array.isArray(records) || !Number.isSafeInteger(total) || total < 0) throw new Error('Invalid algorithm page')
+    const lastPage = Math.max(1, Math.ceil(total / algorithmPageSize))
+    if (algorithmCurrent.value > lastPage) {
+      algorithmCurrent.value = lastPage
+      return await loadAlgorithms()
+    }
+    algorithms.value = records
+    algorithmTotal.value = total
+  } catch {
+    if (!request.signal.aborted) algorithmLoadFailed.value = true
+  } finally {
+    if (!request.signal.aborted) algorithmsLoading.value = false
+  }
+}
+
+function resetAlgorithmSearch() {
+  cancelAlgorithmLoad()
+  algorithmCurrent.value = 1
+  algorithmTotal.value = 0
+  algorithms.value = []
+  algorithmLoadFailed.value = false
+  algorithmsLoading.value = true
+}
+
+function scheduleAlgorithmSearch() {
+  if (section.value !== 'library') return
+  resetAlgorithmSearch()
+  searchTimer = setTimeout(loadAlgorithms, searchDelayMs)
+}
+
+function submitAlgorithmSearch() {
+  if (section.value !== 'library') return
+  resetAlgorithmSearch()
+  return loadAlgorithms()
+}
+
+function selectAlgorithmPage(page) {
+  if (algorithmCurrent.value === page) return
+  algorithmCurrent.value = page
+  algorithms.value = []
+  return loadAlgorithms()
 }
 function selectCategory(data) {
   activeCategoryId.value = data.id === ROOT_ID ? '0' : String(data.id)
-  algorithmCurrent.value = 1
-  if (section.value === 'library') loadAlgorithms()
+  return submitAlgorithmSearch()
 }
-function selectFlat(id) { activeCategoryId.value = String(id); algorithmCurrent.value = 1; loadAlgorithms() }
+function selectFlat(id) { activeCategoryId.value = String(id); return submitAlgorithmSearch() }
 function resetEditor(parentId) { Object.assign(editor, { id: null, name: '', parentId: String(parentId || '0'), sortOrder: 0, remark: '' }) }
 function openCreate(parentId) { resetEditor(parentId === ROOT_ID ? '0' : parentId); editorOpen.value = true }
 function openEdit(row) { Object.assign(editor, { id: String(row.id), name: row.name, parentId: String(row.parentId || '0'), sortOrder: row.sortOrder || 0, remark: row.remark || '' }); editorOpen.value = true }
 async function saveCategory() {
-  await formRef.value.validate(); saving.value = true
-  try { await saveAlgorithmCatalogCategory({ ...editor }); editorOpen.value = false; ElMessage.success(uiText('分类已保存')); await refreshAll() }
+  if (saving.value || !formRef.value) return
+  saving.value = true
+  try {
+    if (!(await formRef.value.validate().catch(() => false))) return
+    await saveAlgorithmCatalogCategory({ ...editor })
+    editorOpen.value = false
+    ElMessage.success(uiText('分类已保存'))
+    await refreshAll()
+  } catch { /* The request client already reports save failures. */ }
   finally { saving.value = false }
 }
 async function removeCategories(ids) {
@@ -264,6 +349,7 @@ async function removeCategories(ids) {
 }
 function openSettings(row) { settingsTarget.value = row; viewDraft.value = viewMode.value; peerDraft.value = parseIds(row.flatCategoryIds); settingsOpen.value = true }
 async function saveSettings() {
+  if (saving.value) return
   saving.value = true
   try {
     const targetId = String(settingsTarget.value?.id || '')
@@ -308,6 +394,10 @@ async function handleAlgorithmCommand(command, algorithm) {
 const TreePreview = { render: () => h('div', { class: 'mini tree-mini' }, ['▾  所有算法', h('br'), '　▾  基础算法', h('br'), '　　　回归分析', h('br'), '　　　居正运算']) }
 const FlatPreview = { render: () => h('div', { class: 'mini flat-mini' }, ['基础算法　/ 回归分析　/ 居正运算', h('br'), '智慧水利　/ 水位测量预测　/ 水量统计']) }
 onMounted(refreshAll)
+onBeforeUnmount(() => {
+  catalogRequest?.abort()
+  cancelAlgorithmLoad()
+})
 defineExpose({ refreshAll })
 </script>
 
@@ -318,6 +408,6 @@ defineExpose({ refreshAll })
 .catalog-shell{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;border-radius:16px;color:#1f2533}.catalog-header{height:56px;flex-shrink:0;border-bottom:1px solid #eef1f6;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px}.catalog-tabs{width:220px}.catalog-tabs :deep(.el-tabs__header){margin:0}.model-hub{height:55px;display:flex;gap:6px;align-items:center;color:var(--el-color-primary);font-weight:500;text-decoration:none}.model-hub:hover{color:var(--el-color-primary-dark-2)}.catalog-body{display:grid;grid-template-columns:280px minmax(0,1fr);flex:1;min-height:0;overflow:hidden}.catalog-body.flat-layout{grid-template-columns:minmax(0,1fr)}.category-aside{min-height:0;padding:20px;border-right:1px solid #eef0f4;overflow-y:auto}.category-aside h3{font-size:16px;margin:0 0 16px;padding-left:9px;border-left:3px solid var(--el-color-primary);font-weight:600}.category-aside .el-input{margin-bottom:14px}.tree-node{width:100%;display:flex;align-items:center;justify-content:space-between;min-width:0}.node-label{display:flex;align-items:center;gap:8px;overflow:hidden;text-overflow:ellipsis}.node-label .el-icon{color:var(--el-color-primary-light-3)}.node-actions{display:flex;opacity:0}.tree-node:hover .node-actions{opacity:1}.node-actions .el-button{margin:0;padding:2px}.category-main{min-width:0;min-height:0;padding:20px;overflow-y:auto}.toolbar{display:flex;justify-content:space-between;gap:20px;margin-bottom:18px}.toolbar-primary{flex-shrink:0}.toolbar-search{display:flex;align-items:center;gap:8px}.toolbar-search .el-input{width:340px}.flat-navigation{display:flex;flex-direction:column;gap:14px;margin:-2px 0 18px;padding-bottom:4px}.flat-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-height:24px}.flat-parent,.flat-child{cursor:pointer;transition:color .18s ease}.flat-parent{flex-shrink:0;font-weight:600;border-left:3px solid var(--el-color-primary);padding-left:8px}.flat-child{color:#7a8399}.flat-parent:hover,.flat-child:hover{color:var(--el-color-primary)}.type-pills{display:flex;gap:22px;border-bottom:1px solid #edf0f5;margin-bottom:20px}.type-pills .el-button{padding:10px 0 12px;color:#7a808b;border-radius:0}.type-pills .active{color:var(--el-color-primary);border-bottom:2px solid var(--el-color-primary)}.algorithm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:20px;align-items:start}.algorithm-card{border:1px solid #e8ebf2;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgb(23 34 64 / 4%);background:#fff;transition:transform .25s cubic-bezier(.2,0,0,1),box-shadow .25s cubic-bezier(.2,0,0,1),border-color .25s ease}.algorithm-card:hover{transform:translateY(-3px);border-color:#d6def5;box-shadow:0 2px 4px rgb(23 34 64 / 4%),0 16px 32px -16px rgb(26 83 255 / 28%)}.algorithm-image{height:148px;position:relative;overflow:hidden;background:#e8eeff}.algorithm-image img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,0,0,1)}.algorithm-card:hover .algorithm-image img{transform:scale(1.04)}.card-actions{position:absolute;right:10px;top:10px}.card-actions button{border:0;width:30px;height:30px;border-radius:9px;background:rgb(255 255 255 / 86%);backdrop-filter:blur(6px);color:#475066;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgb(23 34 64 / 12%);transition:background .18s ease,transform .18s ease}.card-actions button:hover{background:#fff;transform:scale(1.06)}.algorithm-copy{padding:14px 16px 16px;cursor:pointer}.algorithm-copy h4{margin:0 0 8px;font-size:15px;font-weight:600;line-height:1.45;color:#1f2533}.algorithm-copy small{display:inline-block;margin-inline-start:4px;padding:0 7px;border-radius:6px;background:#eef2ff;font-size:12px;line-height:20px;color:#3f5bd9;font-weight:500;vertical-align:1px}.algorithm-copy p{height:36px;margin:0;color:#7a8399;font-size:13px;line-height:18px;overflow:hidden}.view-toggle{display:flex;align-items:center;gap:12px}.view-toggle span{color:#8a919d}.view-toggle span.active{color:var(--el-color-primary)}.settings-hint{color:#a1a7b1;font-size:13px}.view-previews{display:grid;grid-template-columns:1fr 1fr;gap:18px}.view-previews button{height:145px;background:white;border:2px solid transparent;border-radius:7px;padding:12px;text-align:left}.view-previews button.active{border-color:var(--el-color-primary)}.mini{height:100%;border-radius:5px;background:#f5f7fb;color:#aab4c6;line-height:25px;padding:12px}.flat-settings{margin-top:20px}.field-hint{width:100%;margin:6px 0 0;color:#9299a3;font-size:12px;line-height:18px}.danger-item{color:#f56c6c}@media(max-width:1000px){.catalog-body:not(.flat-layout){grid-template-columns:220px 1fr}.toolbar{flex-direction:column}.toolbar-search .el-input{width:min(340px,80%)}}
 .flat-navigation{gap:10px;margin-bottom:14px;padding-bottom:3px;font-size:13px}
 .flat-row{column-gap:8px;row-gap:5px;min-height:22px}
-.algorithm-grid{grid-template-columns:repeat(auto-fill,minmax(215px,1fr))}
+.algorithm-grid{grid-template-columns:repeat(auto-fill,minmax(215px,1fr));min-height:120px}
 .algorithm-pagination{display:flex;justify-content:flex-end;margin-top:20px}
 </style>

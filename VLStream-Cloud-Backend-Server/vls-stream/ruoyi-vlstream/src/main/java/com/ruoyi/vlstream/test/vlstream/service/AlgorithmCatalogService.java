@@ -51,7 +51,7 @@ public class AlgorithmCatalogService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public boolean saveCategory(AlgorithmRepository input) {
+    public AlgorithmRepository saveCategory(AlgorithmRepository input) {
         List<AlgorithmRepository> rows = lockCategories();
         AlgorithmRepository existing = input.getId() == null ? null : requireCategory(rows, input.getId());
         Long parentId = input.getParentId() == null ? (existing == null ? 0L : existing.getParentId()) : input.getParentId();
@@ -87,9 +87,10 @@ public class AlgorithmCatalogService {
             row.setSortOrder(row.getSortOrder() == null ? 0 : row.getSortOrder());
             row.setStatus(row.getStatus() == null ? 1 : row.getStatus());
             row.setIsDeleted(0);
-            return repositories.insert(row) == 1;
         }
-        return repositories.updateById(row) == 1;
+        int affected = existing == null ? repositories.insert(row) : repositories.updateById(row);
+        if (affected != 1) throw new ServiceException("分类保存失败");
+        return row;
     }
 
     @Transactional(rollbackFor = Exception.class)

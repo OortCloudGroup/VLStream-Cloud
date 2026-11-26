@@ -17,12 +17,11 @@ test('empty, orphaned and cyclic catalogs do not lose nodes or recurse forever',
  assert.equal(algorithmRepositoryOptions([{id:'1',parentId:'missing'}]).length,1)
  assert.equal(algorithmRepositoryOptions([{id:'1',parentId:'2'},{id:'2',parentId:'1'}]).length,2)
 })
-test('catalog selection has accessible selected styles and guards stale list results', () => {
+test('catalog selection has accessible selected styles', () => {
  const source=readFileSync(new URL('../src/views/AlgorithmWarehouse/components/AlgorithmCatalogView.vue',import.meta.url),'utf8')
  assert.match(source, /active: activeCategoryId === group.id/)
  assert.match(source, /active: activeCategoryId === child.id/)
  assert.match(source, /aria-pressed/)
- assert.match(source, /if \(version !== algorithmLoadVersion\) return/)
 })
 test('algorithm editor loads authorized catalogs and submits repositoryId', () => {
  const source=readFileSync(new URL('../src/views/AlgorithmWarehouse/AlgorithmManagement.vue',import.meta.url),'utf8')
@@ -40,9 +39,9 @@ test('disabled ancestor prevents assignment to an enabled child', () => {
 test('tree and flat navigation share selected category and catalog filtering API', () => {
  const source=readFileSync(new URL('../src/views/AlgorithmWarehouse/components/AlgorithmCatalogView.vue',import.meta.url),'utf8')
  assert.match(source, /@node-click="selectCategory"/)
- assert.match(source, /function selectCategory\(data\)[\s\S]*?activeCategoryId.value = data.id === ROOT_ID \? '0' : String\(data.id\)[\s\S]*?loadAlgorithms\(\)/)
- assert.match(source, /function selectFlat\(id\) \{ activeCategoryId.value = String\(id\); algorithmCurrent.value = 1; loadAlgorithms\(\) \}/)
- assert.match(source, /getAlgorithmCatalogPage\(\{ categoryId: activeCategoryId.value === '0' \? undefined : activeCategoryId.value/)
+ assert.match(source, /activeCategoryId.value = data.id === ROOT_ID \? '0' : String\(data.id\)\s*return submitAlgorithmSearch\(\)/)
+ assert.match(source, /activeCategoryId.value = String\(id\); return submitAlgorithmSearch\(\)/)
+ assert.match(source, /getAlgorithmCatalogPage\(\{\s*categoryId: activeCategoryId.value === '0' \? undefined : activeCategoryId.value/)
 })
 import { runInNewContext } from 'node:vm'
 

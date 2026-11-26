@@ -42,6 +42,22 @@ class AlgorithmCatalogServiceTest {
     }
 
     @Test
+    void createdCategoryResponseContainsThePersistedIdAndNormalizedFields() {
+        when(repositories.selectList(any())).thenReturn(Collections.emptyList());
+        when(repositories.insert(any())).thenAnswer(invocation -> {
+            AlgorithmRepository saved = invocation.getArgument(0);
+            saved.setId(9007199254740993L);
+            return 1;
+        });
+
+        AlgorithmRepository result = service().saveCategory(category(null, 0L, "  新分类 "));
+
+        assertEquals(Long.valueOf(9007199254740993L), result.getId());
+        assertEquals("新分类", result.getName());
+        assertEquals(Integer.valueOf(0), result.getAlgorithmCount());
+    }
+
+    @Test
     void rejectsMovingCategoryUnderItsDescendant() {
         List<AlgorithmRepository> rows = Arrays.asList(category(1L, 0L, "A"), category(2L, 1L, "B"));
         when(repositories.selectList(any())).thenReturn(rows);

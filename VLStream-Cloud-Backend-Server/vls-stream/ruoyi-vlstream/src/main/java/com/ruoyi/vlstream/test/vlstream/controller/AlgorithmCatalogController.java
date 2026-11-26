@@ -25,13 +25,13 @@ public class AlgorithmCatalogController {
     @PostMapping("/categories")
     public R<?> create(@RequestBody AlgorithmRepository row) {
         row.setId(null);
-        return catalog.saveCategory(row) ? R.data(row) : R.fail("分类保存失败");
+        return R.data(catalog.saveCategory(row));
     }
 
     @PutMapping("/categories/{id}")
     public R<?> update(@PathVariable Long id, @RequestBody AlgorithmRepository row) {
         row.setId(id);
-        return catalog.saveCategory(row) ? R.data(row) : R.fail("分类保存失败");
+        return R.data(catalog.saveCategory(row));
     }
 
     @DeleteMapping("/categories")

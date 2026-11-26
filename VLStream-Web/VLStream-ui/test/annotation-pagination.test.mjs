@@ -7,7 +7,9 @@ const source = await readFile(new URL('../src/views/AlgorithmTraining/AlgorithmS
 const start = source.indexOf('// Only the requested page')
 const end = source.indexOf('// annotationinstance\nconst reloadSavedImageAnnotations', start)
 const loader = source.slice(start, end)
-const image = id => ({ id, imageName: 'same-name.jpg', previewUrl: `/image/${id}`, instances: [] })
+const previewStart = source.indexOf('let previewRequests')
+const previewLifecycle = source.slice(previewStart, source.indexOf('onUnmounted(() =>', previewStart))
+const image = id => ({ id, imageName: 'same-name.jpg', instances: [] })
 const page = (current, records, total = 330) => ({ current, records, total })
 
 test('initial and newly opened annotation projects default to twenty images', () => {
@@ -18,7 +20,14 @@ test('initial and newly opened annotation projects default to twenty images', ()
 
 function harness(load) {
   const ref = value => ({ value })
+  const records = new Map()
+  const revokedPreviews = []
   const state = {
+    AbortController,
+    URL: {
+      createObjectURL: sample => `blob:annotation/${sample.id}`,
+      revokeObjectURL: url => revokedPreviews.push(url)
+    },
     annotationLoadSequence: 0,
     annotationDataLoading: ref(false),
     annotationLoadError: ref(''),
@@ -32,11 +41,20 @@ function harness(load) {
     selectedAnnotation: ref(null),
     getCurrentAnnotationId: () => '2118653742822842369',
     getAnnotationLabels: async () => ({ code: 200, data: [{ id: '12', name: 'person' }] }),
-    getAnnotationImagePage: load,
+    getAnnotationImagePage: async (...args) => {
+      const result = await load(...args)
+      for (const sample of result.records) records.set(sample.id, sample)
+      return result
+    },
+    fetchAnnotationPreview: async (_annotationId, imageId) => {
+      const sample = records.get(imageId)
+      if (sample.previewError) throw new Error(sample.previewError)
+      return sample
+    },
     uiText: value => value
   }
-  const actions = vm.runInNewContext(`(() => { ${loader}; return { loadAnnotationPage, handleAnnotationFilterChange, handleAnnotationPageChange } })()`, state)
-  return { state, ...actions }
+  const actions = vm.runInNewContext(`(() => { ${previewLifecycle}; ${loader}; return { loadAnnotationPage, handleAnnotationFilterChange, handleAnnotationPageChange } })()`, state)
+  return { state, revokedPreviews, ...actions }
 }
 
 test('loads ten images and only their instances, then replaces the page', async () => {
@@ -53,6 +71,7 @@ test('loads ten images and only their instances, then replaces the page', async 
   assert.equal(context.state.uploadedImages.value.length, 10)
   assert.equal(context.state.uploadedImages.value[0].id, '20')
   assert.equal(context.state.annotationImageTotal.value, 330)
+  assert.deepEqual(context.revokedPreviews, Array.from({ length: 10 }, (_, i) => `blob:annotation/${i + 10}`))
 })
 
 test('keeps images with identical names distinct by their complete IDs', async () => {
