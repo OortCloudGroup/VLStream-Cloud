@@ -6,13 +6,14 @@
 -->
 
 <template>
-  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-video-view': viewMode === 'video', 'is-panel-right': viewMode === 'map', 'is-device-panel-open': !devicePanelCollapsed, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-video-view': viewMode === 'video', 'is-panel-right': viewMode === 'map', 'is-device-panel-open': !devicePanelCollapsed, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode !== 'video' }">
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content" :style="{ '--toolbar-inset': toolbarInset + 'px' }">
       <div class="fullscreen-toolbar-trigger" aria-hidden="true"></div>
       <div ref="bottomWorkspace" class="square-bottom-workspace" :class="{ 'is-bottom': presentationMode === 'bottom' }"
         :style="{ '--toolbar-inset': toolbarInset + 'px' }"></div>
+      <div id="square-scene-overlay"></div>
       <!-- info -->
       <div v-if="showDebugInfo" class="debug-panel">
         <div class="debug-header">
@@ -58,10 +59,12 @@
                   :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
                   <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
                 </button>
+                <button v-if="isSceneView" ref="assistantTrigger" type="button" :class="{ active: assistantOpen }"
+                  :title="$tp('场景助手')" :aria-label="$tp('场景助手')" :aria-expanded="assistantOpen"
+                  :aria-controls="'video-square-chat-' + viewMode" @click="assistantOpen = !assistantOpen"><strong aria-hidden="true">AI</strong></button>
               </nav>
             </div>
             <VideoLayoutControls
-            v-if="!isSceneView"
             show-presentation
             :presentation-mode="presentationMode"
             :layout-mode="layoutMode"
@@ -85,9 +88,9 @@
                工具栏、缩略图行、播放窗口的位置与尺寸与视频展示完全一致，窗口仍可点选 -->
           <template v-for="mode in sceneModes" :key="mode">
             <VideoSquareSceneWorkspace v-if="visitedScenes[mode]" v-show="viewMode === mode" :active="viewMode === mode"
-              :mode="mode" :devices="visibleDevices" :catalog-error="catalogError" />
+              :mode="mode" :panel-open="viewMode === mode && assistantOpen" @close-panel="closeAssistant" :devices="visibleDevices" :catalog-error="catalogError" />
           </template>
-          <section v-if="!isSceneView" class="square-video-stage">
+          <section class="square-video-stage">
             <!-- 列表视图：设备表格作为画面区背景，视频窗口浮在表格之上 -->
             <VideoSquareCatalogTable v-if="viewMode === 'list'" :devices="visibleDevices" :keyword="mapSearchKeyword" :loading="loading" :error="catalogError" @search="mapSearchKeyword = $event" @play="handleCameraClick" @sharing="openSharing" />
             <Teleport v-for="dialog in layoutDialogs" :key="'layout-' + dialog.id"
@@ -253,7 +256,7 @@
     </div>
 
     <!-- Map/list previews reuse the video-mode player and transparent controls. -->
-    <div v-for="dialog in (isSceneView ? [] : videoDialogs)" :key="dialog.id" class="video-dialog-overlay" :style="{zIndex:2000 + dialog.id}">
+    <div v-for="dialog in videoDialogs" :key="dialog.id" class="video-dialog-overlay" :style="{zIndex:2000 + dialog.id}">
       <div class="video-dialog square-unified-preview" :data-video-dialog-id="dialog.id"
         :style="{left:dialog.position.x + 'px', top:dialog.position.y + 'px', width:dialog.previewWidth ? dialog.previewWidth + 'px' : undefined, height:dialog.previewWidth ? (dialog.previewWidth / (dialog.videoAspect || 16 / 9) + 32) + 'px' : undefined, '--video-aspect':dialog.videoAspect || 16 / 9}"
         @mousedown="bringToFront(dialog.id)"
@@ -371,6 +374,12 @@ const viewMode = ref('video')
 const sceneModes = ['topology', 'bim']
 const isSceneView = computed(() => sceneModes.includes(viewMode.value))
 const visitedScenes = ref({})
+const assistantOpen = ref(false)
+const assistantTrigger = ref(null)
+function closeAssistant() {
+  assistantOpen.value = false
+  nextTick(() => assistantTrigger.value?.focus({ preventScroll: true }))
+}
 const showSharing = ref(false)
 const sharingOwnerId = ref('')
 const openSharing = device => {
@@ -390,6 +399,7 @@ const setSquareView = async value => {
   if (!view) return
   if (sceneModes.includes(value)) visitedScenes.value[value] = true
   if (viewMode.value === 'map' && value !== 'map') mapInstance?.closePopup()
+  if (viewMode.value !== value) assistantOpen.value = false
   viewMode.value = value
   devicePanelCollapsed.value = true
   devicePanelFront.value = false

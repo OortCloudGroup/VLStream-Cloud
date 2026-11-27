@@ -13,7 +13,6 @@ body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif
 #labels{position:absolute;inset:0;pointer-events:none}
 .panel{position:absolute;z-index:3;background:var(--panel);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:blur(14px);transition:background .5s,color .5s}
 .title{left:18px;top:16px;padding:12px 16px;max-width:min(400px,58vw)}
-.title h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.02em}
 .title p{margin:4px 0 0;color:var(--muted);font-size:12px}
 .stats{display:flex;gap:14px;margin-top:9px;font-size:12px;color:var(--muted)}
 .stats b{color:var(--text);font-size:15px;margin-right:4px;font-variant-numeric:tabular-nums}
@@ -50,7 +49,6 @@ body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif
 <body>
 <div id="app"><canvas id="scene" tabindex="0" aria-label="三维园区，可拖动旋转、滚轮缩放"></canvas><div id="labels"></div></div>
 <section class="panel title">
-  <h1>智慧园区 · 三维 BIM</h1>
   <p>拖动旋转 · 滚轮缩放 · 点击楼栋查看楼层 · 点击点位看实时视频</p>
   <div class="stats"><span><b id="bCount">3</b>栋楼</span><span><b id="liveCount">0</b>实时点位</span><span><b id="demoCount">0</b>示意点位</span></div>
 </section>

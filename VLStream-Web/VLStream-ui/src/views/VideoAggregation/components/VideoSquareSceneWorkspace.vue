@@ -2,27 +2,6 @@
     <section class="scene-workspace" :data-theme="theme" :aria-label="$tp(mode === 'bim' ? 'BIM视图' : '拓扑视图')">
         <div ref="studio" class="scene-studio" :class="{ 'chat-open': panelOpen, 'is-narrow': narrow }">
             <section class="scene-stage" :inert="narrow && panelOpen ? '' : null">
-                <header class="stage-bar">
-                    <span class="mode-badge"><component :is="mode === 'bim' ? OfficeBuilding : Share" aria-hidden="true" /></span>
-                    <div class="stage-name">
-                        <h2>{{ $tp(mode === 'bim' ? 'BIM视图' : '拓扑视图') }}</h2>
-                        <span class="scene-title" data-i18n-ignore>{{ shown.builtin ? $tp(shown.title) : shown.title }}</span>
-                    </div>
-                    <span class="status-pill" :class="statusTone" aria-live="polite"><i aria-hidden="true" />{{ $tp(status) }}</span>
-                    <span v-if="revision" class="revision" :title="$tp('版本')">v{{ revision }}</span>
-                    <div class="stage-actions">
-                        <button v-if="undoCount" type="button" class="icon-button" :disabled="busy" :title="$tp('回退到上一版')"
-                            :aria-label="$tp('回退到上一版')" @click="undoLast"><RefreshLeft aria-hidden="true" /></button>
-                        <button type="button" class="icon-button" :title="$tp(theme === 'dark' ? '切换到白天模式' : '切换到夜间模式')"
-                            :aria-label="$tp(theme === 'dark' ? '切换到白天模式' : '切换到夜间模式')" @click="toggleTheme">
-                            <component :is="theme === 'dark' ? Sunny : Moon" aria-hidden="true" />
-                        </button>
-                        <button type="button" class="icon-button" :title="$tp(fullscreen ? '退出全屏' : '全屏')" :aria-label="$tp(fullscreen ? '退出全屏' : '全屏')"
-                            @click="toggleFullscreen"><FullScreen aria-hidden="true" /></button>
-                        <button v-show="!panelOpen" ref="opener" type="button" class="assistant-launch" :aria-controls="panelId" :aria-expanded="panelOpen"
-                            @click="togglePanel(true)"><MagicStick aria-hidden="true" />{{ $tp('场景助手') }}</button>
-                    </div>
-                </header>
                 <div ref="canvas" class="stage-canvas" :class="{ generating: phase === 'generating' }">
                     <VideoSquareGeneratedPage v-if="usePage" :scene="pageScene" :devices="devices" :draft="draft"
                         :active="active && visible" :theme="theme" :preview-id="point?.key || null"
@@ -62,7 +41,9 @@
                     </Transition>
                 </div>
             </section>
-            <div v-if="narrow && panelOpen" class="drawer-backdrop" aria-hidden="true" @click="togglePanel(false)" />
+            <Teleport to="#square-scene-overlay">
+            <div class="scene-overlay" :data-theme="theme" :class="{ 'is-narrow': narrow }">
+            <div v-if="narrow && panelOpen" class="drawer-backdrop" aria-hidden="true" @click="closePanel()" />
             <Transition name="scene-drawer">
                 <aside v-show="panelOpen" :id="panelId" ref="panel" class="chat-panel" :inert="!panelOpen ? '' : null" :role="narrow ? 'dialog' : undefined"
                     :aria-modal="narrow && panelOpen ? 'true' : undefined" :aria-labelledby="panelId + '-title'" @keydown="panelKeys">
@@ -73,8 +54,22 @@
                             <span class="provider" data-i18n-ignore>OortCloud<template v-if="modelLabel"> · {{ modelLabel }}</template></span>
                         </div>
                         <button type="button" class="icon-button" :aria-label="$tp('收起对话')" :title="$tp('收起对话')" :aria-controls="panelId"
-                            :aria-expanded="panelOpen" @click="togglePanel(false)"><Fold aria-hidden="true" /></button>
+                            :aria-expanded="panelOpen" @click="closePanel()"><Fold aria-hidden="true" /></button>
                     </header>
+                <header class="stage-bar">
+                    <span class="status-pill" :class="statusTone" aria-live="polite"><i aria-hidden="true" />{{ $tp(status) }}</span>
+                    <span v-if="revision" class="revision" :title="$tp('版本')">v{{ revision }}</span>
+                    <div class="stage-actions">
+                        <button v-if="undoCount" type="button" class="icon-button" :disabled="busy" :title="$tp('回退到上一版')"
+                            :aria-label="$tp('回退到上一版')" @click="undoLast"><RefreshLeft aria-hidden="true" /></button>
+                        <button type="button" class="icon-button" :title="$tp(theme === 'dark' ? '切换到白天模式' : '切换到夜间模式')"
+                            :aria-label="$tp(theme === 'dark' ? '切换到白天模式' : '切换到夜间模式')" @click="toggleTheme">
+                            <component :is="theme === 'dark' ? Sunny : Moon" aria-hidden="true" />
+                        </button>
+                        <button type="button" class="icon-button" :title="$tp(fullscreen ? '退出全屏' : '全屏')" :aria-label="$tp(fullscreen ? '退出全屏' : '全屏')"
+                            @click="toggleFullscreen"><FullScreen aria-hidden="true" /></button>
+                    </div>
+                </header>
                     <div ref="thread" class="chat-thread" @scroll="trackScroll">
                         <div v-if="!messages.length && phase !== 'loading'" class="starter">
                             <h4>{{ $tp(mode === 'bim' ? '描述你想要的三维场景' : '描述你想要的拓扑页面') }}</h4>
@@ -170,13 +165,15 @@
                     </div>
                 </aside>
             </Transition>
+            </div>
+            </Teleport>
         </div>
     </section>
 </template>
 
 <script setup>
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { CircleCheck, Close, DocumentAdd, Fold, FullScreen, MagicStick, Moon, OfficeBuilding, RefreshLeft, SetUp, Share, Sunny, Top,
+import { CircleCheck, Close, DocumentAdd, Fold, FullScreen, MagicStick, Moon, RefreshLeft, SetUp, Sunny, Top,
     TopRight, VideoCamera, Warning } from '@element-plus/icons-vue'
 import { authManager } from '@/utils/auth'
 import { translatePhrase } from '@/i18n'
@@ -193,8 +190,9 @@ import VideoSquareScenePage from './VideoSquareScenePage.vue'
 const VideoSquareGeneratedPage = defineAsyncComponent(() => import('./VideoSquareGeneratedPage.vue'))
 
 const props = defineProps({
-    mode: { type: String, required: true }, active: Boolean, devices: { type: Array, required: true }, catalogError: String,
+    mode: { type: String, required: true }, active: Boolean, panelOpen: Boolean, devices: { type: Array, required: true }, catalogError: String,
 })
+const emit = defineEmits(['close-panel'])
 const THEME_KEY = 'vls.videoSquare.sceneTheme'
 const samples = {
     topology: { title: '园区视频链路 · 实时拓扑', html: topologySample },
@@ -203,9 +201,9 @@ const samples = {
 const defaultPage = { type: 'row', children: [{ type: 'canvas', grow: 4 }] }
 const phase = ref('loading'), error = ref(''), needsReload = ref(false), field = ref(null)
 const prompt = ref(''), revision = ref(0), saved = shallowRef(null), draft = shallowRef(null)
-const studio = ref(null), panel = ref(null), opener = ref(null), thread = ref(null), canvas = ref(null)
+const studio = ref(null), panel = ref(null), thread = ref(null), canvas = ref(null)
 const panelId = computed(() => 'video-square-chat-' + props.mode)
-const panelOpen = ref(true), narrow = ref(false), messages = ref([]), fullscreen = ref(false)
+const narrow = ref(false), messages = ref([]), fullscreen = ref(false)
 const point = ref(null), visible = ref(true), slotRect = shallowRef(null), toast = ref(''), now = ref(Date.now())
 const choices = shallowRef(null), selectedModel = ref(''), loadingModels = ref(false), modelError = ref('')
 const runtimeErrors = shallowRef([]), fresh = ref(false)
@@ -232,7 +230,7 @@ const statusTone = computed(() => ({ generating: phase.value === 'generating', d
     warn: !!runtimeErrors.value.length && phase.value !== 'generating', ok: !!saved.value && phase.value === 'ready' && !runtimeErrors.value.length }))
 const previewStyle = computed(() => slotRect.value || (drag.value ? { left: drag.value.left + 'px', top: drag.value.top + 'px', right: 'auto', bottom: 'auto' } : null))
 let request, identity, modelRequest, sizeObserver, clock = 0, toastTimer = 0, userStopped = false
-let initializedSize = false, followLatest = true, nextMessageId = 0
+let followLatest = true, nextMessageId = 0
 
 function readTheme() {
     try {
@@ -247,9 +245,9 @@ function toggleTheme() {
 }
 function toggleFullscreen() {
     if (document.fullscreenElement) document.exitFullscreen?.()
-    else studio.value?.requestFullscreen?.().catch(() => {})
+    else studio.value?.closest('.main-content')?.requestFullscreen?.().catch(() => {})
 }
-function syncFullscreen() { fullscreen.value = document.fullscreenElement === studio.value }
+function syncFullscreen() { fullscreen.value = document.fullscreenElement === studio.value?.closest('.main-content') }
 function notify(text) {
     toast.value = text
     clearTimeout(toastTimer)
@@ -296,14 +294,14 @@ function progressLabel(progress) {
 }
 
 function trackScroll() {
-    if (thread.value && panelOpen.value && props.active) {
+    if (thread.value && props.panelOpen && props.active) {
         const { scrollHeight, scrollTop, clientHeight } = thread.value
         followLatest = scrollHeight - scrollTop - clientHeight < 60
     }
 }
 function scrollToLatest() {
     nextTick(() => {
-        if (followLatest && panelOpen.value && props.active && thread.value) thread.value.scrollTop = thread.value.scrollHeight
+        if (followLatest && props.panelOpen && props.active && thread.value) thread.value.scrollTop = thread.value.scrollHeight
     })
 }
 function addMessage(message) {
@@ -311,24 +309,21 @@ function addMessage(message) {
     scrollToLatest()
     return messages.value[messages.value.length - 1]
 }
-function togglePanel(open) {
-    panelOpen.value = open
-    nextTick(() => (open ? field.value : opener.value)?.focus({ preventScroll: true }))
-    if (open) scrollToLatest()
-}
-function updateWidth(width) {
-    if (!width) return
-    narrow.value = width <= 860
-    if (!initializedSize) {
-        panelOpen.value = !narrow.value
-        initializedSize = true
+function closePanel() { emit('close-panel') }
+watch(() => props.panelOpen, open => {
+    if (open) {
+        nextTick(() => field.value?.focus({ preventScroll: true }))
+        scrollToLatest()
     }
+})
+function updateWidth(width) {
+    if (width) narrow.value = width <= 860
 }
 function panelKeys(event) {
     if (event.isComposing) return
     if (event.key === 'Escape') {
         event.preventDefault()
-        togglePanel(false)
+        closePanel()
     } else if (event.key === 'Tab' && narrow.value) {
         const items = panel.value.querySelectorAll('button:not(:disabled), textarea, select:not(:disabled)')
         const first = items[0], last = items[items.length - 1]
@@ -416,7 +411,7 @@ async function submit(text) {
     addMessage({ role: 'user', text: instruction, state: 'sent' })
     const reply = addMessage({ role: 'assistant', state: 'pending', text: '', progress: { started: Date.now(), chars: 0, edit: '', edits: 0, notice: '', tail: '' } })
     if (prompt.value.trim() === instruction) prompt.value = ''
-    if (narrow.value && panelOpen.value) togglePanel(false)
+    if (narrow.value && props.panelOpen) closePanel()
     const startFresh = fresh.value
     fresh.value = false
     try {
@@ -535,7 +530,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.scene-workspace {
+.scene-workspace, .scene-overlay {
     --sw-bg: #e9eff7; --sw-stage: #f2f6fc; --sw-surface: rgba(255, 255, 255, .92); --sw-surface-2: #f4f7fc; --sw-raised: #ffffff;
     --sw-border: #d9e2ee; --sw-text: #13223a; --sw-muted: #5a6a80; --sw-faint: #8796ab;
     --sw-accent: #2f6bff; --sw-accent-2: #00b8d9; --sw-accent-soft: rgba(47, 107, 255, .1);
@@ -543,26 +538,29 @@ onBeforeUnmount(() => {
     --sw-code: #1d2b45; --sw-code-text: #a7c4ff;
     container: scene-workspace / inline-size;
     display: flex; flex: 1; min-width: 0; min-height: 0;
-    padding: var(--toolbar-inset, 82px) 12px 12px; box-sizing: border-box;
+    padding: 0; box-sizing: border-box;
     color: var(--sw-text); background: var(--sw-bg); overflow: hidden;
     transition: background .4s ease, color .3s ease;
 }
-.scene-workspace[data-theme="dark"] {
+.scene-workspace[data-theme="dark"], .scene-overlay[data-theme="dark"] {
     --sw-bg: #060b16; --sw-stage: #0b1220; --sw-surface: rgba(14, 23, 41, .9); --sw-surface-2: rgba(22, 35, 60, .72); --sw-raised: #111c31;
     --sw-border: rgba(120, 160, 230, .18); --sw-text: #e6eefc; --sw-muted: #9badc8; --sw-faint: #6f819d;
     --sw-accent: #4d8dff; --sw-accent-2: #22d3ee; --sw-accent-soft: rgba(77, 141, 255, .14);
     --sw-ok: #2dd4a7; --sw-warn: #f5b041; --sw-danger: #ff7a66; --sw-shadow: 0 12px 40px rgba(0, 0, 0, .45);
     --sw-code: #070e1c; --sw-code-text: #8fb6ff;
 }
+.scene-workspace { position: absolute; inset: var(--toolbar-inset, 82px) 0 0; }
+.scene-overlay { position: absolute; inset: var(--toolbar-inset, 82px) 0 0; z-index: 65; pointer-events: none; background: transparent; }
+.scene-overlay .chat-panel, .scene-overlay .drawer-backdrop { pointer-events: auto; }
 .scene-studio {
     position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden;
-    border: 1px solid var(--sw-border); border-radius: 14px; background: var(--sw-stage); box-shadow: var(--sw-shadow);
+    background: var(--sw-stage);
 }
 .scene-studio:fullscreen { border-radius: 0; border: 0; }
 .scene-stage { position: relative; display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .stage-bar, .chat-head, .stage-name, .status-pill, .stage-actions, .card-head, .preview-head, .composer-tools, .chips, .system-line, .meta, .card-actions { display: flex; align-items: center; }
 .stage-bar {
-    flex: none; gap: 12px; min-height: 52px; padding: 8px 12px 8px 14px; box-sizing: border-box;
+    flex: none; justify-content: flex-end; gap: 8px; min-height: 38px; padding: 3px 12px; box-sizing: border-box;
     border-bottom: 1px solid var(--sw-border); background: var(--sw-surface); backdrop-filter: blur(16px); z-index: 2;
 }
 .mode-badge, .assistant-orb { display: inline-grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: #fff;
@@ -632,11 +630,11 @@ button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2p
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 10px); }
 
 .chat-panel {
-    z-index: 4; display: flex; flex-direction: column; flex: 0 0 clamp(300px, 27%, 380px); min-width: 0; min-height: 0; box-sizing: border-box;
+    position: absolute; inset: 0 0 0 auto; width: clamp(300px, 27%, 380px); box-shadow: var(--sw-shadow); z-index: 4; display: flex; flex-direction: column; min-width: 0; min-height: 0; box-sizing: border-box;
     border-left: 1px solid var(--sw-border); background: var(--sw-surface); backdrop-filter: blur(18px); text-align: left;
 }
-.scene-drawer-enter-active, .scene-drawer-leave-active { overflow: hidden; transition: flex-basis .32s cubic-bezier(.2, .8, .2, 1), transform .32s cubic-bezier(.2, .8, .2, 1), opacity .22s ease; }
-.scene-drawer-enter-from, .scene-drawer-leave-to { flex-basis: 0; transform: translateX(24px); opacity: 0; }
+.scene-drawer-enter-active, .scene-drawer-leave-active { overflow: hidden; transition: transform .32s cubic-bezier(.2, .8, .2, 1), opacity .22s ease; }
+.scene-drawer-enter-from, .scene-drawer-leave-to { transform: translateX(100%); opacity: 0; }
 .scene-drawer-leave-active { pointer-events: none; }
 .is-narrow .scene-drawer-enter-from, .is-narrow .scene-drawer-leave-to { transform: translateX(100%); }
 .chat-head { gap: 10px; flex: none; min-height: 60px; padding: 10px 12px 10px 14px; box-sizing: border-box; border-bottom: 1px solid var(--sw-border); }
@@ -722,15 +720,15 @@ textarea::placeholder { color: var(--sw-faint); }
 .notice.error { color: var(--sw-danger); }
 .retry { margin: 0 0 8px; padding: 4px 10px; border: 1px solid var(--sw-border); border-radius: 8px; background: var(--sw-raised); color: var(--sw-accent); font-size: 12px; }
 .drawer-backdrop { position: absolute; inset: 0; z-index: 3; background: rgb(8 16 32 / 40%); backdrop-filter: blur(2px); }
-.is-narrow .chat-panel { position: absolute; inset: 0 0 0 auto; width: min(370px, calc(100% - 24px)); box-shadow: -10px 0 40px rgb(0 0 0 / 25%); }
+.is-narrow .chat-panel { width: min(370px, calc(100% - 24px)); box-shadow: -10px 0 40px rgb(0 0 0 / 25%); }
 @container scene-workspace (max-width: 620px) {
-    .stage-bar { gap: 8px; padding-inline: 8px; }
+    .stage-bar { height: auto; padding: 4px 8px; }
     .stage-name { flex-direction: column; align-items: flex-start; gap: 1px; }
     .scene-title { border: 0; padding: 0; font-size: 11px; max-width: 100%; }
     .revision, .status-pill { display: none; }
 }
 @media (max-width: 700px) {
-    .scene-workspace { min-height: 480px; height: min(76dvh, 760px); padding: 0 6px 6px; flex-basis: auto; }
+    .scene-workspace { min-height: 480px; height: min(76dvh, 760px); padding: 0; flex-basis: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
     .scene-drawer-enter-active, .scene-drawer-leave-active, .preview-pop-enter-active, .preview-pop-leave-active { transition: none; }
