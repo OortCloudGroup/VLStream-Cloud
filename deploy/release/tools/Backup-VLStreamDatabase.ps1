@@ -16,7 +16,11 @@ param(
     [ValidatePattern('^[A-Za-z0-9_][A-Za-z0-9_.-]*$')]
     [string]$LoginPath,
 
+    [Parameter(Mandatory, ParameterSetName = 'Native')]
+    [string]$NativeDataRoot,
+
     [Parameter(ParameterSetName = 'External')]
+    [Parameter(ParameterSetName = 'Native')]
     [string]$MysqlDumpPath = 'mysqldump'
 )
 
@@ -63,6 +67,25 @@ exec mysqldump --no-defaults --protocol=socket --user=root "$@"
 '@
     $containerCommand = $containerCommand.Replace("`r`n", "`n")
     $clientArguments = @('compose', 'exec', '-T', 'mysql', 'sh', '-c', $containerCommand, 'mysqldump')
+} elseif ($PSCmdlet.ParameterSetName -eq 'Native') {
+    $mysqlState = Join-Path $NativeDataRoot 'mysql'
+    if (-not (Test-Path -LiteralPath (Join-Path $mysqlState 'databases.ready') -PathType Leaf)) {
+        throw "The native VLStream databases are not initialized: $mysqlState"
+    }
+    $configured = Import-Clixml -LiteralPath (Join-Path $mysqlState 'credentials.xml')
+    $port = 0
+    if ($configured.root -isnot [pscredential] -or
+        -not [int]::TryParse([string]$configured.Port, [ref]$port) -or $port -lt 1024 -or $port -gt 65535) {
+        throw 'The native MySQL configuration is invalid.'
+    }
+
+    $client = $MysqlDumpPath
+    if (-not $PSBoundParameters.ContainsKey('MysqlDumpPath')) {
+        $client = Join-Path (Split-Path -Parent $PSScriptRoot) 'runtime/mysql/bin/mysqldump.exe'
+    }
+    $clientArguments = @('--no-defaults', '--protocol=TCP', '--host=127.0.0.1', "--port=$port", "--user=$($configured.root.UserName)")
+    $startInfo.Environment['MYSQL_PWD'] = $configured.root.GetNetworkCredential().Password
+    $startInfo.Environment['MYSQL_TEST_LOGIN_FILE'] = Join-Path $mysqlState ('.unused-login-' + [Guid]::NewGuid().ToString('N'))
 } else {
     $client = $MysqlDumpPath
     $clientArguments = @("--login-path=$LoginPath")
