@@ -104,6 +104,7 @@ export default defineConfig(async ({ mode }) => {
   }
 
   return {
+    cacheDir: `node_modules/.vite-${new URL(backendTarget).port || 'default'}`,
     plugins: [
       generatedPageRuntime(),
       vue(),
@@ -139,6 +140,7 @@ export default defineConfig(async ({ mode }) => {
       port: 3000,
       strictPort: true,
       host: '0.0.0.0',
+      allowedHosts: true,
       proxy: {
         '/wvp-api': {
           target: wvpTarget,
