@@ -66,10 +66,6 @@
                 <profiles.active>dev</profiles.active>
                 <logging.level>debug</logging.level>
             </properties>
-            <build>
-                <!-- IDEA activates this via idea.version; CLI: mvn -Pidea-build -DskipTests install. -->
-                <directory>${maven.multiModuleProjectDirectory}/../../codex/maven-idea/${project.artifactId}</directory>
-            </build>
         </profile>
         <profile>
             <id>local</id>
