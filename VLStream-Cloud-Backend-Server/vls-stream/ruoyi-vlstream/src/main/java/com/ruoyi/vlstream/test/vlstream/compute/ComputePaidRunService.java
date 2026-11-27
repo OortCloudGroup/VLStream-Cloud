@@ -782,23 +782,7 @@ public class ComputePaidRunService {
         return "unavailable";
     }
     private long stopDeadline(Map<String,Object> run) {
-        long margin=0;
-        if(policy!=null)try {
-            policy.validate();
-            margin=Math.addExact((long)policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
-        }catch(IllegalArgumentException invalidCurrentPolicy){
-            // Existing orders retain the safety margin they accepted even when
-            // deployment admission policy is later absent or invalid.
-        }
-        JsonNode saved=parse(text(run,"quote_snapshot")).path("run_budget");
-        if(!saved.isMissingNode()) {
-            JsonNode stop=saved.path("stop_budget_seconds"),poll=saved.path("polling_safety_seconds");
-            if(!stop.canConvertToInt()||!poll.canConvertToInt()||!stop.isIntegralNumber()||!poll.isIntegralNumber()||stop.asInt()<1||poll.asInt()<1)
-                throw new IllegalStateException("Invalid accepted run budget");
-            // A later local setting cannot silently reduce the accepted safety margin.
-            margin=Math.max(margin,Math.addExact(stop.longValue(),poll.longValue()));
-        }
-        return Math.subtractExact(number(run,"hold_until_ms"),Math.multiplyExact(margin,1000L));
+        return ComputeBillingPolicy.stopDeadline(number(run,"hold_until_ms"),parse(text(run,"quote_snapshot")).path("run_budget"),policy);
     }
     private boolean cancelUnsubmittedHold(Map<String,Object> run) {
         return Boolean.TRUE.equals(tx.execute(status->{

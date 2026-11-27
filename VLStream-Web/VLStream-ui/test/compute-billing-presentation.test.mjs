@@ -1,19 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidClaimLabel, paidStartLabel } from '../src/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidClaimLabel } from '../src/utils/computeBillingPresentation.mjs'
 const marketSource = await readFile(new URL('../src/utils/computeMarketPresentation.js', import.meta.url), 'utf8')
 const { marketPricePresentation } = await import('data:text/javascript;base64,' + Buffer.from(marketSource).toString('base64'))
-
-test('paid start button retains the latest explicit stock rejection without displaying order history', () => {
-  const stock = { nodeId: '-6000', state: 'CANCELLED', startFailureCode: 'NO_STOCK', quoteUntilMs: 10 }
-  assert.equal(paidStartLabel(-6000, [stock]), '暂无库存')
-  assert.equal(paidStartLabel(-6001, [stock]), '付费开机')
-  assert.equal(paidStartLabel(-6000, [stock, { ...stock, state: 'QUOTED', quoteUntilMs: 20 }]), '暂无库存')
-  assert.equal(paidStartLabel(-6000, [stock, { ...stock, state: 'COMPLETED', startFailureCode: null, quoteUntilMs: 20 }]), '付费开机')
-  assert.equal(paidStartLabel(-6000, [{ ...stock, startFailureCode: 'START_REJECTED' }]), '付费开机')
-  assert.equal(paidStartLabel(-6000, [{ ...stock, archiveRecovery: true }]), '付费开机')
-})
 
 test('confirmed physical stop shows settlement progress without implying the machine still runs', () => {
   const run = { state: 'STOPPING', errorCode: 'COORDINATION_UNAVAILABLE', billingDiagnostics: {

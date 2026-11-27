@@ -155,7 +155,7 @@ test('the actual market displays the fixed RTX 6000D price independently of star
       loading: false, route: { query: {} }, resources: [item], pagedResources: [item], page: 1, pageSize: 20,
       marketText: text => text, marketError: '', operating: '', marketResourceName: row => row.name,
       getMarketSpecifications: () => null, marketPricePresentation,
-      paidClaimLabel, billingPanel: { activeRun: () => null, startLabel: () => '付费开机' },
+      paidClaimLabel, billingPanel: { activeRun: () => null, recoverableRun: () => null, startLabel: () => '付费开机' },
       load() {}, claim() {}, release() {}, refresh() {}, health() {}, power() {}, router: { push() {} }
     }), render })
     app.component('ComputeBillingPanel', { render: () => Vue.h('section') })

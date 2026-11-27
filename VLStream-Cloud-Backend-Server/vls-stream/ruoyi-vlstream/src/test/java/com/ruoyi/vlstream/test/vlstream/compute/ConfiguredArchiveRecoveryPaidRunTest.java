@@ -33,9 +33,10 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         leases=official.enableCentralLease();
         jdbc.execute("ALTER TABLE vls_cloud_training_job ADD COLUMN run_dir TEXT");
         jdbc.execute("CREATE TABLE vls_model_artifact_storage(tenant_id VARCHAR(64),path_hash CHAR(64),storage_state VARCHAR(32),retry_after TIMESTAMP,sha256 VARCHAR(64),file_size BIGINT)");
-        archives=new ComputePaidArchiveRecoveryService(jdbc,f.json,new DataSourceTransactionManager(jdbc.getDataSource()));
+        archives=new ComputePaidArchiveRecoveryService(jdbc,f.json,new DataSourceTransactionManager(jdbc.getDataSource()), new ComputeBillingPolicy());
         ReflectionTestUtils.setField(f.runs,"archiveRecovery",archives);
         ReflectionTestUtils.setField(f.lifecycle,"paidArchives",archives);
+        jdbc.execute("CREATE TABLE IF NOT EXISTS vls_shared_training_workspace_cleanup(job_id VARCHAR(64) PRIMARY KEY)");
         source=official.accepted();official.running(source);
         ComputePublicInventoryService.Instance claim=official.nodes.publicInventory().read(official.node(),false);
         jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,node_id,public_instance_key,public_claim_id,public_owner_subject,job_state,options_json,run_dir) VALUES(?,'tenant-test',-6000,?,?,?,'ARCHIVING','{}','/fixture/original-job')",
@@ -47,7 +48,12 @@ class ConfiguredArchiveRecoveryPaidRunTest {
         ((ObjectNode)expired.path("archiveAttempt")).put("deadlineMs",System.currentTimeMillis()-1);
         jdbc.update("UPDATE vls_cloud_training_job SET options_json=? WHERE id=?",expired.toString(),jobId);
         assertTrue(archives.pauseForStop(jobId,official.node(),"tenant-test",claim.getOwnerSubject(),claim.getClaimId(),target(),f.runs.get(source,f.payer).getUsageId(),System.currentTimeMillis()));
+        ComputeWorkspaceCleanupService cleanup = mock(ComputeWorkspaceCleanupService.class);
+        ReflectionTestUtils.setField(f.lifecycle,"workspaceCleanup",cleanup);
+        jdbc.update("UPDATE vls_compute_public_instance SET workspace_dirty=1 WHERE claim_id=?",claim.getClaimId());
         official.finish(source);
+        verifyNoInteractions(cleanup);
+        assertTrue(official.nodes.publicInventory().read(official.node(),false).isWorkspaceDirty());
         assertEquals("COMPLETED",f.runs.get(source,f.payer).getState());
         assertEquals("ARCHIVE_PENDING",job().getJobState());
         f.runs.scanCentralReleases();

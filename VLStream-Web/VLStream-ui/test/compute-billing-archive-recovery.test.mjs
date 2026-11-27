@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 import * as Vue from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel } from '../src/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '../src/utils/computeBillingPresentation.mjs'
 
 const source = readFileSync(new URL('../src/views/AIComputingScheduling/components/ComputeBillingPanel.vue', import.meta.url), 'utf8')
 const compiled = compileScript(parse(source).descriptor, { id: 'archive-recovery-test' }).content
@@ -13,11 +13,11 @@ const create = new Function('__deps', `
   const Refresh = {}, Wallet = {};
   const uiText = value => value;
   const phrase = (value, params) => value.replace(/\\{(\\w+)\\}/g, (_, key) => String(params[key]));
-  const {computed,onMounted,onUnmounted,ref,useRouter,ElMessageBox,getComputeBillingCapabilities,
+  const {computed,onMounted,onUnmounted,ref,useRouter,ElMessage,ElMessageBox,getComputeBillingCapabilities,
     checkComputeBillingAccount,quoteComputePaidRun,quoteComputeArchiveRecovery,listComputePaidRuns,
     acceptComputePaidRun,stopComputePaidRun,resumeComputeSettlement,refreshComputeHealth,captureComputeIdentity,
     requireComputePlatformAuthorization,isComputeAuthorizationCurrent,billingCurrency,paidRunState,
-    paidRunActive,paidRunErrorPresentation,paidRunQuoteText,paidStartLabel,window,setInterval,clearInterval}=__deps;
+    paidRunActive,paidRunErrorPresentation,paidRunQuoteText,window,setInterval,clearInterval}=__deps;
   ${executable}
 `)
 const template = compileTemplate({ source: parse(source).descriptor.template.content, id: 'billing-presentation-test' })
@@ -44,13 +44,14 @@ const original = () => ({ runId: 'source-1', nodeId: '-6000', state: 'COMPLETED'
 const quote = () => ({ ...original(), runId: 'recovery-1', state: 'QUOTED', archiveRecoveryAvailable: false, archiveRecovery: true, archiveRecoverySourceRunId: 'source-1', archiveRecoveryJobIds: ['job-1'], reserveQuota: '5', maximumRunSeconds: 60, hourlyPrice: '13.00', currency: 'CNY', quoteUntilMs: Date.now() + 60000 })
 
 function harness(options = {}) {
-  const calls = { capabilities: 0, list: 0, account: 0, normalQuote: 0, recoveryQuote: [], accept: [], stop: [], resume: [], health: 0, confirmations: [], route: [], proof: 0 }
+  const calls = { capabilities: 0, list: 0, account: 0, normalQuote: 0, recoveryQuote: [], accept: [], stop: [], resume: [], health: 0, warnings: [], confirmations: [], route: [], proof: 0 }
   const mounts = [], unmounts = [], events = new Map(), timers = [], emitted = []
   let identity = 1, rows = [original()]
   const deps = {
     computed: fn => ({ get value() { return fn() } }), ref: value => ({ value }),
     onMounted: fn => mounts.push(fn), onUnmounted: fn => unmounts.push(fn),
     useRouter: () => ({ push: async value => { calls.route.push(value) } }),
+    ElMessage: { warning: message => calls.warnings.push(message) },
     ElMessageBox: { confirm: async (...args) => { calls.confirmations.push(args); return options.confirm ? options.confirm(...args) : 'confirm' }, alert: async () => {} },
     getComputeBillingCapabilities: async () => { calls.capabilities++; return { data: options.capabilities || { accountAvailable: true, paidAdmissionEnabled: options.enabled !== false } } },
     checkComputeBillingAccount: async () => { calls.account++; return options.account ? options.account() : { data: {} } },
@@ -64,7 +65,7 @@ function harness(options = {}) {
     captureComputeIdentity: () => { const current = identity; return { assertCurrent() { if (current !== identity) throw Error('fixture identity changed') } } },
     requireComputePlatformAuthorization: async () => { calls.proof++; return options.proof ? options.proof() : { identity, platformToken: 'fixture-proof' } },
     isComputeAuthorizationCurrent: proof => proof.identity === identity,
-    billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel,
+    billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText,
     window: { addEventListener: (name, fn) => events.set(name, fn), removeEventListener: name => events.delete(name) },
     setInterval: fn => { timers.push(fn); return timers.length }, clearInterval() {}
   }
@@ -137,7 +138,6 @@ test('completed automatic settlement removes the active run and refreshes market
   h.setRows([run])
   await h.mount()
   assert.equal(h.instance.activeRun(run.nodeId), undefined)
-  assert.equal(h.instance.startLabel(run.nodeId), '付费开机')
   assert.deepEqual(h.emitted, [['changed']])
   assert.deepEqual(h.calls.confirmations, [])
 })
@@ -220,7 +220,8 @@ test('unavailable target reports its specific configuration reason without quoti
   const h = harness()
   await h.mount()
   await h.instance.start({ id: '-6000', paidAdmissionEnabled: false, paidUnavailableReason: '官方算力供应商调用身份未配置' })
-  assert.equal(h.instance.error.value, '官方算力供应商调用身份未配置')
+  assert.deepEqual(h.calls.warnings, ['官方算力供应商调用身份未配置'])
+  assert.equal(h.instance.error.value, '')
   assert.equal(h.calls.normalQuote, 0)
   assert.deepEqual(h.calls.accept, [])
 })
@@ -462,4 +463,32 @@ test('stop copy limits archive-timeout behavior to official/recovery runs and pr
   await other.instance.stop(original())
   assert.doesNotMatch(other.calls.confirmations[0][0], /到期保留原磁盘/)
   assert.match(other.calls.confirmations[0][0], /等待产物回存后请求停止/)
+})
+
+test('a stock rejection warns once for this start and stays silent on a later visit', async () => {
+  const h = harness()
+  const rejected = { ...quote(), archiveRecovery: false, state: 'CANCELLED', startFailureCode: 'NO_STOCK' }
+  await h.mount()
+  await h.instance.start({ id: rejected.nodeId, paidAdmissionEnabled: true })
+  h.setRows([rejected])
+  await h.instance.refreshRuns()
+  await h.instance.refreshRuns()
+  assert.equal(h.calls.warnings.length, 1)
+  assert.match(h.calls.warnings[0], /暂无库存/)
+  assert.equal(h.instance.activeRun(rejected.nodeId), undefined)
+  const reopened = harness()
+  reopened.setRows([rejected])
+  await reopened.mount()
+  assert.deepEqual(reopened.calls.warnings, [])
+})
+
+test('only an actionable original order supplies the resource recovery button', async () => {
+  const h = harness()
+  h.setRows([{ ...original(), archiveRecoveryAvailable: false }, quote()])
+  await h.mount()
+  assert.equal(h.instance.recoverableRun('-6000'), undefined)
+  h.setRows([original()])
+  await h.instance.refreshRuns()
+  assert.equal(h.instance.recoverableRun('-6000').runId, original().runId)
+  assert.equal(h.instance.recoverableRun('-6001'), undefined)
 })

@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ruoyi.common.exception.ServiceException;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -22,6 +23,25 @@ public class ComputeBillingPolicy {
     private boolean automaticDeletionEnabled = false;
     private boolean faultCompensationEnabled = false;
     private String supplierMinimumCostBearer = "PLATFORM";
+
+    static long stopDeadline(long holdUntil, JsonNode saved, ComputeBillingPolicy policy) {
+        long margin=0;
+        if(policy!=null)try {
+            policy.validate();
+            margin=Math.addExact((long)policy.getStopBudgetSeconds(),policy.getPollingSafetySeconds());
+        }catch(IllegalArgumentException invalidCurrentPolicy){
+            // Existing orders retain the safety margin they accepted even when
+            // deployment admission policy is later absent or invalid.
+        }
+        if(!saved.isMissingNode()) {
+            JsonNode stop=saved.path("stop_budget_seconds"),poll=saved.path("polling_safety_seconds");
+            if(!stop.canConvertToInt()||!poll.canConvertToInt()||!stop.isIntegralNumber()||!poll.isIntegralNumber()||stop.asInt()<1||poll.asInt()<1)
+                throw new IllegalStateException("Invalid accepted run budget");
+            // A later local setting cannot silently reduce the accepted safety margin.
+            margin=Math.max(margin,Math.addExact(stop.longValue(),poll.longValue()));
+        }
+        return Math.subtractExact(holdUntil,Math.multiplyExact(margin,1000L));
+    }
 
     public void validate() {
         if (openingReserveSeconds < stopBudgetSeconds || pollingSafetySeconds <= 0 || stopBudgetSeconds < 300 || stopBudgetSeconds <= pollingSafetySeconds

@@ -31,12 +31,6 @@ export const paidRunActive = run => !['QUOTED', 'COMPLETED', 'CANCELLED'].includ
 export const paidClaimLabel = claimState => claimState === 'OTHER' ? '占用中'
   : claimState === 'ISOLATED' ? '暂不可用' : '状态待确认'
 
-export function paidStartLabel(nodeId, runs = []) {
-  const latest = runs.filter(run => String(run.nodeId) === String(nodeId) && run.state !== 'QUOTED' && !run.archiveRecovery)
-    .sort((a, b) => Number(b.quoteUntilMs) - Number(a.quoteUntilMs))[0]
-  return latest?.state === 'CANCELLED' && latest.startFailureCode === 'NO_STOCK' ? '暂无库存' : '付费开机'
-}
-
 export function paidRunErrorPresentation(run) {
   if (run?.settlementAuthorizationRequired) return { message: '实例已关机，系统正在核对本次费用和释放剩余冻结余额，完成后自动解除占用。', type: 'warning' }
   if (run?.state === 'FUNDING' && run.errorCode === 'COMPUTE_LEASE_WAITING') return { message: '服务器正被占用，释放后再开始预冻结。', type: 'warning' }

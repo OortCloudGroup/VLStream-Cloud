@@ -25,13 +25,13 @@
 import { translateUiMessage as uiText, translatePhrase as phrase } from '@/i18n'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Wallet } from '@element-plus/icons-vue'
 import { getComputeBillingCapabilities, checkComputeBillingAccount, quoteComputePaidRun, quoteComputeArchiveRecovery, listComputePaidRuns, acceptComputePaidRun, stopComputePaidRun, resumeComputeSettlement } from '@/api/computeBilling'
 import { refreshComputeHealth } from '@/api/compute'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent } from '@/utils/computePlatformAuth'
-import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText, paidStartLabel } from '@/utils/computeBillingPresentation.mjs'
+import { billingCurrency, paidRunState, paidRunActive, paidRunErrorPresentation, paidRunQuoteText } from '@/utils/computeBillingPresentation.mjs'
 
 const props = defineProps({ resources: { type: Array, default: () => [] }, inlineActions: { type: Boolean, default: true } })
 const emit = defineEmits(['changed'])
@@ -41,7 +41,7 @@ const canReadRuns = () => capabilities.value.identityAvailable ?? capabilities.v
 const account = ref(null), runs = ref([]), busy = ref(''), error = ref('')
 const settlementRetryAt = new Map()
 const settlementErrors = ref({})
-let submittedRunId = null
+const submittedRuns = new Set()
 const recoveryAttempts = ref({})
 const visibleRuns = computed(() => runs.value.filter(run => paidRunActive(run)))
 const resourceName = id => props.resources.find(item => String(item.id) === id)?.name || uiText('付费实例')
@@ -52,7 +52,7 @@ const balanceParts = computed(() => {
 })
 let active = true, polling = false, timer, revision = 0
 let identity = captureComputeIdentity()
-const reset = () => { revision++; settlementRetryAt.clear(); settlementErrors.value = {}; submittedRunId = null; account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
+const reset = () => { revision++; settlementRetryAt.clear(); settlementErrors.value = {}; submittedRuns.clear(); account.value = null; runs.value = []; recoveryAttempts.value = {}; busy.value = ''; error.value = ''; identity = captureComputeIdentity() }
 const current = (snapshot, epoch) => {
   if (!active || epoch !== revision) return false
   try { snapshot.assertCurrent(); return true } catch { reset(); return false }
@@ -111,10 +111,14 @@ const refreshRuns = async () => {
     const response = await listComputePaidRuns()
     if (current(snapshot, epoch)) {
       runs.value = response.data || []; observeRecoveryAttempts(runs.value)
-      const submitted = runs.value.find(run => run.runId === submittedRunId)
-      if (submitted?.state === 'CANCELLED') {
-        error.value = paidRunErrorPresentation(submitted)?.message || '本次开机已取消，请重新选择可用资源。'
-        submittedRunId = null
+      for (const run of runs.value) {
+        if (!submittedRuns.has(run.runId)) continue
+        if (run.startFailureCode || run.state === 'CANCELLED') {
+          ElMessage.warning(uiText(paidRunErrorPresentation(run)?.message || '本次开机已取消，请重新选择可用资源。'))
+          submittedRuns.delete(run.runId)
+        } else if (['RUNNING', 'COMPLETED'].includes(run.state)) {
+          submittedRuns.delete(run.runId)
+        }
       }
       await settleStoppedRuns(snapshot, epoch)
     }
@@ -122,7 +126,7 @@ const refreshRuns = async () => {
   catch { current(snapshot, epoch) /* Background polling keeps the last known orders; explicit actions report their own errors. */ }
   finally { polling = false }
 }
-const execute = async (id, action) => {
+const execute = async (id, action, onFailure = message => { error.value = message }) => {
   if (busy.value) return
   const snapshot = captureComputeIdentity(), epoch = revision
   busy.value = id; error.value = ''
@@ -131,7 +135,7 @@ const execute = async (id, action) => {
     if (!proof || !current(snapshot, epoch) || !isComputeAuthorizationCurrent(proof)) return
     await action(proof, () => current(snapshot, epoch) && isComputeAuthorizationCurrent(proof))
     if (current(snapshot, epoch)) { await refreshRuns(); emit('changed') }
-  } catch (failure) { if (current(snapshot, epoch)) error.value = failure?.data?.msg || failure?.data?.message || failure?.message || '操作尚未确认，请查看原单状态。' }
+  } catch (failure) { if (current(snapshot, epoch)) onFailure(failure?.data?.msg || failure?.data?.message || failure?.message || '操作尚未确认，请查看原单状态。') }
   finally { if (current(snapshot, epoch)) busy.value = '' }
 }
 const checkAccount = () => execute('account', async (proof, valid) => {
@@ -146,9 +150,9 @@ const start = item => execute(String(item.id), async (proof, valid) => {
   if (!valid()) return
   const accepted = await ElMessageBox.confirm(uiText(paidRunQuoteText(quote)), uiText('确认开机吗？'), { confirmButtonText: uiText('确定'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
   if (!accepted || !valid()) return
-  submittedRunId = quote.runId
+  submittedRuns.add(quote.runId)
   await acceptComputePaidRun(quote.runId)
-})
+}, message => ElMessage.warning(uiText(message)))
 const archiveQuoteText = (quote, run) => {
   if (quote?.archiveRecovery !== true || quote.archiveRecoverySourceRunId !== recoverySourceId(run)
     || String(quote.nodeId) !== String(run.nodeId) || !quote.runId || quote.runId === run.runId
@@ -196,7 +200,7 @@ const recoverArchive = run => execute(`archive:${recoverySourceId(run)}`, async 
 const stop = run => execute(run.runId, async (proof, valid) => {
   const official = props.resources.some(item => String(item.id) === String(run.nodeId) && item.configurationManaged === true && item.provider === 'autodl' && item.billingType === 'POINTS')
   const message = official || run.archiveRecovery
-    ? '将请求停止本次实例。系统确认本轮训练进程退出后限时等待归档；到期保留原磁盘和产物并请求关机，未归档产物仍待明确恢复。按实际确认关机前的运行用量结算，未消费冻结余额在停止和对账后释放；请等待状态完成。'
+    ? '将请求停止本次实例。系统确认本轮训练进程退出后限时等待归档，正在回存的模型最多额外等待两分钟，受本单运行预算限制；到期保留原磁盘和产物并请求关机，未归档产物仍待明确恢复。按实际确认关机前的运行用量结算，未消费冻结余额在停止和对账后释放；请等待状态完成。'
     : '将结束本实例中您自己的训练任务，等待产物回存后请求停止。按已确认的运行用量结算，未消费冻结余额在停止和对账后释放；请等待状态完成。'
   const accepted = await ElMessageBox.confirm(uiText(message), uiText('停止并结算'), { confirmButtonText: uiText('停止并结算'), cancelButtonText: uiText('继续运行'), type: 'warning' }).then(() => true).catch(() => false)
   if (accepted && valid()) await stopComputePaidRun(run.runId)
@@ -209,8 +213,9 @@ const prepareTraining = run => execute(run.runId, async (proof, valid) => {
   if (valid()) await router.push({ path: '/algorithm-training', query: { nodeId: run.nodeId } })
 })
 const activeRun = nodeId => visibleRuns.value.find(run => String(run.nodeId) === String(nodeId))
-const startLabel = nodeId => paidStartLabel(nodeId, runs.value)
-defineExpose({ start, stop, settlementErrors, prepareTraining, activeRun, startLabel, busy })
+const recoverableRun = nodeId => runs.value.find(run => String(run.nodeId) === String(nodeId)
+  && !run.archiveRecovery && showArchiveRecovery(run))
+defineExpose({ recoverableRun, recoverArchive, recoveryActionLabel, start, stop, settlementErrors, prepareTraining, activeRun, busy })
 onMounted(async () => {
   const epoch = revision
   try {

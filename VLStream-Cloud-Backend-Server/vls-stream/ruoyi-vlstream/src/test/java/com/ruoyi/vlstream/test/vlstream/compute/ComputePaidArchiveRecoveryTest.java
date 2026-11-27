@@ -26,11 +26,12 @@ class ComputePaidArchiveRecoveryTest {
 
     @BeforeEach void setup() {
         DriverManagerDataSource data = new DriverManagerDataSource("jdbc:h2:mem:archive-" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
-        jdbc = new JdbcTemplate(data); json = new ObjectMapper(); service = new ComputePaidArchiveRecoveryService(jdbc, json, new DataSourceTransactionManager(data));
+        jdbc = new JdbcTemplate(data); json = new ObjectMapper(); service = new ComputePaidArchiveRecoveryService(jdbc, json, new DataSourceTransactionManager(data),null);
         jdbc.execute("CREATE TABLE vls_cloud_training_job(id VARCHAR(36) PRIMARY KEY,tenant_id VARCHAR(64),node_id BIGINT,public_instance_key VARCHAR(64),public_claim_id VARCHAR(36),public_owner_subject VARCHAR(64),run_dir VARCHAR(1024),options_json TEXT,job_state VARCHAR(20),message VARCHAR(500),update_time TIMESTAMP)");
-        jdbc.execute("CREATE TABLE vls_compute_paid_run(run_id VARCHAR(36) PRIMARY KEY,usage_id VARCHAR(36),active_instance_key VARCHAR(64),instance_key VARCHAR(64),tenant_id VARCHAR(64),platform_subject VARCHAR(64),state VARCHAR(20),quote_snapshot TEXT,hold_until_ms BIGINT)");
+        jdbc.execute("CREATE TABLE vls_compute_paid_run(run_id VARCHAR(36) PRIMARY KEY,usage_id VARCHAR(36),active_instance_key VARCHAR(64),instance_key VARCHAR(64),tenant_id VARCHAR(64),platform_subject VARCHAR(64),state VARCHAR(20),quote_snapshot TEXT,hold_until_ms BIGINT,maximum_run_seconds INT DEFAULT 1000)");
         jdbc.execute("CREATE TABLE vls_compute_billing_session(usage_id VARCHAR(36) PRIMARY KEY,stop_requested INT)");
         jdbc.execute("CREATE TABLE vls_model_artifact_storage(tenant_id VARCHAR(64),path_hash VARCHAR(64),storage_state VARCHAR(20),retry_after TIMESTAMP,sha256 VARCHAR(64),file_size BIGINT)");
+        jdbc.execute("CREATE TABLE vls_compute_usage(id VARCHAR(36),billing_start_at TIMESTAMP)");
         node = new ComputeNode(); node.setId(-6000L); node.setConfigurationManaged(true); node.setProvider("autodl");
         node.setResourceScope("PLATFORM"); node.setBillingType("POINTS"); node.setControlMode("API"); node.setPublicInstanceKey("instance");
         job = new CloudTrainingJob(); job.setId("job"); job.setTenantId("tenant"); job.setNodeId(node.getId()); job.setRunDir("/fixture/original/job");
@@ -42,7 +43,7 @@ class ComputePaidArchiveRecoveryTest {
     ObjectNode quote() { ObjectNode q=json.createObjectNode(); q.putObject("run_budget").put("stop_budget_seconds",300).put("polling_safety_seconds",60); return q; }
     void addRun(String id,String usage,ObjectNode quote,long until) {
         jdbc.update("INSERT INTO vls_compute_billing_session VALUES(?,0)", usage);
-        jdbc.update("INSERT INTO vls_compute_paid_run VALUES(?,?, 'instance','instance','tenant','platform','RUNNING',?,?)", id,usage,quote.toString(),until);
+        jdbc.update("INSERT INTO vls_compute_paid_run VALUES(?,?, 'instance','instance','tenant','platform','RUNNING',?,?,1000)", id,usage,quote.toString(),until);
     }
     ObjectNode proof() { ObjectNode p=json.createObjectNode();p.put("version",1);p.put("state","SUCCEEDED");p.put("processExited",true);p.put("sha256",ModelArtifactObjectStore.hash("pt"));p.put("resultSha256",ModelArtifactObjectStore.hash("result"));p.put("size",4);p.put("childPid",101);p.put("childStart","12");p.put("supervisorPid",102);p.put("supervisorStart","13");return p; }
     void record() { service.recordExit(job,node,target,"claim",owner,proof(),now); }
@@ -59,10 +60,33 @@ class ComputePaidArchiveRecoveryTest {
         record(); assertEquals(now+40000,options().path("archiveAttempt").path("deadlineMs").asLong());
         assertFalse(pause(now+39999));assertEquals("ARCHIVING",state());
         assertTrue(pause(now+40000));assertEquals("ARCHIVE_PENDING",state());
-        ComputePaidArchiveRecoveryService restarted=new ComputePaidArchiveRecoveryService(jdbc,json,new DataSourceTransactionManager(jdbc.getDataSource()));
+        ComputePaidArchiveRecoveryService restarted=new ComputePaidArchiveRecoveryService(jdbc,json,new DataSourceTransactionManager(jdbc.getDataSource()), null);
         assertEquals(Collections.singletonList("job"),restarted.requireRecoverableJobs(node,Collections.singletonList(node.getId()),"tenant",owner,"claim",target));
         assertFalse(restarted.mayArchive(job,node,target,now+50000));
         assertEquals("original",options().path("archiveRecovery").path("originalRunId").asText());
+    }
+
+    @Test void activeModelTransferDefersStopButCannotRenewGraceOrExceedPaidRuntime() throws Exception {
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=?", now + 1200000);
+        jdbc.update("INSERT INTO vls_compute_usage VALUES('usage-original',?)",new java.sql.Timestamp(now));
+        jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1");
+        record();
+        String path = ModelArtifactObjectStore.hash(job.modelKey());
+        jdbc.update("INSERT INTO vls_model_artifact_storage VALUES('tenant',?,'COPYING',DATEADD('HOUR',1,CURRENT_TIMESTAMP),NULL,NULL)",path);
+        assertFalse(pause(now+60000));
+        assertTrue(service.mayArchive(job,node,target,now+61000));
+        assertFalse(pause(now+179999));
+        assertTrue(pause(now+180000));
+        assertEquals("ARCHIVE_PENDING", state());
+    }
+
+    @Test void absoluteRunLimitWinsOverLiveCopyLease() {
+        jdbc.update("UPDATE vls_compute_paid_run SET hold_until_ms=?,maximum_run_seconds=65", now+1200000);
+        jdbc.update("INSERT INTO vls_compute_usage VALUES('usage-original',?)",new java.sql.Timestamp(now));
+        record();
+        jdbc.update("INSERT INTO vls_model_artifact_storage VALUES('tenant',?,'COPYING',DATEADD('HOUR',1,CURRENT_TIMESTAMP),NULL,NULL)",ModelArtifactObjectStore.hash(job.modelKey()));
+        assertFalse(pause(now+64000));
+        assertTrue(pause(now+65000));
     }
 
     @Test void unknownExitOrWrongCurrentClaimNeverCreatesAStopProof() throws Exception {

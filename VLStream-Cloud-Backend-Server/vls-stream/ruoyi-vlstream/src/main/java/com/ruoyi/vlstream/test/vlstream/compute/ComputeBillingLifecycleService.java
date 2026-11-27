@@ -95,7 +95,8 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
                 }
                 if(blocked){phase(usageId,"CANCEL_REQUESTED");return null;}
             }
-            if(workspaceCleanup!=null&&claim!=null&&claim.isWorkspaceDirty()) {
+            // A paused archive still needs its original run directory on the next paid recovery.
+            if(jobs.isEmpty() && workspaceCleanup!=null&&claim!=null&&claim.isWorkspaceDirty()) {
                 try {
                     workspaceCleanup.clean(node,claim.getInstanceKey());
                     jdbc.update("UPDATE vls_compute_public_instance SET workspace_dirty=0 WHERE instance_key=? AND claim_id=?",claim.getInstanceKey(),claim.getClaimId());

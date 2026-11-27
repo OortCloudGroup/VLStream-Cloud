@@ -24,9 +24,14 @@ public class ComputePaidArchiveRecoveryService {
     private final ObjectMapper json;
     private final TransactionTemplate tx;
 
-    public ComputePaidArchiveRecoveryService(JdbcTemplate jdbc, ObjectMapper json, PlatformTransactionManager manager) {
+    private final ComputeBillingPolicy policy;
+
+    public ComputePaidArchiveRecoveryService(JdbcTemplate jdbc, ObjectMapper json, PlatformTransactionManager manager, ComputeBillingPolicy policy) {
+        this.policy = policy;
         this.jdbc = jdbc; this.json = json; this.tx = new TransactionTemplate(manager);
     }
+
+    private static final long COPY_FINISH_GRACE_MS = 120_000L;
 
     public boolean hasCheckpoint(CloudTrainingJob job) { return parse(job.getOptionsJson()).has("archiveRecovery"); }
 
@@ -85,7 +90,8 @@ public class ComputePaidArchiveRecoveryService {
             if (text(run, "run_id").equals(previous.path("runId").asText())) {
                 if (previous.path("paused").asBoolean(true)) return false;
                 if (now >= previous.path("deadlineMs").asLong(0)
-                    && (number(run, "stop_requested") != 0 || now >= stopDeadline(run))) {
+                    && (number(run, "stop_requested") != 0 || now >= stopDeadline(run))
+                    && !finishingModelCopy(row, run, previous, now)) {
                     pause(row, options);
                     return false;
                 }
@@ -125,6 +131,9 @@ public class ComputePaidArchiveRecoveryService {
             }
             if (!usageId.equals(attempt.path("usageId").asText()) || !attempt.path("deadlineMs").isIntegralNumber()
                 || now < attempt.path("deadlineMs").longValue()) return false;
+            Map<String, Object> run = activeRun(node);
+            if (run != null && usageId.equals(text(run, "usage_id")) && finishingModelCopy(row, run, attempt, now))
+                return false;
             pause(row, options);
             return true;
         }));
@@ -188,6 +197,23 @@ public class ComputePaidArchiveRecoveryService {
         return checkpoint;
     }
 
+    /** The transfer lease is durable and visible to the separate billing worker.
+     * A stale copier cannot renew the fixed grace window on subsequent polls. */
+    private boolean finishingModelCopy(Map<String, Object> job, Map<String, Object> run, JsonNode attempt, long now) {
+        if (!text(run, "run_id").equals(attempt.path("runId").asText())
+            || now >= stopDeadline(run) || now >= attempt.path("deadlineMs").asLong() + COPY_FINISH_GRACE_MS)
+            return false;
+        String model = "cloud-training/" + text(job, "node_id") + "/" + text(job, "id") + "/weights/best.pt";
+        JsonNode proof = parse(text(job, "options_json")).path("archiveRecovery");
+        Integer finishing = jdbc.queryForObject("SELECT COUNT(*) FROM vls_model_artifact_storage WHERE tenant_id=? AND path_hash=? "
+            + "AND ((storage_state='COPYING' AND retry_after>CURRENT_TIMESTAMP) OR (storage_state='READY' AND sha256=? AND file_size=?))",
+            Integer.class, text(job, "tenant_id"), ModelArtifactObjectStore.hash(model), proof.path("sha256").asText(), proof.path("size").asLong());
+        if (finishing == null || finishing == 0) return false;
+        java.sql.Timestamp started = jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage WHERE id=?",
+            java.sql.Timestamp.class, text(run, "usage_id"));
+        return started != null && now < started.getTime() + Math.multiplyExact(number(run, "maximum_run_seconds"), 1000L);
+    }
+
     private ObjectNode attempt(Map<String, Object> run, long now) {
         JsonNode budget = parse(text(run, "quote_snapshot")).path("run_budget");
         long poll = positive(budget.path("polling_safety_seconds"));
@@ -198,8 +224,8 @@ public class ComputePaidArchiveRecoveryService {
 
     private long stopDeadline(Map<String, Object> run) {
         JsonNode budget = parse(text(run, "quote_snapshot")).path("run_budget");
-        return Math.subtractExact(number(run, "hold_until_ms"), Math.multiplyExact(Math.addExact(
-            positive(budget.path("stop_budget_seconds")), positive(budget.path("polling_safety_seconds"))), 1000L));
+        if (budget.isMissingNode()) throw new IllegalStateException("Missing accepted archive budget");
+        return ComputeBillingPolicy.stopDeadline(number(run,"hold_until_ms"), budget, policy);
     }
     private void pause(Map<String, Object> row, ObjectNode options) {
         ((ObjectNode) options.path("archiveAttempt")).put("paused", true);
