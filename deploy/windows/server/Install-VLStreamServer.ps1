@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $DataDirectory = [IO.Path]::GetFullPath($DataDirectory)
-$cloudDirectory = Join-Path $DataDirectory 'VLStream-Cloud-v1.2.12'
+$cloudDirectory = Join-Path $DataDirectory 'VLStream-Cloud-v1.2.13'
 $wvpDirectory = Join-Path $DataDirectory 'VLStream-wvp-lite-v1.0.12'
 $ownerFile = Join-Path $DataDirectory '.compose-project'
 $initializedFile = Join-Path $DataDirectory '.cloud-initialized'

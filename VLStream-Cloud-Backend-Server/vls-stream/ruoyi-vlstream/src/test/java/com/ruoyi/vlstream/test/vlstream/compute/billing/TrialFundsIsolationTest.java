@@ -47,7 +47,7 @@ class TrialFundsIsolationTest {
         Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (root != null && !Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         assertNotNull(root);
-        Path migrations = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        Path migrations = root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline");
         for (String name : new String[]{"V1_2_0_054__compute_corrective_refund_intents.sql", "V1_2_0_056__compute_paid_run_orchestration.sql"}) {
             try (java.sql.Connection c = f.jdbc.getDataSource().getConnection()) {
                 ScriptUtils.executeSqlScript(c, new FileSystemResource(migrations.resolve(name).toFile()));

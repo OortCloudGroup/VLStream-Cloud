@@ -39,7 +39,7 @@ class ModelDispatchBatchHttpTest {
     @BeforeEach void setup() throws Exception {
         store = new ModelDispatchPersistenceTest(); store.setup();
         store.jdbc.update("DELETE FROM vls_model_dispatch_task");
-        String migration = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/V1_2_0_055__model_dispatch_batches.sql")), StandardCharsets.UTF_8)
+        String migration = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_055__model_dispatch_batches.sql")), StandardCharsets.UTF_8)
             .replace("CHARACTER SET ascii COLLATE ascii_bin", "").replaceAll("(?s)\\) ENGINE=.*", ")");
         store.jdbc.execute(migration);
         TenantContextHolder.setTenantId("tenant-a"); actor = new LoginUser(); actor.setTenantId("tenant-a"); actor.setUserId("alice");

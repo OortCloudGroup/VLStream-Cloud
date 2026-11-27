@@ -3,7 +3,7 @@
 services:
   backend:
     environment:
-      VLSTREAM_OM_CONVERSION_ENABLED: ${VLSTREAM_OM_CONVERSION_ENABLED:-true}
+      VLSTREAM_OM_CONVERSION_ENABLED: "true"
       VLSTREAM_OM_WORK_DIR: /app/om-work
     volumes:
       - om-work:/app/om-work

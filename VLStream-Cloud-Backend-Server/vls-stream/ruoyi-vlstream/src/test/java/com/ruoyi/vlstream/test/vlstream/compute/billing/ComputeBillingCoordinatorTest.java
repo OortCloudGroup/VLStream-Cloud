@@ -24,7 +24,7 @@ class ComputeBillingCoordinatorTest {
     @BeforeEach void setup() throws Exception {
         f=new ComputeBillingSettlementTest();f.database();
         String migration=System.getProperty("billing.migration");
-        if(migration==null){java.nio.file.Path root=java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(!java.nio.file.Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();migration=root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_048__compute_billing_slices.sql").toString();}
+        if(migration==null){java.nio.file.Path root=java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(!java.nio.file.Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();migration=root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_048__compute_billing_slices.sql").toString();}
         try(java.sql.Connection connection=f.jdbc.getDataSource().getConnection()){ScriptUtils.executeSqlScript(connection,new FileSystemResource(migration.replace("048__compute_billing_slices","049__compute_billing_coordination")));}
         lifecycle=new Lifecycle();gateway=new LedgerGateway();beans=new DefaultListableBeanFactory();beans.registerSingleton("lifecycle",lifecycle);beans.registerSingleton("gateway",gateway);
         reconciliation=reconciler();coordinator=new ComputeBillingCoordinator(f.jdbc,f.service,f.properties,beans.getBeanProvider(BillingLifecycleGateway.class),reconciliation);

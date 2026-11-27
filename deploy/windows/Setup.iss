@@ -14,7 +14,7 @@
 [Setup]
 AppId={#SetupAppId}
 AppName=VLStream
-AppVersion=1.2.12
+AppVersion=1.2.13
 AppPublisher=OortCloudGroup
 DefaultDirName={localappdata}\Programs\VLStream
 DefaultGroupName={#SetupGroupName}
@@ -26,7 +26,7 @@ ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
 UninstallDisplayIcon={app}\VLStream.exe
 OutputDir={#DeliveryRoot}
-OutputBaseFilename=VLStream-Cloud-v1.2.12-Windows-x64-Native-Setup
+OutputBaseFilename=VLStream-Cloud-v1.2.13-Windows-x64-Native-Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern

@@ -45,7 +45,7 @@ class ComputeBillingCaptureTest {
         Path root = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (root != null && !java.nio.file.Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root = root.getParent();
         if (root == null) throw new IllegalStateException("Set billing.migration to the actual Flyway source");
-        return root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        return root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline");
     }
 
     private String usage() throws Exception {

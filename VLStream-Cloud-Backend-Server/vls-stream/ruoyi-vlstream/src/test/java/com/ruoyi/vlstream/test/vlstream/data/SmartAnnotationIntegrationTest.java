@@ -72,7 +72,7 @@ class SmartAnnotationIntegrationTest {
         DataTestConfiguration.initialize(context.getBean(DataSource.class));
         jdbc = new JdbcTemplate(context.getBean(DataSource.class));
         for (String table : Arrays.asList("vls_smart_annotation_candidate", "vls_smart_annotation_round", "vls_smart_annotation_task")) jdbc.execute("DROP TABLE IF EXISTS " + table);
-        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
+        String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
         applyDatasetMigrations(jdbc);
         TenantContextHolder.setTenantId("tenant-a");
@@ -86,7 +86,7 @@ class SmartAnnotationIntegrationTest {
 
     static void applyDatasetMigrations(JdbcTemplate jdbc) throws Exception {
         jdbc.execute("DROP TABLE IF EXISTS vls_training_dataset_artifact");
-        Path migrations = DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration");
+        Path migrations = DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline");
         for (String file : Arrays.asList("V1_2_0_022__four_type_annotation_payloads.sql", "V1_2_0_026__training_dataset_object_storage.sql")) {
             String migration = new String(Files.readAllBytes(migrations.resolve(file)), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
             for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);

@@ -29,7 +29,7 @@ class ModelDispatchPersistenceTest {
         JdbcDataSource source = new JdbcDataSource();
         source.setURL("jdbc:h2:mem:dispatch-" + UUID.randomUUID() + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
         jdbc = new JdbcTemplate(source);
-        String sql = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/V1_1_3_001__model_dispatch_protocol_v2.sql")), StandardCharsets.UTF_8);
+        String sql = new String(Files.readAllBytes(Paths.get("../ruoyi-admin/src/main/resources/db/migration/mainline/V1_1_3_001__model_dispatch_protocol_v2.sql")), StandardCharsets.UTF_8);
         sql = sql.substring(0, sql.indexOf(';')).replaceAll("(?s)\\) ENGINE=.*", ")");
         jdbc.execute(sql);
         for (String column : new String[]{"class_file_name VARCHAR(255)", "class_file_size BIGINT", "class_file_sha256 CHAR(64)", "class_file_content TEXT"}) {

@@ -10,8 +10,8 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("VLStream")]
 [assembly: AssemblyProduct("VLStream Cloud")]
 [assembly: AssemblyCompany("VLStream")]
-[assembly: AssemblyVersion("1.2.12.0")]
-[assembly: AssemblyFileVersion("1.2.12.0")]
+[assembly: AssemblyVersion("1.2.13.0")]
+[assembly: AssemblyFileVersion("1.2.13.0")]
 
 internal static class Program
 {

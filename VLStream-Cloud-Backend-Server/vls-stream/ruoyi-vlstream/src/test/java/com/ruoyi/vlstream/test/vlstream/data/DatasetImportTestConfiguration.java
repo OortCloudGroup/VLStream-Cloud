@@ -50,10 +50,10 @@ public class DatasetImportTestConfiguration {
         DataTestConfiguration.initialize(source);
         try(Connection connection=source.getConnection();Statement statement=connection.createStatement()){
             for(String table:new String[]{"vls_dataset_frame_origin","vls_dataset_upload_part","vls_dataset_import_job","vls_dataset_source"})statement.execute("DROP TABLE IF EXISTS "+table);
-            Path migration=DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_013__dataset_sources_resumable_imports.sql");
+            Path migration=DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_013__dataset_sources_resumable_imports.sql");
             String text=new String(Files.readAllBytes(migration),java.nio.charset.StandardCharsets.UTF_8);
             for(String sql:text.split(";"))if(!sql.trim().isEmpty())statement.execute(sql);
-            Path frames=DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_014__dataset_video_frame_origins.sql");
+            Path frames=DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_014__dataset_video_frame_origins.sql");
             for(String sql:new String(Files.readAllBytes(frames),java.nio.charset.StandardCharsets.UTF_8).split(";"))if(!sql.trim().isEmpty())statement.execute(sql);
         }
     }
