@@ -7,10 +7,12 @@ package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTunnelProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelAccessSessionMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelEndpointMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.TunnelDtos;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelAccessSession;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEndpoint;
 import org.junit.jupiter.api.Tag;
@@ -93,7 +95,7 @@ class TunnelAccessServiceTest {
             endpoint.setLastHeartbeatAt(Date.from(now));
             when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
             TunnelAccessService target = new TunnelAccessService(endpoints, sessions,
-                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+                new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
             ProxyFactory proxy = new ProxyFactory(target);
             proxy.setProxyTargetClass(true);
             proxy.addAdvice(new TransactionInterceptor(transactions, new AnnotationTransactionAttributeSource()));
@@ -123,7 +125,7 @@ class TunnelAccessServiceTest {
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-            new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
         TunnelAccessSession session = openedSession(now);
         Date expires = session.getExpiresAt();
         Date opened = session.getOpenedAt();
@@ -151,7 +153,7 @@ class TunnelAccessServiceTest {
             TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
             TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
             TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+                new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
             TunnelAccessSession session = openedSession(now);
             if ("expired".equals(state)) session.setExpiresAt(Date.from(now));
             if ("revoked".equals(state)) session.setRevokedAt(Date.from(now));
@@ -174,7 +176,7 @@ class TunnelAccessServiceTest {
             TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
             TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
             TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+                new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
             TunnelEndpoint endpoint = readyEndpoint();
             endpoint.setLastHeartbeatAt(Date.from(now));
             if ("other-tenant".equals(state)) endpoint.setTenantId("another-tenant");
@@ -203,7 +205,7 @@ class TunnelAccessServiceTest {
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessService access = new TunnelAccessService(endpoints, sessions,
-            new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
         com.ruoyi.vlstream.test.vlstream.controller.VlsTunnelInternalController controller =
             new com.ruoyi.vlstream.test.vlstream.controller.VlsTunnelInternalController(
                 mock(TunnelControlService.class), access);
@@ -237,7 +239,7 @@ class TunnelAccessServiceTest {
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-            new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
         TunnelAccessSession session = openedSession(now);
         Date openedAt = session.getOpenedAt();
         TunnelEndpoint endpoint = readyEndpoint();
@@ -265,7 +267,7 @@ class TunnelAccessServiceTest {
             TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
             TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
             TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+                new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
             TunnelAccessSession session = openedSession(now);
             if ("expired".equals(state)) session.setExpiresAt(Date.from(now));
             if ("revoked".equals(state)) session.setRevokedAt(Date.from(now.minusSeconds(1)));
@@ -289,7 +291,7 @@ class TunnelAccessServiceTest {
             TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
             TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
             TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
-                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+                new TunnelTokenService(properties), properties, onlineResolver(), Clock.fixed(now, ZoneOffset.UTC));
             TunnelEndpoint endpoint = readyEndpoint();
             endpoint.setLastHeartbeatAt(Date.from(now));
             if ("other-tenant".equals(state)) endpoint.setTenantId("tenant-b");
@@ -340,7 +342,7 @@ class TunnelAccessServiceTest {
         TunnelTokenService tokens = new TunnelTokenService(properties);
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
         TunnelAccessService service = new TunnelAccessService(
-            mock(TunnelEndpointMapper.class), sessions, tokens, properties);
+            mock(TunnelEndpointMapper.class), sessions, tokens, properties, onlineResolver());
         TunnelAccessSession session = new TunnelAccessSession();
         session.setCreateTime(new Date(System.currentTimeMillis() - 36000_001L));
         session.setExpiresAt(new Date(System.currentTimeMillis() - 1L));
@@ -360,7 +362,7 @@ class TunnelAccessServiceTest {
         TunnelTokenService tokens = new TunnelTokenService(properties);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
-        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties);
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties, onlineResolver());
 
         String rawToken = "short-lived-browser-token";
         TunnelAccessSession session = new TunnelAccessSession();
@@ -388,7 +390,7 @@ class TunnelAccessServiceTest {
         TunnelTokenService tokens = new TunnelTokenService(properties);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
-        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties);
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties, onlineResolver());
 
         String rawToken = "pending-route-token";
         TunnelAccessSession session = new TunnelAccessSession();
@@ -412,7 +414,7 @@ class TunnelAccessServiceTest {
         TunnelTokenService tokens = new TunnelTokenService(properties);
         TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
-        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties);
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties, onlineResolver());
 
         String rawToken = "already-consumed-token";
         TunnelAccessSession session = new TunnelAccessSession();
@@ -433,7 +435,7 @@ class TunnelAccessServiceTest {
         properties.setGatewayBaseUrl("https://{sessionId}.ipc.example.com");
         TunnelTokenService tokens = new TunnelTokenService(properties);
         TunnelAccessService service = new TunnelAccessService(
-            mock(TunnelEndpointMapper.class), mock(TunnelAccessSessionMapper.class), tokens, properties);
+            mock(TunnelEndpointMapper.class), mock(TunnelAccessSessionMapper.class), tokens, properties, onlineResolver());
 
         String url = service.buildAccessUrl("session-123", "secret/token");
         assertTrue(url.startsWith("https://session-123.ipc.example.com/s/"));
@@ -447,7 +449,7 @@ class TunnelAccessServiceTest {
         TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
         when(endpoints.selectOne(any())).thenReturn(readyEndpoint());
         TunnelAccessService service = new TunnelAccessService(
-            endpoints, sessions, new TunnelTokenService(properties), properties);
+            endpoints, sessions, new TunnelTokenService(properties), properties, onlineResolver());
 
         TunnelDtos.AccessSessionView view = service.createSession("IPC-1");
         ArgumentCaptor<TunnelAccessSession> saved = ArgumentCaptor.forClass(TunnelAccessSession.class);
@@ -455,6 +457,57 @@ class TunnelAccessServiceTest {
         assertEquals(expectedSeconds * 1000L,
             saved.getValue().getExpiresAt().getTime() - saved.getValue().getCreateTime().getTime());
         assertEquals(saved.getValue().getExpiresAt(), view.getExpiresAt());
+    }
+
+    @Test
+    void cannotCreateSessionWhenDeviceIsOfflineEvenThoughTunnelIsReady() {
+        VlsTunnelProperties properties = new VlsTunnelProperties();
+        properties.setEnabled(true);
+        properties.setGatewayBaseUrl("https://{sessionId}.ipc.example.com");
+        TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+        TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+        WvpVlStreamDeviceResolver resolver = mock(WvpVlStreamDeviceResolver.class);
+        when(endpoints.selectOne(any())).thenReturn(readyEndpoint());
+        String reason = "设备离线，无法打开管理后台";
+        when(resolver.resolveOnline("IPC-1", reason)).thenThrow(new ServiceException(reason));
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
+            new TunnelTokenService(properties), properties, resolver);
+
+        assertEquals(reason, assertThrows(ServiceException.class, () -> service.createSession("IPC-1")).getMessage());
+        verify(sessions, never()).insert(any(TunnelAccessSession.class));
+    }
+
+    @Test
+    void cannotOpenUnusedSessionAfterDeviceGoesOffline() {
+        VlsTunnelProperties properties = new VlsTunnelProperties();
+        properties.setEnabled(true);
+        TunnelTokenService tokens = new TunnelTokenService(properties);
+        TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+        TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+        WvpVlStreamDeviceResolver resolver = mock(WvpVlStreamDeviceResolver.class);
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions, tokens, properties, resolver);
+        String rawToken = "issued-while-online";
+        TunnelAccessSession session = new TunnelAccessSession();
+        session.setEndpointId(1L);
+        session.setExpiresAt(new Date(System.currentTimeMillis() + 60000L));
+        when(sessions.selectByTokenHash(tokens.hash(rawToken))).thenReturn(session);
+        when(endpoints.selectByIdGlobal(1L)).thenReturn(readyEndpoint());
+        String reason = "设备离线，无法打开管理后台";
+        when(resolver.resolveOnline("IPC-1", reason)).thenThrow(new ServiceException(reason));
+
+        TunnelApiException error = assertThrows(TunnelApiException.class, () -> service.resolveSession(rawToken));
+        assertEquals(503, error.getStatus());
+        assertEquals(reason, error.getMessage());
+        verify(sessions, never()).updateById(any(TunnelAccessSession.class));
+    }
+
+    private WvpVlStreamDeviceResolver onlineResolver() {
+        WvpVlStreamDeviceResolver resolver = mock(WvpVlStreamDeviceResolver.class);
+        DeviceInfo device = new DeviceInfo();
+        device.setId(101L);
+        device.setTenantId("000000");
+        when(resolver.resolveOnline("IPC-1", "设备离线，无法打开管理后台")).thenReturn(device);
+        return resolver;
     }
 
     private TunnelEndpoint readyEndpoint() {

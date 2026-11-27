@@ -53,23 +53,23 @@ public class WvpVlStreamDeviceResolver {
 	}
 
 	public DeviceInfo resolve(String deviceId) {
-		return resolve(deviceId, false);
+		return resolve(deviceId, null, false);
 	}
 
 	public DeviceInfo resolveOnline(String deviceId) {
-		return resolve(deviceId, true);
+		return resolveOnline(deviceId, "设备离线，无法操作模型");
+	}
+
+	public DeviceInfo resolveOnline(String deviceId, String offlineMessage) {
+		return resolve(deviceId, offlineMessage, false);
 	}
 
 	/** Event ingestion must never infer ownership from a local/default tenant. */
 	public DeviceInfo resolveEventDevice(String deviceId) {
-		return resolve(deviceId, false, true);
+		return resolve(deviceId, null, true);
 	}
 
-	private DeviceInfo resolve(String deviceId, boolean requireOnline) {
-		return resolve(deviceId, requireOnline, false);
-	}
-
-	private DeviceInfo resolve(String deviceId, boolean requireOnline, boolean requireOwner) {
+	private DeviceInfo resolve(String deviceId, String offlineMessage, boolean requireOwner) {
 		if (StringUtils.isBlank(deviceId)) {
 			throw new ServiceException("设备编号不能为空");
 		}
@@ -77,8 +77,8 @@ public class WvpVlStreamDeviceResolver {
 		try {
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
 			DeviceInfo device = mapResponse(deviceId, response.getBody(), requireOwner);
-			if (requireOnline && !Boolean.TRUE.equals(JSONUtil.parseObj(response.getBody()).getJSONObject("data").getBool("online"))) {
-				throw new ServiceException("设备离线，无法操作模型");
+			if (offlineMessage != null && !Boolean.TRUE.equals(JSONUtil.parseObj(response.getBody()).getJSONObject("data").getBool("online"))) {
+				throw new ServiceException(offlineMessage);
 			}
 			return device;
 		} catch (RestClientException exception) {

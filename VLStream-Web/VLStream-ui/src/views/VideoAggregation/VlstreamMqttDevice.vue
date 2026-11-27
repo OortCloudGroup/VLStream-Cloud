@@ -337,11 +337,13 @@ const modelTasks = ref([])
 const modelTasksError = ref('')
 let tasksRefreshing = false
 let snapshotRefreshing = false
+let remoteStatusRequest = 0
 const deploymentRows = computed(() => deviceDeploymentRows(modelTasks.value, detailDevice.value?.deviceId, detailClock.value))
 const reportedModels = computed(() => liveModels.value ?? parseSnapshot(detailDevice.value?.modelsJson) ?? [])
 const remoteManagementReady = computed(() => {
   const status = remoteManagementStatus.value
-  return Boolean(status?.configured
+  return Boolean(detailDevice.value?.online === true
+    && status?.configured
     && status.featureEnabled
     && status.desiredState === 'ENABLED'
     && status.agentOnline
@@ -355,6 +357,7 @@ const remoteManagementBlockReason = computed(() => {
   if (!status?.configured) return uiText('尚未激活')
   if (status.desiredState === 'REVOKED') return uiText('已吊销')
   if (status.desiredState === 'DISABLED') return uiText('已停用')
+  if (detailDevice.value?.online !== true) return uiText('设备离线')
   if (!status.agentOnline) return uiText('Agent 离线')
   if (status.routeStatus !== 'APPLIED') return status.routeStatus === 'FAILED' ? uiText('路由应用失败') : uiText('路由待生效')
   if (status.tunnelStatus !== 'ONLINE') return uiText('隧道未连接')
@@ -540,12 +543,17 @@ async function openDetail(device) {
 }
 
 async function loadRemoteManagementStatus(deviceId = detailDevice.value?.deviceId) {
-  if (!deviceId) return
+  const session = modelSession
+  const request = ++remoteStatusRequest
+  if (!deviceId || !modelSessionCurrent(session)) return
+  const isCurrent = () => request === remoteStatusRequest && modelSessionCurrent(session)
   try {
     const result = await getIpcTunnelStatus(deviceId)
+    if (!isCurrent()) return
     remoteManagementStatus.value = result?.data || { configured: false, deviceId }
     remoteManagementVisible.value = true
   } catch (error) {
+    if (!isCurrent()) return
     remoteManagementStatus.value = null
     remoteManagementVisible.value = false
   }
@@ -605,7 +613,7 @@ async function reloadFirmwareDetail() {
 
 async function openRemoteManagement() {
   const deviceId = detailDevice.value?.deviceId
-  if (!deviceId || remoteManagementOpening.value) return
+  if (!deviceId || !remoteManagementReady.value || remoteManagementOpening.value) return
   const targetWindow = window.open('about:blank', '_blank')
   if (!targetWindow) {
     ElMessage.warning(uiText('浏览器已拦截新窗口，请允许本站打开弹窗后重试'))

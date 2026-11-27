@@ -13,6 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.config.VlsTunnelProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelAccessSessionMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.TunnelEndpointMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.TunnelDtos;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelAccessSession;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEndpoint;
 import org.apache.commons.lang3.StringUtils;
@@ -31,24 +32,27 @@ public class TunnelAccessService {
     private final TunnelAccessSessionMapper sessionMapper;
     private final TunnelTokenService tokenService;
     private final VlsTunnelProperties properties;
+    private final WvpVlStreamDeviceResolver deviceResolver;
     private final Clock clock;
 
     @Autowired
     public TunnelAccessService(TunnelEndpointMapper endpointMapper,
                                TunnelAccessSessionMapper sessionMapper,
                                TunnelTokenService tokenService,
-                               VlsTunnelProperties properties) {
-        this(endpointMapper, sessionMapper, tokenService, properties, Clock.systemUTC());
+                               VlsTunnelProperties properties,
+                               WvpVlStreamDeviceResolver deviceResolver) {
+        this(endpointMapper, sessionMapper, tokenService, properties, deviceResolver, Clock.systemUTC());
     }
 
     TunnelAccessService(TunnelEndpointMapper endpointMapper,
                         TunnelAccessSessionMapper sessionMapper,
                         TunnelTokenService tokenService,
-                        VlsTunnelProperties properties, Clock clock) {
+                        VlsTunnelProperties properties, WvpVlStreamDeviceResolver deviceResolver, Clock clock) {
         this.endpointMapper = endpointMapper;
         this.sessionMapper = sessionMapper;
         this.tokenService = tokenService;
         this.properties = properties;
+        this.deviceResolver = deviceResolver;
         this.clock = clock;
     }
 
@@ -67,6 +71,7 @@ public class TunnelAccessService {
             throw new ServiceException("该设备尚未配置远程管理");
         }
         requireAvailable(endpoint);
+        requireDeviceOnline(endpoint);
 
         Date now = Date.from(clock.instant());
         String rawToken = tokenService.randomToken(32);
@@ -110,6 +115,7 @@ public class TunnelAccessService {
         }
         try {
             requireAvailable(endpoint);
+            requireDeviceOnline(endpoint);
         } catch (ServiceException exception) {
             throw new TunnelApiException(503, exception.getMessage());
         }
@@ -203,6 +209,14 @@ public class TunnelAccessService {
         return UriComponentsBuilder.fromHttpUrl(sessionBaseUrl)
             .pathSegment("s", rawToken)
             .build().encode().toUriString();
+    }
+
+    private void requireDeviceOnline(TunnelEndpoint endpoint) {
+        DeviceInfo device = deviceResolver.resolveOnline(endpoint.getDeviceId(), "设备离线，无法打开管理后台");
+        if (!StringUtils.equals(endpoint.getTenantId(), device.getTenantId())
+            || (endpoint.getWvpDeviceRowId() != null && !endpoint.getWvpDeviceRowId().equals(device.getId()))) {
+            throw new ServiceException("远程管理端点的设备归属已失效");
+        }
     }
 
     private void requireAvailable(TunnelEndpoint endpoint) {
