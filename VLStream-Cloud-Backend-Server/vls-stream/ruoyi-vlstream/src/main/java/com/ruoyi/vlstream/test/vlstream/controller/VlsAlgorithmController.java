@@ -12,6 +12,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.core.boot.ctrl.BladeController;
 import org.springblade.core.excel.util.ExcelUtil;
@@ -51,10 +52,12 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/vlsAlgorithm")
 @Tag(name = "算法表", description = "算法表接口")
 public class VlsAlgorithmController extends BladeController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.vlstream.test.vlstream.service.SharedAlgorithmCatalog shared;
 
 	private final IVlsAlgorithmService vlsAlgorithmService;
 	private final AlgorithmCoverService covers;
@@ -100,7 +103,14 @@ public class VlsAlgorithmController extends BladeController {
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
 	@Operation(summary = "分页", description = "传入vlsAlgorithm")
-	public R<IPage<AlgorithmVO>> page(AlgorithmVO vlsAlgorithm, Query query) {
+	public R<?> page(AlgorithmVO vlsAlgorithm, Query query,
+	                 @RequestParam(defaultValue = "false") boolean forTraining) {
+        if (forTraining && shared != null && shared.available()) {
+            cn.dev33.satoken.stp.StpUtil.checkPermission("vls:menu:algorithm-training");
+            IPage<Algorithm> options = Condition.getPage(query);
+            return R.data(shared.page(new Page<>(options.getCurrent(), options.getSize()), null, vlsAlgorithm.getName(),
+                vlsAlgorithm.getCategory() == null ? null : vlsAlgorithm.getCategory().getCode()));
+        }
 		IPage<AlgorithmVO> pages = vlsAlgorithmService.selectVlsAlgorithmPage(Condition.getPage(query), vlsAlgorithm);
 		for (AlgorithmVO algorithm : pages.getRecords()) {
 			covers.prepare(algorithm);
@@ -118,7 +128,8 @@ public class VlsAlgorithmController extends BladeController {
 	@Operation(summary = "新增", description = "传入vlsAlgorithm")
 	public R save(@Valid @RequestBody Algorithm vlsAlgorithm) {
 		covers.validate(vlsAlgorithm);
-		return R.status(vlsAlgorithmService.save(vlsAlgorithm));
+		vlsAlgorithm.setId(null);
+		return R.status(vlsAlgorithmService.createAlgorithm(vlsAlgorithm));
 	}
 
 	/**
@@ -142,7 +153,7 @@ public class VlsAlgorithmController extends BladeController {
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithm")
 	public R submit(@Valid @RequestBody Algorithm vlsAlgorithm) {
 		covers.validate(vlsAlgorithm);
-		return R.status(vlsAlgorithm.getId() == null ? vlsAlgorithmService.save(vlsAlgorithm)
+		return R.status(vlsAlgorithm.getId() == null ? vlsAlgorithmService.createAlgorithm(vlsAlgorithm)
 			: vlsAlgorithmService.updateAlgorithm(vlsAlgorithm));
 	}
 
@@ -154,7 +165,7 @@ public class VlsAlgorithmController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
-		return R.status(vlsAlgorithmService.deleteLogic(Func.toLongList(ids)));
+		return R.status(vlsAlgorithmService.batchDeleteAlgorithms(Func.toLongList(ids)));
 	}
 
 	/**
@@ -218,6 +229,7 @@ public class VlsAlgorithmController extends BladeController {
 		log.info("查询算法详情：ID={}", id);
 
 		Algorithm algorithm = vlsAlgorithmService.getById(id);
+		if (algorithm == null && shared != null) algorithm = shared.visible(id);
 		if (algorithm == null) {
 			return R.fail("算法不存在");
 		}

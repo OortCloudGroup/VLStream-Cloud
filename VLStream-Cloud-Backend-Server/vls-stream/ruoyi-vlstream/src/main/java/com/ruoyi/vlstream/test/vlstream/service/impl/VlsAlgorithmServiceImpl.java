@@ -47,6 +47,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper, Algorithm> implements IVlsAlgorithmService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.vlstream.test.vlstream.service.SharedAlgorithmCatalog shared;
+
 	private final VlsAlgorithmMapper algorithmMapper;
 	private final IVlsAlgorithmRepositoryService algorithmRepositoryService;
 
@@ -92,7 +95,8 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 
 		// whether
 		QueryWrapper<Algorithm> queryWrapper = new QueryWrapper<>();
-		queryWrapper.eq("repository_id", algorithm.getRepositoryId()).eq("name", algorithm.getName()).eq("is_deleted", 0);
+		queryWrapper.in("repository_id", ownedRepositoryIds(algorithm.getRepositoryId()))
+			.eq("name", algorithm.getName()).eq("is_deleted", 0);
 		if (count(queryWrapper) > 0) {
 			log.warn("同一仓库下算法名称已存在：{}", algorithm.getName());
 			return false;
@@ -123,6 +127,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			log.warn("算法不存在：ID={}", algorithm.getId());
 			return false;
 		}
+        if (shared != null) shared.checkAlgorithmWritable(existing);
 
         Long oldRepositoryId = existing.getRepositoryId();
         Long newRepositoryId = algorithm.getRepositoryId() == null ? oldRepositoryId : algorithm.getRepositoryId();
@@ -131,7 +136,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
             validateTargetRepository(newRepositoryId, existing.getTenantId());
         }
         String name = algorithm.getName() == null ? existing.getName() : algorithm.getName();
-        if (count(new QueryWrapper<Algorithm>().eq("repository_id", newRepositoryId).eq("name", name)
+        if (count(new QueryWrapper<Algorithm>().in("repository_id", ownedRepositoryIds(newRepositoryId)).eq("name", name)
             .ne("id", existing.getId()).eq("is_deleted", 0)) > 0) {
             throw new ServiceException("同一算法库下算法名称已存在");
         }
@@ -147,7 +152,12 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		return result;
 	}
 
+    private Set<Long> ownedRepositoryIds(Long repositoryId) {
+        return shared == null ? java.util.Collections.singleton(repositoryId) : shared.ownedRepositoryIds(repositoryId);
+    }
+
     private void validateTargetRepository(Long newRepositoryId, String tenantId) {
+        if (shared != null && shared.lockAssignable(newRepositoryId)) return;
         // Lock the same tenant-scoped category rows as hierarchy edits/deletion.
         List<AlgorithmRepository> categories = algorithmRepositoryService.list(
             new QueryWrapper<AlgorithmRepository>().orderByAsc("id").last("FOR UPDATE"));
@@ -178,6 +188,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			log.warn("算法不存在：ID={}", id);
 			return false;
 		}
+        if (shared != null) shared.checkAlgorithmWritable(algorithm);
 
 		boolean result = removeById(id);
 
@@ -196,6 +207,10 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 
 		// Get Delete algorithm info
 		List<Algorithm> algorithms = listByIds(ids);
+        if (shared != null && shared.available()) {
+            if (algorithms.size() != new HashSet<>(ids).size()) throw new ServiceException("部分算法不存在或无权操作");
+            algorithms.forEach(shared::checkAlgorithmWritable);
+        }
 		Map<Long, Boolean> repositoryMap = new HashMap<>();
 		algorithms.forEach(algo -> repositoryMap.put(algo.getRepositoryId(), true));
 
@@ -214,6 +229,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		log.info("更新算法部署状态：ID={}, Status={}", id, deployStatus);
 
 		UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
+		if (shared != null && shared.available()) updateWrapper.eq("catalog_seed", 0);
 		updateWrapper.eq("id", id).set("deploy_status", deployStatus);
 
 		// if is successfully, and new
@@ -229,6 +245,12 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		log.info("批量更新算法部署状态：IDs={}, Status={}", ids, deployStatus);
 
 		UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
+        if (shared != null && shared.available()) {
+            List<Algorithm> owned = listByIds(ids);
+            if (owned.size() != new HashSet<>(ids).size()) throw new ServiceException("部分算法不存在或无权操作");
+            owned.forEach(shared::checkAlgorithmWritable);
+            updateWrapper.eq("catalog_seed", 0);
+        }
 		updateWrapper.in("id", ids).set("deploy_status", deployStatus);
 
 		// if is successfully, and new
@@ -245,7 +267,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		log.info("部署算法到设备：AlgorithmId={}, DeviceIds={}", algorithmId, deviceIds);
 
 		// new algorithm to in
-		updateDeployStatus(algorithmId, "deploying");
+		if (!updateDeployStatus(algorithmId, "deploying")) return false;
 
 		try {
 			// service

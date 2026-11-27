@@ -18,7 +18,59 @@
         <result column="output_format" property="outputFormat"/>
         <result column="gpu_required" property="gpuRequired"/>
         <result column="is_system" property="isSystem"/>
+        <result column="catalog_seed" property="catalogSeed"/>
+        <result column="catalog_read_only" property="catalogReadOnly"/>
+        <result column="catalog_name" property="catalogName"/>
     </resultMap>
+
+    <sql id="sharedCatalogProjection">
+        a.id, COALESCE(r.shared_catalog_id, r.id) AS repository_id, a.name, a.category, a.description,
+        COALESCE(canonical.name, r.name) AS catalog_name,
+        a.create_time, a.input_format, a.output_format, a.gpu_required, a.is_system, a.catalog_seed,
+        CASE WHEN a.tenant_id = #{tenant} THEN a.tenant_id END AS tenant_id,
+        CASE WHEN a.tenant_id = #{tenant} OR
+           (a.catalog_seed = 1 AND a.image_url LIKE 'builtin://algorithm-covers/%')
+           THEN a.image_url END AS image_url,
+        CASE WHEN a.tenant_id = #{tenant} THEN a.pt_model_file_path END AS pt_model_file_path,
+        CASE WHEN a.tenant_id = #{tenant} THEN a.onnx_model_file_path END AS onnx_model_file_path,
+        CASE WHEN a.tenant_id = #{tenant} THEN a.config_params END AS config_params,
+        (a.catalog_seed = 1 OR a.tenant_id &lt;&gt; #{tenant}) AS catalog_read_only
+    </sql>
+
+    <sql id="sharedCatalogRows">
+        FROM vls_algorithm a
+        JOIN vls_algorithm_repository r ON r.id = a.repository_id AND r.is_deleted = 0
+        LEFT JOIN vls_algorithm_repository canonical
+            ON canonical.id = r.shared_catalog_id
+            AND canonical.shared_catalog_id = canonical.id AND canonical.is_deleted = 0
+        WHERE a.is_deleted = 0
+        AND (
+            (r.shared_catalog_id IS NULL AND a.tenant_id = #{tenant} AND r.tenant_id = #{tenant})
+            OR (
+                canonical.status = 1
+                AND (a.tenant_id = r.tenant_id OR r.id = canonical.id)
+                AND (a.catalog_seed = 0 OR r.id = canonical.id)
+            )
+        )
+    </sql>
+
+    <select id="selectSharedCatalogPage" resultMap="vlsAlgorithmResultMap">
+        SELECT <include refid="sharedCatalogProjection"/>
+        <include refid="sharedCatalogRows"/>
+        <if test="repositoryIds != null">
+            AND COALESCE(r.shared_catalog_id, r.id) IN
+            <foreach collection="repositoryIds" item="id" open="(" close=")" separator=",">#{id}</foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">AND a.name LIKE CONCAT('%', #{keyword}, '%')</if>
+        <if test="category != null and category != ''">AND a.category = #{category}</if>
+        ORDER BY a.create_time DESC, a.id DESC
+    </select>
+
+    <select id="selectSharedCatalogAlgorithm" resultMap="vlsAlgorithmResultMap">
+        SELECT <include refid="sharedCatalogProjection"/>
+        <include refid="sharedCatalogRows"/>
+        AND a.id = #{id}
+    </select>
 
     <select id="selectVlsAlgorithmPage" resultMap="vlsAlgorithmResultMap">
         select *

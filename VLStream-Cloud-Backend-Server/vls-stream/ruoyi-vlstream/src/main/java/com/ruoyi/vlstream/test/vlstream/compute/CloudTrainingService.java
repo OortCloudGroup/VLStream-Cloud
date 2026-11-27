@@ -25,6 +25,8 @@ public class CloudTrainingService {
     private final IVlsContainerInstanceService containers;
     private final VlsAlgorithmMapper algorithms;
     private final ObjectMapper json;
+    @org.springframework.beans.factory.annotation.Autowired
+    private SharedAlgorithmCatalog sharedAlgorithms;
     @javax.annotation.Resource
     private ModelArtifactObjectStore modelObjects;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -57,8 +59,12 @@ public class CloudTrainingService {
             claim=inventory.training(node);
         }
         Algorithm algorithm = algorithms.selectById(training.getAlgorithmId());
+        if (algorithm != null && !tenant.equals(algorithm.getTenantId())) {
+            throw new ServiceException("算法不存在或无权用于训练");
+        }
+        if (algorithm == null && sharedAlgorithms != null) algorithm = sharedAlgorithms.visible(training.getAlgorithmId());
         AnnotationTaskType type = AnnotationTaskType.of(dataset.getAnnotationType());
-        if (algorithm == null || !tenant.equals(algorithm.getTenantId()) || algorithm.getCategory() == null || !type.getModelTask().equals(algorithm.getCategory().getCode())) throw new ServiceException("算法不存在、无权访问或与数据集标注类型不匹配");
+        if (algorithm == null || algorithm.getCategory() == null || !type.getModelTask().equals(algorithm.getCategory().getCode())) throw new ServiceException("算法不存在、无权访问或与数据集标注类型不匹配");
         String baseModel = resolveBaseModel(request.getModelSource(), algorithm.getPtModelFilePath(), type.getModelTask());
         if(companyShared)baseModel=sharedQueue.verifyBaseModel(baseModel,type.getCode(),taskOwner);
         else if(nodes.officialConfigured(node))baseModel=nodes.officialBaseModel(baseModel,type.getCode(),taskOwner);

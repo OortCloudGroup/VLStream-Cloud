@@ -19,7 +19,7 @@
           <template #default="{ data }">
             <span class="tree-node">
               <span class="node-label"><el-icon><Folder /></el-icon>{{ data.name }}</span>
-              <span v-if="section === 'categories' && data.id !== ROOT_ID" class="node-actions" @click.stop>
+              <span v-if="section === 'categories' && data.id !== ROOT_ID && !data.catalogReadOnly" class="node-actions" @click.stop>
                 <el-button link :icon="Plus" @click="openCreate(data.id)" />
                 <el-dropdown trigger="click" @command="command => handleNodeCommand(command, data)">
                   <el-button link :icon="MoreFilled" />
@@ -50,7 +50,7 @@
           <div class="toolbar-primary">
             <el-button v-if="section === 'library'" type="primary" round :icon="Plus" @click="emit('add', activeCategoryId)">{{ $tp('新增算法') }}</el-button>
             <template v-else>
-              <el-button type="primary" round :icon="Plus" @click="openCreate(activeCategoryId)">{{ $tp('添加分类') }}</el-button>
+              <el-button type="primary" round :icon="Plus" :disabled="selectedCatalogReadOnly" @click="openCreate(activeCategoryId)">{{ $tp('添加分类') }}</el-button>
               <el-button round :icon="Delete" :disabled="!selectedRows.length" @click="removeCategories(selectedRows.map(row => row.id))">{{ $tp('删除') }}</el-button>
             </template>
           </div>
@@ -72,7 +72,7 @@
             <article v-for="algorithm in algorithms" :key="algorithm.id" class="algorithm-card">
               <div class="algorithm-image">
                 <img :src="algorithmCoverUrl(algorithm)" :alt="algorithm.name" loading="lazy" decoding="async" />
-                <el-dropdown class="card-actions" trigger="click" @command="command => handleAlgorithmCommand(command, algorithm)">
+                <el-dropdown v-if="!algorithm.catalogReadOnly" class="card-actions" trigger="click" @command="command => handleAlgorithmCommand(command, algorithm)">
                   <button type="button"><el-icon><MoreFilled /></el-icon></button>
                   <template #dropdown><el-dropdown-menu>
                     <el-dropdown-item command="edit">{{ $tp('编辑') }}</el-dropdown-item>
@@ -83,9 +83,10 @@
                   </el-dropdown-menu></template>
                 </el-dropdown>
               </div>
-              <div class="algorithm-copy" @click="emit('edit', algorithm)">
+              <div class="algorithm-copy" @click="handleAlgorithmCommand('edit', algorithm)">
                 <h4>{{ algorithm.name }} <small>{{ typeName(algorithm.category) }}</small></h4>
                 <p>{{ algorithm.description || $tp('暂无算法描述') }}</p>
+                <p v-if="algorithm.catalogReadOnly">{{ $tp('只读') }}</p>
               </div>
             </article>
             <el-empty v-if="!algorithmsLoading && !algorithmLoadFailed && !algorithms.length" :description="$tp('暂无算法')" />
@@ -97,15 +98,18 @@
 
         <el-table v-else v-loading="catalogLoading" :data="visibleRows" row-key="id" highlight-current-row
                   @selection-change="selectedRows = $event" @row-click="row => activeCategoryId = row.id">
-          <el-table-column type="selection" width="52" />
+          <el-table-column type="selection" :selectable="row => !row.catalogReadOnly" width="52" />
           <el-table-column type="index" :label="$tp('序号')" width="72" />
           <el-table-column prop="name" :label="$tp('名称')" min-width="180" />
           <el-table-column :label="$tp('上级分类')" min-width="180"><template #default="{ row }">{{ categoryName(row.parentId) }}</template></el-table-column>
           <el-table-column :label="$tp('拥有下级')" width="150"><template #default="{ row }">{{ childCount(row.id) }}</template></el-table-column>
           <el-table-column prop="createTime" :label="$tp('创建时间')" min-width="170" />
           <el-table-column :label="$tp('操作')" width="110" align="right"><template #default="{ row }">
-            <el-button link type="primary" :icon="Edit" @click.stop="openEdit(row)" />
-            <el-button link type="danger" :icon="Delete" @click.stop="removeCategories([row.id])" />
+            <span v-if="row.catalogReadOnly">{{ $tp('只读') }}</span>
+            <template v-else>
+              <el-button link type="primary" :icon="Edit" @click.stop="openEdit(row)" />
+              <el-button link type="danger" :icon="Delete" @click.stop="removeCategories([row.id])" />
+            </template>
           </template></el-table-column>
         </el-table>
       </main>
@@ -195,6 +199,7 @@ const algorithmTypes = [
   { label: '图像分类算法', value: 'classify' }, { label: '关键点检测算法', value: 'pose' }, { label: '旋转目标检测算法', value: 'obb' }
 ]
 const normalizedRows = computed(() => rows.value.map(row => ({ ...row, id: String(row.id), parentId: String(row.parentId || '0') })))
+const selectedCatalogReadOnly = computed(() => normalizedRows.value.some(row => row.id === activeCategoryId.value && row.catalogReadOnly))
 const directChildren = id => normalizedRows.value.filter(row => row.parentId === String(id))
 const nest = parentId => directChildren(parentId).map(row => ({ ...row, children: nest(row.id) }))
 const treeData = computed(() => [{ id: ROOT_ID, name: '所有算法', children: nest(0) }])
@@ -381,6 +386,7 @@ async function saveSettings() {
 }
 function handleNodeCommand(command, row) { if (command === 'edit') openEdit(row); if (command === 'settings') openSettings(row); if (command === 'delete') removeCategories([row.id]) }
 async function handleAlgorithmCommand(command, algorithm) {
+  if (algorithm.catalogReadOnly) return
   if (command === 'edit') emit('edit', algorithm)
   if (command === 'evaluate') emit('evaluate', algorithm)
   if (command === 'deploy') emit('deploy', algorithm)

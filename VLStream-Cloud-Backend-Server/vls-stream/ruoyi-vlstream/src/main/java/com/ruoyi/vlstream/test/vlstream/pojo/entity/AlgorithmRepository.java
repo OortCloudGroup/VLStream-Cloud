@@ -8,7 +8,10 @@
 
 package com.ruoyi.vlstream.test.vlstream.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -36,6 +39,15 @@ public class AlgorithmRepository extends TenantEntity {
 	private Integer sortOrder;
 	/** JSON array of child category IDs displayed in this category's flat row. */
 	private String flatCategoryIds;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer.class)
+    private Long sharedCatalogId;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(exist = false)
+    private Boolean catalogReadOnly;
 
 	/**
 	 * algorithm

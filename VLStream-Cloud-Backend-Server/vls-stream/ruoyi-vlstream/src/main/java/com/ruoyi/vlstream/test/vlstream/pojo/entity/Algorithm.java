@@ -8,8 +8,10 @@
 
 package com.ruoyi.vlstream.test.vlstream.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -63,6 +65,17 @@ public class Algorithm extends TenantEntity {
 	@TableField(exist = false)
 	@Schema(description = "算法图片临时预览地址")
 	private String imagePreviewUrl;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private Boolean catalogSeed;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(exist = false)
+    private Boolean catalogReadOnly;
+
+    @TableField(exist = false)
+    private String catalogName;
 	/**
 	 * ptmodel
 	 */

@@ -22,6 +22,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AlgorithmCoverService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private SharedAlgorithmCatalog shared;
     private static final String PREFIX = "minio://algorithm-covers/";
     private static final long MAX_SIZE = 5 * 1024 * 1024;
     private final VlsAlgorithmMapper algorithms;
@@ -31,6 +33,7 @@ public class AlgorithmCoverService {
         Algorithm algorithm = algorithms.selectOne(new QueryWrapper<Algorithm>()
             .eq("id", algorithmId).eq("tenant_id", tenant()).eq("is_deleted", 0));
         if (algorithm == null) throw new ServiceException("算法不存在或无权访问");
+        if (shared != null) shared.checkAlgorithmWritable(algorithm);
         if (file == null || file.isEmpty()) throw new ServiceException("请选择图片");
         if (file.getSize() > MAX_SIZE) throw new ServiceException("图片大小不能超过 5MB");
         byte[] bytes = file.getBytes();

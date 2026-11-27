@@ -33,10 +33,13 @@ public class AlgorithmCatalogService {
     private final VlsAlgorithmMapper algorithms;
     private final AlgorithmCatalogPreferenceMapper preferences;
     private final ObjectMapper json;
+    @org.springframework.beans.factory.annotation.Autowired
+    private SharedAlgorithmCatalog shared;
 
     public List<AlgorithmRepository> categories() {
-        return repositories.selectList(new LambdaQueryWrapper<AlgorithmRepository>()
+        List<AlgorithmRepository> owned = repositories.selectList(new LambdaQueryWrapper<AlgorithmRepository>()
             .orderByAsc(AlgorithmRepository::getSortOrder, AlgorithmRepository::getId));
+        return shared == null ? owned : shared.categories(owned);
     }
 
     private List<AlgorithmRepository> lockCategories() {
@@ -54,6 +57,7 @@ public class AlgorithmCatalogService {
     public AlgorithmRepository saveCategory(AlgorithmRepository input) {
         List<AlgorithmRepository> rows = lockCategories();
         AlgorithmRepository existing = input.getId() == null ? null : requireCategory(rows, input.getId());
+        if (shared != null && existing != null) shared.checkCatalogWritable(existing);
         Long parentId = input.getParentId() == null ? (existing == null ? 0L : existing.getParentId()) : input.getParentId();
         if (parentId == null) parentId = 0L;
         String name = input.getName() == null ? (existing == null ? "" : existing.getName()) : input.getName().trim();
@@ -65,6 +69,9 @@ public class AlgorithmCatalogService {
         while (cursor != 0L) {
             if (Objects.equals(cursor, input.getId()) || !visited.add(cursor)) throw new ServiceException("不能将分类放入自身或下级分类");
             AlgorithmRepository parent = requireCategory(rows, cursor);
+            if (shared != null && !Objects.equals(parentId, existing == null ? null : existing.getParentId())) {
+                shared.checkCatalogWritable(parent);
+            }
             cursor = parent.getParentId() == null ? 0L : parent.getParentId();
         }
         for (AlgorithmRepository row : rows) {
@@ -128,6 +135,9 @@ public class AlgorithmCatalogService {
         }
         Page<Algorithm> page = new Page<>(Math.max(1, current), Math.max(1, Math.min(100, size)));
         if (visible.isEmpty()) return page;
+        if (shared != null && shared.available()) {
+            return shared.page(page, visible, keyword == null ? null : keyword.trim(), type);
+        }
         return algorithms.selectPage(page, new LambdaQueryWrapper<Algorithm>()
             .in(Algorithm::getRepositoryId, visible)
             .like(keyword != null && !keyword.trim().isEmpty(), Algorithm::getName, keyword == null ? null : keyword.trim())
@@ -157,6 +167,7 @@ public class AlgorithmCatalogService {
         List<AlgorithmRepository> rows = lockCategories();
         if (settings.getRepositoryId() != null && settings.getRepositoryId() != 0L) {
             AlgorithmRepository row = requireCategory(rows, settings.getRepositoryId());
+            if (shared != null) shared.checkCatalogWritable(row);
             List<String> ids = settings.getPeerIds() == null ? new ArrayList<>() : settings.getPeerIds();
             if (ids.size() > 500) throw new ServiceException("同级展示分类过多");
             for (String id : ids) {

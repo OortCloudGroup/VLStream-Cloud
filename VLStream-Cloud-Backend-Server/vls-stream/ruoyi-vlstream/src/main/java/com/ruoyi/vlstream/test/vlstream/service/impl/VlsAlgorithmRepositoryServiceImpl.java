@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgorithmRepositoryMapper, AlgorithmRepository> implements IVlsAlgorithmRepositoryService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.vlstream.test.vlstream.service.SharedAlgorithmCatalog shared;
 
 	private final VlsAlgorithmRepositoryMapper algorithmRepositoryMapper;
 	private final VlsAlgorithmMapper algorithmMapper;
@@ -83,6 +85,10 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 	@Transactional(rollbackFor = Exception.class)
 	public boolean createRepository(AlgorithmRepository repository) {
 		log.info("创建算法仓库：{}", repository.getName());
+        validateParent(repository.getParentId());
+        if (shared != null && shared.available()) {
+            repository.setTenantId(com.ruoyi.common.helper.TenantContextHolder.getTenantId());
+        }
 
 		// whether
 		QueryWrapper<AlgorithmRepository> queryWrapper = new QueryWrapper<>();
@@ -113,7 +119,13 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 
 		// whether to algorithm ( Update field)
 		AlgorithmRepository existing = getById(repository.getId());
-		if (existing != null && "basic".equals(existing.getRepositoryType())) {
+        if (existing == null) return false;
+        if (shared != null) shared.checkCatalogWritable(existing);
+        if (repository.getParentId() != null && !java.util.Objects.equals(repository.getParentId(), existing.getParentId())) {
+            validateParent(repository.getParentId());
+        }
+        repository.setTenantId(existing.getTenantId());
+		if (existing.getRepositoryType() == AlgorithmRepositoryTypeEnum.basic) {
 			// algorithm only Update remark and
 			repository.setName(existing.getName());
 			repository.setRepositoryType(existing.getRepositoryType());
@@ -122,6 +134,13 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		return updateById(repository);
 	}
 
+    private void validateParent(Long parentId) {
+        if (shared == null || !shared.available() || parentId == null || parentId == 0L) return;
+        AlgorithmRepository parent = getById(parentId);
+        if (parent == null) throw new com.ruoyi.common.exception.ServiceException("上级分类不存在或无权操作");
+        shared.checkCatalogWritable(parent);
+    }
+
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean deleteRepository(Long id) {
@@ -129,6 +148,8 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 
 		// whether to algorithm ( Delete )
 		AlgorithmRepository repository = getById(id);
+        if (repository == null) return false;
+        if (shared != null) shared.checkCatalogWritable(repository);
 		if (repository != null && "basic".equals(repository.getRepositoryType())) {
 			log.warn("不允许删除基础预置算法库：ID={}", id);
 			return false;
@@ -144,6 +165,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 
 		// algorithm
 		List<AlgorithmRepository> repositories = listByIds(ids);
+        if (shared != null) repositories.forEach(shared::checkCatalogWritable);
 		List<Long> allowedIds = repositories.stream()
 			.filter(repo -> !"basic".equals(repo.getRepositoryType()))
 			.map(AlgorithmRepository::getId)
@@ -162,6 +184,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		log.info("更新算法仓库状态：ID={}, Status={}", id, status);
 
 		UpdateWrapper<AlgorithmRepository> updateWrapper = new UpdateWrapper<>();
+        if (shared != null && shared.available()) updateWrapper.isNull("shared_catalog_id");
 		updateWrapper.eq("id", id)
 			.set("status", status);
 
@@ -173,6 +196,14 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		log.info("批量更新算法仓库状态：IDs={}, Status={}", ids, status);
 
 		UpdateWrapper<AlgorithmRepository> updateWrapper = new UpdateWrapper<>();
+        if (shared != null && shared.available()) {
+            List<AlgorithmRepository> owned = listByIds(ids);
+            if (owned.size() != new java.util.HashSet<>(ids).size()) {
+                throw new com.ruoyi.common.exception.ServiceException("部分算法库不存在或无权操作");
+            }
+            owned.forEach(shared::checkCatalogWritable);
+            updateWrapper.isNull("shared_catalog_id");
+        }
 		updateWrapper.in("id", ids)
 			.set("status", status);
 
@@ -193,6 +224,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		Long count = algorithmMapper.countByRepositoryId(repositoryId);
 
 		UpdateWrapper<AlgorithmRepository> updateWrapper = new UpdateWrapper<>();
+        if (shared != null && shared.available()) updateWrapper.isNull("shared_catalog_id");
 		updateWrapper.eq("id", repositoryId)
 			.set("algorithm_count", count);
 

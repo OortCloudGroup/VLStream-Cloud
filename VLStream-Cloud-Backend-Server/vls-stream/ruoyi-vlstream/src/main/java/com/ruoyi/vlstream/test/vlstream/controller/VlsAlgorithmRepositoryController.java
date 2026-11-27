@@ -94,7 +94,8 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmRepository")
 	public R save(@Valid @RequestBody AlgorithmRepository vlsAlgorithmRepository) {
-		return R.status(vlsAlgorithmRepositoryService.save(vlsAlgorithmRepository));
+		vlsAlgorithmRepository.setId(null);
+		return R.status(vlsAlgorithmRepositoryService.createRepository(vlsAlgorithmRepository));
 	}
 
 	/**
@@ -104,7 +105,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmRepository")
 	public R update(@Valid @RequestBody AlgorithmRepository vlsAlgorithmRepository) {
-		return R.status(vlsAlgorithmRepositoryService.updateById(vlsAlgorithmRepository));
+		return R.status(vlsAlgorithmRepositoryService.updateRepository(vlsAlgorithmRepository));
 	}
 
 	/**
@@ -114,7 +115,9 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmRepository")
 	public R submit(@Valid @RequestBody AlgorithmRepository vlsAlgorithmRepository) {
-		return R.status(vlsAlgorithmRepositoryService.saveOrUpdate(vlsAlgorithmRepository));
+		return R.status(vlsAlgorithmRepository.getId() == null
+			? vlsAlgorithmRepositoryService.createRepository(vlsAlgorithmRepository)
+			: vlsAlgorithmRepositoryService.updateRepository(vlsAlgorithmRepository));
 	}
 
 	/**
@@ -124,7 +127,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
-		return R.status(vlsAlgorithmRepositoryService.deleteLogic(Func.toLongList(ids)));
+		return R.status(vlsAlgorithmRepositoryService.batchDeleteRepositories(Func.toLongList(ids)));
 	}
 
 	/**

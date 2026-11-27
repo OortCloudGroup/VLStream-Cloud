@@ -105,6 +105,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@Resource
 	private IVlsAlgorithmService algorithmService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.ruoyi.vlstream.test.vlstream.service.SharedAlgorithmCatalog sharedAlgorithms;
+
 	@Resource
 	private IVlsAlgorithmModelService algorithmModelService;
 
@@ -169,6 +172,13 @@ public class VlsAlgorithmTrainingController extends BladeController {
             for (Algorithm algorithm : algorithmService.listByIds(algorithmIds)) {
                 algorithmsById.put(algorithm.getId(), algorithm);
             }
+            if (sharedAlgorithms != null && sharedAlgorithms.available()) {
+                for (Long algorithmId : algorithmIds) {
+                    if (!algorithmsById.containsKey(algorithmId)) {
+                        algorithmsById.put(algorithmId, sharedAlgorithms.visible(algorithmId));
+                    }
+                }
+            }
         }
 		for (AlgorithmTrainingVO training : pages.getRecords()) {
 			if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
@@ -199,6 +209,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmTraining")
 	public R save(@Valid @RequestBody AlgorithmTraining vlsAlgorithmTraining) {
+		checkTrainingAlgorithm(vlsAlgorithmTraining.getAlgorithmId());
 		return R.status(vlsAlgorithmTrainingService.save(vlsAlgorithmTraining));
 	}
 
@@ -222,6 +233,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmTraining")
 	public R submit(@Valid @RequestBody AlgorithmTraining vlsAlgorithmTraining) {
+		if (vlsAlgorithmTraining.getId() == null) checkTrainingAlgorithm(vlsAlgorithmTraining.getAlgorithmId());
 		guardCloudUpdate(vlsAlgorithmTraining);
 		return R.status(vlsAlgorithmTrainingService.saveOrUpdate(vlsAlgorithmTraining));
 	}
@@ -282,7 +294,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@PostMapping
 	@Operation(summary = "创建训练任务", description = "新增训练任务")
 	public R<String> createTraining(@Valid @RequestBody AlgorithmTraining training) {
-
+		checkTrainingAlgorithm(training.getAlgorithmId());
 		training.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
 		log.info("创建训练任务：{}", training);
 
@@ -437,7 +449,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				if (datasetError != null) return R.fail(datasetError);
 			}
 
-			Algorithm algorithm = training.getAlgorithmId() != null ? algorithmService.getById(training.getAlgorithmId()) : null;
+			Algorithm algorithm = trainingAlgorithm(training.getAlgorithmId());
 			if (algorithm == null) {
 				return R.fail("算法不存在");
 			}
@@ -822,7 +834,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
 			return R.data(cloudTrainingService.logs(training));
 		}
-		Algorithm algorithm = training.getAlgorithmId() != null ? algorithmService.getById(training.getAlgorithmId()) : null;
+		Algorithm algorithm = trainingAlgorithm(training.getAlgorithmId());
 		String trainType = algorithm != null && algorithm.getCategory() != null
 			? algorithm.getCategory().getCode()
 			: "detect";
@@ -910,6 +922,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (update.getId() == null) return;
 		AlgorithmTraining existing = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(update.getId());
 		com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectTrainingUpdate(existing,update);
+		if (update.getAlgorithmId() != null && (existing == null || !update.getAlgorithmId().equals(existing.getAlgorithmId()))) {
+			checkTrainingAlgorithm(update.getAlgorithmId());
+		}
 		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(existing)) {
 			protectDatasetRelation(existing, update);
 			cloudTrainingService.preserveExecutionConfig(existing, update);
@@ -927,6 +942,17 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			} catch (java.io.IOException | ClassCastException e) { throw new com.ruoyi.common.exception.ServiceException("训练配置格式无效"); }
 		}
 	}
+
+    private Algorithm trainingAlgorithm(Long id) {
+        if (id == null) return null;
+        return sharedAlgorithms == null ? algorithmService.getById(id) : sharedAlgorithms.forTraining(id);
+    }
+
+    private void checkTrainingAlgorithm(Long id) {
+        if (sharedAlgorithms != null && sharedAlgorithms.available() && trainingAlgorithm(id) == null) {
+            throw new com.ruoyi.common.exception.ServiceException("算法不存在或无权用于训练");
+        }
+    }
 
 	private boolean hasFrozenDataset(AlgorithmTraining training) {
 		if (training == null || StringUtils.isBlank(training.getConfigParams())) return false;

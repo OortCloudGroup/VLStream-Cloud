@@ -46,8 +46,21 @@ export const defaultAlgorithmCover = id => {
   return ALGORITHM_COVERS[remainder]
 }
 
-export const algorithmCoverUrl = algorithm => {
+const BUILTIN_COVER_PREFIX = 'builtin://algorithm-covers/'
+const builtinCovers = import.meta.glob('../assets/algorithm-covers/*/*.webp', {
+  eager: true, import: 'default', query: '?url'
+})
+
+export const algorithmImageUrl = algorithm => {
   const url = String(algorithm?.imagePreviewUrl || algorithm?.imageUrl || '').trim()
-  if (url.startsWith('minio://')) return defaultAlgorithmCover(algorithm?.id)
+  if (url.startsWith(BUILTIN_COVER_PREFIX)) {
+    const path = url.slice(BUILTIN_COVER_PREFIX.length)
+    return builtinCovers[`../assets/algorithm-covers/${path}`] || ''
+  }
+  return url.startsWith('minio://') ? '' : url
+}
+
+export const algorithmCoverUrl = algorithm => {
+  const url = algorithmImageUrl(algorithm)
   return url && !isLegacyGeneratedCover(url) ? url : defaultAlgorithmCover(algorithm?.id)
 }

@@ -809,6 +809,8 @@
           style="width: 100%"
           :loading="algorithmLoading"
           filterable
+          remote
+          :remote-method="loadAlgorithmOptions"
           clearable>
           <el-option
             v-for="algorithm in algorithmOptions"
@@ -928,6 +930,8 @@
           style="width: 100%"
           :loading="algorithmLoading"
           filterable
+          remote
+          :remote-method="loadAlgorithmOptions"
           clearable
         >
           <el-option
@@ -1116,7 +1120,7 @@ import {
 } from '@/api/algorithmTraining.js'
 import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage, getAlgorithmAnnotationById} from '@/api/algorithmAnnotation.js'
-import {getAlgorithmPage} from '@/api/algorithmManagement.js'
+import {getTrainingAlgorithmOptions} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import TrainingComputeSelector from './components/TrainingComputeSelector.vue'
 import { listComputeSelection, startCloudTraining } from '@/api/compute'
@@ -3179,27 +3183,35 @@ const loadDatasetOptions = async () => {
 }
 
 // Load algorithm
-const loadAlgorithmOptions = async () => {
+let algorithmOptionRequest = 0
+const loadAlgorithmOptions = async (name = '') => {
+  const request = ++algorithmOptionRequest
   algorithmLoading.value = true
   try {
     const params = {
       current: 1,
-      size: 500
+      size: 500,
+      name: name.trim() || undefined
     }
-    const response = await getAlgorithmPage(params)
+    const response = await getTrainingAlgorithmOptions(params)
     const records = response?.data?.records || response?.records || []
-    algorithmOptions.value = records.map(item => ({
-      value: item.id,
-      label: `${item.name}${item.version ? ` (${item.version})` : ''}`,
-      name: item.name,
-      type: item.type || item.category || '',
-      ptModelFilePath: item.ptModelFilePath
-    }))
+    if (request !== algorithmOptionRequest) return
+    algorithmOptions.value = records.map(item => {
+      const name = item.catalogName ? `${item.catalogName} / ${item.name}` : item.name
+      return {
+        value: item.id,
+        label: `${name}${item.version ? ` (${item.version})` : ''}`,
+        name,
+        type: item.type || item.category || '',
+        ptModelFilePath: item.ptModelFilePath
+      }
+    })
   } catch (error) {
+    if (request !== algorithmOptionRequest) return
     console.error('加载算法列表失败:', error)
     ElMessage.error(uiText('加载算法列表失败'))
   } finally {
-    algorithmLoading.value = false
+    if (request === algorithmOptionRequest) algorithmLoading.value = false
   }
 }
 

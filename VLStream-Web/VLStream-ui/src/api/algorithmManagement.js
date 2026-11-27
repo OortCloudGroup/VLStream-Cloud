@@ -14,6 +14,7 @@ export const saveAlgorithmCatalogCategory = (data) => request({
 })
 export const deleteAlgorithmCatalogCategories = (ids) => request({ url: '/vlsAlgorithmCatalog/categories', method: 'delete', data: ids })
 export const getAlgorithmCatalogPage = (params, options = {}) => request.get('/vlsAlgorithmCatalog/algorithms', { ...options, params })
+export const getTrainingAlgorithmOptions = (params) => getAlgorithmPage({ ...params, forTraining: true })
 export const getAlgorithmCatalogSettings = (options = {}) => request.get('/vlsAlgorithmCatalog/settings', options)
 export const saveAlgorithmCatalogSettings = (data) => request({ url: '/vlsAlgorithmCatalog/settings', method: 'put', data })
 

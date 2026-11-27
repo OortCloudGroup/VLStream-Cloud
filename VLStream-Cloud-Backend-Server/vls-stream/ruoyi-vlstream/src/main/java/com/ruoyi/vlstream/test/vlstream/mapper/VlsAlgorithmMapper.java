@@ -9,6 +9,7 @@
 package com.ruoyi.vlstream.test.vlstream.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,6 +29,14 @@ import java.util.Map;
  * @since 2025-12-23
  */
 public interface VlsAlgorithmMapper extends BaseMapper<Algorithm> {
+
+    @InterceptorIgnore(tenantLine = "true")
+    IPage<Algorithm> selectSharedCatalogPage(Page<Algorithm> page, @Param("tenant") String tenant,
+        @Param("repositoryIds") java.util.Set<Long> repositoryIds, @Param("keyword") String keyword,
+        @Param("category") String category);
+
+    @InterceptorIgnore(tenantLine = "true")
+    Algorithm selectSharedCatalogAlgorithm(@Param("id") Long id, @Param("tenant") String tenant);
 
 	/**
 	 * Custom

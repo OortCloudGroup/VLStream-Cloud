@@ -523,6 +523,7 @@ import {
   updateAlgorithmRepositoryStatus
 } from '@/api/algorithmManagement'
 import { algorithmRepositoryOptions } from '@/utils/algorithmRepositoryOptions.mjs'
+import { algorithmImageUrl } from '@/utils/algorithmCover'
 import {dispatchAlgorithmToDevices} from '@/api/device'
 import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 import {
@@ -713,11 +714,8 @@ const getNumericModulo = (value, divisor) => {
 
 // Get algorithm
 const getAlgorithmCardBackground = (algorithm, repositoryId) => {
-  // if algorithm already ,
-  const imageUrl = algorithm.imagePreviewUrl || algorithm.imageUrl
-  if (imageUrl && imageUrl.trim() !== '' && !imageUrl.startsWith('minio://')) {
-    return imageUrl
-  }
+  const imageUrl = algorithmImageUrl(algorithm)
+  if (imageUrl) return imageUrl
 
   // algorithmID and ID
   const algorithmIndex = getNumericModulo(algorithm.id, cardBackgrounds.length)
@@ -1007,7 +1005,7 @@ const editAlgorithm = async (algorithm) => {
   }
   imageUploadVersion++
   imageUploading.value = false
-  algorithmImagePreview.value = algorithm.imagePreviewUrl || (algorithm.imageUrl?.startsWith('minio://') ? '' : algorithm.imageUrl) || ''
+  algorithmImagePreview.value = algorithmImageUrl(algorithm)
   // Set algorithm
   editingAlgorithm.value = algorithm
 

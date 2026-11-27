@@ -22,6 +22,8 @@ import java.util.LinkedHashMap;
 @Service
 @RequiredArgsConstructor
 public class LlmReviewManagementService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private SharedAlgorithmCatalog shared;
 
 	public static final String DEFAULT_PROMPT = "你是视频安全事件复核器。设备端YOLO报告事件类型：{{eventType}}，"
 		+ "检测对象：{{objectType}}，YOLO置信度：{{yoloConfidence}}，设备：{{deviceName}}。"
@@ -156,9 +158,11 @@ public class LlmReviewManagementService {
 	@Transactional(rollbackFor = Exception.class)
 	public AlgorithmLlmReviewConfig saveAlgorithmConfig(Long algorithmId,
 													 AlgorithmLlmReviewConfig input) {
-		if (algorithmMapper.selectById(algorithmId) == null) {
+		com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm algorithm = algorithmMapper.selectById(algorithmId);
+		if (algorithm == null) {
 			throw new ServiceException("算法不存在");
 		}
+		if (shared != null) shared.checkAlgorithmWritable(algorithm);
 		input.setAlgorithmId(algorithmId);
 		applyConfigDefaults(input);
 		validateAlgorithmConfig(input);

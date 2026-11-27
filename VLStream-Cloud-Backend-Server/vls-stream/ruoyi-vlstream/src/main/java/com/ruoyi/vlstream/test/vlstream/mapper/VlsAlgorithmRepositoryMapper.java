@@ -9,6 +9,7 @@
 package com.ruoyi.vlstream.test.vlstream.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -27,6 +28,25 @@ import java.util.List;
  * @since 2025-12-23
  */
 public interface VlsAlgorithmRepositoryMapper extends BaseMapper<AlgorithmRepository> {
+
+    @InterceptorIgnore(tenantLine = "true")
+    @Select("SELECT r.id, r.name, 0 AS parent_id, r.sort_order, r.status, r.remark, r.repository_type, "
+        + "r.shared_catalog_id, 1 AS catalog_read_only, "
+        + "(SELECT COUNT(*) FROM vls_algorithm a JOIN vls_algorithm_repository source ON source.id = a.repository_id "
+        + "WHERE source.shared_catalog_id = r.id AND source.is_deleted = 0 AND a.is_deleted = 0 "
+        + "AND (source.id = r.id OR (a.tenant_id = source.tenant_id AND a.catalog_seed = 0))) AS algorithm_count "
+        + "FROM vls_algorithm_repository r WHERE r.id = r.shared_catalog_id AND r.is_deleted = 0")
+    List<AlgorithmRepository> selectSharedCatalogs();
+
+    @InterceptorIgnore(tenantLine = "true")
+    @Select("SELECT shared_catalog_id FROM vls_algorithm_repository "
+        + "WHERE id = #{id} AND id = shared_catalog_id AND status = 1 AND is_deleted = 0")
+    Long selectAssignableSharedCatalog(@Param("id") Long id);
+
+    @InterceptorIgnore(tenantLine = "true")
+    @Select("SELECT shared_catalog_id FROM vls_algorithm_repository "
+        + "WHERE id = #{id} AND id = shared_catalog_id AND status = 1 AND is_deleted = 0 FOR UPDATE")
+    Long lockAssignableSharedCatalog(@Param("id") Long id);
 
 	/**
 	 * Custom
